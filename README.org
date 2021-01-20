@@ -1,0 +1,4 @@
+* Dotfiles
+
+This repo contains all of my confiurations. It is a work in progress.
+This is managed using GNU stow to manage symlink creation.
