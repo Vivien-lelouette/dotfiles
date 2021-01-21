@@ -18,7 +18,7 @@ This allows us to easily manage symlinks of our configurations to our home folde
 
   (setq inhibit-startup-message t)
 
-  ;; (scroll-bar-mode -1)        ; Disable visible scrollbar
+  (scroll-bar-mode -1)        ; Disable visible scrollbar
   (tool-bar-mode -1)          ; Disable the toolbar
   (tooltip-mode -1)           ; Disable tooltips
   (set-fringe-mode 10)        ; Give some breathing room
@@ -177,7 +177,7 @@ The first time you load your configuration on a new machine, you'll need to run 
   (general-create-definer rune/leader-keys
     :keymaps '(normal insert visual emacs)
     :prefix "SPC"
-    :global-prefix "C-SPC")
+    :global-prefix "s-SPC")
 
   (rune/leader-keys
     "t"  '(:ignore t :which-key "toggles")
@@ -413,7 +413,7 @@ This snippet adds a hook to org-mode buffers so that efs/org-babel-tangle-config
 
 (defun efs/org-babel-tangle-config ()
   (when (string-equal (buffer-file-name)
-                      (expand-file-name "~/Workspace/dotfiles/emacs/emacs.org"))
+                      (expand-file-name "~/dotfiles/emacs/emacs.org"))
     ;; Dynamic scoping to the rescue
     (let ((org-confirm-babel-evaluate nil))
       (org-babel-tangle))))
@@ -479,3 +479,109 @@ NOTE: Make sure to configure a GitHub token before using this package!
 ;; (use-package forge)
 
 #+end_src
+
+** Commenting
+#+begin_src emacs-lisp
+
+  (use-package evil-nerd-commenter
+    :bind ("M-/" . evilnc-comment-or-uncomment-lines))
+
+#+end_src
+
+** Lsp
+*** lsp-mode
+
+We use the excellent [[https://emacs-lsp.github.io/lsp-mode/][lsp-mode]] to enable IDE-like functionality for many different programming languages via "language servers" that speak the [[https://microsoft.github.io/language-server-protocol/][Language Server Protocol]].  Before trying to set up =lsp-mode= for a particular language, check out the [[https://emacs-lsp.github.io/lsp-mode/page/languages/][documentation for your language]] so that you can learn which language servers are available and how to install them.
+
+The =lsp-keymap-prefix= setting enables you to define a prefix for where =lsp-mode='s default keybindings will be added.  I *highly recommend* using the prefix to find out what you can do with =lsp-mode= in a buffer.
+
+The =which-key= integration adds helpful descriptions of the various keys so you should be able to learn a lot just by pressing =C-c l= in a =lsp-mode= buffer and trying different things that you find there.
+#+begin_src emacs-lisp
+
+    (defun efs/lsp-mode-setup ()
+      (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
+      (lsp-headerline-breadcrumb-mode))
+
+    (use-package lsp-mode
+      :commands (lsp lsp-deferred)
+      :hook (lsp-mode . efs/lsp-mode-setup)
+      :init
+      (setq lsp-keymap-prefix "C-SPC")  ;; Or 'C-l', 's-l'
+      :config
+      (lsp-enable-which-key-integration t))
+
+#+end_src
+
+*** lsp-ui
+#+begin_src emacs-lisp
+
+  (use-package lsp-ui
+    :hook (lsp-mode . lsp-ui-mode))
+
+#+end_src
+
+*** lsp-treemacs
+#+begin_src emacs-lisp
+
+  (use-package lsp-treemacs
+    :after lsp)
+
+#+end_src
+
+*** lsp-ivy
+#+begin_src emacs-lisp
+
+  (use-package lsp-ivy)
+
+#+end_src
+
+*** Javascript/Typescript
+This is a basic configuration for the TypeScript language so that =.ts= files activate =typescript-mode= when opened.  We're also adding a hook to =typescript-mode-hook= to call =lsp-deferred= so that we activate =lsp-mode= to get LSP features every time we edit TypeScript code.
+
+#+begin_src emacs-lisp
+
+  (use-package typescript-mode
+    :mode ("\\.ts\\'" "\\.js\\'")
+    :hook (typescript-mode . lsp-deferred)
+    :config
+    (setq typescript-indent-level 2))
+
+  #+end_src
+
+*Important note!*  For =lsp-mode= to work with TypeScript (and JavaScript) you will need to install a language server on your machine.  If you have Node.js installed, the easiest way to do that is by running the following command:
+
+#+begin_src shell :tangle no
+
+npm install -g typescript-language-server typescript
+
+#+end_src
+
+This will install the [[https://github.com/theia-ide/typescript-language-server][typescript-language-server]] and the TypeScript compiler package.
+
+*** Bash
+Requires you to run: M-x lsp-install-server RET bash RET.
+#+begin_src emacs-lisp
+
+  (add-hook 'sh-mode-hook 'lsp-deferred)
+
+#+end_src
+
+** Company
+#+begin_src emacs-lisp
+
+  (use-package company
+    :after lsp-mode
+    :hook (lsp-mode . company-mode)
+    :bind (:map company-active-map
+           ("<tab>" . company-complete-selection))
+          (:map lsp-mode-map
+           ("<tab>" . company-indent-or-complete-common))
+    :custom
+    (company-minimum-prefix-length 1)
+    (company-idle-delay 0.0))
+
+  (use-package company-box
+    :hook (company-mode . company-box-mode))
+
+#+end_src
+

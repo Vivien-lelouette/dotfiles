@@ -2,3 +2,19 @@
 
 This repo contains all of my confiurations. It is a work in progress.
 This is managed using GNU stow to manage symlink creation.
+
+* Installing Emacs from sources
+
+The snippets below will install emacs from their git master:
+
+#+begin_src shell
+
+  git clone -b master git://git.sv.gnu.org/emacs.git
+  sudo apt install autoconf make gcc texinfo libgtk-3-dev libxpm-dev libjpeg-dev libgif-dev libtiff5-dev libgnutls28-dev libncurses5-dev
+  cd emacs
+  ./autogen.sh
+  ./configure --with-modules
+  make
+  sudo make install
+
+#+end_src

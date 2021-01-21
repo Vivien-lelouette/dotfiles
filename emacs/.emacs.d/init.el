@@ -1,6 +1,6 @@
 (setq inhibit-startup-message t)
 
-;; (scroll-bar-mode -1)        ; Disable visible scrollbar
+(scroll-bar-mode -1)        ; Disable visible scrollbar
 (tool-bar-mode -1)          ; Disable the toolbar
 (tooltip-mode -1)           ; Disable tooltips
 (set-fringe-mode 10)        ; Give some breathing room
@@ -108,7 +108,7 @@
   (general-create-definer rune/leader-keys
     :keymaps '(normal insert visual emacs)
     :prefix "SPC"
-    :global-prefix "C-SPC")
+    :global-prefix "s-SPC")
 
   (rune/leader-keys
     "t"  '(:ignore t :which-key "toggles")
@@ -313,7 +313,7 @@
 
 (defun efs/org-babel-tangle-config ()
   (when (string-equal (buffer-file-name)
-                      (expand-file-name "~/Workspace/dotfiles/emacs/emacs.org"))
+                      (expand-file-name "~/dotfiles/emacs/emacs.org"))
     ;; Dynamic scoping to the rescue
     (let ((org-confirm-babel-evaluate nil))
       (org-babel-tangle))))
@@ -351,3 +351,48 @@
   :after magit)
 
 ;; (use-package forge)
+
+(use-package evil-nerd-commenter
+  :bind ("M-/" . evilnc-comment-or-uncomment-lines))
+
+(defun efs/lsp-mode-setup ()
+  (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
+  (lsp-headerline-breadcrumb-mode))
+
+(use-package lsp-mode
+  :commands (lsp lsp-deferred)
+  :hook (lsp-mode . efs/lsp-mode-setup)
+  :init
+  (setq lsp-keymap-prefix "C-SPC")  ;; Or 'C-l', 's-l'
+  :config
+  (lsp-enable-which-key-integration t))
+
+(use-package lsp-ui
+  :hook (lsp-mode . lsp-ui-mode))
+
+(use-package lsp-treemacs
+  :after lsp)
+
+(use-package lsp-ivy)
+
+(use-package typescript-mode
+  :mode ("\\.ts\\'" "\\.js\\'")
+  :hook (typescript-mode . lsp-deferred)
+  :config
+  (setq typescript-indent-level 2))
+
+(add-hook 'sh-mode-hook 'lsp-deferred)
+
+(use-package company
+  :after lsp-mode
+  :hook (lsp-mode . company-mode)
+  :bind (:map company-active-map
+         ("<tab>" . company-complete-selection))
+        (:map lsp-mode-map
+         ("<tab>" . company-indent-or-complete-common))
+  :custom
+  (company-minimum-prefix-length 1)
+  (company-idle-delay 0.0))
+
+(use-package company-box
+  :hook (company-mode . company-box-mode))
