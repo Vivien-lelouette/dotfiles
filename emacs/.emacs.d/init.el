@@ -350,6 +350,9 @@
 (use-package evil-magit
   :after magit)
 
+(rune/leader-keys
+  "gg" '(magit :which-key "magit status"))
+
 ;; (use-package forge)
 
 (use-package evil-nerd-commenter

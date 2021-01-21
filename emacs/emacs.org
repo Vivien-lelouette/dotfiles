@@ -460,12 +460,15 @@ This snippet adds a hook to org-mode buffers so that efs/org-babel-tangle-config
 *** Magit
 #+begin_src emacs-lisp
 
-(use-package magit
-  :custom
-  (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
+  (use-package magit
+    :custom
+    (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
 
-(use-package evil-magit
-  :after magit)
+  (use-package evil-magit
+    :after magit)
+
+  (rune/leader-keys
+    "gg" '(magit :which-key "magit status"))
 
 #+end_src
 
