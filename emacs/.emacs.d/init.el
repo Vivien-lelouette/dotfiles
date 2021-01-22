@@ -313,7 +313,8 @@
 
 (defun efs/org-babel-tangle-config ()
   (when (string-equal (buffer-file-name)
-                      (expand-file-name "~/dotfiles/emacs/emacs.org"))
+                      (expand-file-name "~/dotfiles/README.org")
+                      (expand-file-name "~/dotfiles/emacs/README.org"))
     ;; Dynamic scoping to the rescue
     (let ((org-confirm-babel-evaluate nil))
       (org-babel-tangle))))
@@ -379,10 +380,12 @@
 (use-package lsp-ivy)
 
 (use-package typescript-mode
-  :mode ("\\.ts\\'" "\\.js\\'")
+  :mode ("\\.ts\\'")
   :hook (typescript-mode . lsp-deferred)
   :config
   (setq typescript-indent-level 2))
+
+(add-hook 'js-mode-hook 'lsp-deferred)
 
 (add-hook 'sh-mode-hook 'lsp-deferred)
 

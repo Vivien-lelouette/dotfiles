@@ -1,13 +1,27 @@
 #+title Emacs configuration
 #+PROPERTY: header-args:emacs-lisp :tangle .emacs.d/init.el :mkdirp yes
 
-* Global prerequisite
-** GNU Stow
-This allows us to easily manage symlinks of our configurations to our home folder.
+* Installation
+** Prerequisites
+*** Ubuntu
+#+begin_src emacs-lisp :tangle .scripts/emacs/init-ubuntu.sh :mkdirp yes
 
-#+begin_src shell :tangle .scripts/init-ubuntu.sh :mkdirp yes
+  sudo apt install autoconf make gcc texinfo libgtk-3-dev libxpm-dev libjpeg-dev libgif-dev libtiff5-dev libgnutls28-dev libncurses5-dev
 
-  sudo apt install stow
+#+end_src
+** Emacs installation from sources
+The snippets below will install emacs from their git master:
+
+#+begin_src shell :tangle .scripts/emacs/install.sh :mkdirp yes
+
+  mkdir -p ~/Tools/emacs
+  cd ~/Tools
+  git clone -b master git://git.sv.gnu.org/emacs.git
+  cd emacs
+  ./autogen.sh
+  ./configure --with-modules
+  make
+  sudo make install
 
 #+end_src
 
@@ -407,18 +421,19 @@ The first time you load your configuration on a new machine, you'll need to run 
 
 ** Auto-tangle configuration files
 
-This snippet adds a hook to org-mode buffers so that efs/org-babel-tangle-config gets executed each time such a buffer gets saved. This function checks to see if the file being saved is the config file you’re looking at right now, and if so, automatically exports the configuration here to the associated output files.
+This snippet adds a hook to org-mode buffers so that efs/org-babel-tangle-config gets executed each time such a buffer gets saved. This function checks to see if a configuration file being saved, and if so, automatically exports the configuration here to the associated output files.
 
 #+begin_src emacs-lisp
 
-(defun efs/org-babel-tangle-config ()
-  (when (string-equal (buffer-file-name)
-                      (expand-file-name "~/dotfiles/emacs/README.org"))
-    ;; Dynamic scoping to the rescue
-    (let ((org-confirm-babel-evaluate nil))
-      (org-babel-tangle))))
+  (defun efs/org-babel-tangle-config ()
+    (when (string-equal (buffer-file-name)
+                        (expand-file-name "~/dotfiles/README.org")
+                        (expand-file-name "~/dotfiles/emacs/README.org"))
+      ;; Dynamic scoping to the rescue
+      (let ((org-confirm-babel-evaluate nil))
+        (org-babel-tangle))))
 
-(add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'efs/org-babel-tangle-config)))
+  (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'efs/org-babel-tangle-config)))
 
 #+end_src
 
@@ -539,19 +554,8 @@ The =which-key= integration adds helpful descriptions of the various keys so you
 #+end_src
 
 *** Javascript/Typescript
-This is a basic configuration for the TypeScript language so that =.ts= files activate =typescript-mode= when opened.  We're also adding a hook to =typescript-mode-hook= to call =lsp-deferred= so that we activate =lsp-mode= to get LSP features every time we edit TypeScript code.
-
-#+begin_src emacs-lisp
-
-  (use-package typescript-mode
-    :mode ("\\.ts\\'" "\\.js\\'")
-    :hook (typescript-mode . lsp-deferred)
-    :config
-    (setq typescript-indent-level 2))
-
-  #+end_src
-
-*Important note!*  For =lsp-mode= to work with TypeScript (and JavaScript) you will need to install a language server on your machine.  If you have Node.js installed, the easiest way to do that is by running the following command:
+**** Prerequisite
+ For =lsp-mode= to work with TypeScript (and JavaScript) you will need to install a language server on your machine.  If you have Node.js installed, the easiest way to do that is by running the following command:
 
 #+begin_src shell :tangle no
 
@@ -560,6 +564,26 @@ npm install -g typescript-language-server typescript
 #+end_src
 
 This will install the [[https://github.com/theia-ide/typescript-language-server][typescript-language-server]] and the TypeScript compiler package.
+
+**** Tyepscript
+This is a basic configuration for the TypeScript language so that =.ts= files activate =typescript-mode= when opened.  We're also adding a hook to =typescript-mode-hook= to call =lsp-deferred= so that we activate =lsp-mode= to get LSP features every time we edit TypeScript code.
+
+#+begin_src emacs-lisp
+
+  (use-package typescript-mode
+    :mode ("\\.ts\\'")
+    :hook (typescript-mode . lsp-deferred)
+    :config
+    (setq typescript-indent-level 2))
+
+  #+end_src
+
+**** Javascript
+#+begin_src emacs-lisp
+
+  (add-hook 'js-mode-hook 'lsp-deferred)
+
+#+end_src
 
 *** Bash
 Requires you to run: M-x lsp-install-server RET bash RET.
