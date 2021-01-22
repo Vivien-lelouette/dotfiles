@@ -6,8 +6,24 @@ This is managed using GNU stow to manage symlink creation.
 *** GNU Stow
 This allows us to easily manage symlinks of our configurations to our home folder.
 
-#+begin_src shell :tangle global/.scripts/init-ubuntu.sh :mkdirp yes
+#+begin_src shell :tangle global/.scripts/init-ubuntu.sh :shebang #!/bin/sh :mkdirp yes
 
   sudo apt install stow
+
+#+end_src
+
+* Install all prerequisite
+** Ubuntu
+#+begin_src shell :tangle global/.scripts/init-ubuntu.sh :mkdirp yes
+
+  for script in $(find ~/.scripts/*/ -name init-ubuntu.sh) ; do sh $script ; done
+
+#+end_src
+
+* Install all programs 
+
+#+begin_src shell :tangle global/.scripts/install-all-tools.sh :shebang #!/bin/sh :mkdirp yes
+
+  for script in $(find ~/.scripts/*/ -name install.sh) ; do sh $script ; done
 
 #+end_src
