@@ -1,4 +1,10 @@
-#!/bin/sh
-sudo apt install autoconf make gcc texinfo libgtk-3-dev libxpm-dev libjpeg-dev libgif-dev libtiff5-dev libgnutls28-dev libncurses5-dev
+echo "[Desktop Entry]
+  Name=EXWM
+  Comment=Emacs Window Manager
+  Exec=sh $(pwd ~)/.emacs.d/exwm/start-exwm.sh
+  TryExec=sh
+  Type=Application
+  X-LightDM-DesktopName=exwm
+  DesktopNames=exwm" > ~/.emacs.d/exwm/EXWM.desktop
 
-sudo apt install fonts-firacode font-cantarell
+sudo ln -f ~/.emacs.d/exwm/EXWM.desktop /usr/share/xsessions/EXWM.desktop

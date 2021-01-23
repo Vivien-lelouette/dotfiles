@@ -15,7 +15,7 @@ The snippets below will install emacs from their git master:
 
 #+begin_src shell :tangle .scripts/emacs/install.sh :shebang #!/bin/sh :mkdirp yes
 
-  mkdir -p ~/Tools/emacs
+  mkdir -p ~/Tools
   cd ~/Tools
   git clone -b master git://git.sv.gnu.org/emacs.git
   cd emacs
@@ -49,6 +49,10 @@ The snippets below will install emacs from their git master:
 
   ;; Make ESC quit prompts
   (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
+
+  ;; Let emacs use system clipboard as a default behaviour
+  (setq x-select-enable-clipboard t)
+  (setq interprogram-paste-function 'x-cut-buffer-or-selection-value)
 
 #+end_src
 

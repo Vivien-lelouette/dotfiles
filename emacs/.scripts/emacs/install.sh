@@ -1,5 +1,5 @@
 #!/bin/sh
-mkdir -p ~/Tools/emacs
+mkdir -p ~/Tools
 cd ~/Tools
 git clone -b master git://git.sv.gnu.org/emacs.git
 cd emacs

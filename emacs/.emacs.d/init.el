@@ -17,6 +17,10 @@
 ;; Make ESC quit prompts
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 
+;; Let emacs use system clipboard as a default behaviour
+(setq x-select-enable-clipboard t)
+(setq interprogram-paste-function 'x-cut-buffer-or-selection-value)
+
 (set-face-attribute 'default nil :font "Fira Code" :height 100)
 
 ;; Set the fixed pitch face

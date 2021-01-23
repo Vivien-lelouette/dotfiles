@@ -169,7 +169,7 @@
   (add-hook 'exwm-update-title-hook #'efs/exwm-update-title)
 
   ;; When EXWM starts up, do some extra confifuration
-  ;;(add-hook 'exwm-init-hook #'efs/exwm-init-hook)
+  (add-hook 'exwm-init-hook #'efs/exwm-init-hook)
 
   ;; Rebind CapsLock to Esc
   (start-process-shell-command "xmodmap" nil "xmodmap ~/.emacs.d/exwm/Xmodmap")
@@ -253,10 +253,10 @@
           ([S-s-right] . +evil/window-move-right)
 
           ;; easy window resize
-          ([C-s-h] . windsize-left)
-          ([C-s-j] . windsize-down)
-          ([C-s-k] . windsize-up)
-          ([C-s-l] . windsize-right)
+          ;; ([C-s-h] . windsize-left)
+          ;; ([C-s-j] . windsize-down)
+          ;; ([C-s-k] . windsize-up)
+          ;; ([C-s-l] . windsize-right)
 
           ([C-s-left] . windsize-left)
           ([C-s-down] . windsize-down)
@@ -300,6 +300,12 @@
                           (exwm-workspace-switch-create ,i))))
                     (number-sequence 0 9))
           ))
+
+  ;; Should be set in the previous list but does not work atm
+  (exwm-input-set-key (kbd "C-s-h") #'windsize-left)
+  (exwm-input-set-key (kbd "C-s-l") #'windsize-right)
+  (exwm-input-set-key (kbd "C-s-j") #'windsize-down)
+  (exwm-input-set-key (kbd "C-s-k") #'windsize-up)
 
   (exwm-enable))
 
