@@ -10,6 +10,7 @@ His [[https://github.com/daviwil/dotfiles][dotfiles repo]] is also a great sourc
 *** GNU Stow
 This allows us to easily manage symlinks of our configurations to our home folder.
 Each subfolders of this repo Will be symlinked at your home folder as long as this repo is cloned in your home folder. 
+
 To created à module symlinks, just start the following command in the dotfile folder: 
 
 #+begin_src shell
@@ -18,7 +19,7 @@ To created à module symlinks, just start the following command in the dotfile f
 
 #+end_src
 
-Stow also supports regex, so to created every symlinks: 
+Stow also supports regex, so to create every symlinks: 
 
 #+begin_src shell
 
