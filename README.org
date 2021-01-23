@@ -1,10 +1,32 @@
 * Dotfiles
-This repo contains all of my confiurations. It is a work in progress.
+This repo contains all of my configurations. It is a work in progress.
 This is managed using GNU stow to manage symlink creation.
 
+Most of this configuration is base on the excellent [[https://youtube.com/c/SystemCrafters][System Crafters livestreams]]. 
+I highly recommand his channel as it was a great help moving from Doom emacs to a clean Emacs from scratch. 
+His [[https://github.com/daviwil/dotfiles][dotfiles repo]] is also a great source for Emacs tips !
+ 
 * Global prerequisite
 *** GNU Stow
 This allows us to easily manage symlinks of our configurations to our home folder.
+Each subfolders of this repo Will be symlinked at your home folder as long as this repo is cloned in your home folder. 
+To created à module symlinks, just start the following command in the dotfile folder: 
+
+#+begin_src shell
+
+  stow $NAME_OF_FOLDER.
+
+#+end_src
+
+Stow also supports regex, so to created every symlinks: 
+
+#+begin_src shell
+
+  stow *
+
+#+end_src
+
+To install stow on Ubuntu, use the following command:
 
 #+begin_src shell :tangle global/.scripts/init-ubuntu.sh :shebang #!/bin/sh :mkdirp yes
 
