@@ -242,15 +242,15 @@
           ([s-right] . evil-window-right)
 
           ;; easy window moving
-          ([?\s-H] . +evil/window-move-left)
-          ([?\s-J] . +evil/window-move-down)
-          ([?\s-K] . +evil/window-move-up)
-          ([?\s-L] . +evil/window-move-right)
+          ([?\s-H] . windmove-swap-states-left)
+          ([?\s-J] . windmove-swap-states-down)
+          ([?\s-K] . windmove-swap-states-up)
+          ([?\s-L] . windmove-swap-states-right)
 
-          ([S-s-left] . +evil/window-move-left)
-          ([S-s-down] . +evil/window-move-down)
-          ([S-s-up] . +evil/window-move-up)
-          ([S-s-right] . +evil/window-move-right)
+          ([S-s-left] . windmove-swap-states-left)
+          ([S-s-down] . windmove-swap-states-down)
+          ([S-s-up] . windmove-swap-states-up)
+          ([S-s-right] . windmove-swap-states-right)
 
           ;; easy window resize
           ;; ([C-s-h] . windsize-left)

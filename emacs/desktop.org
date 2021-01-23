@@ -262,15 +262,15 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
             ([s-right] . evil-window-right)
 
             ;; easy window moving
-            ([?\s-H] . +evil/window-move-left)
-            ([?\s-J] . +evil/window-move-down)
-            ([?\s-K] . +evil/window-move-up)
-            ([?\s-L] . +evil/window-move-right)
+            ([?\s-H] . windmove-swap-states-left)
+            ([?\s-J] . windmove-swap-states-down)
+            ([?\s-K] . windmove-swap-states-up)
+            ([?\s-L] . windmove-swap-states-right)
 
-            ([S-s-left] . +evil/window-move-left)
-            ([S-s-down] . +evil/window-move-down)
-            ([S-s-up] . +evil/window-move-up)
-            ([S-s-right] . +evil/window-move-right)
+            ([S-s-left] . windmove-swap-states-left)
+            ([S-s-down] . windmove-swap-states-down)
+            ([S-s-up] . windmove-swap-states-up)
+            ([S-s-right] . windmove-swap-states-right)
 
             ;; easy window resize
             ;; ([C-s-h] . windsize-left)
@@ -462,7 +462,7 @@ Check out the Polybar wiki for more details on how to configure it: https://gith
 
 The configuration for our ingeniously named panel, "panel".  Invoke it with =polybar panel= on the command line!
 
-#+begin_src conf :tangle ~/.config/polybar/config :mkdirp yes
+#+begin_src conf :tangle .config/polybar/config :mkdirp yes
 
   ; Docs: https://github.com/polybar/polybar
   ;==========================================================
@@ -471,7 +471,7 @@ The configuration for our ingeniously named panel, "panel".  Invoke it with =pol
   screenchange-reload = true
 
   [global/wm]
-  margin-top = -18px
+  margin-top = -16px
   margin-bottom = 0
 
   [colors]
@@ -488,7 +488,7 @@ The configuration for our ingeniously named panel, "panel".  Invoke it with =pol
   monitor = ${env:MONITOR:}
   bottom = true
   width = 600
-  height = 18
+  height = 16
   offset-x = 100%:-600
   offset-y = 0px
   fixed-center = true
@@ -507,9 +507,9 @@ The configuration for our ingeniously named panel, "panel".  Invoke it with =pol
   module-margin = 3
 
   font-0 = "Cantarell:size=12;2"
-  font-1 = "Font Awesome:size=10;2"
-  font-2 = "Material Icons:size=14;5"
-  font-3 = "Fira Mono:size=9;-3"
+  font-1 = "Font Awesome:size=12;2"
+  font-2 = "Material Icons:size=12;5"
+  font-3 = "Fira Mono:size=12;-3"
 
   modules-right = date battery
 
@@ -597,4 +597,4 @@ The configuration for our ingeniously named panel, "panel".  Invoke it with =pol
   label-warn = %temperature-c%!
   label-warn-foreground = ${colors.secondary}
 
-#
+#+end_src

@@ -1,0 +1,132 @@
+; Docs: https://github.com/polybar/polybar
+;==========================================================
+
+[settings]
+screenchange-reload = true
+
+[global/wm]
+margin-top = -16px
+margin-bottom = 0
+
+[colors]
+background = #f0252526
+background-alt = #001e1e1e
+foreground = #d4d4d4
+foreground-alt = #555
+primary = #ffb52a
+secondary = #e60053
+alert = #bd2c40
+underline-1 = #c792ea
+
+[bar/panel]
+monitor = ${env:MONITOR:}
+bottom = true
+width = 600
+height = 16
+offset-x = 100%:-600
+offset-y = 0px
+fixed-center = true
+enable-ipc = true
+
+background = ${colors.background}
+foreground = ${colors.foreground}
+
+border-size = 0
+border-color = #00000000
+
+padding-top = 5
+padding-left = 1
+padding-right = 1
+
+module-margin = 3
+
+font-0 = "Cantarell:size=12;2"
+font-1 = "Font Awesome:size=12;2"
+font-2 = "Material Icons:size=12;5"
+font-3 = "Fira Mono:size=12;-3"
+
+modules-right = date battery
+
+tray-detached = true
+tray-position = right
+tray-padding = 3
+tray-maxsize = 28
+tray-offset-x = -290
+
+cursor-click = pointer
+cursor-scroll = ns-resize
+
+[module/cpu]
+type = internal/cpu
+interval = 2
+format = <label> <ramp-coreload>
+format-underline = ${colors.underline-1}
+click-left = emacsclient -e "(proced)"
+label = %percentage:2%%
+ramp-coreload-spacing = 0
+ramp-coreload-0 = ▁
+ramp-coreload-0-foreground = ${colors.foreground-alt}
+ramp-coreload-1 = ▂
+ramp-coreload-2 = ▃
+ramp-coreload-3 = ▄
+ramp-coreload-4 = ▅
+ramp-coreload-5 = ▆
+ramp-coreload-6 = ▇
+
+[module/date]
+type = internal/date
+interval = 5
+
+date = "%a %b %d %Y"
+
+time = %H:%M
+
+format-prefix-foreground = ${colors.foreground-alt}
+format-underline = ${colors.underline-1}
+
+label = %date% %time%
+
+[module/battery]
+type = internal/battery
+battery = BAT1
+adapter = ADP1
+full-at = 98
+time-format = %-l:%M
+
+label-charging = %percentage%%
+format-charging = <animation-charging> <label-charging>
+format-charging-underline = ${colors.underline-1}
+
+label-discharging = %percentage%%
+format-discharging = <ramp-capacity> <label-discharging>
+format-discharging-underline = ${self.format-charging-underline}
+
+format-full = <ramp-capacity> <label-full>
+format-full-underline = ${self.format-charging-underline}
+
+ramp-capacity-0 = 
+ramp-capacity-1 = 
+ramp-capacity-2 = 
+ramp-capacity-3 = 
+ramp-capacity-4 = 
+
+animation-charging-0 = 
+animation-charging-1 = 
+animation-charging-2 = 
+animation-charging-3 = 
+animation-charging-4 = 
+animation-charging-framerate = 750
+
+[module/temperature]
+type = internal/temperature
+thermal-zone = 0
+warn-temperature = 60
+
+format = <label>
+format-underline = ${colors.underline-1}
+format-warn = <label-warn>
+format-warn-underline = ${self.format-underline}
+
+label = %temperature-c%
+label-warn = %temperature-c%!
+label-warn-foreground = ${colors.secondary}
