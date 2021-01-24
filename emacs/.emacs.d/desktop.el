@@ -275,7 +275,7 @@
           ([?\s-i] . my-next-browser)
           ([?\s-I] . my-previous-browser)
 
-          ([?\s-p] . +treemacs/toggle)
+          ([?\s-p] . treemacs)
 
           ([?\s-W] . delete-window)
           ([?\s-X] . kill-current-buffer)
