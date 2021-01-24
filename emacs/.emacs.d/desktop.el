@@ -98,7 +98,7 @@
               (seq "Firefox" (zero-or-more anything)))
       eos)
   "Matching buffer names are ignored by `my-next-buffer'
-    and `my-previous-buffer'."
+        and `my-previous-buffer'."
   :type 'regexp)
 
 ;; only switch to next relevant buffer
@@ -208,10 +208,12 @@
 
   ;; Automatically send the mouse cursor to the selected workspace's display
   (setq exwm-workspace-warp-cursor t)
+  ;; These keys should always pass through to Emacs
+  (setq exwm-input-prefix-keys
+        '(C-s-\ ))  ;; Ctrl+super+Space
 
   ;; Ctrl+Q will enable the next key to be sent directly
-  ;; (define-key exwm-mode-map [?\C-q] 'exwm-input-send-next-key)
-
+  (define-key exwm-mode-map [?\s-,] 'exwm-input-send-next-key)
 
   ;; Set up global key bindings.  These always work, no matter the input state!
   ;; Keep in mind that changing this list after EXWM initializes has no effect.
@@ -219,6 +221,7 @@
         `(
           ;; Reset to line-mode (C-c C-k switches to char-mode via exwm-input-release-keyboard)
           ([?\s-r] . exwm-reset)
+          ([?\s-R] . exwm-input-release-keyboard)
 
           ;; refresh monitors
           ([?\s-D] . refresh-monitors)
@@ -228,7 +231,8 @@
           ([?\s-G] . zoom-mode)
 
           ;; move to another window using switch-window
-          ([?\s-o] . switch-window)
+          ([?\s-o] . ace-window)
+          ([?\s-O] . ace-swap-window)
 
           ;; easy window switching
           ([?\s-h] . evil-window-left)
@@ -275,7 +279,7 @@
           ([?\s-i] . my-next-browser)
           ([?\s-I] . my-previous-browser)
 
-          ([?\s-p] . treemacs)
+          ([?\s-t] . treemacs)
 
           ([?\s-W] . delete-window)
           ([?\s-X] . kill-current-buffer)
@@ -301,11 +305,19 @@
                     (number-sequence 0 9))
           ))
 
+  ;; Send copy/paste easily
+  (setq exwm-input-simulation-keys
+        `(
+          ([?\s-p] . [?\C-v])
+          ([?\s-y] . [?\C-c])
+          ))
+
   ;; Should be set in the previous list but does not work atm
   (exwm-input-set-key (kbd "C-s-h") #'windsize-left)
   (exwm-input-set-key (kbd "C-s-l") #'windsize-right)
   (exwm-input-set-key (kbd "C-s-j") #'windsize-down)
   (exwm-input-set-key (kbd "C-s-k") #'windsize-up)
+
 
   (exwm-enable))
 
