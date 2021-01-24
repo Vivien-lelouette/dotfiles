@@ -338,7 +338,7 @@ This file is used by your "login manager" (GDM, LightDM, etc) to display EXWM as
 
 *IMPORTANT*: Make sure you create a symbolic link for this file into =/usr/share/xsessions=:
 
-#+begin_src shell :tangle .scripts/emacs/init-ubuntu.sh :mkdirp yes
+#+begin_src shell :tangle .scripts/emacs/exwm/init-ubuntu.sh :mkdirp yes
 
   echo "[Desktop Entry]
     Name=EXWM
