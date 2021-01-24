@@ -422,4 +422,6 @@
 
 (use-package windsize)
 
-(use-package zoom)
+(use-package zoom
+  :config
+  (setq zoom-size '(0.618 . 0.618)))
