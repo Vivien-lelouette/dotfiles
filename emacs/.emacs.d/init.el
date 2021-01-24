@@ -29,6 +29,46 @@
 ;; Set the variable pitch face
 (set-face-attribute 'variable-pitch nil :font "Cantarell" :height 100 :weight 'regular)
 
+(setq ibuffer-formats
+      '((mark modified read-only locked " "
+              (icon 2 2 :left :elide)
+              #(" " 0 1
+                (display
+                 (space :align-to 8)))
+              (name 50 50 :left :elide)
+              " "
+              (size 9 -1 :right)
+              " "
+              (mode 16 16 :left :elide)
+              " "
+              (vc-status 12 :left)
+              " " filename-and-process)
+        (mark " "
+              (name 16 -1)
+              " " filename)))
+
+(defun ibuffer-custom-filter-groups ()
+  (append
+   '(
+     ("Applications" (and
+                      (mode . exwm-mode)
+                      (not (name . "qutebrowser:.*"))
+                      (not (name . "Firefox:.*"))))
+     ("Qutebrowser" (name . "qutebrowser:.*"))
+     ("Firefox" (name . "Firefox:.*")))
+    (ibuffer-projectile-generate-filter-groups)
+  )
+ )
+
+(add-hook 'ibuffer-mode-hook
+          (lambda ()
+            (setq ibuffer-saved-filter-groups
+             (list
+              (append
+               '("custom")
+               (ibuffer-custom-filter-groups))))
+            (ibuffer-auto-mode 1)))
+
 (require 'package)
 
 (setq package-archives '(("melpa" . "https://melpa.org/packages/")
@@ -51,6 +91,12 @@
 (use-package command-log-mode)
 
 (use-package all-the-icons)
+
+(use-package all-the-icons-dired)
+
+(use-package all-the-icons-ibuffer)
+
+(use-package ibuffer-vc)
 
 (use-package doom-modeline
   :init (doom-modeline-mode 1)
@@ -351,6 +397,8 @@
 (use-package counsel-projectile
   :config (counsel-projectile-mode))
 
+(use-package ibuffer-projectile)
+
 (use-package magit
   :custom
   (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
@@ -425,3 +473,16 @@
 (use-package zoom
   :config
   (setq zoom-size '(0.618 . 0.618)))
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages
+   '(ibuffer-vc zoom windsize which-key use-package typescript-mode rainbow-delimiters org-bullets lsp-ui lsp-ivy ivy-rich ibuffer-projectile helpful general exwm evil-nerd-commenter evil-magit evil-collection doom-themes doom-modeline desktop-environment dap-mode counsel-projectile company-box command-log-mode all-the-icons-ibuffer all-the-icons-dired)))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
