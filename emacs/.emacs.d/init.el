@@ -151,7 +151,9 @@
 (use-package ibuffer-vc)
 
 (use-package doom-themes
-  :init (load-theme 'doom-dark+ t))
+  :init (load-theme 'doom-dark+ t)
+  :config
+  (setq doom-themes-treemacs-theme "doom-colors"))
 
 (use-package doom-modeline
   :init (doom-modeline-mode 1)
@@ -203,7 +205,8 @@
          ("C-k" . ivy-previous-line)
          ("C-d" . ivy-reverse-i-search-kill))
   :config
-  (ivy-mode 1))
+  (ivy-mode 1)
+  (setq ivy-initial-inputs-alist nil))
 
 (use-package ivy-rich
   :init
@@ -217,7 +220,7 @@
          ("C-r" . 'counsel-minibuffer-history))
   :config
   (keys/leader-keys
-    "y" '(counsel-yank-pop)))
+    "y" #'counsel-yank-pop))
 
 (defun efs/org-mode-setup ()
   (org-indent-mode)
@@ -484,6 +487,36 @@
 
 (use-package company-box
   :hook (company-mode . company-box-mode))
+
+(use-package vterm
+  :config
+  (setq vterm-shell "/bin/zsh"))
+
+(use-package vterm-toggle
+  :config
+  (setq vterm-toggle-fullscreen-p nil)
+  (add-to-list 'display-buffer-alist
+               '((lambda(bufname _) (with-current-buffer bufname (equal major-mode 'vterm-mode)))
+                 (display-buffer-reuse-window display-buffer-at-bottom)
+                 ;(display-buffer-reuse-window display-buffer-in-direction)
+                 (dedicated . t) ;dedicated is supported in emacs27
+                 (reusable-frames . visible)
+                 (window-height . 0.3))))
+
+(use-package term
+  :config
+  (setq explicit-shell-file-name "zsh")
+
+  ;; Use 'explicit-<shell>-args for shell-specific args
+  ;;(setq explicit-zsh-args '())         
+
+  (setq evil-move-cursor-back t)
+
+  ;; Match the default Bash shell prompt.  Update this if you have a custom prompt
+  (setq term-prompt-regexp "^[^#$%>\n]*[#$%>] *"))
+
+(use-package eterm-256color
+  :hook (term-mode . eterm-256color-mode))
 
 ;; (use-package framemove
 ;;   :config
