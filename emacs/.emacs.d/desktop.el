@@ -75,12 +75,11 @@
   (efs/run-in-background "pasystray")
   (efs/run-in-background "blueman-applet"))
 
-(defun efs/exwm-update-class ()
-  (exwm-workspace-rename-buffer exwm-class-name))
-
 (defun efs/exwm-update-title ()
-  (pcase exwm-class-name
-    ("Firefox" (exwm-workspace-rename-buffer (format "Firefox: %s" exwm-title)))))
+  (exwm-workspace-rename-buffer
+ (concat exwm-class-name ":"
+         (if (<= (length exwm-title) 100) exwm-title
+           (concat (substring exwm-title 0 99) "...")))))
 
 ;; This function should be used only after configuring autorandr!
 (defun efs/update-displays ()
@@ -171,7 +170,7 @@
   (keys/keyboard-setup)
 
   ;; When window "class" updates, use it to set the buffer name
-  (add-hook 'exwm-update-class-hook #'efs/exwm-update-class)
+  (add-hook 'exwm-update-class-hook #'efs/exwm-update-title)
 
   ;; When window title updates, use it to set the buffer name
   (add-hook 'exwm-update-title-hook #'efs/exwm-update-title)

@@ -28,13 +28,22 @@
 (setq x-select-enable-clipboard t)
 (setq interprogram-paste-function 'x-cut-buffer-or-selection-value)
 
-(set-face-attribute 'default nil :font "Fira Code" :height 100)
+(defun fonts/set-size (font-size)
+  (set-face-attribute 'default nil :font "Fira Code" :height font-size)
+  ;; Set the fixed pitch face
+  (set-face-attribute 'fixed-pitch nil :font "Fira Code" :height font-size)
+  ;; Set the variable pitch face
+  (set-face-attribute 'variable-pitch nil :font "Cantarell" :height font-size :weight 'regular))
 
-;; Set the fixed pitch face
-(set-face-attribute 'fixed-pitch nil :font "Fira Code" :height 100)
+(defun fonts/default-size ()
+  (interactive)
+  (fonts/set-size 85))
 
-;; Set the variable pitch face
-(set-face-attribute 'variable-pitch nil :font "Cantarell" :height 100 :weight 'regular)
+(defun fonts/big-size ()
+  (interactive)
+  (fonts/set-size 140))
+
+(fonts/default-size)
 
 (setq ibuffer-formats
       '((mark modified read-only locked " "
@@ -87,16 +96,24 @@
 (unless package-archive-contents
   (package-refresh-contents))
 
-(unless (package-installed-p 'use-package)
-  (package-install 'use-package))
+(unless (package-installed-p 'quelpa)
+  (with-temp-buffer
+    (url-insert-file-contents "https://raw.githubusercontent.com/quelpa/quelpa/master/quelpa.el")
+    (eval-buffer)
+    (quelpa-self-upgrade)))
 
-(require 'use-package)
-(setq use-package-always-ensure t)
+  (quelpa
+   '(quelpa-use-package
+     :fetcher git
+     :url "https://github.com/quelpa/quelpa-use-package.git"))
 
-(column-number-mode)
-(global-display-line-numbers-mode t)
+  (require 'quelpa-use-package)
+  (setq use-package-always-ensure t)
 
-(use-package command-log-mode)
+  (column-number-mode)
+  (global-display-line-numbers-mode t)
+
+  (use-package command-log-mode)
 
 (use-package general
   :config
@@ -146,7 +163,10 @@
   "ts" '(hydra-text-scale/body :which-key "scale text"))
 
 (use-package all-the-icons)
-(use-package all-the-icons-dired)
+(use-package all-the-icons-dired
+  :quelpa
+  :config
+  (add-hook 'dired-mode-hook 'all-the-icons-dired-mode))
 (use-package all-the-icons-ibuffer)
 
 (use-package ibuffer-vc)
@@ -189,6 +209,13 @@
     "o" #'ace-window
     "O" #'ace-swap-window)
   )
+
+(use-package treemacs :quelpa)
+
+(use-package treemacs-all-the-icons
+  :quelpa
+  :config
+  (treemacs-load-theme "all-the-icons"))
 
 (use-package ivy
   :diminish
@@ -424,6 +451,8 @@
 
 (use-package ibuffer-projectile)
 
+(use-package flycheck :quelpa)
+
 (use-package magit
   :custom
   (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
@@ -438,20 +467,30 @@
 
 (use-package dap-mode)
 
-(defun efs/lsp-mode-setup ()
-  (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
-  (lsp-headerline-breadcrumb-mode)
-  (let ((lsp-keymap-prefix "C-SPC"))
-  (lsp-enable-which-key-integration)))
+(use-package highlight-indent-guides
+  :quelpa
+  :custom
+  (highlight-indent-guides-method 'character)
+  (highlight-indent-guides-responsive 'top))
 
-(use-package lsp-mode
-  :init
-  (setq lsp-keymap-prefix "C-SPC")  ;; Or 'C-l', 's-l'
-  :commands (lsp lsp-deferred)
-  :hook (lsp-mode . efs/lsp-mode-setup)
-  :config
-  (define-key lsp-mode-map (kbd "C-SPC") lsp-command-map)
-  (define-key lsp-mode-map (kbd "s-l") nil))
+(add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
+
+(defun efs/lsp-mode-setup ()
+   (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
+   (lsp-headerline-breadcrumb-mode)
+   (let ((lsp-keymap-prefix "C-SPC"))
+   (lsp-enable-which-key-integration)))
+
+ (use-package lsp-mode
+   :init
+   (setq lsp-keymap-prefix "C-SPC")  ;; Or 'C-l', 's-l'
+   :commands (lsp lsp-deferred)
+   :hook (lsp-mode . efs/lsp-mode-setup)
+   :config
+   (define-key lsp-mode-map (kbd "C-SPC") lsp-command-map)
+   (define-key lsp-mode-map (kbd "s-l") nil))
+
+(add-hook 'lsp-mode-hook 'highlight-indent-guides-mode)
 
 (use-package lsp-ui
   :hook (lsp-mode . lsp-ui-mode))
@@ -492,6 +531,40 @@
 (use-package company-box
   :hook (company-mode . company-box-mode))
 
+(use-package yaml-mode
+   :quelpa (yaml-mode
+     :fetcher url
+     :url "https://raw.githubusercontent.com/yoshiki/yaml-mode/master/yaml-mode.el"))
+
+ (add-hook 'yaml-mode-hook 'highlight-indent-guides-mode)
+
+(use-package json-mode :quelpa)
+
+(add-hook 'json-mode-hook 'highlight-indent-guides-mode)
+
+(use-package company
+  :after lsp-mode
+  :hook (lsp-mode . company-mode)
+  :bind (:map company-active-map
+              ("<tab>" . company-complete-selection))
+  (:map lsp-mode-map
+        ("<tab>" . company-indent-or-complete-common))
+  :custom
+  (company-minimum-prefix-length 1)
+  (company-idle-delay 0.0))
+
+(use-package company-box
+  :hook (company-mode . company-box-mode))
+
+(use-package restclient
+  :quelpa (restclient
+    :fetcher url
+    :url "https://raw.githubusercontent.com/pashky/restclient.el/master/restclient.el"))
+
+(use-package company-restclient :quelpa)
+
+(add-to-list 'company-backends 'company-restclient)
+
 (use-package vterm
   :config
   (setq vterm-shell "/bin/zsh"))
@@ -522,9 +595,14 @@
 (use-package eterm-256color
   :hook (term-mode . eterm-256color-mode))
 
-;; (use-package framemove
-;;   :config
-;;   (setq framemove-hook-into-windmove t))
+(use-package windmove)
+
+(use-package framemove
+  :quelpa (framemove
+    :fetcher url
+    :url "https://raw.githubusercontent.com/emacsmirror/emacswiki.org/master/framemove.el")
+  :config
+  (setq framemove-hook-into-windmove t))
 
 (use-package windsize)
 

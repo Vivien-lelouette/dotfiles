@@ -75,13 +75,22 @@ The snippets below will install emacs from their git master:
 *** Configuration
 #+begin_src emacs-lisp
 
-  (set-face-attribute 'default nil :font "Fira Code" :height 100)
+  (defun fonts/set-size (font-size)
+    (set-face-attribute 'default nil :font "Fira Code" :height font-size)
+    ;; Set the fixed pitch face
+    (set-face-attribute 'fixed-pitch nil :font "Fira Code" :height font-size)
+    ;; Set the variable pitch face
+    (set-face-attribute 'variable-pitch nil :font "Cantarell" :height font-size :weight 'regular))
+    
+  (defun fonts/default-size ()
+    (interactive)
+    (fonts/set-size 85))
 
-  ;; Set the fixed pitch face
-  (set-face-attribute 'fixed-pitch nil :font "Fira Code" :height 100)
-
-  ;; Set the variable pitch face
-  (set-face-attribute 'variable-pitch nil :font "Cantarell" :height 100 :weight 'regular)
+  (defun fonts/big-size ()
+    (interactive)
+    (fonts/set-size 140))
+    
+  (fonts/default-size)
 
 #+end_src
 
@@ -148,14 +157,22 @@ The snippets below will install emacs from their git master:
 
 #+end_src
 
-** Initialize use-package
+** Initialize quelpa & quelpa-use-package
 
 #+begin_src emacs-lisp
 
-  (unless (package-installed-p 'use-package)
-    (package-install 'use-package))
+(unless (package-installed-p 'quelpa)
+  (with-temp-buffer
+    (url-insert-file-contents "https://raw.githubusercontent.com/quelpa/quelpa/master/quelpa.el")
+    (eval-buffer)
+    (quelpa-self-upgrade)))
 
-  (require 'use-package)
+  (quelpa
+   '(quelpa-use-package
+     :fetcher git
+     :url "https://github.com/quelpa/quelpa-use-package.git"))
+
+  (require 'quelpa-use-package)
   (setq use-package-always-ensure t)
 
   (column-number-mode)
@@ -236,7 +253,10 @@ The first time you load your configuration on a new machine, you'll need to run 
 #+begin_src emacs-lisp
 
   (use-package all-the-icons)
-  (use-package all-the-icons-dired)
+  (use-package all-the-icons-dired
+    :quelpa
+    :config
+    (add-hook 'dired-mode-hook 'all-the-icons-dired-mode))
   (use-package all-the-icons-ibuffer)
 
 #+end_src
@@ -314,6 +334,18 @@ The first time you load your configuration on a new machine, you'll need to run 
           "o" #'ace-window
           "O" #'ace-swap-window)
         )
+
+#+end_src
+
+** Treemacs
+#+begin_src emacs-lisp
+
+  (use-package treemacs :quelpa)
+
+  (use-package treemacs-all-the-icons
+    :quelpa
+    :config
+    (treemacs-load-theme "all-the-icons"))
 
 #+end_src
 
@@ -594,6 +626,13 @@ This snippet adds a hook to org-mode buffers so that efs/org-babel-tangle-config
 
 #+end_src
 
+** Flycheck
+#+begin_src emacs-lisp
+
+  (use-package flycheck :quelpa)
+
+#+end_src
+
 ** Magit & Forge
 *** Magit
 #+begin_src emacs-lisp
@@ -633,6 +672,19 @@ NOTE: Make sure to configure a GitHub token before using this package!
 
 #+end_src
 
+** Highlight ident
+#+begin_src emacs-lisp
+
+  (use-package highlight-indent-guides
+    :quelpa
+    :custom
+    (highlight-indent-guides-method 'character)
+    (highlight-indent-guides-responsive 'top))
+
+  (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
+
+#+end_src
+
 ** Lsp
 *** lsp-mode
 
@@ -657,6 +709,8 @@ The =which-key= integration adds helpful descriptions of the various keys so you
     :config
     (define-key lsp-mode-map (kbd "C-SPC") lsp-command-map)
     (define-key lsp-mode-map (kbd "s-l") nil))
+
+ (add-hook 'lsp-mode-hook 'highlight-indent-guides-mode)
 
 #+end_src
 
@@ -749,6 +803,60 @@ Requires you to run: M-x lsp-install-server RET bash RET.
 
 #+end_src
 
+** Yaml
+#+begin_src emacs-lisp
+
+ (use-package yaml-mode
+    :quelpa (yaml-mode
+      :fetcher url
+      :url "https://raw.githubusercontent.com/yoshiki/yaml-mode/master/yaml-mode.el"))
+
+  (add-hook 'yaml-mode-hook 'highlight-indent-guides-mode)
+
+#+end_src
+
+** Json
+#+begin_src emacs-lisp
+
+ (use-package json-mode :quelpa)
+
+ (add-hook 'json-mode-hook 'highlight-indent-guides-mode)
+
+#+end_src
+
+** Company
+#+begin_src emacs-lisp
+
+  (use-package company
+    :after lsp-mode
+    :hook (lsp-mode . company-mode)
+    :bind (:map company-active-map
+                ("<tab>" . company-complete-selection))
+    (:map lsp-mode-map
+          ("<tab>" . company-indent-or-complete-common))
+    :custom
+    (company-minimum-prefix-length 1)
+    (company-idle-delay 0.0))
+
+  (use-package company-box
+    :hook (company-mode . company-box-mode))
+
+#+end_src
+
+** Http client
+#+begin_src emacs-lisp
+
+  (use-package restclient
+    :quelpa (restclient
+      :fetcher url
+      :url "https://raw.githubusercontent.com/pashky/restclient.el/master/restclient.el"))
+
+  (use-package company-restclient :quelpa)
+
+  (add-to-list 'company-backends 'company-restclient)
+
+#+end_src
+
 * Shell & Terminals
 ** Vterm
 *** Prerequisites
@@ -803,9 +911,14 @@ Requires you to run: M-x lsp-install-server RET bash RET.
 ** Framemove
 #+begin_src emacs-lisp
 
-  ;; (use-package framemove
-  ;;   :config
-  ;;   (setq framemove-hook-into-windmove t))
+  (use-package windmove)
+
+  (use-package framemove
+    :quelpa (framemove
+      :fetcher url
+      :url "https://raw.githubusercontent.com/emacsmirror/emacswiki.org/master/framemove.el")
+    :config
+    (setq framemove-hook-into-windmove t))
 
 #+end_src
 
@@ -824,3 +937,4 @@ Requires you to run: M-x lsp-install-server RET bash RET.
     (setq zoom-size '(0.618 . 0.618)))
 
 #+end_src
+

@@ -95,12 +95,11 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
     (efs/run-in-background "pasystray")
     (efs/run-in-background "blueman-applet"))
 
-  (defun efs/exwm-update-class ()
-    (exwm-workspace-rename-buffer exwm-class-name))
-
   (defun efs/exwm-update-title ()
-    (pcase exwm-class-name
-      ("Firefox" (exwm-workspace-rename-buffer (format "Firefox: %s" exwm-title)))))
+    (exwm-workspace-rename-buffer
+   (concat exwm-class-name ":"
+           (if (<= (length exwm-title) 100) exwm-title
+             (concat (substring exwm-title 0 99) "...")))))
 
   ;; This function should be used only after configuring autorandr!
   (defun efs/update-displays ()
@@ -191,11 +190,11 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
     (keys/keyboard-setup)
 
     ;; When window "class" updates, use it to set the buffer name
-    (add-hook 'exwm-update-class-hook #'efs/exwm-update-class)
+    (add-hook 'exwm-update-class-hook #'efs/exwm-update-title)
 
     ;; When window title updates, use it to set the buffer name
     (add-hook 'exwm-update-title-hook #'efs/exwm-update-title)
-
+    
     ;; When EXWM starts up, do some extra confifuration
     (add-hook 'exwm-init-hook #'efs/exwm-init-hook)
 
@@ -438,10 +437,10 @@ The =Xmodmap= file will be used with the =xmodmap= program to remap CapsLock to 
 *** Prerequisite
 **** Ubuntu
 Install useful tray apps:
-#+begin_src emacs-lisp  :tangle .scripts/polybar/inint-ubuntu.sh :shebang #!/bin/sh :mkdirp yes
+#+begin_src emacs-lisp  :tangle .scripts/polybar/init-ubuntu.sh :shebang #!/bin/sh :mkdirp yes
 
   sudo apt install pasystray blueman
-  sudo apt install build-essential git cmake cmake-data pkg-config python3-sphinx libcairo2-dev libxcb1-dev libxcb-util0-dev libxcb-randr0-dev libxcb-composite0-dev python3-xcbgen xcb-proto libxcb-image0-dev libxcb-ewmh-dev libxcb-icccm4-dev
+  sudo apt install build-essential git cmake cmake-data pkg-config python3-sphinx libcairo2-dev libxcb1-dev libxcb-util0-dev libxcb-randr0-dev libxcb-composite0-dev python3-xcbgen xcb-proto libxcb-image0-dev libxcb-ewmh-dev libxcb-icccm4-dev libjsoncpp-dev python3-sphinx
 
 #+end_src
 
@@ -496,7 +495,7 @@ The configuration for our ingeniously named panel, "panel".  Invoke it with =pol
   screenchange-reload = true
 
   [global/wm]
-  margin-top = -16px
+  margin-top = -14px
   margin-bottom = 0
 
   [colors]
@@ -513,7 +512,7 @@ The configuration for our ingeniously named panel, "panel".  Invoke it with =pol
   monitor = ${env:MONITOR:}
   bottom = true
   width = 600
-  height = 16
+  height = 14
   offset-x = 100%:-600
   offset-y = 0px
   fixed-center = true
@@ -531,10 +530,10 @@ The configuration for our ingeniously named panel, "panel".  Invoke it with =pol
 
   module-margin = 3
 
-  font-0 = "Cantarell:size=12;2"
-  font-1 = "Font Awesome:size=12;2"
-  font-2 = "Material Icons:size=12;5"
-  font-3 = "Fira Mono:size=12;-3"
+  font-0 = "Cantarell:size=10;2"
+  font-1 = "Font Awesome:size=10;2"
+  font-2 = "Material Icons:size=10;5"
+  font-3 = "Fira Mono:size=10;-3"
 
   modules-right = date battery
 
