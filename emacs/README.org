@@ -288,7 +288,7 @@ The first time you load your configuration on a new machine, you'll need to run 
     :config
     (setq doom-themes-treemacs-theme "doom-colors"))
 
-#+end_src
+   #+end_src
 
 ** Doom modeline
 #+begin_src emacs-lisp

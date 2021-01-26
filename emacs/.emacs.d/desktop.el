@@ -1,3 +1,10 @@
+(defun shell/run-in-background (command)
+  (let ((command-parts (split-string command "[ ]+")))
+    (apply #'call-process `(,(car command-parts) nil 0 nil ,@(cdr command-parts)))))
+
+(defun shell/async-command-no-output (command)
+  (call-process-shell-command (concat command " &") nil 0))
+
 (defun car-string-to-number (list-two-elements)
   (append (list (string-to-number (car list-two-elements))) (cdr list-two-elements))
   )
@@ -53,43 +60,64 @@
 (defun build-exwm-monitors ()
   (build-exwm-monitors-aux 1 (order-monitors)))
 
-(defun efs/run-in-background (command)
-  (let ((command-parts (split-string command "[ ]+")))
-    (apply #'call-process `(,(car command-parts) nil 0 nil ,@(cdr command-parts)))))
-
 (defun efs/set-wallpaper ()
   (interactive)
-  ;; NOTE: You will need to update this to a valid background path!
-  (start-process-shell-command
-   "feh" nil  "feh --bg-scale /usr/share/backgrounds/matt-mcnulty-nyc-2nd-ave.jpg"))
+  (set-frame-parameter (selected-frame) 'alpha '(93 . 93))
+  (add-to-list 'default-frame-alist '(alpha . (93 . 93)))
+  (shell/async-command-no-output "feh --bg-scale ~/.wallpaper --bg-scale ~/.wallpaper --bg-scale ~/.wallpaper --bg-scale ~/.wallpaper --bg-scale ~/.wallpaper"))
 
-(defun efs/exwm-init-hook ()
-  ;; Make workspace 1 be the one where we land at startup
-  (exwm-workspace-switch-create 1)
+(use-package desktop-environment
+  :after exwm
+  :config
+  (setq desktop-environment-screenshot-directory "~/Images/")
 
-  ;; Start the Polybar panel
-  (efs/start-panel)
+  (setq desktop-environment-volume-toggle-command "pactl set-sink-mute 0 toggle")
+  (setq desktop-environment- "pactl set-sink-mute 0 toggle")
 
-  ;; Launch apps that will run in the background
-  (efs/run-in-background "nm-applet")
-  (efs/run-in-background "pasystray")
-  (efs/run-in-background "blueman-applet"))
+  (exwm-input-set-key (kbd "<XF86MonBrightnessUp>") #'desktop-environment-brightness-increment)
+  (exwm-input-set-key (kbd "<XF86MonBrightnessDown>") #'desktop-environment-brightness-decrement)
+  (exwm-input-set-key (kbd "S-<XF86MonBrightnessUp>") #'desktop-environment-brightness-increment-slowly)
+  (exwm-input-set-key (kbd "S-<XF86MonBrightnessDown>") #'desktop-environment-brightness-decrement-slowly)
+  (exwm-input-set-key (kbd "<XF86AudioRaiseVolume>") #'desktop-environment-volume-increment)
+  (exwm-input-set-key (kbd "<XF86AudioLowerVolume>") #'desktop-environment-volume-decrement)
+  (exwm-input-set-key (kbd "S-<XF86AudioRaiseVolume>") #'desktop-environment-volume-increment-slowly)
+  (exwm-input-set-key (kbd "S-<XF86AudioLowerVolume>") #'desktop-environment-volume-decrement-slowly)
+  (exwm-input-set-key (kbd "<XF86AudioMute>") #'desktop-environment-toggle-mute)
+  (exwm-input-set-key (kbd "<XF86AudioMicMute>") #'desktop-environment-toggle-microphone-mute)
+  (exwm-input-set-key (kbd "S-<print>") #'desktop-environment-screenshot-part)
+  (exwm-input-set-key (kbd "<print>") #'desktop-environment-screenshot)
+  (exwm-input-set-key (kbd "<XF86WLAN>") #'desktop-environment-toggle-wifi)
+  (exwm-input-set-key (kbd "<XF86Bluetooth>") #'desktop-environment-toggle-bluetooth)
+  :custom
+  (desktop-environment-brightness-small-increment "2%+")
+  (desktop-environment-brightness-small-decrement "2%-")
+  (desktop-environment-brightness-normal-increment "5%+")
+  (desktop-environment-brightness-normal-decrement "5%-"))
 
-(defun efs/exwm-update-title ()
-  (exwm-workspace-rename-buffer
- (concat exwm-class-name ":"
-         (if (<= (length exwm-title) 100) exwm-title
-           (concat (substring exwm-title 0 99) "...")))))
+;; logout function
+(defun my-logout ()
+  (interactive)
+  (shell-command "gnome-screensaver-command -l"))
 
-;; This function should be used only after configuring autorandr!
-(defun efs/update-displays ()
-  (efs/run-in-background "autorandr --change --force")
-  (efs/set-wallpaper)
-  (message "Display config: %s"
-           (string-trim (shell-command-to-string "autorandr --current"))))
+;; keyboard setup
+(defun keys/keyboard-setup ()
+  ;; Rebind CapsLock to Esc
+  (start-process-shell-command "xmodmap" nil "xmodmap ~/.emacs.d/exwm/Xmodmap")
+  (start-process-shell-command "qwerty" nil "setxkbmap us,us_intl '' compose:ralt grp:rctrl_rshift_toggle"))
 
-;; The next functions are tools to easily switch buffer
-;; only switch to next relevant buffer
+;; Make sure the server is started (better to do this in your main Emacs config!)
+(server-start)
+
+(defun panel/kill ()
+  (interactive)
+  (shell/async-command-no-output "pkill -f polybar"))
+
+(defun panel/start ()
+  (interactive)
+  (panel/kill)
+  (cl-loop for (key . monitor) in (xrandr-active-monitors)
+    collect (shell/async-command-no-output (concat "MONITOR=" (car monitor) " polybar -c ~/.config/polybar/config.txt --reload panel"))))
+
 (defcustom my-skippable-buffer-regexp
   (rx bos (or (seq "*" (zero-or-more anything))
               (seq "magit" (zero-or-more anything))
@@ -140,7 +168,6 @@
   (interactive)
   (my-change-buffer 'previous-buffer (lambda () (not (string-match-p my-browser-buffer-regexp (buffer-name))))))
 
-;; split and move to the new split
 (defun my-window-vsplit ()
   (interactive)
   (evil-window-vsplit)
@@ -154,16 +181,27 @@
   (run-at-time "0.1 seconds" nil (lambda ()
                                    (windmove-down))))
 
-;; logout function
-(defun my-logout ()
-  (interactive)
-  (shell-command "gnome-screensaver-command -l"))
+(defun efs/exwm-init-hook ()
+  ;; Make workspace 1 be the one where we land at startup
+  (exwm-workspace-switch-create 1)
 
-;; keyboard setup
-(defun keys/keyboard-setup ()
-  ;; Rebind CapsLock to Esc
-  (start-process-shell-command "xmodmap" nil "xmodmap ~/.emacs.d/exwm/Xmodmap")
-  (start-process-shell-command "qwerty" nil "setxkbmap us,us_intl '' compose:ralt grp:rctrl_rshift_toggle"))
+  ;; Start the Polybar panel
+  (panel/start)
+
+  ;; Launch apps that will run in the background
+  (shell/run-in-background "nm-applet")
+  (shell/run-in-background "pasystray")
+  (shell/run-in-background "blueman-applet"))
+
+(defun efs/exwm-update-title ()
+  (exwm-workspace-rename-buffer
+ (concat exwm-class-name ":"
+         (if (<= (length exwm-title) 100) exwm-title
+           (concat (substring exwm-title 0 99) "...")))))
+
+(defun efs/exwm-set-fringe ()
+  (setq left-fringe-width 10)
+  (setq right-fringe-width 10))
 
 (use-package exwm
   :config
@@ -178,8 +216,7 @@
   ;; When EXWM starts up, do some extra confifuration
   (add-hook 'exwm-init-hook #'efs/exwm-init-hook)
 
-  ;; NOTE: Uncomment the following two options if you want window buffers
-  ;;       to be available on all workspaces!
+  (add-hook 'exwm-mode-hook #'efs/exwm-set-fringe)
 
   ;; Automatically move EXWM buffer to current workspace when selected
   (setq exwm-layout-show-all-buffers t)
@@ -202,13 +239,8 @@
     (exwm-randr-refresh)
     )
 
-  ;; NOTE: Uncomment these lines after setting up autorandr!
-  ;; React to display connectivity changes, do initial display update
-  ;; (add-hook 'exwm-randr-screen-change-hook #'efs/update-displays)
-  ;; (efs/update-displays)
-
   ;; Set the wallpaper after changing the resolution
-  ;; (efs/set-wallpaper)
+  (efs/set-wallpaper)
 
   ;; Automatically send the mouse cursor to the selected workspace's display
   (setq exwm-workspace-warp-cursor t)
@@ -324,46 +356,5 @@
   (exwm-input-set-key (kbd "C-s-j") #'windsize-down)
   (exwm-input-set-key (kbd "C-s-k") #'windsize-up)
 
-  (exwm-enable))
-
-(use-package desktop-environment
-  :after exwm
-  :config
-  (setq desktop-environment-screenshot-directory "~/Images/")
-
-  (setq desktop-environment-volume-toggle-command "pactl set-sink-mute 0 toggle")
-  (setq desktop-environment- "pactl set-sink-mute 0 toggle")
-
-  (exwm-input-set-key (kbd "<XF86MonBrightnessUp>") #'desktop-environment-brightness-increment)
-  (exwm-input-set-key (kbd "<XF86MonBrightnessDown>") #'desktop-environment-brightness-decrement)
-  (exwm-input-set-key (kbd "S-<XF86MonBrightnessUp>") #'desktop-environment-brightness-increment-slowly)
-  (exwm-input-set-key (kbd "S-<XF86MonBrightnessDown>") #'desktop-environment-brightness-decrement-slowly)
-  (exwm-input-set-key (kbd "<XF86AudioRaiseVolume>") #'desktop-environment-volume-increment)
-  (exwm-input-set-key (kbd "<XF86AudioLowerVolume>") #'desktop-environment-volume-decrement)
-  (exwm-input-set-key (kbd "S-<XF86AudioRaiseVolume>") #'desktop-environment-volume-increment-slowly)
-  (exwm-input-set-key (kbd "S-<XF86AudioLowerVolume>") #'desktop-environment-volume-decrement-slowly)
-  (exwm-input-set-key (kbd "<XF86AudioMute>") #'desktop-environment-toggle-mute)
-  (exwm-input-set-key (kbd "<XF86AudioMicMute>") #'desktop-environment-toggle-microphone-mute)
-  (exwm-input-set-key (kbd "S-<print>") #'desktop-environment-screenshot-part)
-  (exwm-input-set-key (kbd "<print>") #'desktop-environment-screenshot)
-  (exwm-input-set-key (kbd "<XF86WLAN>") #'desktop-environment-toggle-wifi)
-  (exwm-input-set-key (kbd "<XF86Bluetooth>") #'desktop-environment-toggle-bluetooth)
-  :custom
-  (desktop-environment-brightness-small-increment "2%+")
-  (desktop-environment-brightness-small-decrement "2%-")
-  (desktop-environment-brightness-normal-increment "5%+")
-  (desktop-environment-brightness-normal-decrement "5%-"))
-
-;; Make sure the server is started (better to do this in your main Emacs config!)
-(server-start)
-
-(defun efs/kill-panel ()
-  (interactive)
-  (when efs/polybar-process
-    (ignore-errors
-      (kill-process efs/polybar-process)))
-  (setq efs/polybar-process nil))
-
-(defun efs/start-panel ()
-  (interactive)
-  (start-process-shell-command "sh .config/polybar/start.sh" nil "polybar panel"))
+  (exwm-enable)
+  (refresh-monitors))
