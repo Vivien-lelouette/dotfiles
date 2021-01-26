@@ -318,12 +318,30 @@
   (exwm-input-set-key (kbd "C-s-j") #'windsize-down)
   (exwm-input-set-key (kbd "C-s-k") #'windsize-up)
 
-
   (exwm-enable))
 
 (use-package desktop-environment
   :after exwm
-  :config (desktop-environment-mode)
+  :config
+  (setq desktop-environment-screenshot-directory "~/Images/")
+
+  (setq desktop-environment-volume-toggle-command "pactl set-sink-mute 0 toggle")
+  (setq desktop-environment- "pactl set-sink-mute 0 toggle")
+
+  (exwm-input-set-key (kbd "<XF86MonBrightnessUp>") #'desktop-environment-brightness-increment)
+  (exwm-input-set-key (kbd "<XF86MonBrightnessDown>") #'desktop-environment-brightness-decrement)
+  (exwm-input-set-key (kbd "S-<XF86MonBrightnessUp>") #'desktop-environment-brightness-increment-slowly)
+  (exwm-input-set-key (kbd "S-<XF86MonBrightnessDown>") #'desktop-environment-brightness-decrement-slowly)
+  (exwm-input-set-key (kbd "<XF86AudioRaiseVolume>") #'desktop-environment-volume-increment)
+  (exwm-input-set-key (kbd "<XF86AudioLowerVolume>") #'desktop-environment-volume-decrement)
+  (exwm-input-set-key (kbd "S-<XF86AudioRaiseVolume>") #'desktop-environment-volume-increment-slowly)
+  (exwm-input-set-key (kbd "S-<XF86AudioLowerVolume>") #'desktop-environment-volume-decrement-slowly)
+  (exwm-input-set-key (kbd "<XF86AudioMute>") #'desktop-environment-toggle-mute)
+  (exwm-input-set-key (kbd "<XF86AudioMicMute>") #'desktop-environment-toggle-microphone-mute)
+  (exwm-input-set-key (kbd "S-<print>") #'desktop-environment-screenshot-part)
+  (exwm-input-set-key (kbd "<print>") #'desktop-environment-screenshot)
+  (exwm-input-set-key (kbd "<XF86WLAN>") #'desktop-environment-toggle-wifi)
+  (exwm-input-set-key (kbd "<XF86Bluetooth>") #'desktop-environment-toggle-bluetooth)
   :custom
   (desktop-environment-brightness-small-increment "2%+")
   (desktop-environment-brightness-small-decrement "2%-")
