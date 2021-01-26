@@ -109,6 +109,8 @@
 
   (require 'quelpa-use-package)
   (setq use-package-always-ensure t)
+  (setq use-package-ensure-function 'quelpa)
+
 
   (column-number-mode)
   (global-display-line-numbers-mode t)
@@ -126,6 +128,11 @@
     "t"  '(:ignore t :which-key "toggles")
     "tt" '(counsel-load-theme :which-key "choose theme")))
 
+(use-package undo-fu
+  :quelpa (undo-fu
+    :fetcher url
+    :url "https://gitlab.com/ideasman42/emacs-undo-fu/-/raw/master/undo-fu.el"))
+
 (use-package evil
   :init
   (setq evil-want-integration t)
@@ -142,7 +149,8 @@
   (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
 
   (evil-set-initial-state 'messages-buffer-mode 'normal)
-  (evil-set-initial-state 'dashboard-mode 'normal))
+  (evil-set-initial-state 'dashboard-mode 'normal)
+  (evil-set-undo-system 'undo-fu))
 
 (use-package evil-collection
   :after evil
@@ -164,7 +172,6 @@
 
 (use-package all-the-icons)
 (use-package all-the-icons-dired
-  :quelpa
   :config
   (add-hook 'dired-mode-hook 'all-the-icons-dired-mode))
 (use-package all-the-icons-ibuffer)
@@ -210,10 +217,9 @@
     "O" #'ace-swap-window)
   )
 
-(use-package treemacs :quelpa)
+(use-package treemacs)
 
 (use-package treemacs-all-the-icons
-  :quelpa
   :config
   (treemacs-load-theme "all-the-icons"))
 
@@ -451,7 +457,7 @@
 
 (use-package ibuffer-projectile)
 
-(use-package flycheck :quelpa)
+(use-package flycheck)
 
 (use-package magit
   :custom
@@ -468,7 +474,6 @@
 (use-package dap-mode)
 
 (use-package highlight-indent-guides
-  :quelpa
   :custom
   (highlight-indent-guides-method 'character)
   (highlight-indent-guides-responsive 'top))
@@ -538,20 +543,18 @@
 
  (add-hook 'yaml-mode-hook 'highlight-indent-guides-mode)
 
-(use-package json-mode :quelpa)
+(use-package json-mode)
 
 (add-hook 'json-mode-hook 'highlight-indent-guides-mode)
 
 (use-package company
   :after lsp-mode
   :hook (lsp-mode . company-mode)
-  :bind (:map company-active-map
-              ("<tab>" . company-complete-selection))
-  (:map lsp-mode-map
-        ("<tab>" . company-indent-or-complete-common))
   :custom
   (company-minimum-prefix-length 1)
-  (company-idle-delay 0.0))
+  (company-idle-delay 0.0)
+  :config
+  (company-tng-configure-default))
 
 (use-package company-box
   :hook (company-mode . company-box-mode))
@@ -561,7 +564,7 @@
     :fetcher url
     :url "https://raw.githubusercontent.com/pashky/restclient.el/master/restclient.el"))
 
-(use-package company-restclient :quelpa)
+(use-package company-restclient)
 
 (add-to-list 'company-backends 'company-restclient)
 
