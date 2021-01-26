@@ -68,7 +68,7 @@ The snippets below will install emacs from their git master:
 **** Ubuntu
 #+begin_src shell :tangle .scripts/emacs/init-ubuntu.sh :mkdirp yes
 
-  sudo apt install fonts-firacode font-cantarell
+  sudo apt install fonts-firacode fonts-cantarell
 
 #+end_src
 
