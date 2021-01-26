@@ -158,7 +158,7 @@
 
 (use-package doom-modeline
   :init (doom-modeline-mode 1)
-  :custom ((doom-modeline-height 15)))
+  :custom ((doom-modeline-height 22)))
 
 (use-package rainbow-delimiters
   :hook (prog-mode . rainbow-delimiters-mode))
@@ -440,15 +440,18 @@
 
 (defun efs/lsp-mode-setup ()
   (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
-  (lsp-headerline-breadcrumb-mode))
+  (lsp-headerline-breadcrumb-mode)
+  (let ((lsp-keymap-prefix "C-SPC"))
+  (lsp-enable-which-key-integration)))
 
 (use-package lsp-mode
-  :commands (lsp lsp-deferred)
-  :hook (lsp-mode . efs/lsp-mode-setup)
   :init
   (setq lsp-keymap-prefix "C-SPC")  ;; Or 'C-l', 's-l'
+  :commands (lsp lsp-deferred)
+  :hook (lsp-mode . efs/lsp-mode-setup)
   :config
-  (lsp-enable-which-key-integration t))
+  (define-key lsp-mode-map (kbd "C-SPC") lsp-command-map)
+  (define-key lsp-mode-map (kbd "s-l") nil))
 
 (use-package lsp-ui
   :hook (lsp-mode . lsp-ui-mode))

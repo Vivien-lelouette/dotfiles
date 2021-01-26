@@ -160,8 +160,16 @@
   (interactive)
   (shell-command "gnome-screensaver-command -l"))
 
+;; keyboard setup
+(defun keys/keyboard-setup ()
+  ;; Rebind CapsLock to Esc
+  (start-process-shell-command "xmodmap" nil "xmodmap ~/.emacs.d/exwm/Xmodmap")
+  (start-process-shell-command "qwerty" nil "setxkbmap us,us_intl '' compose:ralt grp:rctrl_rshift_toggle"))
+
 (use-package exwm
   :config
+  (keys/keyboard-setup)
+
   ;; When window "class" updates, use it to set the buffer name
   (add-hook 'exwm-update-class-hook #'efs/exwm-update-class)
 
@@ -171,14 +179,11 @@
   ;; When EXWM starts up, do some extra confifuration
   (add-hook 'exwm-init-hook #'efs/exwm-init-hook)
 
-  ;; Rebind CapsLock to Esc
-  (start-process-shell-command "xmodmap" nil "xmodmap ~/.emacs.d/exwm/Xmodmap")
-
   ;; NOTE: Uncomment the following two options if you want window buffers
   ;;       to be available on all workspaces!
 
   ;; Automatically move EXWM buffer to current workspace when selected
-  ;; (setq exwm-layout-show-all-buffers t)
+  (setq exwm-layout-show-all-buffers t)
 
   ;; Display all EXWM buffers in every workspace buffer list
   (setq exwm-workspace-show-all-buffers t)
@@ -208,9 +213,11 @@
 
   ;; Automatically send the mouse cursor to the selected workspace's display
   (setq exwm-workspace-warp-cursor t)
+
   ;; These keys should always pass through to Emacs
   (setq exwm-input-prefix-keys
-        '(C-s-\ ))  ;; Ctrl+super+Space
+        '([C-s-\ ] ;; Ctrl+super+Space
+        ))
 
   ;; Ctrl+Q will enable the next key to be sent directly
   (define-key exwm-mode-map [?\s-,] 'exwm-input-send-next-key)
