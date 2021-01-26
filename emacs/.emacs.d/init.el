@@ -74,6 +74,7 @@
               (append
                '("custom")
                (ibuffer-custom-filter-groups))))
+               (ibuffer-switch-to-saved-filter-groups "custom")
             (ibuffer-auto-mode 1)))
 
 (require 'package)

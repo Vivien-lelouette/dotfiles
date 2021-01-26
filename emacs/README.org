@@ -126,6 +126,7 @@ The snippets below will install emacs from their git master:
                 (append
                  '("custom")
                  (ibuffer-custom-filter-groups))))
+                 (ibuffer-switch-to-saved-filter-groups "custom")
               (ibuffer-auto-mode 1)))
 
 #+end_src
