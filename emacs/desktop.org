@@ -461,7 +461,7 @@ Check out the Polybar wiki for more details on how to configure it: https://gith
 
 The configuration for our ingeniously named panel, "panel".  Invoke it with =polybar panel= on the command line!
 
-#+begin_src conf :tangle .config/polybar/config :mkdirp yes
+#+begin_src conf :tangle .config/polybar/config.txt :mkdirp yes
 
   ; Docs: https://github.com/polybar/polybar
   ;==========================================================
@@ -603,10 +603,10 @@ The configuration for our ingeniously named panel, "panel".  Invoke it with =pol
 
   if type "xrandr"; then
     for m in $(xrandr --query | grep " connected" | cut -d" " -f1); do
-      MONITOR=$m polybar --reload -c ~/.config/polybar/config panel &
+      MONITOR=$m polybar --reload -c ~/.config/polybar/config.txt panel &
     done
   else
-    polybar --reload -c ~/.config/polybar/config panel &
+    polybar --reload -c ~/.config/polybar/config.txt panel &
   fi
 
 #+end_src
