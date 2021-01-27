@@ -201,11 +201,10 @@
   (replace-regexp-in-string (concat " . " exwm-class-name) "" exwm-title))
 
 (defun efs/exwm-update-title ()
-  (defvar new-title (win-title))
   (exwm-workspace-rename-buffer
   (concat exwm-class-name ":"
-         (if (<= (length new-title) 100) new-title
-           (concat (substring new-title 0 99) "...")))))
+         (if (<= (length exwm-title) 100) exwm-title
+           (concat (substring exwm-title 0 99) "...")))))
 
 (defun efs/exwm-set-fringe ()
   (setq left-fringe-width 10)
