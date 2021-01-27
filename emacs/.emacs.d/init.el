@@ -118,6 +118,7 @@
   (use-package command-log-mode)
 
 (use-package general
+  :quelpa
   :config
   (general-create-definer keys/leader-keys
     :keymaps '(normal insert visual emacs)
@@ -134,6 +135,7 @@
     :url "https://gitlab.com/ideasman42/emacs-undo-fu/-/raw/master/undo-fu.el"))
 
 (use-package evil
+  :quelpa
   :init
   (setq evil-want-integration t)
   (setq evil-want-keybinding nil)
@@ -157,9 +159,14 @@
   :config
   (evil-collection-init))
 
-(use-package treemacs-evil)
+(use-package treemacs-evil :quelpa)
 
-(use-package hydra)
+(use-package evil-multiedit
+ :quelpa
+ :config
+ (evil-multiedit-default-keybinds))
+
+(use-package hydra :quelpa)
 
 (defhydra hydra-text-scale (:timeout 4)
   "scale text"
@@ -170,33 +177,39 @@
 (keys/leader-keys
   "ts" '(hydra-text-scale/body :which-key "scale text"))
 
-(use-package all-the-icons)
+(use-package all-the-icons :quelpa)
 (use-package all-the-icons-dired
+  :quelpa
   :config
   (add-hook 'dired-mode-hook 'all-the-icons-dired-mode))
-(use-package all-the-icons-ibuffer)
+(use-package all-the-icons-ibuffer :quelpa)
 
-(use-package ibuffer-vc)
+(use-package ibuffer-vc :quelpa)
 
 (use-package doom-themes
+  :quelpa
   :init (load-theme 'doom-dark+ t)
   :config
   (setq doom-themes-treemacs-theme "doom-colors"))
 
 (use-package doom-modeline
+  :quelpa
   :init (doom-modeline-mode 1)
   :custom ((doom-modeline-height 22)))
 
 (use-package rainbow-delimiters
+  :quelpa
   :hook (prog-mode . rainbow-delimiters-mode))
 
 (use-package which-key
+  :quelpa
   :init (which-key-mode)
   :diminish which-key-mode
   :config
   (setq which-key-idle-delay 1))
 
 (use-package helpful
+  :quelpa
   :custom
   (counsel-describe-function-function #'helpful-callable)
   (counsel-describe-variable-function #'helpful-variable)
@@ -207,6 +220,7 @@
   ([remap describe-key] . helpful-key))
 
 (use-package ace-window
+  :quelpa
   :config
   (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
   (setq aw-background nil)
@@ -222,16 +236,19 @@
   (setq right-fringe-width 0))
 
 (use-package treemacs
+  :quelpa
   :config
   (add-hook 'treemacs-mode-hook #'efs/treemacs-set-fringe))
 
 (use-package treemacs-all-the-icons
+  :quelpa
   :config
   (treemacs-load-theme "all-the-icons"))
 
 (efs/treemacs-set-fringe)
 
 (use-package ivy
+  :quelpa
   :diminish
   :bind (("C-s" . swiper)
          :map ivy-minibuffer-map
@@ -251,10 +268,12 @@
   (setq ivy-initial-inputs-alist nil))
 
 (use-package ivy-rich
+  :quelpa
   :init
   (ivy-rich-mode 1))
 
 (use-package counsel
+  :quelpa
   :bind (("M-x" . counsel-M-x)
          ("C-x b" . counsel-ibuffer)
          ("C-x C-f" . counsel-find-file)
@@ -296,6 +315,7 @@
   (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch))
 
 (use-package org
+  :quelpa
   :hook (org-mode . efs/org-mode-setup)
   :config
   (require 'org-tempo)
@@ -420,6 +440,7 @@
   (efs/org-font-setup))
 
 (use-package org-bullets
+  :quelpa
   :after org
   :hook (org-mode . org-bullets-mode)
   :custom
@@ -447,6 +468,7 @@
 (setq org-confirm-babel-evaluate nil)
 
 (use-package projectile
+  :quelpa
   :diminish projectile-mode
   :config (projectile-mode)
   :custom ((projectile-completion-system 'ivy))
@@ -459,13 +481,15 @@
   (setq projectile-switch-project-action #'projectile-dired))
 
 (use-package counsel-projectile
+  :quelpa
   :config (counsel-projectile-mode))
 
-(use-package ibuffer-projectile)
+(use-package ibuffer-projectile :quelpa)
 
-(use-package flycheck)
+(use-package flycheck :quelpa)
 
 (use-package magit
+  :quelpa
   :custom
   (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
 
@@ -475,11 +499,13 @@
 ;; (use-package forge)
 
 (use-package evil-nerd-commenter
+  :quelpa
   :bind ("M-/" . evilnc-comment-or-uncomment-lines))
 
-(use-package dap-mode)
+(use-package dap-mode :quelpa)
 
 (use-package highlight-indent-guides
+  :quelpa
   :custom
   (highlight-indent-guides-method 'character)
   (highlight-indent-guides-responsive 'top))
@@ -493,6 +519,7 @@
    (lsp-enable-which-key-integration)))
 
  (use-package lsp-mode
+   :quelpa
    :init
    (setq lsp-keymap-prefix "C-SPC")  ;; Or 'C-l', 's-l'
    :commands (lsp lsp-deferred)
@@ -504,14 +531,17 @@
 (add-hook 'lsp-mode-hook 'highlight-indent-guides-mode)
 
 (use-package lsp-ui
+  :quelpa
   :hook (lsp-mode . lsp-ui-mode))
 
 (use-package lsp-treemacs
+  :quelpa
   :after lsp)
 
-(use-package lsp-ivy)
+(use-package lsp-ivy :quelpa)
 
 (use-package typescript-mode
+  :quelpa
   :mode ("\\.ts\\'")
   :hook (typescript-mode . lsp-deferred)
   :config
@@ -529,6 +559,7 @@
 (add-hook 'sh-mode-hook 'lsp-deferred)
 
 (use-package company
+  :quelpa
   :after lsp-mode
   :hook (lsp-mode . company-mode)
   :bind (:map company-active-map
@@ -540,6 +571,7 @@
   (company-idle-delay 0.0))
 
 (use-package company-box
+  :quelpa
   :hook (company-mode . company-box-mode))
 
 (use-package yaml-mode
@@ -549,11 +581,12 @@
 
  (add-hook 'yaml-mode-hook 'highlight-indent-guides-mode)
 
-(use-package json-mode)
+(use-package json-mode :quelpa)
 
 (add-hook 'json-mode-hook 'highlight-indent-guides-mode)
 
 (use-package company
+  :quelpa
   :after lsp-mode
   :hook (lsp-mode . company-mode)
   :custom
@@ -563,6 +596,7 @@
   (company-tng-configure-default))
 
 (use-package company-box
+  :quelpa
   :hook (company-mode . company-box-mode))
 
 (use-package restclient
@@ -575,10 +609,12 @@
 (add-to-list 'company-backends 'company-restclient)
 
 (use-package vterm
+  :quelpa
   :config
   (setq vterm-shell "/bin/zsh"))
 
 (use-package vterm-toggle
+  :quelpa
   :config
   (setq vterm-toggle-fullscreen-p nil)
   (add-to-list 'display-buffer-alist
@@ -590,6 +626,7 @@
                  (window-height . 0.3))))
 
 (use-package term
+  :quelpa
   :config
   (setq explicit-shell-file-name "zsh")
 
@@ -602,9 +639,10 @@
   (setq term-prompt-regexp "^[^#$%>\n]*[#$%>] *"))
 
 (use-package eterm-256color
+  :quelpa
   :hook (term-mode . eterm-256color-mode))
 
-(use-package windmove)
+(use-package windmove :quelpa)
 
 (use-package framemove
   :quelpa (framemove
@@ -613,8 +651,9 @@
   :config
   (setq framemove-hook-into-windmove t))
 
-(use-package windsize)
+(use-package windsize :quelpa)
 
 (use-package zoom
+  :quelpa
   :config
   (setq zoom-size '(0.618 . 0.618)))

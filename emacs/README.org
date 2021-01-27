@@ -189,6 +189,7 @@ The snippets below will install emacs from their git master:
 #+begin_src emacs-lisp
 
   (use-package general
+    :quelpa
     :config
     (general-create-definer keys/leader-keys
       :keymaps '(normal insert visual emacs)
@@ -215,6 +216,7 @@ The snippets below will install emacs from their git master:
 #+begin_src emacs-lisp
 
   (use-package evil
+    :quelpa
     :init
     (setq evil-want-integration t)
     (setq evil-want-keybinding nil)
@@ -238,14 +240,26 @@ The snippets below will install emacs from their git master:
     :config
     (evil-collection-init))
 
-  (use-package treemacs-evil)
+  (use-package treemacs-evil :quelpa)
+
+#+end_src
+
+** Evil multiedit
+#+begin_src emacs-lisp
+
+  (use-package evil-multiedit
+   :quelpa
+   :config
+   (evil-multiedit-default-keybinds))
+
+
 
 #+end_src
 
 ** Hydra
 #+begin_src emacs-lisp
 
-  (use-package hydra)
+  (use-package hydra :quelpa)
 
   (defhydra hydra-text-scale (:timeout 4)
     "scale text"
@@ -265,18 +279,19 @@ The first time you load your configuration on a new machine, you'll need to run 
 
 #+begin_src emacs-lisp
 
-  (use-package all-the-icons)
+  (use-package all-the-icons :quelpa)
   (use-package all-the-icons-dired
+    :quelpa
     :config
     (add-hook 'dired-mode-hook 'all-the-icons-dired-mode))
-  (use-package all-the-icons-ibuffer)
+  (use-package all-the-icons-ibuffer :quelpa)
 
 #+end_src
 
 ** Ibuffer packages
 #+begin_src emacs-lisp
 
-  (use-package ibuffer-vc)
+  (use-package ibuffer-vc :quelpa)
 
 #+end_src
 
@@ -284,6 +299,7 @@ The first time you load your configuration on a new machine, you'll need to run 
 #+begin_src emacs-lisp
 
   (use-package doom-themes
+    :quelpa
     :init (load-theme 'doom-dark+ t)
     :config
     (setq doom-themes-treemacs-theme "doom-colors"))
@@ -294,6 +310,7 @@ The first time you load your configuration on a new machine, you'll need to run 
 #+begin_src emacs-lisp
 
   (use-package doom-modeline
+    :quelpa
     :init (doom-modeline-mode 1)
     :custom ((doom-modeline-height 22)))
 
@@ -303,6 +320,7 @@ The first time you load your configuration on a new machine, you'll need to run 
 #+begin_src emacs-lisp
 
   (use-package rainbow-delimiters
+    :quelpa
     :hook (prog-mode . rainbow-delimiters-mode))
 
 #+end_src
@@ -311,6 +329,7 @@ The first time you load your configuration on a new machine, you'll need to run 
 #+begin_src emacs-lisp
 
   (use-package which-key
+    :quelpa
     :init (which-key-mode)
     :diminish which-key-mode
     :config
@@ -322,6 +341,7 @@ The first time you load your configuration on a new machine, you'll need to run 
 #+begin_src emacs-lisp
 
   (use-package helpful
+    :quelpa
     :custom
     (counsel-describe-function-function #'helpful-callable)
     (counsel-describe-variable-function #'helpful-variable)
@@ -336,16 +356,17 @@ The first time you load your configuration on a new machine, you'll need to run 
 ** Ace-window
 #+begin_src emacs-lisp
 
-      (use-package ace-window
-        :config
-        (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
-        (setq aw-background nil)
-        (setq aw-dispatch-always t)
-        (ace-window-display-mode t)
-        (keys/leader-keys
-          "o" #'ace-window
-          "O" #'ace-swap-window)
-        )
+  (use-package ace-window
+    :quelpa
+    :config
+    (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
+    (setq aw-background nil)
+    (setq aw-dispatch-always t)
+    (ace-window-display-mode t)
+    (keys/leader-keys
+      "o" #'ace-window
+      "O" #'ace-swap-window)
+    )
 
 #+end_src
 
@@ -357,10 +378,12 @@ The first time you load your configuration on a new machine, you'll need to run 
     (setq right-fringe-width 0))
 
   (use-package treemacs
+    :quelpa
     :config
     (add-hook 'treemacs-mode-hook #'efs/treemacs-set-fringe))
 
   (use-package treemacs-all-the-icons
+    :quelpa
     :config
     (treemacs-load-theme "all-the-icons"))
 
@@ -373,6 +396,7 @@ The first time you load your configuration on a new machine, you'll need to run 
 #+begin_src emacs-lisp
 
   (use-package ivy
+    :quelpa
     :diminish
     :bind (("C-s" . swiper)
            :map ivy-minibuffer-map
@@ -392,6 +416,7 @@ The first time you load your configuration on a new machine, you'll need to run 
     (setq ivy-initial-inputs-alist nil))
 
   (use-package ivy-rich
+    :quelpa
     :init
     (ivy-rich-mode 1))
 
@@ -401,6 +426,7 @@ The first time you load your configuration on a new machine, you'll need to run 
 #+begin_src emacs-lisp
 
   (use-package counsel
+    :quelpa
     :bind (("M-x" . counsel-M-x)
            ("C-x b" . counsel-ibuffer)
            ("C-x C-f" . counsel-find-file)
@@ -449,6 +475,7 @@ The first time you load your configuration on a new machine, you'll need to run 
     (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch))
 
   (use-package org
+    :quelpa
     :hook (org-mode . efs/org-mode-setup)
     :config
     (require 'org-tempo)
@@ -579,6 +606,7 @@ The first time you load your configuration on a new machine, you'll need to run 
 #+begin_src emacs-lisp
 
   (use-package org-bullets
+    :quelpa
     :after org
     :hook (org-mode . org-bullets-mode)
     :custom
@@ -625,6 +653,7 @@ This snippet adds a hook to org-mode buffers so that efs/org-babel-tangle-config
 #+begin_src emacs-lisp
 
   (use-package projectile
+    :quelpa
     :diminish projectile-mode
     :config (projectile-mode)
     :custom ((projectile-completion-system 'ivy))
@@ -637,16 +666,17 @@ This snippet adds a hook to org-mode buffers so that efs/org-babel-tangle-config
     (setq projectile-switch-project-action #'projectile-dired))
 
   (use-package counsel-projectile
+    :quelpa
     :config (counsel-projectile-mode))
 
-  (use-package ibuffer-projectile)
+  (use-package ibuffer-projectile :quelpa)
 
 #+end_src
 
 ** Flycheck
 #+begin_src emacs-lisp
 
-  (use-package flycheck)
+  (use-package flycheck :quelpa)
 
 #+end_src
 
@@ -655,6 +685,7 @@ This snippet adds a hook to org-mode buffers so that efs/org-babel-tangle-config
 #+begin_src emacs-lisp
 
   (use-package magit
+    :quelpa
     :custom
     (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
 
@@ -678,6 +709,7 @@ NOTE: Make sure to configure a GitHub token before using this package!
 #+begin_src emacs-lisp
 
   (use-package evil-nerd-commenter
+    :quelpa
     :bind ("M-/" . evilnc-comment-or-uncomment-lines))
 
 #+end_src
@@ -685,7 +717,7 @@ NOTE: Make sure to configure a GitHub token before using this package!
 ** Dap
 #+begin_src emacs-lisp
 
-  (use-package dap-mode)
+  (use-package dap-mode :quelpa)
 
 #+end_src
 
@@ -693,6 +725,7 @@ NOTE: Make sure to configure a GitHub token before using this package!
 #+begin_src emacs-lisp
 
   (use-package highlight-indent-guides
+    :quelpa
     :custom
     (highlight-indent-guides-method 'character)
     (highlight-indent-guides-responsive 'top))
@@ -718,6 +751,7 @@ The =which-key= integration adds helpful descriptions of the various keys so you
     (lsp-enable-which-key-integration)))
 
   (use-package lsp-mode
+    :quelpa
     :init
     (setq lsp-keymap-prefix "C-SPC")  ;; Or 'C-l', 's-l'
     :commands (lsp lsp-deferred)
@@ -734,6 +768,7 @@ The =which-key= integration adds helpful descriptions of the various keys so you
 #+begin_src emacs-lisp
 
   (use-package lsp-ui
+    :quelpa
     :hook (lsp-mode . lsp-ui-mode))
 
 #+end_src
@@ -742,6 +777,7 @@ The =which-key= integration adds helpful descriptions of the various keys so you
 #+begin_src emacs-lisp
 
   (use-package lsp-treemacs
+    :quelpa
     :after lsp)
 
 #+end_src
@@ -749,7 +785,7 @@ The =which-key= integration adds helpful descriptions of the various keys so you
 *** lsp-ivy
 #+begin_src emacs-lisp
 
-  (use-package lsp-ivy)
+  (use-package lsp-ivy :quelpa)
 
 #+end_src
 
@@ -771,6 +807,7 @@ This is a basic configuration for the TypeScript language so that =.ts= files ac
 #+begin_src emacs-lisp
 
   (use-package typescript-mode
+    :quelpa
     :mode ("\\.ts\\'")
     :hook (typescript-mode . lsp-deferred)
     :config
@@ -804,6 +841,7 @@ Requires you to run: M-x lsp-install-server RET bash RET.
 #+begin_src emacs-lisp
 
   (use-package company
+    :quelpa
     :after lsp-mode
     :hook (lsp-mode . company-mode)
     :bind (:map company-active-map
@@ -815,6 +853,7 @@ Requires you to run: M-x lsp-install-server RET bash RET.
     (company-idle-delay 0.0))
 
   (use-package company-box
+    :quelpa
     :hook (company-mode . company-box-mode))
 
 #+end_src
@@ -834,7 +873,7 @@ Requires you to run: M-x lsp-install-server RET bash RET.
 ** Json
 #+begin_src emacs-lisp
 
- (use-package json-mode)
+ (use-package json-mode :quelpa)
 
  (add-hook 'json-mode-hook 'highlight-indent-guides-mode)
 
@@ -844,6 +883,7 @@ Requires you to run: M-x lsp-install-server RET bash RET.
 #+begin_src emacs-lisp
 
   (use-package company
+    :quelpa
     :after lsp-mode
     :hook (lsp-mode . company-mode)
     :custom
@@ -853,6 +893,7 @@ Requires you to run: M-x lsp-install-server RET bash RET.
     (company-tng-configure-default))
 
   (use-package company-box
+    :quelpa
     :hook (company-mode . company-box-mode))
 
 #+end_src
@@ -885,10 +926,12 @@ Requires you to run: M-x lsp-install-server RET bash RET.
 #+begin_src emacs-lisp
 
   (use-package vterm
+    :quelpa
     :config
     (setq vterm-shell "/bin/zsh"))
 
   (use-package vterm-toggle
+    :quelpa
     :config
     (setq vterm-toggle-fullscreen-p nil)
     (add-to-list 'display-buffer-alist
@@ -905,6 +948,7 @@ Requires you to run: M-x lsp-install-server RET bash RET.
 #+begin_src emacs-lisp
 
   (use-package term
+    :quelpa
     :config
     (setq explicit-shell-file-name "zsh")
 
@@ -917,6 +961,7 @@ Requires you to run: M-x lsp-install-server RET bash RET.
     (setq term-prompt-regexp "^[^#$%>\n]*[#$%>] *"))
 
   (use-package eterm-256color
+    :quelpa
     :hook (term-mode . eterm-256color-mode))
 
 #+end_src
@@ -925,7 +970,7 @@ Requires you to run: M-x lsp-install-server RET bash RET.
 ** Framemove
 #+begin_src emacs-lisp
 
-  (use-package windmove)
+  (use-package windmove :quelpa)
 
   (use-package framemove
     :quelpa (framemove
@@ -939,7 +984,7 @@ Requires you to run: M-x lsp-install-server RET bash RET.
 ** Windsize
 #+begin_src emacs-lisp
 
-  (use-package windsize)
+  (use-package windsize :quelpa)
 
 #+end_src
 
@@ -947,6 +992,7 @@ Requires you to run: M-x lsp-install-server RET bash RET.
 #+begin_src emacs-lisp
 
   (use-package zoom
+    :quelpa
     :config
     (setq zoom-size '(0.618 . 0.618)))
 

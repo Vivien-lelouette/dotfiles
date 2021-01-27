@@ -50,3 +50,4 @@ To install stow on Ubuntu, use the following command:
   for script in $(find ~/.scripts/*/ -name install.sh) ; do sh $script ; done
 
 #+end_src
+
