@@ -9,7 +9,7 @@ margin-top = -14px
 margin-bottom = 0
 
 [colors]
-background = #f0252526
+background = #f01e1e1e
 background-alt = #001e1e1e
 foreground = #d4d4d4
 foreground-alt = #555
@@ -23,7 +23,7 @@ monitor = ${env:MONITOR:}
 bottom = true
 width = 600
 height = 14
-offset-x = 100%:-600
+offset-x = 100%:-618
 offset-y = 0px
 fixed-center = true
 enable-ipc = true
