@@ -101,6 +101,7 @@
 
 ;; keyboard setup
 (defun keys/keyboard-setup ()
+  (interactive)
   ;; Rebind CapsLock to Esc
   (start-process-shell-command "xmodmap" nil "xmodmap ~/.emacs.d/exwm/Xmodmap")
   (start-process-shell-command "qwerty" nil "setxkbmap us,us_intl '' compose:ralt grp:rctrl_rshift_toggle"))
