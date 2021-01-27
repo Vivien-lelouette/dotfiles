@@ -451,8 +451,6 @@ The first time you load your configuration on a new machine, you'll need to run 
   (use-package org
     :hook (org-mode . efs/org-mode-setup)
     :config
-    (setq org-ellipsis " ▾")
-
     (require 'org-tempo)
     (add-to-list 'org-structure-template-alist '("sh" . "src shell"))
     (add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
