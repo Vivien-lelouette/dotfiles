@@ -31,6 +31,9 @@ The snippets below will install emacs from their git master:
 
 #+begin_src emacs-lisp
 
+  ;; Avoid blinding white at startup
+  (load-theme 'wombat)
+
   (setq inhibit-startup-message t)
 
   (scroll-bar-mode -1)        ; Disable visible scrollbar
