@@ -217,11 +217,19 @@
     "O" #'ace-swap-window)
   )
 
-(use-package treemacs)
+(defun efs/treemacs-set-fringe ()
+  (setq left-fringe-width 0)
+  (setq right-fringe-width 0))
+
+(use-package treemacs
+  :config
+  (add-hook 'treemacs-mode-hook #'efs/treemacs-set-fringe))
 
 (use-package treemacs-all-the-icons
   :config
   (treemacs-load-theme "all-the-icons"))
+
+(efs/treemacs-set-fringe)
 
 (use-package ivy
   :diminish

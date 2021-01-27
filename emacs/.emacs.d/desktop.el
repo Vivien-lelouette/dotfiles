@@ -185,6 +185,9 @@
   ;; Make workspace 1 be the one where we land at startup
   (exwm-workspace-switch-create 1)
 
+  ;; Set the wallpaper after changing the resolution
+  (efs/set-wallpaper)
+
   ;; Start the Polybar panel
   (panel/start)
 
@@ -195,7 +198,7 @@
 
 (defun efs/exwm-update-title ()
   (exwm-workspace-rename-buffer
- (concat exwm-class-name ":"
+  (concat exwm-class-name ":"
          (if (<= (length exwm-title) 100) exwm-title
            (concat (substring exwm-title 0 99) "...")))))
 
@@ -237,10 +240,9 @@
     (interactive)
     (setq exwm-randr-workspace-monitor-plist (build-exwm-monitors))
     (exwm-randr-refresh)
-    )
 
-  ;; Set the wallpaper after changing the resolution
-  (efs/set-wallpaper)
+    ;; Start the Polybar panel
+    (panel/start))
 
   ;; Automatically send the mouse cursor to the selected workspace's display
   (setq exwm-workspace-warp-cursor t)
@@ -356,5 +358,4 @@
   (exwm-input-set-key (kbd "C-s-j") #'windsize-down)
   (exwm-input-set-key (kbd "C-s-k") #'windsize-up)
 
-  (exwm-enable)
-  (refresh-monitors))
+  (exwm-enable))

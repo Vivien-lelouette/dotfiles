@@ -458,7 +458,6 @@ Functions to split and move to the new split.
 #+end_src
 
 ** EXWM Configuration
-
 We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basis for our Emacs Desktop Environment.  The [[https://github.com/ch11ng/exwm/wiki][EXWM Wiki]] is a great place to find tips about how to configure everything!
 
 *NOTE:* Make sure you've installed =nm-applet=, =pasystray= and =blueman= for the system tray apps to work!
@@ -468,6 +467,9 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
   (defun efs/exwm-init-hook ()
     ;; Make workspace 1 be the one where we land at startup
     (exwm-workspace-switch-create 1)
+
+    ;; Set the wallpaper after changing the resolution
+    (efs/set-wallpaper)
 
     ;; Start the Polybar panel
     (panel/start)
@@ -479,7 +481,7 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
 
   (defun efs/exwm-update-title ()
     (exwm-workspace-rename-buffer
-   (concat exwm-class-name ":"
+    (concat exwm-class-name ":"
            (if (<= (length exwm-title) 100) exwm-title
              (concat (substring exwm-title 0 99) "...")))))
              
@@ -521,10 +523,9 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
       (interactive)
       (setq exwm-randr-workspace-monitor-plist (build-exwm-monitors))
       (exwm-randr-refresh)
-      )
 
-    ;; Set the wallpaper after changing the resolution
-    (efs/set-wallpaper)
+      ;; Start the Polybar panel
+      (panel/start))
 
     ;; Automatically send the mouse cursor to the selected workspace's display
     (setq exwm-workspace-warp-cursor t)
@@ -640,8 +641,7 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
     (exwm-input-set-key (kbd "C-s-j") #'windsize-down)
     (exwm-input-set-key (kbd "C-s-k") #'windsize-up)
 
-    (exwm-enable)
-    (refresh-monitors))
+    (exwm-enable))
 
 #+end_src
 
