@@ -202,7 +202,7 @@
 
 (defun efs/exwm-update-title ()
   (exwm-workspace-rename-buffer
-  (concat exwm-class-name ":"
+  (concat exwm-class-name ": "
          (if (<= (length exwm-title) 100) exwm-title
            (concat (substring exwm-title 0 99) "...")))))
 

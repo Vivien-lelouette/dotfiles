@@ -259,6 +259,16 @@ The snippets below will install emacs from their git master:
 
 #+end_src
 
+** Evil surround
+#+begin_src emacs-lisp
+
+(use-package evil-surround
+  :quelpa
+  :config
+  (global-evil-surround-mode 1))
+
+#+end_src
+
 ** Hydra
 #+begin_src emacs-lisp
 

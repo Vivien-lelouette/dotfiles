@@ -169,6 +169,11 @@
  :config
  (evil-multiedit-default-keybinds))
 
+(use-package evil-surround
+  :quelpa
+  :config
+  (global-evil-surround-mode 1))
+
 (use-package hydra :quelpa)
 
 (defhydra hydra-text-scale (:timeout 4)
