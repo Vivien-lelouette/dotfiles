@@ -624,6 +624,12 @@
 
 (add-to-list 'company-backends 'company-restclient)
 
+(use-package adoc-mode
+  :quelpa
+  :hook (adoc-mode . company-mode))
+
+(add-to-list 'auto-mode-alist '("\\.adoc\\'" . adoc-mode))
+
 (use-package vterm
   :quelpa
   :config

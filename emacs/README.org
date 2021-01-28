@@ -933,6 +933,17 @@ Requires you to run: M-x lsp-install-server RET bash RET.
 
 #+end_src
 
+** Asciidoc
+#+begin_src emacs-lisp
+
+  (use-package adoc-mode
+    :quelpa
+    :hook (adoc-mode . company-mode))
+
+  (add-to-list 'auto-mode-alist '("\\.adoc\\'" . adoc-mode))
+
+#+end_src
+
 * Shell & Terminals
 ** Vterm
 *** Prerequisites
