@@ -104,8 +104,7 @@
 (defun keys/keyboard-setup ()
   (interactive)
   ;; Rebind CapsLock to Esc
-  (start-process-shell-command "xmodmap" nil "xmodmap ~/.emacs.d/exwm/Xmodmap")
-  (start-process-shell-command "qwerty" nil "setxkbmap us,us_intl '' compose:ralt grp:rctrl_rshift_toggle"))
+  (start-process-shell-command "qwerty" nil "setxkbmap -option caps:escape us,us_intl '' compose:ralt grp:rctrl_rshift_toggle"))
 
 ;; Make sure the server is started (better to do this in your main Emacs config!)
 (server-start)

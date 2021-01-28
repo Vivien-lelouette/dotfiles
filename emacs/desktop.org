@@ -161,8 +161,7 @@ We use the [[https://github.com/DamienCassou/desktop-environment][desktop-enviro
   (defun keys/keyboard-setup ()
     (interactive)
     ;; Rebind CapsLock to Esc
-    (start-process-shell-command "xmodmap" nil "xmodmap ~/.emacs.d/exwm/Xmodmap")
-    (start-process-shell-command "qwerty" nil "setxkbmap us,us_intl '' compose:ralt grp:rctrl_rshift_toggle"))
+    (start-process-shell-command "qwerty" nil "setxkbmap -option caps:escape us,us_intl '' compose:ralt grp:rctrl_rshift_toggle"))
 
 #+end_src
 
@@ -177,18 +176,6 @@ This launcher script is invoked by =EXWM.desktop= to start Emacs and load our de
 
   # Fire it up
   exec dbus-launch --exit-with-session emacs -mm --debug-init -l ~/.emacs.d/desktop.el
-
-#+end_src
-
-** Keyboard Configuration
-
-The =Xmodmap= file will be used with the =xmodmap= program to remap CapsLock to Esc inside of our desktop environment:
-
-#+begin_src sh :tangle ./.emacs.d/exwm/Xmodmap
-
-  remove Lock = Caps_Lock
-  keysym Caps_Lock = Escape
-  add Lock = Caps_Lock'
 
 #+end_src
 
