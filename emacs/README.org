@@ -394,6 +394,19 @@ The first time you load your configuration on a new machine, you'll need to run 
  
 #+end_src
 
+** Yascroll
+#+begin_src emacs-lisp
+
+  (use-package yascroll
+    :quelpa
+    :config
+    (global-yascroll-bar-mode 1)
+    (setq yascroll:delay-to-hide nil)
+    ;; Don't hide scrollbar when editing
+    (defadvice yascroll:before-change (around always-show-bar activate) ()))
+
+#+end_src
+
 * Search packages  
 ** Ivy
 #+begin_src emacs-lisp

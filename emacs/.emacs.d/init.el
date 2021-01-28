@@ -250,6 +250,14 @@
 
 (efs/treemacs-set-fringe)
 
+(use-package yascroll
+  :quelpa
+  :config
+  (global-yascroll-bar-mode 1)
+  (setq yascroll:delay-to-hide nil)
+  ;; Don't hide scrollbar when editing
+  (defadvice yascroll:before-change (around always-show-bar activate) ()))
+
 (use-package ivy
   :quelpa
   :diminish
