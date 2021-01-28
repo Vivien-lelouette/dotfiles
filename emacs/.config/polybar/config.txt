@@ -51,7 +51,7 @@ tray-detached = true
 tray-position = right
 tray-padding = 3
 tray-maxsize = 28
-tray-offset-x = -290
+tray-offset-x = -220
 
 cursor-click = pointer
 cursor-scroll = ns-resize

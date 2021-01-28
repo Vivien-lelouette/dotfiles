@@ -286,7 +286,7 @@ The configuration for our ingeniously named panel, "panel".  Invoke it with =pol
   tray-position = right
   tray-padding = 3
   tray-maxsize = 28
-  tray-offset-x = -290
+  tray-offset-x = -220
 
   cursor-click = pointer
   cursor-scroll = ns-resize
