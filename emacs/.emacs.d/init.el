@@ -671,12 +671,12 @@
 
 (use-package windmove :quelpa)
 
-(use-package framemove
-  :quelpa (framemove
-    :fetcher url
-    :url "https://raw.githubusercontent.com/emacsmirror/emacswiki.org/master/framemove.el")
-  :config
-  (setq framemove-hook-into-windmove t))
+;; (use-package framemove
+;;   :quelpa (framemove
+;;     :fetcher url
+;;     :url "https://raw.githubusercontent.com/emacsmirror/emacswiki.org/master/framemove.el")
+;;   :config
+;;   (setq framemove-hook-into-windmove t))
 
 (use-package windsize :quelpa)
 
