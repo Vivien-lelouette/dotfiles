@@ -605,9 +605,12 @@
 (use-package restclient
   :quelpa (restclient
     :fetcher url
-    :url "https://raw.githubusercontent.com/pashky/restclient.el/master/restclient.el"))
+    :url "https://raw.githubusercontent.com/pashky/restclient.el/master/restclient.el")
+  :hook (restclient-mode . company-mode))
 
-(use-package company-restclient)
+(add-to-list 'auto-mode-alist '("\\.http\\'" . restclient-mode))
+
+(use-package company-restclient :quelpa)
 
 (add-to-list 'company-backends 'company-restclient)
 
