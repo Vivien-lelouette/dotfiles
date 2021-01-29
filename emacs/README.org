@@ -197,7 +197,7 @@ The snippets below will install emacs from their git master:
     (general-create-definer keys/leader-keys
       :keymaps '(normal insert visual emacs)
       :prefix "SPC"
-      :global-prefix "s-SPC")
+      :global-prefix "s-d")
 
     (keys/leader-keys
       "t"  '(:ignore t :which-key "toggles")
@@ -641,7 +641,6 @@ The first time you load your configuration on a new machine, you'll need to run 
 #+end_src
 
 ** Auto-tangle configuration files
-
 This snippet adds a hook to org-mode buffers so that efs/org-babel-tangle-config gets executed each time such a buffer gets saved. This function checks to see if a configuration file being saved, and if so, automatically exports the configuration here to the associated output files.
 
 #+begin_src emacs-lisp
@@ -713,10 +712,10 @@ This snippet adds a hook to org-mode buffers so that efs/org-babel-tangle-config
   (use-package magit
     :quelpa
     :custom
-    (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
-
+    (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
+    :config
   (keys/leader-keys
-    "gg" '(magit :which-key "magit status"))
+    "gg" '(magit :which-key "magit status")))
 
 #+end_src
 

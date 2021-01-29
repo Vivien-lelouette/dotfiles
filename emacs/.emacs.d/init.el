@@ -126,7 +126,7 @@
   (general-create-definer keys/leader-keys
     :keymaps '(normal insert visual emacs)
     :prefix "SPC"
-    :global-prefix "s-SPC")
+    :global-prefix "s-d")
 
   (keys/leader-keys
     "t"  '(:ignore t :which-key "toggles")
@@ -466,6 +466,8 @@
   (when (or (string-equal (buffer-file-name)
                           (expand-file-name "~/dotfiles/README.org"))
             (string-equal (buffer-file-name)
+                        (expand-file-name "~/dotfiles/qutebrowser/README.org"))
+            (string-equal (buffer-file-name)
                           (expand-file-name "~/dotfiles/emacs/README.org"))
             (string-equal (buffer-file-name)
                         (expand-file-name "~/dotfiles/emacs/desktop.org")))
@@ -507,10 +509,10 @@
 (use-package magit
   :quelpa
   :custom
-  (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
-
+  (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
+  :config
 (keys/leader-keys
-  "gg" '(magit :which-key "magit status"))
+  "gg" '(magit :which-key "magit status")))
 
 ;; (use-package forge)
 
@@ -634,6 +636,17 @@
   :hook (adoc-mode . company-mode))
 
 (add-to-list 'auto-mode-alist '("\\.adoc\\'" . adoc-mode))
+
+(use-package dockerfile-mode :quelpa)
+
+(use-package docker-compose-mode :quelpa)
+
+(use-package docker
+  :quelpa
+  :config
+  (keys/leader-keys
+    "d"  'docker
+    "D"  'docker-compose))
 
 (use-package vterm
   :quelpa
