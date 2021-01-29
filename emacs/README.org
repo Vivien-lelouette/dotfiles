@@ -953,6 +953,33 @@ Requires you to run: M-x lsp-install-server RET bash RET.
 
 #+end_src
 
+** Docker
+*** Dockerfile
+#+begin_src emacs-lisp
+
+  (use-package dockerfile-mode :quelpa)
+
+#+end_src
+
+*** Docker-compose file
+#+begin_src emacs-lisp
+
+  (use-package docker-compose-mode :quelpa)
+
+#+end_src
+
+*** Docker
+#+begin_src emacs-lisp
+
+  (use-package docker
+    :quelpa
+    :config
+    (keys/leader-keys
+      "d"  'docker
+      "D"  'docker-compose))
+
+#+end_src
+
 * Shell & Terminals
 ** Vterm
 *** Prerequisites
