@@ -974,9 +974,54 @@ Requires you to run: M-x lsp-install-server RET bash RET.
 *** Docker
 #+begin_src emacs-lisp
 
+  (defun docker/set-format ()
+    (interactive)
+(setq tabulated-list-format [("Names" 30 t)("Ports" 30 t)("Status" 20 t)("Id" 16 t)("Image" 15 t)("Command" 30 t)("Created" 23 t)])
+  (setq tabulated-list-padding 2)
+  (setq tabulated-list-sort-key docker-container-default-sort-key)
+  (add-hook 'tabulated-list-revert-hook 'docker-container-refresh nil t)
+  (tabulated-list-init-header)
+  (tablist-minor-mode))
+
   (use-package docker
     :quelpa
     :config
+    (defun docker-container-parse (line)
+      "Convert a LINE from \"docker container ls\" to a `tabulated-list-entries' entry."
+      (condition-case nil
+          (let* ((data (json-read-from-string line))
+                 (uptime (aref data 6))
+                 (status (aref data 2)))
+            (aset data 6 (format-time-string "%F %T" (date-to-time uptime)))
+            (aset data 2 (propertize status 'font-lock-face (docker-container-status-face status)))
+            (list (aref data 1) data))
+        (json-readtable-error
+         (error "Could not read following string as json:\n%s" line))))
+
+    (defun docker-container-entries ()
+      "Return the docker containers data for `tabulated-list-entries'."
+      (let* ((fmt "[{{json .Names}},{{json .Ports}},{{json .Status}},{{json .ID}},{{json .Image}},{{json .Command}},{{json .CreatedAt}}]")
+             (data (docker-run-docker "container ls" (docker-container-ls-arguments) (format "--format=\"%s\"" fmt)))
+             (lines (s-split "\n" data t)))
+        (-map #'docker-container-parse lines)))
+
+    (defun docker-container-refresh ()
+      "Refresh the containers list."
+      (setq tabulated-list-entries (docker-container-entries)))
+
+    (define-derived-mode docker-container-mode tabulated-list-mode "Containers Menu"
+      "Major mode for handling a list of docker containers."
+      (setq tabulated-list-format [("Names" 30 t)("Ports" 40 t)("Status" 20 t)("Id" 16 t)("Image" 15 t)("Command" 30 t)("Created" 23 t)])
+      (setq tabulated-list-padding 2)
+      (setq tabulated-list-sort-key docker-container-default-sort-key)
+      (add-hook 'tabulated-list-revert-hook 'docker-container-refresh nil t)
+      (tabulated-list-init-header)
+      (tablist-minor-mode))
+
+    (setq docker-container-shell-file-name "/bin/sh")
+    
+    (add-hook 'docker-container-mode 'docker/set-format)
+    
     (keys/leader-keys
       "d"  'docker
       "D"  'docker-compose))
