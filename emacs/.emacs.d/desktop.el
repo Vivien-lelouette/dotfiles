@@ -337,6 +337,7 @@
           ([?\s-F] . exwm-floating-toggle-floating)
 
           ([?\s-T] . my-logout)
+          ([s-x] . counsel-M-x)
           ([s-backspace] . counsel-M-x)
           ([?\s-.] . counsel-find-file)
 
