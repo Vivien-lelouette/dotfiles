@@ -1,7 +1,6 @@
 #+title Qutebrowser configuration
 
-* Configurations
-** Keybindings
+* Keybindings
 #+begin_src python :tangle .config/qutebrowser/config.py :mkdirp yes
 
   # Automatically turn on insert mode when a loaded page focuses a text field
@@ -25,7 +24,7 @@
 
 #+end_src
 
-** Tabs
+* Tabs
 #+begin_src python :tangle .config/qutebrowser/config.py :mkdirp yes
 
   # Open every tab as a new window, Vimb style
@@ -40,7 +39,7 @@
   
 #+end_src
 
-** Style
+* Style
 #+begin_src python :tangle .config/qutebrowser/config.py :mkdirp yes
 
   # Scale pages and UI better for hidpi
@@ -54,7 +53,7 @@
 
   c.colors.webpage.bg = "#1e1e1e"
   c.colors.completion.category.bg = "#252525"
-  c.colors.completion.item.selected.bg = "#317ccc"
+  c.colors.completion.item.selected.bg = "#123862"
   c.colors.completion.even.bg = "#1e1e1e"
   c.colors.completion.odd.bg = "#1e1e1e"
   c.colors.keyhint.bg = "#1e1e1e"
@@ -97,12 +96,12 @@
   c.colors.completion.category.border.bottom = "#1e1e1e"
   c.colors.completion.category.border.top = "#1e1e1e"
   c.colors.prompts.border = "#1e1e1e"
-  c.colors.completion.item.selected.border.bottom = "#317ccc"
-  c.colors.completion.item.selected.border.top = "#317ccc"
+  c.colors.completion.item.selected.border.bottom = "#123862"
+  c.colors.completion.item.selected.border.top = "#123862"
 
 #+end_src
 
-** Ensures that manual configs are loaded
+* Ensures that manual configs are loaded
 #+begin_src python :tangle .config/qutebrowser/config.py :mkdirp yes
 
  config.load_autoconfig()

@@ -38,7 +38,7 @@ c.colors.webpage.prefers_color_scheme_dark = True
 
 c.colors.webpage.bg = "#1e1e1e"
 c.colors.completion.category.bg = "#252525"
-c.colors.completion.item.selected.bg = "#317ccc"
+c.colors.completion.item.selected.bg = "#123862"
 c.colors.completion.even.bg = "#1e1e1e"
 c.colors.completion.odd.bg = "#1e1e1e"
 c.colors.keyhint.bg = "#1e1e1e"
@@ -81,7 +81,7 @@ c.colors.tabs.selected.odd.fg = "#d4d4d4"
 c.colors.completion.category.border.bottom = "#1e1e1e"
 c.colors.completion.category.border.top = "#1e1e1e"
 c.colors.prompts.border = "#1e1e1e"
-c.colors.completion.item.selected.border.bottom = "#317ccc"
-c.colors.completion.item.selected.border.top = "#317ccc"
+c.colors.completion.item.selected.border.bottom = "#123862"
+c.colors.completion.item.selected.border.top = "#123862"
 
 config.load_autoconfig()
