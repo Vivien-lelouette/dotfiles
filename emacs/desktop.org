@@ -527,9 +527,7 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
     (setq exwm-workspace-warp-cursor t)
 
     ;; These keys should always pass through to Emacs
-    (setq exwm-input-prefix-keys
-          '([C-s-\ ] ;; Ctrl+super+Space
-          ))
+    (add-to-list 'exwm-input-prefix-keys ?\s-\s)
 
     ;; Ctrl+Q will enable the next key to be sent directly
     (define-key exwm-mode-map [?\s-,] 'exwm-input-send-next-key)
@@ -608,11 +606,11 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
             ([?\s-F] . exwm-floating-toggle-floating)
 
             ([?\s-T] . my-logout)
-            ([s-x] . counsel-M-x)
+            ([?\s-x] . counsel-M-x)
             ([s-backspace] . counsel-M-x)
             ([?\s-.] . counsel-find-file)
 
-            ([?\s- ] . counsel-linux-app)
+            ([?\s-a] . counsel-linux-app)
             ([s-return] . vterm-toggle)
             ([S-s-return] . vterm)
 

@@ -126,7 +126,7 @@
   (general-create-definer keys/leader-keys
     :keymaps '(normal insert visual emacs)
     :prefix "SPC"
-    :global-prefix "C-s-SPC")
+    :global-prefix "s-SPC")
 
   (keys/leader-keys
     "t"  '(:ignore t :which-key "toggles")
