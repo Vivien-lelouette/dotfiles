@@ -295,7 +295,7 @@
           ([?\s-.] . counsel-find-file)
 
           ([?\s-a] . counsel-linux-app)
-          ([s-return] . vterm-toggle)
+          ([s-return] . vterm)
           ([S-s-return] . vterm)
 
           ;; 's-N': Switch to certain workspace with Super (Win) plus a number key (0 - 9)

@@ -699,18 +699,6 @@
   :config
   (setq vterm-shell "/bin/zsh"))
 
-(use-package vterm-toggle
-  :quelpa
-  :config
-  (setq vterm-toggle-fullscreen-p nil)
-  (add-to-list 'display-buffer-alist
-               '((lambda(bufname _) (with-current-buffer bufname (equal major-mode 'vterm-mode)))
-                 (display-buffer-reuse-window display-buffer-at-bottom)
-                 ;(display-buffer-reuse-window display-buffer-in-direction)
-                 (dedicated . t) ;dedicated is supported in emacs27
-                 (reusable-frames . visible)
-                 (window-height . 0.3))))
-
 (use-package term
   :quelpa
   :config
@@ -743,3 +731,16 @@
   :quelpa
   :config
   (setq zoom-size '(0.618 . 0.618)))
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages
+   '(zoom yascroll xah-css-mode windsize which-key vterm-toggle undo-fu typescript-mode treemacs-evil treemacs-all-the-icons rainbow-delimiters quelpa-use-package org-bullets magit lsp-ui lsp-ivy ivy-rich ibuffer-vc ibuffer-projectile highlight-indent-guides helpful general framemove flycheck exwm evil-surround evil-nerd-commenter evil-multiedit evil-collection eterm-256color doom-themes doom-modeline dockerfile-mode docker-compose-mode docker desktop-environment dap-mode counsel-projectile company-restclient company-box command-log-mode all-the-icons-ibuffer all-the-icons-dired adoc-mode)))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
