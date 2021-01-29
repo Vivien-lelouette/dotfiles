@@ -20,12 +20,10 @@ Workspace 1 & 2 will be allocated to the most left monitor, the 3 & 4 to the one
 #+begin_src emacs-lisp
 
   (defun car-string-to-number (list-two-elements)
-    (append (list (string-to-number (car list-two-elements))) (cdr list-two-elements))
-    )
+    (append (list (string-to-number (car list-two-elements))) (cdr list-two-elements)))
 
   (defun sort-from-car (a b)
-    (< (car a) (car b))
-    )
+    (< (car a) (car b)))
 
   (defun xrandr-active-monitors ()
     (mapcar 'car-string-to-number
@@ -33,29 +31,18 @@ Workspace 1 & 2 will be allocated to the most left monitor, the 3 & 4 to the one
                     (mapcar 'split-string
                             (split-string
                              (shell-command-to-string "xrandr --listactivemonitors | grep / | cut -d '/' -f3 | sed -e 's/^[0-9]\\++//g' -e 's/+[0-9]\\+//g'")
-                             "\n")
-                            )
-                    )
-            )
-    )
+                             "\n")))))
 
-  (defun order-monitors ()
-    (apply #'append
+  (defun order-monitors ()    (apply #'append
            (mapcar 'cdr
                    (sort
                     (xrandr-active-monitors)
-                    'sort-from-car
-                    )
-                   )
-           )
-    )
+                    'sort-from-car))))
 
   (defun build-workspace-monitor (monitor current_workspace max_workspace)
     (if (> current_workspace max_workspace)
         '()
-      (append (list current_workspace monitor) (build-workspace-monitor monitor (+ current_workspace 1) max_workspace))
-      )
-    )
+      (append (list current_workspace monitor) (build-workspace-monitor monitor (+ current_workspace 1) max_workspace))))
 
   (defun build-exwm-monitors-aux (current_workspace monitor-list)
     (cond
@@ -66,10 +53,7 @@ Workspace 1 & 2 will be allocated to the most left monitor, the 3 & 4 to the one
       (append (build-workspace-monitor (car monitor-list) current_workspace 8) (build-exwm-monitors-aux (+ current_workspace 2) (cdr monitor-list)))
       )
      (t
-      (append (build-workspace-monitor (car monitor-list) current_workspace (+ current_workspace 1)) (build-exwm-monitors-aux (+ current_workspace 2) (cdr monitor-list)))
-      )
-     )
-    )
+      (append (build-workspace-monitor (car monitor-list) current_workspace (+ current_workspace 1)) (build-exwm-monitors-aux (+ current_workspace 2) (cdr monitor-list))))))
 
   (defun build-exwm-monitors ()
     (build-exwm-monitors-aux 1 (order-monitors)))
@@ -453,31 +437,22 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
 
 #+begin_src emacs-lisp
 
-  (defun efs/exwm-init-hook ()
-    ;; Make workspace 1 be the one where we land at startup
-    (exwm-workspace-switch-create 1)
-
-    ;; Set the wallpaper after changing the resolution
-    (efs/set-wallpaper)
-
-    ;; Start the Polybar panel
-    (panel/start)
-
+  (defun exwm/exwm-init-hook ()
     ;; Launch apps that will run in the background
     (shell/run-in-background "nm-applet")
     (shell/run-in-background "pasystray")
     (shell/run-in-background "blueman-applet"))
 
-  (defun win-title ()
+  (defun exwm/win-title ()
     (replace-regexp-in-string (concat " . " exwm-class-name) "" exwm-title))
 
-  (defun efs/exwm-update-title ()
+  (defun exwm/exwm-update-title ()
     (exwm-workspace-rename-buffer
     (concat exwm-class-name ": "
            (if (<= (length exwm-title) 100) exwm-title
              (concat (substring exwm-title 0 99) "...")))))
              
-  (defun efs/exwm-set-fringe ()
+  (defun exwm/exwm-set-fringe ()
     (setq left-fringe-width 10)
     (setq right-fringe-width 10))
 
@@ -487,41 +462,21 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
     (keys/keyboard-setup)
 
     ;; When window "class" updates, use it to set the buffer name
-    (add-hook 'exwm-update-class-hook #'efs/exwm-update-title)
+    (add-hook 'exwm-update-class-hook #'exwm/exwm-update-title)
 
     ;; When window title updates, use it to set the buffer name
-    (add-hook 'exwm-update-title-hook #'efs/exwm-update-title)
+    (add-hook 'exwm-update-title-hook #'exwm/exwm-update-title)
     
     ;; When EXWM starts up, do some extra confifuration
-    (add-hook 'exwm-init-hook #'efs/exwm-init-hook)
+    (add-hook 'exwm-init-hook #'exwm/exwm-init-hook)
     
-    (add-hook 'exwm-mode-hook #'efs/exwm-set-fringe)
+    (add-hook 'exwm-mode-hook #'exwm/exwm-set-fringe)
 
     ;; Automatically move EXWM buffer to current workspace when selected
     (setq exwm-layout-show-all-buffers t)
 
     ;; Display all EXWM buffers in every workspace buffer list
     (setq exwm-workspace-show-all-buffers t)
-
-    ;; NOTE: Uncomment this option if you want to detach the minibuffer!
-    ;; Detach the minibuffer (show it with exwm-workspace-toggle-minibuffer)
-    ;;(setq exwm-workspace-minibuffer-position 'top)
-
-    ;; Set the screen resolution (update this to be the correct resolution for your screen!)
-    (require 'exwm-randr)
-    (exwm-randr-enable)
-
-    ;; This defines a function to refresh the workspaces position and xrandr
-    (defun refresh-monitors ()
-      (interactive)
-      (setq exwm-randr-workspace-monitor-plist (build-exwm-monitors))
-      (exwm-randr-refresh)
-
-      ;; Set the wallpaper after changing the resolution
-      (efs/set-wallpaper)
-
-      ;; Start the Polybar panel
-      (panel/start))
 
     ;; Automatically send the mouse cursor to the selected workspace's display
     (setq exwm-workspace-warp-cursor t)
@@ -541,7 +496,7 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
             ([?\s-R] . exwm-input-release-keyboard)
 
             ;; refresh monitors
-            ([?\s-M] . refresh-monitors)
+            ([?\s-M] . exwm/refresh-monitors)
 
             ([?\s-=] . balance-windows)
             ([?\s-+] . zoom)
@@ -636,7 +591,26 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
     (exwm-input-set-key (kbd "C-s-j") #'windsize-down)
     (exwm-input-set-key (kbd "C-s-k") #'windsize-up)
 
-    (exwm-enable))
+    (exwm-enable)
+ 
+    ;; This is for multiscreen support
+    (require 'exwm-randr)
+
+    ;; This defines a function to refresh the workspaces position and xrandr
+    (defun exwm/refresh-monitors ()
+      (interactive)
+      (setq exwm-randr-workspace-monitor-plist (build-exwm-monitors))
+
+      ;; Set the wallpaper after changing the resolution
+      (efs/set-wallpaper)
+   
+      ;; Start the Polybar panel
+      (panel/start))
+
+    (add-hook 'exwm-randr-screen-change-hook 'exwm/refresh-monitors)
+    (exwm/refresh-monitors)
+    (exwm-randr-enable))   
+
 
 #+end_src
 
