@@ -256,7 +256,7 @@
   (setq exwm-workspace-warp-cursor t)
 
   ;; These keys should always pass through to Emacs
-  (add-to-list 'exwm-input-prefix-keys ?\s-\s)
+  (add-to-list 'exwm-input-prefix-keys ?\s-d)
 
   ;; Ctrl+Q will enable the next key to be sent directly
   (define-key exwm-mode-map [?\s-,] 'exwm-input-send-next-key)
@@ -270,7 +270,7 @@
           ([?\s-R] . exwm-input-release-keyboard)
 
           ;; refresh monitors
-          ([?\s-D] . refresh-monitors)
+          ([?\s-M] . refresh-monitors)
 
           ([?\s-=] . balance-windows)
           ([?\s-+] . zoom)
