@@ -1,3 +1,12 @@
 *~
 *#
 EXWM.desktop
+/emacs/.emacs.d/.cache/
+/emacs/.emacs.d/.dap-breakpoints
+/emacs/.emacs.d/.extension/
+/emacs/.emacs.d/.lsp-session-v1
+/emacs/.emacs.d/elpa/
+/emacs/.emacs.d/projectile-bookmarks.eld
+/emacs/.emacs.d/quelpa/
+/emacs/.emacs.d/transient/
+/emacs/.emacs.d/url/
