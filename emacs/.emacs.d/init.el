@@ -601,9 +601,10 @@
 
  (add-hook 'yaml-mode-hook 'highlight-indent-guides-mode)
 
-(use-package json-mode :quelpa)
-
-(add-hook 'json-mode-hook 'highlight-indent-guides-mode)
+(use-package json-mode
+  :quelpa
+  :config
+  (add-hook 'json-mode-hook 'highlight-indent-guides-mode))
 
 (use-package company
   :quelpa

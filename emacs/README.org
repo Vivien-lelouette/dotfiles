@@ -902,9 +902,10 @@ Requires you to run: M-x lsp-install-server RET bash RET.
 ** Json
 #+begin_src emacs-lisp
 
- (use-package json-mode :quelpa)
-
- (add-hook 'json-mode-hook 'highlight-indent-guides-mode)
+  (use-package json-mode
+    :quelpa
+    :config
+    (add-hook 'json-mode-hook 'highlight-indent-guides-mode))
 
 #+end_src
 
