@@ -1,3 +1,4 @@
+mkdir -p ~/.emacs.d/exwm/
 echo "[Desktop Entry]
   Name=EXWM
   Comment=Emacs Window Manager

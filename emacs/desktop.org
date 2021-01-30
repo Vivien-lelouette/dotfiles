@@ -89,6 +89,7 @@ This file is used by your "login manager" (GDM, LightDM, etc) to display EXWM as
 
 #+begin_src shell :tangle .scripts/emacs/exwm/init-ubuntu.sh :mkdirp yes
 
+  mkdir -p ~/.emacs.d/exwm/
   echo "[Desktop Entry]
     Name=EXWM
     Comment=Emacs Window Manager
