@@ -127,8 +127,9 @@
     "t"  '(:ignore t :which-key "toggles")
     "tt" '(counsel-load-theme :which-key "choose theme")))
 
-(use-package undo-fu
-  :straight (undo-fu :type git :host gitlab :repo "ideasman42/emacs-undo-fu"))
+(use-package undo-tree
+  :config
+  (global-undo-tree-mode 1))
 
 (use-package evil
 
@@ -148,7 +149,7 @@
 
   (evil-set-initial-state 'messages-buffer-mode 'normal)
   (evil-set-initial-state 'dashboard-mode 'normal)
-  (evil-set-undo-system 'undo-fu))
+  (evil-set-undo-system 'undo-tree))
 
 (use-package evil-collection
   :after evil
@@ -158,12 +159,10 @@
 (use-package treemacs-evil)
 
 (use-package evil-multiedit
-
  :config
  (evil-multiedit-default-keybinds))
 
 (use-package evil-surround
- 
   :config
   (global-evil-surround-mode 1))
 
@@ -232,6 +231,8 @@
     "O" #'ace-swap-window)
   )
 
+(use-package ace-jump-mode)
+
 (defun efs/treemacs-set-fringe ()
   (setq left-fringe-width 0)
   (setq right-fringe-width 0))
@@ -255,6 +256,14 @@
   (setq yascroll:delay-to-hide nil)
   ;; Don't hide scrollbar when editing
   (defadvice yascroll:before-change (around always-show-bar activate) ()))
+
+(use-package volatile-highlights)
+
+(use-package highlight-parentheses
+  :config
+  (global-highlight-parentheses-mode 1))
+
+(use-package focus)
 
 (use-package counsel
   :bind (("M-x" . counsel-M-x)
@@ -514,6 +523,9 @@
 
 (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
 
+(use-package rainbow-mode
+  :straight (rainbow-mode :type git :host github :repo "emacsmirror/rainbow-mode"))
+
 (defun efs/lsp-mode-setup ()
    (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
    (lsp-headerline-breadcrumb-mode)
@@ -567,7 +579,9 @@
         ("<tab>" . company-indent-or-complete-common))
   :custom
   (company-minimum-prefix-length 1)
-  (company-idle-delay 0.0))
+  (company-idle-delay 0.0)
+  :config
+  (global-company-mode 1))
 
 (use-package company-box
   :hook (company-mode . company-box-mode))
@@ -662,6 +676,11 @@
     (keys/leader-keys
       "d"  'docker
       "D"  'docker-compose))
+
+(use-package kubernetes)
+
+(use-package kubernetes-evil
+  :after kubernetes)
 
 (use-package vterm
   :config

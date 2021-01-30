@@ -203,8 +203,9 @@ The snippets below will install emacs from their git master:
 ** Undo tree
 #+begin_src emacs-lisp
 
-  (use-package undo-fu
-    :straight (undo-fu :type git :host gitlab :repo "ideasman42/emacs-undo-fu"))
+  (use-package undo-tree
+    :config
+    (global-undo-tree-mode 1))
 
 #+end_src
 
@@ -229,7 +230,7 @@ The snippets below will install emacs from their git master:
 
     (evil-set-initial-state 'messages-buffer-mode 'normal)
     (evil-set-initial-state 'dashboard-mode 'normal)
-    (evil-set-undo-system 'undo-fu))
+    (evil-set-undo-system 'undo-tree))
 
   (use-package evil-collection
     :after evil
@@ -244,7 +245,6 @@ The snippets below will install emacs from their git master:
 #+begin_src emacs-lisp
 
   (use-package evil-multiedit
-  
    :config
    (evil-multiedit-default-keybinds))
 
@@ -256,7 +256,6 @@ The snippets below will install emacs from their git master:
 #+begin_src emacs-lisp
 
 (use-package evil-surround
- 
   :config
   (global-evil-surround-mode 1))
 
@@ -376,6 +375,13 @@ The first time you load your configuration on a new machine, you'll need to run 
 
 #+end_src
 
+** Ace-jump
+#+begin_src emacs-lisp
+
+  (use-package ace-jump-mode)
+
+#+end_src
+
 ** Treemacs
 #+begin_src emacs-lisp
 
@@ -407,6 +413,29 @@ The first time you load your configuration on a new machine, you'll need to run 
     (setq yascroll:delay-to-hide nil)
     ;; Don't hide scrollbar when editing
     (defadvice yascroll:before-change (around always-show-bar activate) ()))
+
+#+end_src
+
+** Volatile highlights
+#+begin_src emacs-lisp
+
+  (use-package volatile-highlights)
+
+#+end_src
+
+** Highlight parentheses
+#+begin_src emacs-lisp
+
+  (use-package highlight-parentheses
+    :config
+    (global-highlight-parentheses-mode 1))
+
+#+end_src
+
+** Highlight parentheses
+#+begin_src emacs-lisp
+
+  (use-package focus)
 
 #+end_src
 
@@ -745,6 +774,14 @@ NOTE: Make sure to configure a GitHub token before using this package!
 
 #+end_src
 
+** Rainbow colors
+#+begin_src emacs-lisp
+
+  (use-package rainbow-mode
+    :straight (rainbow-mode :type git :host github :repo "emacsmirror/rainbow-mode"))
+
+#+end_src
+
 ** Lsp
 *** lsp-mode
 
@@ -858,7 +895,9 @@ Requires you to run: M-x lsp-install-server RET bash RET.
           ("<tab>" . company-indent-or-complete-common))
     :custom
     (company-minimum-prefix-length 1)
-    (company-idle-delay 0.0))
+    (company-idle-delay 0.0)
+    :config
+    (global-company-mode 1))
 
   (use-package company-box
     :hook (company-mode . company-box-mode))
@@ -927,6 +966,7 @@ Requires you to run: M-x lsp-install-server RET bash RET.
 
 #+end_src
 
+* Devops
 ** Docker
 *** Dockerfile
 #+begin_src emacs-lisp
@@ -995,6 +1035,16 @@ Requires you to run: M-x lsp-install-server RET bash RET.
     (keys/leader-keys
       "d"  'docker
       "D"  'docker-compose))
+
+#+end_src
+
+** Kubernetes
+#+begin_src emacs-lisp
+
+  (use-package kubernetes)
+
+  (use-package kubernetes-evil
+    :after kubernetes)
 
 #+end_src
 
