@@ -108,7 +108,6 @@ We use the [[https://github.com/DamienCassou/desktop-environment][desktop-enviro
 #+begin_src emacs-lisp
 
   (use-package desktop-environment
-    :quelpa
     :after exwm
     :config
     (setq desktop-environment-screenshot-directory "~/Images/")
@@ -457,7 +456,6 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
     (setq right-fringe-width 10))
 
   (use-package exwm
-    :quelpa
     :config
     (keys/keyboard-setup)
 

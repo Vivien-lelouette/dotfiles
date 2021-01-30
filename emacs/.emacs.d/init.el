@@ -99,29 +99,24 @@
 (unless package-archive-contents
   (package-refresh-contents))
 
-(unless (package-installed-p 'quelpa)
-  (with-temp-buffer
-    (url-insert-file-contents "https://raw.githubusercontent.com/quelpa/quelpa/master/quelpa.el")
-    (eval-buffer)
-    (quelpa-self-upgrade)))
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+      (bootstrap-version 5))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
 
-  (quelpa
-   '(quelpa-use-package
-     :fetcher git
-     :url "https://github.com/quelpa/quelpa-use-package.git"))
+(straight-use-package 'use-package)
 
-  (require 'quelpa-use-package)
-  (setq use-package-always-ensure t)
-  (setq use-package-ensure-function 'quelpa)
-
-
-  (column-number-mode)
-  (global-display-line-numbers-mode t)
-
-  (use-package command-log-mode)
+(setq straight-use-package-by-default t)
 
 (use-package general
-  :quelpa
   :config
   (general-create-definer keys/leader-keys
     :keymaps '(normal insert visual emacs)
@@ -133,12 +128,10 @@
     "tt" '(counsel-load-theme :which-key "choose theme")))
 
 (use-package undo-fu
-  :quelpa (undo-fu
-    :fetcher url
-    :url "https://gitlab.com/ideasman42/emacs-undo-fu/-/raw/master/undo-fu.el"))
+  :straight (undo-fu :type git :host gitlab :repo "ideasman42/emacs-undo-fu"))
 
 (use-package evil
-  :quelpa
+
   :init
   (setq evil-want-integration t)
   (setq evil-want-keybinding nil)
@@ -162,19 +155,19 @@
   :config
   (evil-collection-init))
 
-(use-package treemacs-evil :quelpa)
+(use-package treemacs-evil)
 
 (use-package evil-multiedit
- :quelpa
+
  :config
  (evil-multiedit-default-keybinds))
 
 (use-package evil-surround
-  :quelpa
+ 
   :config
   (global-evil-surround-mode 1))
 
-(use-package hydra :quelpa)
+(use-package hydra)
 
 (defhydra hydra-text-scale (:timeout 4)
   "scale text"
@@ -185,39 +178,39 @@
 (keys/leader-keys
   "ts" '(hydra-text-scale/body :which-key "scale text"))
 
-(use-package all-the-icons :quelpa)
+(use-package all-the-icons)
 (use-package all-the-icons-dired
-  :quelpa
+
   :config
   (add-hook 'dired-mode-hook 'all-the-icons-dired-mode))
-(use-package all-the-icons-ibuffer :quelpa)
+(use-package all-the-icons-ibuffer)
 
-(use-package ibuffer-vc :quelpa)
+(use-package ibuffer-vc)
 
 (use-package doom-themes
-  :quelpa
+
   :init (load-theme 'doom-dark+ t)
   :config
   (setq doom-themes-treemacs-theme "doom-colors"))
 
 (use-package doom-modeline
-  :quelpa
+
   :init (doom-modeline-mode 1)
   :custom ((doom-modeline-height 22)))
 
 (use-package rainbow-delimiters
-  :quelpa
+
   :hook (prog-mode . rainbow-delimiters-mode))
 
 (use-package which-key
-  :quelpa
+
   :init (which-key-mode)
   :diminish which-key-mode
   :config
   (setq which-key-idle-delay 1))
 
 (use-package helpful
-  :quelpa
+
   :custom
   (counsel-describe-function-function #'helpful-callable)
   (counsel-describe-variable-function #'helpful-variable)
@@ -228,7 +221,7 @@
   ([remap describe-key] . helpful-key))
 
 (use-package ace-window
-  :quelpa
+
   :config
   (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
   (setq aw-background nil)
@@ -244,19 +237,19 @@
   (setq right-fringe-width 0))
 
 (use-package treemacs
-  :quelpa
+
   :config
   (add-hook 'treemacs-mode-hook #'efs/treemacs-set-fringe))
 
 (use-package treemacs-all-the-icons
-  :quelpa
+
   :config
   (treemacs-load-theme "all-the-icons"))
 
 (efs/treemacs-set-fringe)
 
 (use-package yascroll
-  :quelpa
+
   :config
   (global-yascroll-bar-mode 1)
   (setq yascroll:delay-to-hide nil)
@@ -264,7 +257,7 @@
   (defadvice yascroll:before-change (around always-show-bar activate) ()))
 
 (use-package ivy
-  :quelpa
+
   :diminish
   :bind (("C-s" . swiper)
          :map ivy-minibuffer-map
@@ -284,12 +277,12 @@
   (setq ivy-initial-inputs-alist nil))
 
 (use-package ivy-rich
-  :quelpa
+
   :init
   (ivy-rich-mode 1))
 
 (use-package counsel
-  :quelpa
+
   :bind (("M-x" . counsel-M-x)
          ("C-x b" . counsel-ibuffer)
          ("C-x C-f" . counsel-find-file)
@@ -331,7 +324,7 @@
   (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch))
 
 (use-package org
-  :quelpa
+
   :hook (org-mode . efs/org-mode-setup)
   :config
   (require 'org-tempo)
@@ -456,7 +449,6 @@
   (efs/org-font-setup))
 
 (use-package org-bullets
-  :quelpa
   :after org
   :hook (org-mode . org-bullets-mode)
   :custom
@@ -486,7 +478,6 @@
 (setq org-confirm-babel-evaluate nil)
 
 (use-package projectile
-  :quelpa
   :diminish projectile-mode
   :config (projectile-mode)
   :custom ((projectile-completion-system 'ivy))
@@ -499,15 +490,13 @@
   (setq projectile-switch-project-action #'projectile-dired))
 
 (use-package counsel-projectile
-  :quelpa
   :config (counsel-projectile-mode))
 
-(use-package ibuffer-projectile :quelpa)
+(use-package ibuffer-projectile)
 
-(use-package flycheck :quelpa)
+(use-package flycheck)
 
 (use-package magit
-  :quelpa
   :custom
   (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
   :config
@@ -517,13 +506,11 @@
 ;; (use-package forge)
 
 (use-package evil-nerd-commenter
-  :quelpa
   :bind ("M-/" . evilnc-comment-or-uncomment-lines))
 
-(use-package dap-mode :quelpa)
+(use-package dap-mode)
 
 (use-package highlight-indent-guides
-  :quelpa
   :custom
   (highlight-indent-guides-method 'character)
   (highlight-indent-guides-responsive 'top))
@@ -537,7 +524,6 @@
    (lsp-enable-which-key-integration)))
 
  (use-package lsp-mode
-   :quelpa
    :init
    (setq lsp-keymap-prefix "C-SPC")  ;; Or 'C-l', 's-l'
    :commands (lsp lsp-deferred)
@@ -549,19 +535,16 @@
 (add-hook 'lsp-mode-hook 'highlight-indent-guides-mode)
 
 (use-package lsp-ui
-  :quelpa
   :hook (lsp-mode . lsp-ui-mode)
   :config
   (setq lsp-ui-doc-position 'at-point))
 
 (use-package lsp-treemacs
-  :quelpa
   :after lsp)
 
-(use-package lsp-ivy :quelpa)
+(use-package lsp-ivy)
 
 (use-package typescript-mode
-  :quelpa
   :mode ("\\.ts\\'")
   :hook (typescript-mode . lsp-deferred)
   :config
@@ -579,7 +562,6 @@
 (add-hook 'sh-mode-hook 'lsp-deferred)
 
 (use-package company
-  :quelpa
   :after lsp-mode
   :hook (lsp-mode . company-mode)
   :bind (:map company-active-map
@@ -591,23 +573,18 @@
   (company-idle-delay 0.0))
 
 (use-package company-box
-  :quelpa
   :hook (company-mode . company-box-mode))
 
 (use-package yaml-mode
-   :quelpa (yaml-mode
-     :fetcher url
-     :url "https://raw.githubusercontent.com/yoshiki/yaml-mode/master/yaml-mode.el"))
-
- (add-hook 'yaml-mode-hook 'highlight-indent-guides-mode)
+   :straight (yaml-mode :type git :host github :repo "yoshiki/yaml-mode")
+   :config
+   (add-hook 'yaml-mode-hook 'highlight-indent-guides-mode))
 
 (use-package json-mode
-  :quelpa
   :config
   (add-hook 'json-mode-hook 'highlight-indent-guides-mode))
 
 (use-package company
-  :quelpa
   :after lsp-mode
   :hook (lsp-mode . company-mode)
   :custom
@@ -617,30 +594,26 @@
   (company-tng-configure-default))
 
 (use-package company-box
-  :quelpa
   :hook (company-mode . company-box-mode))
 
 (use-package restclient
-  :quelpa (restclient
-    :fetcher url
-    :url "https://raw.githubusercontent.com/pashky/restclient.el/master/restclient.el")
+  :straight (restclient :type git :host github :repo "pashky/restclient.el")
   :hook (restclient-mode . company-mode))
 
 (add-to-list 'auto-mode-alist '("\\.http\\'" . restclient-mode))
 
-(use-package company-restclient :quelpa)
+(use-package company-restclient)
 
 (add-to-list 'company-backends 'company-restclient)
 
 (use-package adoc-mode
-  :quelpa
   :hook (adoc-mode . company-mode))
 
 (add-to-list 'auto-mode-alist '("\\.adoc\\'" . adoc-mode))
 
-(use-package dockerfile-mode :quelpa)
+(use-package dockerfile-mode)
 
-(use-package docker-compose-mode :quelpa)
+(use-package docker-compose-mode)
 
 (defun docker/set-format ()
     (interactive)
@@ -652,7 +625,6 @@
   (tablist-minor-mode))
 
   (use-package docker
-    :quelpa
     :config
     (defun docker-container-parse (line)
       "Convert a LINE from \"docker container ls\" to a `tabulated-list-entries' entry."
@@ -695,12 +667,10 @@
       "D"  'docker-compose))
 
 (use-package vterm
-  :quelpa
   :config
   (setq vterm-shell "/bin/zsh"))
 
 (use-package term
-  :quelpa
   :config
   (setq explicit-shell-file-name "zsh")
 
@@ -713,34 +683,17 @@
   (setq term-prompt-regexp "^[^#$%>\n]*[#$%>] *"))
 
 (use-package eterm-256color
-  :quelpa
   :hook (term-mode . eterm-256color-mode))
 
-(use-package windmove :quelpa)
+(use-package windmove)
 
 ;; (use-package framemove
-;;   :quelpa (framemove
-;;     :fetcher url
-;;     :url "https://raw.githubusercontent.com/emacsmirror/emacswiki.org/master/framemove.el")
+;;   :straight (framemove :type git :host github :repo "emacsmirror/framemove")
 ;;   :config
 ;;   (setq framemove-hook-into-windmove t))
 
-(use-package windsize :quelpa)
+(use-package windsize)
 
 (use-package zoom
-  :quelpa
   :config
   (setq zoom-size '(0.618 . 0.618)))
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(package-selected-packages
-   '(zoom yascroll xah-css-mode windsize which-key vterm-toggle undo-fu typescript-mode treemacs-evil treemacs-all-the-icons rainbow-delimiters quelpa-use-package org-bullets magit lsp-ui lsp-ivy ivy-rich ibuffer-vc ibuffer-projectile highlight-indent-guides helpful general framemove flycheck exwm evil-surround evil-nerd-commenter evil-multiedit evil-collection eterm-256color doom-themes doom-modeline dockerfile-mode docker-compose-mode docker desktop-environment dap-mode counsel-projectile company-restclient company-box command-log-mode all-the-icons-ibuffer all-the-icons-dired adoc-mode)))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )

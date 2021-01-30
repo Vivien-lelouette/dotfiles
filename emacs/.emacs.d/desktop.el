@@ -51,7 +51,6 @@
   (shell/async-command-no-output "feh --bg-scale ~/.wallpaper --bg-scale ~/.wallpaper --bg-scale ~/.wallpaper --bg-scale ~/.wallpaper --bg-scale ~/.wallpaper"))
 
 (use-package desktop-environment
-  :quelpa
   :after exwm
   :config
   (setq desktop-environment-screenshot-directory "~/Images/")
@@ -186,7 +185,6 @@
   (setq right-fringe-width 10))
 
 (use-package exwm
-  :quelpa
   :config
   (keys/keyboard-setup)
 
