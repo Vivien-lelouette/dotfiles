@@ -256,8 +256,17 @@
   ;; Don't hide scrollbar when editing
   (defadvice yascroll:before-change (around always-show-bar activate) ()))
 
-(use-package ivy
+(use-package counsel
+  :bind (("M-x" . counsel-M-x)
+         ("C-x b" . counsel-ibuffer)
+         ("C-x C-f" . counsel-find-file)
+         :map minibuffer-local-map
+         ("C-r" . 'counsel-minibuffer-history))
+  :config
+  (keys/leader-keys
+    "y" #'counsel-yank-pop))
 
+(use-package ivy
   :diminish
   :bind (("C-s" . swiper)
          :map ivy-minibuffer-map
@@ -277,20 +286,8 @@
   (setq ivy-initial-inputs-alist nil))
 
 (use-package ivy-rich
-
   :init
   (ivy-rich-mode 1))
-
-(use-package counsel
-
-  :bind (("M-x" . counsel-M-x)
-         ("C-x b" . counsel-ibuffer)
-         ("C-x C-f" . counsel-find-file)
-         :map minibuffer-local-map
-         ("C-r" . 'counsel-minibuffer-history))
-  :config
-  (keys/leader-keys
-    "y" #'counsel-yank-pop))
 
 (defun efs/org-mode-setup ()
   (org-indent-mode)
