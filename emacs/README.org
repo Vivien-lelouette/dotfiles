@@ -481,6 +481,38 @@ The first time you load your configuration on a new machine, you'll need to run 
     :init
     (ivy-rich-mode 1))
 
+  (use-package wgrep)
+
+#+end_src
+
+** Company
+#+begin_src emacs-lisp
+
+  (use-package company
+    :after lsp-mode
+    :hook (lsp-mode . company-mode)
+    :bind (:map company-active-map
+                ("<tab>" . company-complete-selection))
+    (:map lsp-mode-map
+          ("<tab>" . company-indent-or-complete-common))
+    :custom
+    (company-minimum-prefix-length 1)
+    (company-idle-delay 0.0)
+    :config
+    (global-company-mode 1))
+
+  (use-package company-box
+    :hook (company-mode . company-box-mode))
+
+#+end_src
+
+** Orderless
+#+begin_src emacs-lisp
+
+  (use-package orderless
+    :config
+    (setq ivy-re-builders-alist '((t . orderless-ivy-re-builder))))
+
 #+end_src
 
 * File explorer
@@ -895,27 +927,6 @@ Requires you to run: M-x lsp-install-server RET bash RET.
 
 #+end_src
 
-** Company
-#+begin_src emacs-lisp
-
-  (use-package company
-    :after lsp-mode
-    :hook (lsp-mode . company-mode)
-    :bind (:map company-active-map
-                ("<tab>" . company-complete-selection))
-    (:map lsp-mode-map
-          ("<tab>" . company-indent-or-complete-common))
-    :custom
-    (company-minimum-prefix-length 1)
-    (company-idle-delay 0.0)
-    :config
-    (global-company-mode 1))
-
-  (use-package company-box
-    :hook (company-mode . company-box-mode))
-
-#+end_src
-
 ** Yaml
 #+begin_src emacs-lisp
 
@@ -933,23 +944,6 @@ Requires you to run: M-x lsp-install-server RET bash RET.
   (use-package json-mode
     :config
     (add-hook 'json-mode-hook 'highlight-indent-guides-mode))
-
-#+end_src
-
-** Company
-#+begin_src emacs-lisp
-
-  (use-package company
-    :after lsp-mode
-    :hook (lsp-mode . company-mode)
-    :custom
-    (company-minimum-prefix-length 1)
-    (company-idle-delay 0.0)
-    :config
-    (company-tng-configure-default))
-
-  (use-package company-box
-    :hook (company-mode . company-box-mode))
 
 #+end_src
 

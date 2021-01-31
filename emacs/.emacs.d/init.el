@@ -298,6 +298,28 @@
   :init
   (ivy-rich-mode 1))
 
+(use-package wgrep)
+
+(use-package company
+  :after lsp-mode
+  :hook (lsp-mode . company-mode)
+  :bind (:map company-active-map
+              ("<tab>" . company-complete-selection))
+  (:map lsp-mode-map
+        ("<tab>" . company-indent-or-complete-common))
+  :custom
+  (company-minimum-prefix-length 1)
+  (company-idle-delay 0.0)
+  :config
+  (global-company-mode 1))
+
+(use-package company-box
+  :hook (company-mode . company-box-mode))
+
+(use-package orderless
+  :config
+  (setq ivy-re-builders-alist '((t . orderless-ivy-re-builder))))
+
 (use-package image-dired)
 
 (use-package ranger)
@@ -574,22 +596,6 @@
 
 (add-hook 'sh-mode-hook 'lsp-deferred)
 
-(use-package company
-  :after lsp-mode
-  :hook (lsp-mode . company-mode)
-  :bind (:map company-active-map
-              ("<tab>" . company-complete-selection))
-  (:map lsp-mode-map
-        ("<tab>" . company-indent-or-complete-common))
-  :custom
-  (company-minimum-prefix-length 1)
-  (company-idle-delay 0.0)
-  :config
-  (global-company-mode 1))
-
-(use-package company-box
-  :hook (company-mode . company-box-mode))
-
 (use-package yaml-mode
    :straight (yaml-mode :type git :host github :repo "yoshiki/yaml-mode")
    :config
@@ -598,18 +604,6 @@
 (use-package json-mode
   :config
   (add-hook 'json-mode-hook 'highlight-indent-guides-mode))
-
-(use-package company
-  :after lsp-mode
-  :hook (lsp-mode . company-mode)
-  :custom
-  (company-minimum-prefix-length 1)
-  (company-idle-delay 0.0)
-  :config
-  (company-tng-configure-default))
-
-(use-package company-box
-  :hook (company-mode . company-box-mode))
 
 (use-package restclient
   :straight (restclient :type git :host github :repo "pashky/restclient.el")
