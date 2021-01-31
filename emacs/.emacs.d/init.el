@@ -298,6 +298,10 @@
   :init
   (ivy-rich-mode 1))
 
+(use-package image-dired)
+
+(use-package ranger)
+
 (defun efs/org-mode-setup ()
   (org-indent-mode)
   (variable-pitch-mode 1)

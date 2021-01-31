@@ -483,6 +483,18 @@ The first time you load your configuration on a new machine, you'll need to run 
 
 #+end_src
 
+* File explorer
+** Ranger
+Provide a better way of moving arround than plain dired. Files are previewed in emacs, and folder are previewed in a dired buffer.
+
+#+begin_src emacs-lisp
+
+  (use-package image-dired)
+
+  (use-package ranger)
+
+#+end_src
+
 * Org mode
 ** Org mode configuration
 
