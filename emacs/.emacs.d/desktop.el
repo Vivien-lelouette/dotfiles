@@ -44,6 +44,17 @@
 (defun build-exwm-monitors ()
   (build-exwm-monitors-aux 1 (order-monitors)))
 
+;; This defines a function to refresh the workspaces position and xrandr
+(defun exwm/refresh-monitors ()
+  (interactive)
+  (setq exwm-randr-workspace-monitor-plist (build-exwm-monitors))
+
+  ;; Set the wallpaper after changing the resolution
+  (efs/set-wallpaper)
+
+  ;; Start the Polybar panel
+  (panel/start))
+
 (defun efs/set-wallpaper ()
   (interactive)
   (set-frame-parameter (selected-frame) 'alpha '(93 . 93))
@@ -166,6 +177,7 @@
                                    (windmove-down))))
 
 (defun exwm/exwm-init-hook ()
+  (exwm/refresh-monitors)
   ;; Launch apps that will run in the background
   (shell/run-in-background "nm-applet")
   (shell/run-in-background "pasystray")
@@ -280,6 +292,9 @@
 
           ([?\s-t] . treemacs)
 
+          ([?\s-e] . ranger)
+          ([?\s-E] . deer)
+
           ([?\s-W] . delete-window)
           ([?\s-X] . kill-current-buffer)
           ([?\s-Q] . (lambda () (interactive) (kill-current-buffer) (delete-window)))
@@ -319,21 +334,8 @@
   (exwm-input-set-key (kbd "C-s-k") #'windsize-up)
 
   (exwm-enable)
-
+  (exwm/refresh-monitors)
   ;; This is for multiscreen support
   (require 'exwm-randr)
-
-  ;; This defines a function to refresh the workspaces position and xrandr
-  (defun exwm/refresh-monitors ()
-    (interactive)
-    (setq exwm-randr-workspace-monitor-plist (build-exwm-monitors))
-
-    ;; Set the wallpaper after changing the resolution
-    (efs/set-wallpaper)
-
-    ;; Start the Polybar panel
-    (panel/start))
-
   (add-hook 'exwm-randr-screen-change-hook 'exwm/refresh-monitors)
-  (exwm/refresh-monitors)
   (exwm-randr-enable))
