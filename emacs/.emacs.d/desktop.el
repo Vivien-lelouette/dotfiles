@@ -101,17 +101,25 @@
   (start-process-shell-command "qwerty" nil "setxkbmap -option caps:escape us,us_intl '' compose:ralt grp:rctrl_rshift_toggle"))
 
 ;; Make sure the server is started (better to do this in your main Emacs config!)
-(server-start)
+    (server-start)
 
-(defun panel/kill ()
-  (interactive)
-  (shell/async-command-no-output "pkill -f polybar"))
+    (defun panel/kill ()
+      (interactive)
+      (shell/async-command-no-output "pkill -f polybar"))
 
-(defun panel/start ()
-  (interactive)
-  (panel/kill)
-  (cl-loop for (key . monitor) in (xrandr-active-monitors)
-    collect (shell/async-command-no-output (concat "MONITOR=" (car monitor) " polybar -c ~/.config/polybar/config.txt --reload panel"))))
+    (defun panel/start ()
+      (interactive)
+      (panel/kill)
+      (cl-loop for (key . monitor) in (xrandr-active-monitors)
+        collect (shell/async-command-no-output (concat "MONITOR=" (car monitor) " polybar -c ~/.config/polybar/config.txt --reload panel"))))
+
+    ;; Useful to send information to polybar if needed
+    (defun panel/send-polybar-hook (module-name hook-index)
+      (start-process-shell-command "polybar-msg" nil (format "polybar-msg hook %s %s" module-name hook-index)))
+
+    (defun panel/polybar-battery ()
+(battery-format battery-mode-line-format
+				    (funcall battery-status-function)))
 
 (defcustom my-skippable-buffer-regexp
   (rx bos (or (seq "*" (zero-or-more anything))
