@@ -483,7 +483,14 @@ The first time you load your configuration on a new machine, you'll need to run 
     :init
     (ivy-rich-mode 1))
 
-  (use-package wgrep)
+#+end_src
+
+** Wgrep
+#+begin_src emacs-lisp
+
+  (use-package wgrep
+    :config
+    (setq wgrep-auto-save-buffer t))
 
 #+end_src
 

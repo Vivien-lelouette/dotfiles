@@ -300,18 +300,17 @@
   :init
   (ivy-rich-mode 1))
 
-(use-package wgrep)
+(use-package wgrep
+  :config
+  (setq wgrep-auto-save-buffer t))
 
 (use-package company
-  :after lsp-mode
-  :hook (lsp-mode . company-mode)
   :bind (:map company-active-map
-              ("<tab>" . company-complete-selection))
-  (:map lsp-mode-map
-        ("<tab>" . company-indent-or-complete-common))
+              ("<tab>" . company-select-next)
+              ("<backtab>" . company-select-previous))
   :custom
   (company-minimum-prefix-length 1)
-  (company-idle-delay 0.0)
+  (company-idle-delay 0.2)
   :config
   (global-company-mode 1))
 
