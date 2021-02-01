@@ -520,7 +520,14 @@ The first time you load your configuration on a new machine, you'll need to run 
 
 #+end_src
 
-** Orderless
+** Amx
+#+begin_src emacs-lisp
+
+  (use-package amx)
+
+#+end_src
+
+** Avy
 #+begin_src emacs-lisp
 
   (use-package avy

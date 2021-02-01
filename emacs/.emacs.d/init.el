@@ -320,6 +320,8 @@
   :config
   (setq ivy-re-builders-alist '((t . orderless-ivy-re-builder))))
 
+(use-package amx)
+
 (use-package avy
   :config
   (keys/leader-keys
