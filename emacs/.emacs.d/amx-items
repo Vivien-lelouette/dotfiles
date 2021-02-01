@@ -1,0 +1,18 @@
+
+;; ----- amx-history -----
+(
+ evil-quit-all
+ docker/dcup
+ magit
+ cd
+ 5x5
+ amx
+ arp
+)
+
+;; ----- amx-data -----
+(
+ (magit . 2)
+ (evil-quit-all . 2)
+ (docker/dcup . 1)
+)
