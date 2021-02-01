@@ -352,4 +352,25 @@
   ;; This is for multiscreen support
   (require 'exwm-randr)
   (add-hook 'exwm-randr-screen-change-hook 'exwm/refresh-monitors)
-  (exwm-randr-enable))
+  (exwm-randr-enable)
+
+  (defun app/qutebrowser ()
+    (interactive)
+    (shell/async-command-no-output "qutebrowser"))
+
+  (defun app/teams ()
+    (interactive)
+    (shell/async-command-no-output "teams"))
+
+  (defun app/arandr ()
+    (interactive)
+    (shell/async-command-no-output "arandr"))
+
+  (keys/leader-keys
+    "a"  '(:ignore t :which-key "applications")
+    "aa" '(app/qutebrowser :which-key " Qutebrowser")
+    "at" '(app/teams :which-key " Teams")
+    "s"  '(:ignore t :which-key "Settings")
+    "sk" '(keys/keyboard-setup :which-key " Qwerty")
+    "sm" '(app/arandr :which-key " Monitors")
+    ))
