@@ -5,55 +5,9 @@
 (defun shell/async-command-no-output (command)
   (call-process-shell-command (concat command " &") nil 0))
 
-(defun car-string-to-number (list-two-elements)
-  (append (list (string-to-number (car list-two-elements))) (cdr list-two-elements)))
-
-(defun sort-from-car (a b)
-  (< (car a) (car b)))
-
-(defun xrandr-active-monitors ()
-  (mapcar 'car-string-to-number
-          (remove nil
-                  (mapcar 'split-string
-                          (split-string
-                           (shell-command-to-string "xrandr --listactivemonitors | grep / | cut -d '/' -f3 | sed -e 's/^[0-9]\\++//g' -e 's/+[0-9]\\+//g'")
-                           "\n")))))
-
-(defun order-monitors ()    (apply #'append
-         (mapcar 'cdr
-                 (sort
-                  (xrandr-active-monitors)
-                  'sort-from-car))))
-
-(defun build-workspace-monitor (monitor current_workspace max_workspace)
-  (if (> current_workspace max_workspace)
-      '()
-    (append (list current_workspace monitor) (build-workspace-monitor monitor (+ current_workspace 1) max_workspace))))
-
-(defun build-exwm-monitors-aux (current_workspace monitor-list)
-  (cond
-   ((equal (length monitor-list) 1)
-    (list 9 (car monitor-list) 0 (car monitor-list))
-    )
-   ((equal (length monitor-list) 2)
-    (append (build-workspace-monitor (car monitor-list) current_workspace 8) (build-exwm-monitors-aux (+ current_workspace 2) (cdr monitor-list)))
-    )
-   (t
-    (append (build-workspace-monitor (car monitor-list) current_workspace (+ current_workspace 1)) (build-exwm-monitors-aux (+ current_workspace 2) (cdr monitor-list))))))
-
-(defun build-exwm-monitors ()
-  (build-exwm-monitors-aux 1 (order-monitors)))
-
-;; This defines a function to refresh the workspaces position and xrandr
-(defun exwm/refresh-monitors ()
+(defun exwm/autorandr-refresh ()
   (interactive)
-  (setq exwm-randr-workspace-monitor-plist (build-exwm-monitors))
-
-  ;; Set the wallpaper after changing the resolution
-  (efs/set-wallpaper)
-
-  ;; Start the Polybar panel
-  (panel/start))
+  (shell/async-command-no-output "autorandr --change --force"))
 
 (defun efs/set-wallpaper ()
   (interactive)
@@ -121,6 +75,57 @@
 (defun panel/polybar-battery ()
   (battery-format battery-mode-line-format
     (funcall battery-status-function)))
+
+(defun car-string-to-number (list-two-elements)
+  (append (list (string-to-number (car list-two-elements))) (cdr list-two-elements)))
+
+(defun sort-from-car (a b)
+  (< (car a) (car b)))
+
+(defun xrandr-active-monitors ()
+  (mapcar 'car-string-to-number
+          (remove nil
+                  (mapcar 'split-string
+                          (split-string
+                           (shell-command-to-string "xrandr --listactivemonitors | grep / | cut -d '/' -f3 | sed -e 's/^[0-9]\\++//g' -e 's/+[0-9]\\+//g'")
+                           "\n")))))
+
+(defun order-monitors ()    (apply #'append
+         (mapcar 'cdr
+                 (sort
+                  (xrandr-active-monitors)
+                  'sort-from-car))))
+
+(defun build-workspace-monitor (monitor current_workspace max_workspace)
+  (if (> current_workspace max_workspace)
+      '()
+    (append (list current_workspace monitor) (build-workspace-monitor monitor (+ current_workspace 1) max_workspace))))
+
+(defun build-exwm-monitors-aux (current_workspace monitor-list)
+  (cond
+   ((equal (length monitor-list) 1)
+    (list 9 (car monitor-list) 0 (car monitor-list))
+    )
+   ((equal (length monitor-list) 2)
+    (append (build-workspace-monitor (car monitor-list) current_workspace 8) (build-exwm-monitors-aux (+ current_workspace 2) (cdr monitor-list)))
+    )
+   (t
+    (append (build-workspace-monitor (car monitor-list) current_workspace (+ current_workspace 1)) (build-exwm-monitors-aux (+ current_workspace 2) (cdr monitor-list))))))
+
+(defun build-exwm-monitors ()
+  (build-exwm-monitors-aux 1 (order-monitors)))
+
+;; This defines a function to refresh the workspaces position and xrandr
+(defun exwm/refresh-monitors ()
+  (interactive)
+  (exwm/autorandr-refresh)
+  (setq exwm-randr-workspace-monitor-plist (build-exwm-monitors))
+
+  ;; Set the wallpaper after changing the resolution
+  (efs/set-wallpaper)
+
+  ;; Start the Polybar panel
+  (panel/start))
 
 (defcustom my-skippable-buffer-regexp
   (rx bos (or (seq "*" (zero-or-more anything))
