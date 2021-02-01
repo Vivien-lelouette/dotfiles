@@ -1083,9 +1083,10 @@ Requires you to run: M-x lsp-install-server RET bash RET.
 *** Config
 #+begin_src emacs-lisp
 
-  (use-package vterm
-    :config
-    (setq vterm-shell "/bin/zsh"))
+    (use-package vterm
+      :config
+      (setq vterm-shell "/bin/zsh")
+      (setq vterm-buffer-name-string "vterm: %s"))
 
 #+end_src
 
