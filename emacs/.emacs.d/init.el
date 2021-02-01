@@ -320,6 +320,11 @@
   :config
   (setq ivy-re-builders-alist '((t . orderless-ivy-re-builder))))
 
+(use-package avy
+  :config
+  (keys/leader-keys
+    "f" '(avy-goto-word-0 :which-key "Go to word")))
+
 (use-package image-dired)
 
 (use-package ranger)
@@ -532,8 +537,8 @@
   :custom
   (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
   :config
-(keys/leader-keys
-  "gg" '(magit :which-key "magit status")))
+  (keys/leader-keys
+    "gg" '(magit :which-key "magit status")))
 
 ;; (use-package forge)
 

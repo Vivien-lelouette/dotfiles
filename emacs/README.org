@@ -515,6 +515,16 @@ The first time you load your configuration on a new machine, you'll need to run 
 
 #+end_src
 
+** Orderless
+#+begin_src emacs-lisp
+
+  (use-package avy
+    :config
+    (keys/leader-keys
+      "f" '(avy-goto-word-0 :which-key "Go to word")))
+
+#+end_src
+
 * File explorer
 ** Ranger
 Provide a better way of moving arround than plain dired. Files are previewed in emacs, and folder are previewed in a dired buffer.
@@ -775,8 +785,8 @@ This snippet adds a hook to org-mode buffers so that efs/org-babel-tangle-config
     :custom
     (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
     :config
-  (keys/leader-keys
-    "gg" '(magit :which-key "magit status")))
+    (keys/leader-keys
+      "gg" '(magit :which-key "magit status")))
 
 #+end_src
 
