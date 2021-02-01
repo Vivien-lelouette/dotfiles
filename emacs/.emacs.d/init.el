@@ -46,15 +46,23 @@
   ;; Set the variable pitch face
   (set-face-attribute 'variable-pitch nil :font "Cantarell" :height font-size :weight 'regular))
 
-(defun fonts/default-size ()
+(defun fonts/small-size ()
   (interactive)
   (fonts/set-size 85))
 
+(defun fonts/normal-size ()
+    (interactive)
+    (fonts/set-size 100))
+
 (defun fonts/big-size ()
   (interactive)
-  (fonts/set-size 140))
+  (fonts/set-size 120))
 
-(fonts/default-size)
+(defun fonts/huge-size ()
+  (interactive)
+  (fonts/set-size 145))
+
+(fonts/small-size)
 
 (setq ibuffer-formats
       '((mark modified read-only locked " "
