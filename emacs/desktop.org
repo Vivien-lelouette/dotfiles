@@ -492,6 +492,21 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
     (setq left-fringe-width 10)
     (setq right-fringe-width 10))
 
+  (defun +ivy-posframe-display-exwm (str)
+    (ivy-posframe--display str
+     (lambda (info)
+       (let* ((workarea (elt exwm-workspace--workareas exwm-workspace-current-index))
+              (x (aref workarea 0))
+              (y (aref workarea 1))
+
+              (fw (aref workarea 2))
+              (fh (aref workarea 3))
+
+              (pw (plist-get info :posframe-width))
+              (ph (plist-get info :posframe-height)))
+
+         (cons (+ x (/ (- fw pw) 2)) (+ y (/ (- fh ph) 2)))))))
+
   (use-package exwm
     :config
     (keys/keyboard-setup)
@@ -636,26 +651,37 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
     (add-hook 'exwm-randr-screen-change-hook 'exwm/refresh-monitors)
     (exwm-randr-enable)
 
-    (defun app/qutebrowser ()
-      (interactive)
-      (shell/async-command-no-output "qutebrowser"))
+    (setq ivy-posframe-display-functions-alist
+        '((t . +ivy-posframe-display-exwm))
 
-    (defun app/teams ()
-      (interactive)
-      (shell/async-command-no-output "teams"))
+        ivy-posframe-parameters '((parent-frame nil)
+                                  (z-group . above)))
 
-    (defun app/arandr ()
-      (interactive)
-      (shell/async-command-no-output "arandr"))
+  ;; force set frame-position on every posframe display
+  (advice-add 'posframe--set-frame-position :before
+              (lambda (&rest args)
+                (setq-local posframe--last-posframe-pixel-position nil)))
 
-    (keys/leader-keys
-      "a"  '(:ignore t :which-key "applications")
-      "aa" '(app/qutebrowser :which-key " Qutebrowser")
-      "at" '(app/teams :which-key " Teams")
-      "s"  '(:ignore t :which-key "Settings")
-      "sk" '(keys/keyboard-setup :which-key " Qwerty")
-      "sm" '(app/arandr :which-key " Monitors")
-      ))
+      (defun app/qutebrowser ()
+        (interactive)
+        (shell/async-command-no-output "qutebrowser"))
+
+      (defun app/teams ()
+        (interactive)
+        (shell/async-command-no-output "teams"))
+
+      (defun app/arandr ()
+        (interactive)
+        (shell/async-command-no-output "arandr"))
+
+      (keys/leader-keys
+        "a"  '(:ignore t :which-key "applications")
+        "aa" '(app/qutebrowser :which-key " Qutebrowser")
+        "at" '(app/teams :which-key " Teams")
+        "s"  '(:ignore t :which-key "Settings")
+        "sk" '(keys/keyboard-setup :which-key " Qwerty")
+        "sm" '(app/arandr :which-key " Monitors")
+        ))
 
 
 #+end_src

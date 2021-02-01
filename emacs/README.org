@@ -484,6 +484,22 @@ The first time you load your configuration on a new machine, you'll need to run 
 
 #+end_src
 
+** Ivy posframe
+#+begin_src emacs-lisp
+
+  (use-package ivy-posframe
+    :after ivy
+    :custom-face
+    (ivy-posframe-border ((t (:background "#632174"))))
+    :custom
+    (ivy-posframe-border-width 1)
+    (ivy-posframe-width 200)
+    (ivy-posframe-min-width 200)
+    :config
+    (ivy-posframe-mode 1))
+
+#+end_src
+
 ** Wgrep
 #+begin_src emacs-lisp
 

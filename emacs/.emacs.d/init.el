@@ -299,6 +299,17 @@
   :init
   (ivy-rich-mode 1))
 
+(use-package ivy-posframe
+  :after ivy
+  :custom-face
+  (ivy-posframe-border ((t (:background "#632174"))))
+  :custom
+  (ivy-posframe-border-width 1)
+  (ivy-posframe-width 200)
+  (ivy-posframe-min-width 200)
+  :config
+  (ivy-posframe-mode 1))
+
 (use-package wgrep
   :config
   (setq wgrep-auto-save-buffer t))
