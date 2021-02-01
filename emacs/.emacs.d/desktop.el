@@ -1,3 +1,5 @@
+(let ((file-name-handler-alist nil))
+
 (defun shell/run-in-background (command)
   (let ((command-parts (split-string command "[ ]+")))
     (apply #'call-process `(,(car command-parts) nil 0 nil ,@(cdr command-parts)))))
@@ -127,6 +129,18 @@
   ;; Start the Polybar panel
   (panel/start))
 
+(defun app/qutebrowser ()
+  (interactive)
+  (shell/async-command-no-output "qutebrowser"))
+
+(defun app/teams ()
+  (interactive)
+  (shell/async-command-no-output "teams"))
+
+(defun app/arandr ()
+  (interactive)
+  (shell/async-command-no-output "arandr"))
+
 (defcustom my-skippable-buffer-regexp
   (rx bos (or (seq "*" (zero-or-more anything))
               (seq "magit" (zero-or-more anything))
@@ -191,7 +205,7 @@
                                    (windmove-down))))
 
 (defun exwm/exwm-init-hook ()
-  (exwm/refresh-monitors)
+  (keys/keyboard-setup)
   ;; Launch apps that will run in the background
   (shell/run-in-background "nm-applet")
   (shell/run-in-background "pasystray")
@@ -227,18 +241,28 @@
 
 (use-package exwm
   :config
-  (keys/keyboard-setup)
+  (setq ivy-posframe-display-functions-alist
+      '((t . +ivy-posframe-display-exwm))
 
-  ;; When window "class" updates, use it to set the buffer name
-  (add-hook 'exwm-update-class-hook #'exwm/exwm-update-title)
+      ivy-posframe-parameters '((parent-frame nil)
+                                (z-group . above)))
 
-  ;; When window title updates, use it to set the buffer name
-  (add-hook 'exwm-update-title-hook #'exwm/exwm-update-title)
+  ;; force set frame-position on every posframe display
+  (advice-add 'posframe--set-frame-position :before
+          (lambda (&rest args)
+            (setq-local posframe--last-posframe-pixel-position nil)))
+
+  (keys/leader-keys
+    "a"  '(:ignore t :which-key "applications")
+    "aa" '(app/qutebrowser :which-key " Qutebrowser")
+    "at" '(app/teams :which-key " Teams")
+    "s"  '(:ignore t :which-key "Settings")
+    "sk" '(keys/keyboard-setup :which-key " Qwerty")
+    "sm" '(app/arandr :which-key " Monitors")
+    )
 
   ;; When EXWM starts up, do some extra confifuration
   (add-hook 'exwm-init-hook #'exwm/exwm-init-hook)
-
-  (add-hook 'exwm-mode-hook #'exwm/exwm-set-fringe)
 
   ;; Automatically move EXWM buffer to current workspace when selected
   (setq exwm-layout-show-all-buffers t)
@@ -366,37 +390,16 @@
   (exwm/refresh-monitors)
   ;; This is for multiscreen support
   (require 'exwm-randr)
-  (add-hook 'exwm-randr-screen-change-hook 'exwm/refresh-monitors)
+  (exwm/refresh-monitors)
   (exwm-randr-enable)
 
-  (setq ivy-posframe-display-functions-alist
-      '((t . +ivy-posframe-display-exwm))
+  ;; When window "class" updates, use it to set the buffer name
+  (add-hook 'exwm-update-class-hook #'exwm/exwm-update-title)
 
-      ivy-posframe-parameters '((parent-frame nil)
-                                (z-group . above)))
+  ;; When window title updates, use it to set the buffer name
+  (add-hook 'exwm-update-title-hook #'exwm/exwm-update-title)
 
-;; force set frame-position on every posframe display
-(advice-add 'posframe--set-frame-position :before
-            (lambda (&rest args)
-              (setq-local posframe--last-posframe-pixel-position nil)))
+  ;; When randr changes, refresh monitor setup
+  (add-hook 'exwm-randr-screen-change-hook 'exwm/refresh-monitors))
 
-    (defun app/qutebrowser ()
-      (interactive)
-      (shell/async-command-no-output "qutebrowser"))
-
-    (defun app/teams ()
-      (interactive)
-      (shell/async-command-no-output "teams"))
-
-    (defun app/arandr ()
-      (interactive)
-      (shell/async-command-no-output "arandr"))
-
-    (keys/leader-keys
-      "a"  '(:ignore t :which-key "applications")
-      "aa" '(app/qutebrowser :which-key " Qutebrowser")
-      "at" '(app/teams :which-key " Teams")
-      "s"  '(:ignore t :which-key "Settings")
-      "sk" '(keys/keyboard-setup :which-key " Qwerty")
-      "sm" '(app/arandr :which-key " Monitors")
-      ))
+)

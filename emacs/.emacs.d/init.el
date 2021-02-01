@@ -1,3 +1,9 @@
+(setq gc-cons-threshold 100000000)
+
+(let ((file-name-handler-alist nil))
+  (require 'package)
+  (setq package-enable-at-startup nil)
+
 ;; Avoid blinding white at startup
 (load-theme 'wombat)
 
@@ -736,3 +742,7 @@
 (use-package zoom
   :config
   (setq zoom-size '(0.618 . 0.618)))
+
+)
+(setq gc-cons-threshold (* 100 1024 1024))
+(provide 'init)
