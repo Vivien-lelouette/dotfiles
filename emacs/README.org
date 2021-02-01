@@ -336,7 +336,6 @@ The first time you load your configuration on a new machine, you'll need to run 
 #+begin_src emacs-lisp
 
   (use-package which-key
-
     :init (which-key-mode)
     :diminish which-key-mode
     :config
