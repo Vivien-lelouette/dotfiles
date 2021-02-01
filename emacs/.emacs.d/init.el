@@ -693,7 +693,8 @@
 
 (use-package vterm
   :config
-  (setq vterm-shell "/bin/zsh"))
+  (setq vterm-shell "/bin/zsh")
+  (setq vterm-buffer-name-string "vterm: %s"))
 
 (use-package term
   :config
