@@ -2,17 +2,19 @@
 ;; ----- amx-history -----
 (
  evil-quit-all
+ exwm/refresh-monitors
+ emacs-init-time
  docker/dcup
  magit
  cd
  5x5
- amx
- arp
 )
 
 ;; ----- amx-data -----
 (
  (magit . 2)
- (evil-quit-all . 2)
- (docker/dcup . 1)
+ (evil-quit-all . 9)
+ (docker/dcup . 2)
+ (emacs-init-time . 5)
+ (exwm/refresh-monitors . 1)
 )
