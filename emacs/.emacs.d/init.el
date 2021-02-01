@@ -305,8 +305,8 @@
   (ivy-posframe-border ((t (:background "#632174"))))
   :custom
   (ivy-posframe-border-width 1)
-  (ivy-posframe-width 200)
-  (ivy-posframe-min-width 200)
+  (ivy-posframe-width 170)
+  (ivy-posframe-min-width 170)
   :config
   (ivy-posframe-mode 1))
 
