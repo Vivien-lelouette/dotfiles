@@ -398,4 +398,7 @@
   (add-hook 'exwm-update-title-hook #'exwm/exwm-update-title)
 
   ;; When randr changes, refresh monitor setup
-  (add-hook 'exwm-randr-screen-change-hook 'exwm/refresh-monitors))
+  (add-hook 'exwm-randr-screen-change-hook 'exwm/refresh-monitors)
+
+  ;; Set frame fringe
+  (add-hook 'exwm-mode-hook #'exwm/exwm-set-fringe))

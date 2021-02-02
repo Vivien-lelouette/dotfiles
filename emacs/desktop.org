@@ -547,7 +547,7 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
       "sk" '(keys/keyboard-setup :which-key " Qwerty")
       "sm" '(app/arandr :which-key " Monitors")
       )
- 
+
     ;; When EXWM starts up, do some extra confifuration
     (add-hook 'exwm-init-hook #'exwm/exwm-init-hook)
 
@@ -682,12 +682,15 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
 
     ;; When window "class" updates, use it to set the buffer name
     (add-hook 'exwm-update-class-hook #'exwm/exwm-update-title)
-  
+
     ;; When window title updates, use it to set the buffer name
     (add-hook 'exwm-update-title-hook #'exwm/exwm-update-title)
-  
+
     ;; When randr changes, refresh monitor setup
-    (add-hook 'exwm-randr-screen-change-hook 'exwm/refresh-monitors))
+    (add-hook 'exwm-randr-screen-change-hook 'exwm/refresh-monitors)
+
+    ;; Set frame fringe
+    (add-hook 'exwm-mode-hook #'exwm/exwm-set-fringe))
 
 
 #+end_src
