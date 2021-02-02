@@ -196,10 +196,10 @@
 (use-package ibuffer-vc)
 
 (use-package doom-themes
-
   :init (load-theme 'doom-dark+ t)
   :config
-  (setq doom-themes-treemacs-theme "doom-colors"))
+  (setq doom-themes-treemacs-theme "doom-colors")
+  (set-face-attribute 'fringe nil :background "#1e1e1e" :foreground "#1e1e1e"))
 
 (use-package doom-modeline
 
@@ -309,12 +309,17 @@
 (use-package ivy-posframe
   :after ivy
   :custom-face
-  (ivy-posframe-border ((t (:background "#632174"))))
+  (ivy-posframe ((t (:background "#1E1E1E"))))
+  (ivy-posframe-border ((t (:background "#1E1E1E"))))
   :custom
-  (ivy-posframe-border-width 1)
-  (ivy-posframe-width 170)
-  (ivy-posframe-min-width 170)
+  (ivy-posframe-parameters
+      '((left-fringe . 20)
+        (right-fringe . 20)))
+  (ivy-posframe-border-width 10)
+  (ivy-posframe-width 140)
+  (ivy-posframe-min-width 140)
   :config
+  (setq ivy-posframe-display-functions-alist '((t . ivy-posframe-display-at-point)))
   (ivy-posframe-mode 1))
 
 (use-package wgrep
