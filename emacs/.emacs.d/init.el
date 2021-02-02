@@ -310,12 +310,12 @@
   :after ivy
   :custom-face
   (ivy-posframe ((t (:background "#1E1E1E"))))
-  (ivy-posframe-border ((t (:background "#1E1E1E"))))
+  (ivy-posframe-border ((t (:background "#632174"))))
   :custom
   (ivy-posframe-parameters
       '((left-fringe . 20)
         (right-fringe . 20)))
-  (ivy-posframe-border-width 10)
+  (ivy-posframe-border-width 2)
   (ivy-posframe-width 140)
   (ivy-posframe-min-width 140)
   :config
