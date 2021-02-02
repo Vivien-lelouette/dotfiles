@@ -728,6 +728,11 @@
   :config
   (setq zoom-size '(0.618 . 0.618)))
 
+(use-package bitwarden
+  :straight (bitwarden :type git :host github :repo "seanfarley/emacs-bitwarden")
+  :config
+  (bitwarden-auth-source-enable))
+
 (autoload 'exwm-enable "~/.emacs.d/desktop.el")
 
 )

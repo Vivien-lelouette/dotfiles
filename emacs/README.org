@@ -1168,6 +1168,24 @@ Requires you to run: M-x lsp-install-server RET bash RET.
 
 #+end_src
 
+* Bitwarden integration
+** Prerequisite
+Install the bitwarden cli using npm.
+#+begin_src shell
+
+ sudo npm install -g @bitwarden/cli
+
+#+end_src
+** Emacs bitwarden
+#+begin_src emacs-lisp
+
+  (use-package bitwarden
+    :straight (bitwarden :type git :host github :repo "seanfarley/emacs-bitwarden")
+    :config
+    (bitwarden-auth-source-enable))
+
+#+end_src
+
 * Start exwm if wanted
 If emacs is started with emacs --eval "(exwm-enable)", then load exwm.
 #+begin_src emacs-lisp
