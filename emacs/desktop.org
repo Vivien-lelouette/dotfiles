@@ -209,8 +209,8 @@ The configuration for our ingeniously named panel, "panel".  Invoke it with =pol
   margin-bottom = 0
 
   [colors]
-  background = #f01e1e1e
-  background-alt = #001e1e1e
+  background = #1e1e1e
+  background-alt = #1e1e1e
   foreground = #d4d4d4
   foreground-alt = #555
   primary = #ffb52a
@@ -382,7 +382,7 @@ Workspace 1 & 2 will be allocated to the most left monitor, the 3 & 4 to the one
     (setq exwm-randr-workspace-monitor-plist (build-exwm-monitors))
 
     ;; Set the wallpaper after changing the resolution
-    (efs/set-wallpaper)
+    ;; (efs/set-wallpaper)
 
     ;; Start the Polybar panel
     (panel/start))
@@ -532,7 +532,9 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
         '((t . +ivy-posframe-display-exwm))
 
         ivy-posframe-parameters '((parent-frame nil)
-                                  (z-group . above)))
+                                  (z-group . above)
+                                  (left-fringe . 20)
+                                  (right-fringe . 20)))
 
     ;; force set frame-position on every posframe display
     (advice-add 'posframe--set-frame-position :before

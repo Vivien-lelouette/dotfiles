@@ -122,7 +122,7 @@
   (setq exwm-randr-workspace-monitor-plist (build-exwm-monitors))
 
   ;; Set the wallpaper after changing the resolution
-  (efs/set-wallpaper)
+  ;; (efs/set-wallpaper)
 
   ;; Start the Polybar panel
   (panel/start))
@@ -243,7 +243,9 @@
       '((t . +ivy-posframe-display-exwm))
 
       ivy-posframe-parameters '((parent-frame nil)
-                                (z-group . above)))
+                                (z-group . above)
+                                (left-fringe . 20)
+                                (right-fringe . 20)))
 
   ;; force set frame-position on every posframe display
   (advice-add 'posframe--set-frame-position :before
