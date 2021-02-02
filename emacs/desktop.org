@@ -1,10 +1,40 @@
 #+title Destkop with exwm configuration
 #+PROPERTY: header-args:emacs-lisp :tangle .emacs.d/desktop.el :mkdirp yes
-* Wrap to improve startup time
-** Wrap init
-#+begin_src emacs-lisp
 
-  (let ((file-name-handler-alist nil))
+* System files
+** Desktop File
+
+This file is used by your "login manager" (GDM, LightDM, etc) to display EXWM as a desktop environment option when you log in.
+
+*IMPORTANT*: Make sure you create a symbolic link for this file into =/usr/share/xsessions=:
+
+#+begin_src shell :tangle .scripts/emacs/exwm/init-ubuntu.sh :mkdirp yes
+
+  mkdir -p ~/.emacs.d/exwm/
+  echo "[Desktop Entry]
+    Name=EXWM
+    Comment=Emacs Window Manager
+    Exec=sh $(pwd ~)/.emacs.d/exwm/start-exwm.sh
+    TryExec=sh
+    Type=Application
+    X-LightDM-DesktopName=exwm
+    DesktopNames=exwm" > ~/.emacs.d/exwm/EXWM.desktop
+
+  sudo ln -f ~/.emacs.d/exwm/EXWM.desktop /usr/share/xsessions/EXWM.desktop
+
+#+end_src
+
+** Launcher Script
+
+This launcher script is invoked by =EXWM.desktop= to start Emacs and load our desktop environment configuration.  We also start up some other helpful applications to configure the desktop experience.
+
+#+begin_src shell :tangle ./.emacs.d/exwm/start-exwm.sh :shebang #!/bin/sh :mkdirp yes
+
+  # Run the screen compositor
+  compton &
+
+  # Fire it up
+  exec dbus-launch --exit-with-session emacs -mm --debug-init --eval "(exwm-enable)"
 
 #+end_src
 
@@ -59,28 +89,6 @@ Install useful tray apps:
 
 #+end_src
 
-** Desktop File
-
-This file is used by your "login manager" (GDM, LightDM, etc) to display EXWM as a desktop environment option when you log in.
-
-*IMPORTANT*: Make sure you create a symbolic link for this file into =/usr/share/xsessions=:
-
-#+begin_src shell :tangle .scripts/emacs/exwm/init-ubuntu.sh :mkdirp yes
-
-  mkdir -p ~/.emacs.d/exwm/
-  echo "[Desktop Entry]
-    Name=EXWM
-    Comment=Emacs Window Manager
-    Exec=sh $(pwd ~)/.emacs.d/exwm/start-exwm.sh
-    TryExec=sh
-    Type=Application
-    X-LightDM-DesktopName=exwm
-    DesktopNames=exwm" > ~/.emacs.d/exwm/EXWM.desktop
-
-  sudo ln -f ~/.emacs.d/exwm/EXWM.desktop /usr/share/xsessions/EXWM.desktop
-
-#+end_src
-
 ** Desktop Function & Key Bindings
 We use the [[https://github.com/DamienCassou/desktop-environment][desktop-environment]] package to automatically bind to well-known programs for controlling the volume, screen brightness, media playback, and doing other things like locking the screen and taking screenshots.  Make sure that you install the necessary programs to make this functionality work!  Check the [[https://github.com/DamienCassou/desktop-environment#default-configuration][default programs]] list to know what you need to install.
 
@@ -124,20 +132,6 @@ We use the [[https://github.com/DamienCassou/desktop-environment][desktop-enviro
     (interactive)
     ;; Rebind CapsLock to Esc
     (start-process-shell-command "qwerty" nil "setxkbmap -option caps:escape us,us_intl '' compose:ralt grp:rctrl_rshift_toggle"))
-
-#+end_src
-
-** Launcher Script
-
-This launcher script is invoked by =EXWM.desktop= to start Emacs and load our desktop environment configuration.  We also start up some other helpful applications to configure the desktop experience.
-
-#+begin_src shell :tangle ./.emacs.d/exwm/start-exwm.sh :shebang #!/bin/sh :mkdirp yes
-
-  # Run the screen compositor
-  compton &
-
-  # Fire it up
-  exec dbus-launch --exit-with-session emacs -mm --debug-init -l ~/.emacs.d/desktop.el
 
 #+end_src
 
@@ -698,9 +692,3 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
 
 #+end_src
 
-* End of the wrap
-#+begin_src emacs-lisp
-
-  )
-
-#+end_src

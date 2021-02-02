@@ -1191,6 +1191,14 @@ Requires you to run: M-x lsp-install-server RET bash RET.
 
 #+end_src
 
+* Start exwm if wanted
+If emacs is started with emacs --eval "(exwm-enable)", then load exwm.
+#+begin_src emacs-lisp
+
+  (autoload 'exwm-enable "~/.emacs.d/desktop.el")
+
+#+end_src
+
 * End of the wrap
 #+begin_src emacs-lisp
 

@@ -751,6 +751,8 @@
   :config
   (setq zoom-size '(0.618 . 0.618)))
 
+(autoload 'exwm-enable "~/.emacs.d/desktop.el")
+
 )
 (setq gc-cons-threshold (* 100 1024 1024))
 (provide 'init)

@@ -1,5 +1,3 @@
-(let ((file-name-handler-alist nil))
-
 (defun shell/run-in-background (command)
   (let ((command-parts (split-string command "[ ]+")))
     (apply #'call-process `(,(car command-parts) nil 0 nil ,@(cdr command-parts)))))
@@ -401,5 +399,3 @@
 
   ;; When randr changes, refresh monitor setup
   (add-hook 'exwm-randr-screen-change-hook 'exwm/refresh-monitors))
-
-)
