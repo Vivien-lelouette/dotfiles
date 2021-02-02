@@ -41,7 +41,7 @@
 
 (defun fonts/small-size ()
   (interactive)
-  (fonts/set-size 85))
+  (fonts/set-size 90))
 
 (defun fonts/normal-size ()
     (interactive)
@@ -53,7 +53,7 @@
 
 (defun fonts/huge-size ()
   (interactive)
-  (fonts/set-size 145))
+  (fonts/set-size 140))
 
 (fonts/small-size)
 
