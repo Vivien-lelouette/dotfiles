@@ -13,3 +13,4 @@ EXWM.desktop
 /emacs/.emacs.d/eshell/
 /emacs/.emacs.d/tramp
 /emacs/.emacs.d/straight/
+emacs/.emacs.d/amx-items
