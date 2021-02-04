@@ -1175,6 +1175,43 @@ Requires you to run: M-x lsp-install-server RET bash RET.
 
 #+end_src
 
+* Emacs Application Framework
+** Prerequisites
+Install running the install script given in EAF. But it would be better if I could find a way to just use pip like so:
+#+begin_src shell
+
+  python3 -m venv ~/.emacs.d/python.env
+  source ~/.emacs.d/python.env/bin/activate
+  pip3 install --upgrade pip
+  pip3 install epc pyqt5 pyqt5-sip pyqtwebengine pymupdf qrcode qtconsole retrying 
+  deactivate
+
+#+end_src
+
+** Installation
+#+begin_src emacs-lisp
+
+  (use-package eaf
+    :straight (eaf :type git :host github :repo "manateelazycat/emacs-application-framework" :files ("*.el" "*.py" "*.sh" "core" "app"))
+    :init
+    (use-package epc :defer t)
+    (use-package ctable :defer t)
+    (use-package deferred :defer t)
+    (use-package s :defer t)
+    :config
+    (require 'eaf-evil)
+    (add-to-list 'eaf-wm-focus-fix-wms "EXWM")
+    (eaf-setq eaf-browser-enable-adblocker "true")
+    (eaf-setq eaf-browser-scroll-behavior "smooth")
+    (eaf-setq eaf-browser-blank-page-url "https://duckduckgo.com")
+    (eaf-setq eaf-browser-dark-mode "true")
+
+    (setq eaf-browser-continue-where-left-off t)
+   (setq eaf-browser-search-engines '(("duckduckgo" . "https://duckduckgo.com/?q=%s")))
+    (setq eaf-browser-default-search-engine "duckduckgo"))
+
+#+end_src
+
 * Bitwarden integration
 ** Prerequisite
 Install the bitwarden cli using npm.
@@ -1209,3 +1246,4 @@ If emacs is started with emacs --eval "(exwm-enable)", then load exwm.
   (provide 'init)
 
 #+end_src
+

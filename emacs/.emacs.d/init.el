@@ -735,6 +735,25 @@
   :config
   (setq zoom-size '(0.618 . 0.618)))
 
+(use-package eaf
+  :straight (eaf :type git :host github :repo "manateelazycat/emacs-application-framework" :files ("*.el" "*.py" "*.sh" "core" "app"))
+  :init
+  (use-package epc :defer t)
+  (use-package ctable :defer t)
+  (use-package deferred :defer t)
+  (use-package s :defer t)
+  :config
+  (require 'eaf-evil)
+  (add-to-list 'eaf-wm-focus-fix-wms "EXWM")
+  (eaf-setq eaf-browser-enable-adblocker "true")
+  (eaf-setq eaf-browser-scroll-behavior "smooth")
+  (eaf-setq eaf-browser-blank-page-url "https://duckduckgo.com")
+  (eaf-setq eaf-browser-dark-mode "true")
+
+  (setq eaf-browser-continue-where-left-off t)
+ (setq eaf-browser-search-engines '(("duckduckgo" . "https://duckduckgo.com/?q=%s")))
+  (setq eaf-browser-default-search-engine "duckduckgo"))
+
 (use-package bitwarden
   :straight (bitwarden :type git :host github :repo "seanfarley/emacs-bitwarden")
   :config
