@@ -701,7 +701,10 @@
     "d"  'docker
     "D"  'docker-compose))
 
-(use-package kubernetes)
+(use-package kubernetes
+  :config
+  (setq kubernetes-poll-frequency 3600)
+  (setq kubernetes-redraw-frequency 3600))
 
 (use-package kubernetes-evil
   :after kubernetes)
