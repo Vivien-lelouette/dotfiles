@@ -14,6 +14,10 @@
 (tooltip-mode -1)           ; Disable tooltips
 (set-fringe-mode 10)        ; Give some breathing room
 
+(setq window-divider-default-right-width 14)
+(setq window-divider-default-bottom-width 14)
+(menu-bar-bottom-and-right-window-divider)
+(window-divider-mode 1)
 (menu-bar-mode -1)            ; Disable the menu bar
 
 ;; This determines the style of line numbers in effect. If set to `nil', line
