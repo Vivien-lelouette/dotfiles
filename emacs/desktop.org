@@ -68,27 +68,6 @@ This launcher script is invoked by =EXWM.desktop= to start Emacs and load our de
 
 #+end_src
 
-** Wallpaper
-*** Prerequisite
-**** Ubuntu
-Install useful tray apps:
-#+begin_src emacs-lisp  :tangle .scripts/polybar/init-ubuntu.sh :shebang #!/bin/sh :mkdirp yes
-
-  sudo apt install feh
-
-#+end_src
-
-*** Set wallpaper
-#+begin_src emacs-lisp
-
-  (defun efs/set-wallpaper ()
-    (interactive)
-    (set-frame-parameter (selected-frame) 'alpha '(93 . 93))
-    (add-to-list 'default-frame-alist '(alpha . (93 . 93)))
-    (shell/async-command-no-output "feh --bg-scale ~/.wallpaper --bg-scale ~/.wallpaper --bg-scale ~/.wallpaper --bg-scale ~/.wallpaper --bg-scale ~/.wallpaper"))
-
-#+end_src
-
 ** Desktop Function & Key Bindings
 We use the [[https://github.com/DamienCassou/desktop-environment][desktop-environment]] package to automatically bind to well-known programs for controlling the volume, screen brightness, media playback, and doing other things like locking the screen and taking screenshots.  Make sure that you install the necessary programs to make this functionality work!  Check the [[https://github.com/DamienCassou/desktop-environment#default-configuration][default programs]] list to know what you need to install.
 
@@ -135,257 +114,57 @@ We use the [[https://github.com/DamienCassou/desktop-environment][desktop-enviro
 
 #+end_src
 
-** Panel with Polybar
-*** Prerequisite
-**** Ubuntu
-Install useful tray apps:
-#+begin_src emacs-lisp  :tangle .scripts/polybar/init-ubuntu.sh :shebang #!/bin/sh :mkdirp yes
-
-  sudo apt install pasystray blueman
-  sudo apt install build-essential git cmake cmake-data pkg-config python3-sphinx libcairo2-dev libxcb1-dev libxcb-util0-dev libxcb-randr0-dev libxcb-composite0-dev python3-xcbgen xcb-proto libxcb-image0-dev libxcb-ewmh-dev libxcb-icccm4-dev libjsoncpp-dev python3-sphinx
-
-#+end_src
-
-Compile and install polybar:
-#+begin_src shell :tangle .scripts/polybar/install.sh :shebang #!/bin/sh :mkdirp yes
-
-  mkdir -p ~/Tools
-  cd ~/Tools
-  git clone --recursive https://github.com/polybar/polybar
-  cd polybar
-  mkdir build
-  cd build
-  cmake ..
-  make -j$(nproc)
-  # Optional. This will install the polybar executable in /usr/local/bin
-  sudo make install
-
-#+end_src
-
-*** Polybar config
-
-Polybar provides a great, minimalistic panel for your EXWM desktop configuration.  The following config integrates =emacsclient= and Polybar with =polybar-msg= to enable you to gather *any* information from Emacs and display it in the panel!
-
-Check out the Polybar wiki for more details on how to configure it: https://github.com/polybar/polybar/wiki
-
-#+begin_src emacs-lisp
-
-  ;; Make sure the server is started (better to do this in your main Emacs config!)
-  (server-start)
-
-  (defun panel/kill ()
-    (interactive)
-    (shell/async-command-no-output "pkill -f polybar"))
-
-  (defun panel/start ()
-    (interactive)
-    (panel/kill)
-    (cl-loop for (key . monitor) in (xrandr-active-monitors)
-      collect (shell/async-command-no-output (concat "MONITOR=" (car monitor) " polybar -c ~/.config/polybar/config.txt --reload panel"))))
-
-  ;; Useful to send information to polybar if needed
-  (defun panel/send-polybar-hook (module-name hook-index)
-    (start-process-shell-command "polybar-msg" nil (format "polybar-msg hook %s %s" module-name hook-index)))
-
-  (require 'battery)
-  (defun panel/polybar-battery ()
-    (battery-format battery-mode-line-format
-      (funcall battery-status-function)))
-
-#+end_src
-
-The configuration for our ingeniously named panel, "panel".  Invoke it with =polybar panel= on the command line!
-
-#+begin_src conf :tangle .config/polybar/config.txt :mkdirp yes
-
-    ; Docs: https://github.com/polybar/polybar
-    ;==========================================================
-
-  [settings]
-  screenchange-reload = true
-
-  [global/wm]
-  margin-top = -14px
-  margin-bottom = 0
-
-  [colors]
-  background = #1e1e1e
-  background-alt = #1e1e1e
-  foreground = #d4d4d4
-  foreground-alt = #555
-  primary = #ffb52a
-  secondary = #e60053
-  alert = #bd2c40
-  underline-1 = #c792ea
-
-  [bar/panel]
-  monitor = ${env:MONITOR:}
-  bottom = true
-  width = 600
-  height = 14
-  offset-x = 100%:-618
-  offset-y = 0px
-  fixed-center = true
-  enable-ipc = true
-
-  background = ${colors.background}
-  foreground = ${colors.foreground}
-
-  border-size = 0
-  border-color = #00000000
-
-  padding-top = 5
-  padding-left = 1
-  padding-right = 1
-
-  module-margin = 3
-
-  font-0 = "Cantarell:size=10;2"
-  font-1 = "Font Awesome:size=10;2"
-  font-2 = "Material Icons:size=10;5"
-  font-3 = "Fira Mono:size=10;-3"
-
-  modules-right = date exwm-battery
-
-  tray-detached = true
-  tray-position = right
-  tray-padding = 3
-  tray-maxsize = 28
-  tray-offset-x = -220
-
-  cursor-click = pointer
-  cursor-scroll = ns-resize
-
-  [module/cpu]
-  type = internal/cpu
-  interval = 2
-  format = <label> <ramp-coreload>
-  format-underline = ${colors.underline-1}
-  click-left = emacsclient -e "(proced)"
-  label = %percentage:2%%
-  ramp-coreload-spacing = 0
-  ramp-coreload-0 = ▁
-  ramp-coreload-0-foreground = ${colors.foreground-alt}
-  ramp-coreload-1 = ▂
-  ramp-coreload-2 = ▃
-  ramp-coreload-3 = ▄
-  ramp-coreload-4 = ▅
-  ramp-coreload-5 = ▆
-  ramp-coreload-6 = ▇
-
-  [module/date]
-  type = internal/date
-  interval = 5
-
-  date = "%a %b %d %Y"
-
-  time = %H:%M
-
-  format-prefix-foreground = ${colors.foreground-alt}
-  format-underline = ${colors.underline-1}
-
-  label = %date% %time%
-
-  [module/exwm-battery]
-  type = custom/script
-  exec = sh ~/.scripts/polybar/battery.sh
-  interval = 30
-
-  [module/temperature]
-  type = internal/temperature
-  thermal-zone = 0
-  warn-temperature = 60
-
-  format = <label>
-  format-underline = ${colors.underline-1}
-  format-warn = <label-warn>
-  format-warn-underline = ${self.format-underline}
-
-  label = %temperature-c%
-  label-warn = %temperature-c%!
-  label-warn-foreground = ${colors.secondary}
-
-#+end_src
-
-Script to display battery.
-#+begin_src shell  :tangle .scripts/polybar/battery.sh :shebang #!/bin/sh :mkdirp yes
-
-  battery=$(emacsclient -e "(panel/polybar-battery)" | sed -e 's/^"\[//' -e 's/\..%\]"$//')
-
-  if [ $battery -le 100 ] && [ $battery -gt 95 ]
-  then
-      echo "  ${battery}%"
-  elif [ $battery -le 95 ] && [ $battery -gt 50 ]
-  then
-      echo "  ${battery}%"
-  elif [ $battery -le 50 ] && [ $battery -gt 25 ]
-  then
-      echo "  ${battery}%"
-  elif [ $battery -le 25 ] && [ $battery -gt 2 ]
-  then
-      echo "  ${battery}%"
-  else
-      echo "  ${battery}%"
-  fi
-
-#+end_src
-
-** Monitor management
+* Monitor management
 Those functions will organize 10 workspaces according to your monitors relative positions.
 Workspace 1 & 2 will be allocated to the most left monitor, the 3 & 4 to the one on its right, etc. The most right monitor will have the rest of the workspaces.
 
 #+begin_src emacs-lisp
 
-  (defun car-string-to-number (list-two-elements)
-    (append (list (string-to-number (car list-two-elements))) (cdr list-two-elements)))
+    (defun car-string-to-number (list-two-elements)
+      (append (list (string-to-number (car list-two-elements))) (cdr list-two-elements)))
 
-  (defun sort-from-car (a b)
-    (< (car a) (car b)))
+    (defun sort-from-car (a b)
+      (< (car a) (car b)))
 
-  (defun xrandr-active-monitors ()
-    (mapcar 'car-string-to-number
-            (remove nil
-                    (mapcar 'split-string
-                            (split-string
-                             (shell-command-to-string "xrandr --listactivemonitors | grep / | cut -d '/' -f3 | sed -e 's/^[0-9]\\++//g' -e 's/+[0-9]\\+//g'")
-                             "\n")))))
+    (defun xrandr-active-monitors ()
+      (mapcar 'car-string-to-number
+              (remove nil
+                      (mapcar 'split-string
+                              (split-string
+                               (shell-command-to-string "xrandr --listactivemonitors | grep / | cut -d '/' -f3 | sed -e 's/^[0-9]\\++//g' -e 's/+[0-9]\\+//g'")
+                               "\n")))))
 
-  (defun order-monitors ()    (apply #'append
-           (mapcar 'cdr
-                   (sort
-                    (xrandr-active-monitors)
-                    'sort-from-car))))
+    (defun order-monitors ()
+      (apply #'append
+        (mapcar 'cdr
+          (sort
+           (xrandr-active-monitors)
+           'sort-from-car))))
 
-  (defun build-workspace-monitor (monitor current_workspace max_workspace)
-    (if (> current_workspace max_workspace)
-        '()
-      (append (list current_workspace monitor) (build-workspace-monitor monitor (+ current_workspace 1) max_workspace))))
+    (defun build-workspace-monitor (monitor current_workspace max_workspace)
+      (if (> current_workspace max_workspace)
+          '()
+        (append (list current_workspace monitor) (build-workspace-monitor monitor (+ current_workspace 1) max_workspace))))
 
-  (defun build-exwm-monitors-aux (current_workspace monitor-list)
-    (cond
-     ((equal (length monitor-list) 1)
-      (list 9 (car monitor-list) 0 (car monitor-list))
-      )
-     ((equal (length monitor-list) 2)
-      (append (build-workspace-monitor (car monitor-list) current_workspace 8) (build-exwm-monitors-aux (+ current_workspace 2) (cdr monitor-list)))
-      )
-     (t
-      (append (build-workspace-monitor (car monitor-list) current_workspace (+ current_workspace 1)) (build-exwm-monitors-aux (+ current_workspace 2) (cdr monitor-list))))))
+    (defun build-exwm-monitors-aux (current_workspace monitor-list)
+      (cond
+       ((equal (length monitor-list) 1)
+        (list 9 (car monitor-list) 0 (car monitor-list))
+        )
+       ((equal (length monitor-list) 2)
+        (append (build-workspace-monitor (car monitor-list) current_workspace 8) (build-exwm-monitors-aux (+ current_workspace 2) (cdr monitor-list)))
+        )
+       (t
+        (append (build-workspace-monitor (car monitor-list) current_workspace (+ current_workspace 1)) (build-exwm-monitors-aux (+ current_workspace 2) (cdr monitor-list))))))
 
-  (defun build-exwm-monitors ()
-    (build-exwm-monitors-aux 1 (order-monitors)))
+    (defun build-exwm-monitors ()
+      (build-exwm-monitors-aux 1 (order-monitors)))
 
-  ;; This defines a function to refresh the workspaces position and xrandr
-  (defun exwm/refresh-monitors ()
-    (interactive)
-    (exwm/autorandr-refresh)
-    (setq exwm-randr-workspace-monitor-plist (build-exwm-monitors))
-
-    ;; Set the wallpaper after changing the resolution
-    ;; (efs/set-wallpaper)
-
-    ;; Start the Polybar panel
-    (panel/start))
+    ;; This defines a function to refresh the workspaces position and xrandr
+    (defun exwm/refresh-monitors ()
+      (interactive)
+      (exwm/autorandr-refresh)
+      (setq exwm-randr-workspace-monitor-plist (build-exwm-monitors)))
 
 #+end_src
 
@@ -506,10 +285,6 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
     (concat exwm-class-name ": "
            (if (<= (length exwm-title) 100) exwm-title
              (concat (substring exwm-title 0 99) "...")))))
-
-  (defun exwm/exwm-set-fringe ()
-    (setq left-fringe-width 10)
-    (setq right-fringe-width 10))
 
   (defun +ivy-posframe-display-exwm (str)
     (ivy-posframe--display str
@@ -689,11 +464,110 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
     (add-hook 'exwm-update-title-hook #'exwm/exwm-update-title)
 
     ;; When randr changes, refresh monitor setup
-    (add-hook 'exwm-randr-screen-change-hook 'exwm/refresh-monitors)
-
-    ;; Set frame fringe
-    (add-hook 'exwm-mode-hook #'exwm/exwm-set-fringe))
-
+    (add-hook 'exwm-randr-screen-change-hook 'exwm/refresh-monitors))
 
 #+end_src
 
+* Child frame tests
+#+begin_src emacs-lisp
+
+        ;; Display time every minute. will be used to display time and battery to a buffer displayed in child fames
+        (require 'battery)
+
+        (defun panel/battery ()
+          (setq battery-string (replace-regexp-in-string "\\[" ""
+            (replace-regexp-in-string "\\..\\%]" ""
+              (battery-format battery-mode-line-format (funcall battery-status-function)))))
+          (setq battery-value (string-to-number battery-string))
+          (setq battery-icon
+            (if (and (> battery-value 95))
+               ""
+               (if (and (< battery-value 95) (> battery-value 60))
+                 ""
+                 (if (and (< battery-value 60) (> battery-value 25))
+                   ""
+                   (if (and (< battery-value 25) (> battery-value 2))
+                     "" 
+                     "")))))
+          (concat battery-icon "  " battery-string "%"))
+
+          (panel/battery)
+
+        (defun panel/time ()
+          (setq current-date-time-format "%a %d %b %Y %H:%M")
+          (format-time-string current-date-time-format (current-time)))
+
+        (defun panel/print ()
+          (concat (panel/time) "   " (panel/battery)))
+
+        (defun panel/write-buffer ()
+          (setq my-panel-buffer (get-buffer-create "*panel*"))
+          (with-current-buffer "*panel*" ; replace with the name of the buffer you want to append
+            (erase-buffer)
+            (insert (panel/print))))
+
+        (defun utils/get-next-minute ()
+          (setq hour-minute-format "%H:%M")
+          (format-time-string hour-minute-format (time-add (current-time) (seconds-to-time 60))))
+
+        (panel/write-buffer)
+        (setq panel/timer (run-at-time (utils/get-next-minute) 60 'panel/write-buffer))
+
+        (add-hook 'after-make-frame-functions
+                (lambda (frame)
+                  (select-frame frame)
+                  (cond
+                   ((equal (frame-parameter frame 'name) "panel-frame")
+                    (let ((window (frame-root-window frame)))
+                      (set-window-parameter window 'mode-line-format 'none)
+                      (set-window-parameter window 'header-line-format 'none))
+                    (display-buffer "*panel*" nil nil)))
+                  (other-window -1)))
+
+        (setq panel/list '())
+
+        (defun panel/make-frame (x-offset)
+          (setq current-panel (make-frame
+           `((name . "panel-frame")
+             (parent-frame . nil)
+             (no-accept-focus . nil)
+             (window-min-width . 1)
+             (window-min-height . 1)
+             (min-width  . t)
+             (min-height . t)
+             (border-width . 0)
+             (internal-border-width . 0)
+             (vertical-scroll-bars . nil)
+             (horizontal-scroll-bars . nil)
+             (left-fringe . 10)
+             (right-fringe . 0)
+             (menu-bar-lines . 0)
+             (tool-bar-lines . 0)
+             (line-spacing . 0)
+             (unsplittable . t)
+             (no-other-frame . t)
+             (undecorated . t)
+             (unsplittable . t)
+             (cursor-type . nil)
+             (minibuffer . nil)
+             (width . 40)
+             (height . 0)
+             (no-special-glyphs . t))))
+          (push current-panel panel/list)
+          (set-frame-position current-panel (+ (* x-offset 1920) 1630) 1064)
+          (setq index-monitor (+ index-monitor 1)))
+
+      (defun panel/clean-frames ()
+        (cl-loop for frame in panel/list
+          collect (delete-frame frame))
+        (setq panel/list '()))
+
+        (message panel/list)
+        (defun panel/display ()
+          (interactive)
+          (panel/clean-frames)
+          (setq index-monitor 0)
+          (cl-loop for monitor in (order-monitors)
+            do (panel/make-frame index-monitor)))
+
+#+end_src

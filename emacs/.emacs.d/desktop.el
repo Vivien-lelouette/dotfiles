@@ -9,12 +9,6 @@
   (interactive)
   (shell/async-command-no-output "autorandr --change --force"))
 
-(defun efs/set-wallpaper ()
-  (interactive)
-  (set-frame-parameter (selected-frame) 'alpha '(93 . 93))
-  (add-to-list 'default-frame-alist '(alpha . (93 . 93)))
-  (shell/async-command-no-output "feh --bg-scale ~/.wallpaper --bg-scale ~/.wallpaper --bg-scale ~/.wallpaper --bg-scale ~/.wallpaper --bg-scale ~/.wallpaper"))
-
 (use-package desktop-environment
   :after exwm
   :config
@@ -54,28 +48,6 @@
   ;; Rebind CapsLock to Esc
   (start-process-shell-command "qwerty" nil "setxkbmap -option caps:escape us,us_intl '' compose:ralt grp:rctrl_rshift_toggle"))
 
-;; Make sure the server is started (better to do this in your main Emacs config!)
-(server-start)
-
-(defun panel/kill ()
-  (interactive)
-  (shell/async-command-no-output "pkill -f polybar"))
-
-(defun panel/start ()
-  (interactive)
-  (panel/kill)
-  (cl-loop for (key . monitor) in (xrandr-active-monitors)
-    collect (shell/async-command-no-output (concat "MONITOR=" (car monitor) " polybar -c ~/.config/polybar/config.txt --reload panel"))))
-
-;; Useful to send information to polybar if needed
-(defun panel/send-polybar-hook (module-name hook-index)
-  (start-process-shell-command "polybar-msg" nil (format "polybar-msg hook %s %s" module-name hook-index)))
-
-(require 'battery)
-(defun panel/polybar-battery ()
-  (battery-format battery-mode-line-format
-    (funcall battery-status-function)))
-
 (defun car-string-to-number (list-two-elements)
   (append (list (string-to-number (car list-two-elements))) (cdr list-two-elements)))
 
@@ -90,11 +62,12 @@
                            (shell-command-to-string "xrandr --listactivemonitors | grep / | cut -d '/' -f3 | sed -e 's/^[0-9]\\++//g' -e 's/+[0-9]\\+//g'")
                            "\n")))))
 
-(defun order-monitors ()    (apply #'append
-         (mapcar 'cdr
-                 (sort
-                  (xrandr-active-monitors)
-                  'sort-from-car))))
+(defun order-monitors ()
+  (apply #'append
+    (mapcar 'cdr
+      (sort
+       (xrandr-active-monitors)
+       'sort-from-car))))
 
 (defun build-workspace-monitor (monitor current_workspace max_workspace)
   (if (> current_workspace max_workspace)
@@ -119,13 +92,7 @@
 (defun exwm/refresh-monitors ()
   (interactive)
   (exwm/autorandr-refresh)
-  (setq exwm-randr-workspace-monitor-plist (build-exwm-monitors))
-
-  ;; Set the wallpaper after changing the resolution
-  ;; (efs/set-wallpaper)
-
-  ;; Start the Polybar panel
-  (panel/start))
+  (setq exwm-randr-workspace-monitor-plist (build-exwm-monitors)))
 
 (defun app/qutebrowser ()
   (interactive)
@@ -217,10 +184,6 @@
   (concat exwm-class-name ": "
          (if (<= (length exwm-title) 100) exwm-title
            (concat (substring exwm-title 0 99) "...")))))
-
-(defun exwm/exwm-set-fringe ()
-  (setq left-fringe-width 10)
-  (setq right-fringe-width 10))
 
 (defun +ivy-posframe-display-exwm (str)
   (ivy-posframe--display str
@@ -400,7 +363,103 @@
   (add-hook 'exwm-update-title-hook #'exwm/exwm-update-title)
 
   ;; When randr changes, refresh monitor setup
-  (add-hook 'exwm-randr-screen-change-hook 'exwm/refresh-monitors)
+  (add-hook 'exwm-randr-screen-change-hook 'exwm/refresh-monitors))
 
-  ;; Set frame fringe
-  (add-hook 'exwm-mode-hook #'exwm/exwm-set-fringe))
+;; Display time every minute. will be used to display time and battery to a buffer displayed in child fames
+  (require 'battery)
+
+  (defun panel/battery ()
+    (setq battery-string (replace-regexp-in-string "\\[" ""
+      (replace-regexp-in-string "\\..\\%]" ""
+        (battery-format battery-mode-line-format (funcall battery-status-function)))))
+    (setq battery-value (string-to-number battery-string))
+    (setq battery-icon
+      (if (and (> battery-value 95))
+         ""
+         (if (and (< battery-value 95) (> battery-value 60))
+           ""
+           (if (and (< battery-value 60) (> battery-value 25))
+             ""
+             (if (and (< battery-value 25) (> battery-value 2))
+               "" 
+               "")))))
+    (concat battery-icon "  " battery-string "%"))
+
+    (panel/battery)
+
+  (defun panel/time ()
+    (setq current-date-time-format "%a %d %b %Y %H:%M")
+    (format-time-string current-date-time-format (current-time)))
+
+  (defun panel/print ()
+    (concat (panel/time) "   " (panel/battery)))
+
+  (defun panel/write-buffer ()
+    (setq my-panel-buffer (get-buffer-create "*panel*"))
+    (with-current-buffer "*panel*" ; replace with the name of the buffer you want to append
+      (erase-buffer)
+      (insert (panel/print))))
+
+  (defun utils/get-next-minute ()
+    (setq hour-minute-format "%H:%M")
+    (format-time-string hour-minute-format (time-add (current-time) (seconds-to-time 60))))
+
+  (panel/write-buffer)
+  (setq panel/timer (run-at-time (utils/get-next-minute) 60 'panel/write-buffer))
+
+  (add-hook 'after-make-frame-functions
+          (lambda (frame)
+            (select-frame frame)
+            (cond
+             ((equal (frame-parameter frame 'name) "panel-frame")
+              (let ((window (frame-root-window frame)))
+                (set-window-parameter window 'mode-line-format 'none)
+                (set-window-parameter window 'header-line-format 'none))
+              (display-buffer "*panel*" nil nil)))
+            (other-window -1)))
+
+  (setq panel/list '())
+
+  (defun panel/make-frame (x-offset)
+    (setq current-panel (make-frame
+     `((name . "panel-frame")
+       (parent-frame . nil)
+       (no-accept-focus . nil)
+       (window-min-width . 1)
+       (window-min-height . 1)
+       (min-width  . t)
+       (min-height . t)
+       (border-width . 0)
+       (internal-border-width . 0)
+       (vertical-scroll-bars . nil)
+       (horizontal-scroll-bars . nil)
+       (left-fringe . 10)
+       (right-fringe . 0)
+       (menu-bar-lines . 0)
+       (tool-bar-lines . 0)
+       (line-spacing . 0)
+       (unsplittable . t)
+       (no-other-frame . t)
+       (undecorated . t)
+       (unsplittable . t)
+       (cursor-type . nil)
+       (minibuffer . nil)
+       (width . 40)
+       (height . 0)
+       (no-special-glyphs . t))))
+    (push current-panel panel/list)
+    (set-frame-position current-panel (+ (* x-offset 1920) 1630) 1064)
+    (setq index-monitor (+ index-monitor 1)))
+
+(defun panel/clean-frames ()
+  (cl-loop for frame in panel/list
+    collect (delete-frame frame))
+  (setq panel/list '()))
+
+  (message panel/list)
+  (defun panel/display ()
+    (interactive)
+    (panel/clean-frames)
+    (setq index-monitor 0)
+    (cl-loop for monitor in (order-monitors)
+      do (panel/make-frame index-monitor)))
