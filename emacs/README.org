@@ -1211,11 +1211,17 @@ Install running the install script given in EAF. But it would be better if I cou
     (eaf-setq eaf-browser-enable-adblocker "true")
     (eaf-setq eaf-browser-scroll-behavior "smooth")
     (eaf-setq eaf-browser-blank-page-url "https://duckduckgo.com")
-    (eaf-setq eaf-browser-dark-mode "true")
+    (eaf-setq eaf-browser-dark-mode "false")
 
     (setq eaf-browser-continue-where-left-off t)
-   (setq eaf-browser-search-engines '(("duckduckgo" . "https://duckduckgo.com/?q=%s")))
-    (setq eaf-browser-default-search-engine "duckduckgo"))
+    (setq eaf-browser-search-engines '(("duckduckgo" . "https://duckduckgo.com/?q=%s")))
+    (setq eaf-browser-default-search-engine "duckduckgo")
+
+    (keys/leader-keys
+      "i" '(:ignore t :which-key "internet")
+      "ia" '(eaf-open-browser :which-key "address")
+      "ii" '(eaf-open-browser-with-history :which-key "search & history")
+      "ib" '(eaf-open-bookmark :which-key "bookmarks")))
 
 #+end_src
 
@@ -1253,4 +1259,3 @@ If emacs is started with emacs --eval "(exwm-enable)", then load exwm.
   (provide 'init)
 
 #+end_src
-
