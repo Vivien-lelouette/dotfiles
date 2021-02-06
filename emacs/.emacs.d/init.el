@@ -14,8 +14,8 @@
 (tooltip-mode -1)           ; Disable tooltips
 (set-fringe-mode 10)        ; Give some breathing room
 
-(setq window-divider-default-right-width 14)
-(setq window-divider-default-bottom-width 14)
+(setq window-divider-default-right-width 5)
+(setq window-divider-default-bottom-width 5)
 (menu-bar-bottom-and-right-window-divider)
 (window-divider-mode 1)
 (menu-bar-mode -1)            ; Disable the menu bar
@@ -316,22 +316,6 @@
 (use-package ivy-rich
   :init
   (ivy-rich-mode 1))
-
-(use-package ivy-posframe
-  :after ivy
-  :custom-face
-  (ivy-posframe ((t (:background "#1E1E1E"))))
-  (ivy-posframe-border ((t (:background "#632174"))))
-  :custom
-  (ivy-posframe-parameters
-      '((left-fringe . 20)
-        (right-fringe . 20)))
-  (ivy-posframe-border-width 2)
-  (ivy-posframe-width 140)
-  (ivy-posframe-min-width 140)
-  :config
-  (setq ivy-posframe-display-functions-alist '((t . ivy-posframe-display-at-point)))
-  (ivy-posframe-mode 1))
 
 (use-package wgrep
   :config

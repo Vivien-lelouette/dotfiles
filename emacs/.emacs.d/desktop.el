@@ -185,36 +185,8 @@
          (if (<= (length exwm-title) 100) exwm-title
            (concat (substring exwm-title 0 99) "...")))))
 
-(defun +ivy-posframe-display-exwm (str)
-  (ivy-posframe--display str
-   (lambda (info)
-     (let* ((workarea (elt exwm-workspace--workareas exwm-workspace-current-index))
-            (x (aref workarea 0))
-            (y (aref workarea 1))
-
-            (fw (aref workarea 2))
-            (fh (aref workarea 3))
-
-            (pw (plist-get info :posframe-width))
-            (ph (plist-get info :posframe-height)))
-
-       (cons (+ x (/ (- fw pw) 2)) (+ y (/ (- fh ph) 2)))))))
-
 (use-package exwm
   :config
-  (setq ivy-posframe-display-functions-alist
-      '((t . +ivy-posframe-display-exwm))
-
-      ivy-posframe-parameters '((parent-frame nil)
-                                (z-group . above)
-                                (left-fringe . 20)
-                                (right-fringe . 20)))
-
-  ;; force set frame-position on every posframe display
-  (advice-add 'posframe--set-frame-position :before
-          (lambda (&rest args)
-            (setq-local posframe--last-posframe-pixel-position nil)))
-
   (keys/leader-keys
     "a"  '(:ignore t :which-key "applications")
     "aa" '(app/qutebrowser :which-key " Qutebrowser")
@@ -376,11 +348,11 @@
     (setq battery-icon
       (if (and (> battery-value 95))
          ""
-         (if (and (< battery-value 95) (> battery-value 60))
+         (if (and (< battery-value 96) (> battery-value 60))
            ""
-           (if (and (< battery-value 60) (> battery-value 25))
+           (if (and (< battery-value 61) (> battery-value 25))
              ""
-             (if (and (< battery-value 25) (> battery-value 2))
+             (if (and (< battery-value 26) (> battery-value 2))
                "" 
                "")))))
     (concat battery-icon "  " battery-string "%"))
