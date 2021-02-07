@@ -48,51 +48,175 @@
   ;; Rebind CapsLock to Esc
   (start-process-shell-command "qwerty" nil "setxkbmap -option caps:escape us,us_intl '' compose:ralt grp:rctrl_rshift_toggle"))
 
-(defun car-string-to-number (list-two-elements)
-  (append (list (string-to-number (car list-two-elements))) (cdr list-two-elements)))
+(defun xrandr/pixels-to-number-list (pixels)
+  (if (cl-search ":" pixels)
+    (mapcar 'string-to-number (split-string pixels ":"))
+    pixels))
 
-(defun sort-from-car (a b)
-  (< (car a) (car b)))
+(defun xrandr/entries-format (xrandr-entry)
+  (mapcar 'xrandr/pixels-to-number-list xrandr-entry))
 
-(defun xrandr-active-monitors ()
-  (mapcar 'car-string-to-number
-          (remove nil
-                  (mapcar 'split-string
-                          (split-string
-                           (shell-command-to-string "xrandr --listactivemonitors | grep / | cut -d '/' -f3 | sed -e 's/^[0-9]\\++//g' -e 's/+[0-9]\\+//g'")
-                           "\n")))))
+(defun xrandr/entry-position (xrandr-entry)
+ (car (cdr xrandr-entry)))
 
-(defun order-monitors ()
-  (apply #'append
-    (mapcar 'cdr
-      (sort
-       (xrandr-active-monitors)
-       'sort-from-car))))
+(defun xrandr/entry-position-x (xrandr-entry)
+  (car (xrandr/entry-position xrandr-entry)))
 
-(defun build-workspace-monitor (monitor current_workspace max_workspace)
+(defun xrandr/entry-position-y (xrandr-entry)
+  (car (cdr (xrandr/entry-position xrandr-entry))))
+
+(defun xrandr/entry-resolution (xrandr-entry)
+ (car (cdr (cdr xrandr-entry))))
+
+(defun xrandr/entry-resolution-x (xrandr-entry)
+  (car (xrandr/entry-resolution xrandr-entry)))
+
+(defun xrandr/entry-resolution-y (xrandr-entry)
+  (car (cdr (xrandr/entry-resolution xrandr-entry))))
+
+;; This will return an order list of monitors (from left to right)
+;; Format is as following:
+;; (("monitor-1" ("position-x" "position-y") ("resolution-x" "resolution-y")))
+(defun xrandr/build-active-monitors ()
+      (setq xrandr/active-monitors
+        (mapcar 'xrandr/entries-format
+          (mapcar 'reverse
+            (remove nil
+                    (mapcar 'split-string
+                            (split-string
+                             (shell-command-to-string "xrandr --listactivemonitors | cut -d ' ' -f4-6 | sed -e 's|/[0-9]*x|x|g' -e 's|/[0-9]*+| |g' -e 's/[x|+]/:/g'")
+                             "\n")))))))
+
+(defun exwm/build-workspace-monitor (monitor current_workspace max_workspace)
   (if (> current_workspace max_workspace)
       '()
-    (append (list current_workspace monitor) (build-workspace-monitor monitor (+ current_workspace 1) max_workspace))))
+    (append (list current_workspace monitor) (exwm/build-workspace-monitor monitor (+ current_workspace 1) max_workspace))))
 
-(defun build-exwm-monitors-aux (current_workspace monitor-list)
+(defun exwm/build-monitors-aux (current_workspace monitor-list)
   (cond
    ((equal (length monitor-list) 1)
     (list 9 (car monitor-list) 0 (car monitor-list))
     )
    ((equal (length monitor-list) 2)
-    (append (build-workspace-monitor (car monitor-list) current_workspace 8) (build-exwm-monitors-aux (+ current_workspace 2) (cdr monitor-list)))
+    (append (exwm/build-workspace-monitor (car monitor-list) current_workspace 8) (exwm/build-monitors-aux (+ current_workspace 2) (cdr monitor-list)))
     )
    (t
-    (append (build-workspace-monitor (car monitor-list) current_workspace (+ current_workspace 1)) (build-exwm-monitors-aux (+ current_workspace 2) (cdr monitor-list))))))
+    (append (exwm/build-workspace-monitor (car monitor-list) current_workspace (+ current_workspace 1)) (exwm/build-monitors-aux (+ current_workspace 2) (cdr monitor-list))))))
 
-(defun build-exwm-monitors ()
-  (build-exwm-monitors-aux 1 (order-monitors)))
+(defun exwm/build-monitors ()
+  (xrandr/build-active-monitors)
+  (exwm/build-monitors-aux 1 (mapcar 'car xrandr/active-monitors)))
 
 ;; This defines a function to refresh the workspaces position and xrandr
 (defun exwm/refresh-monitors ()
   (interactive)
   (exwm/autorandr-refresh)
-  (setq exwm-randr-workspace-monitor-plist (build-exwm-monitors)))
+  (setq exwm-randr-workspace-monitor-plist (exwm/build-monitors)))
+
+;; Display time every minute. will be used to display time and battery to a buffer displayed in child fames
+(require 'battery)
+
+(defun panel/battery ()
+  (setq battery-string (replace-regexp-in-string "\\[" ""
+    (replace-regexp-in-string "\\..\\%]" ""
+      (battery-format battery-mode-line-format (funcall battery-status-function)))))
+  (setq battery-value (string-to-number battery-string))
+  (setq battery-icon
+    (if (and (> battery-value 95))
+       ""
+       (if (and (< battery-value 96) (> battery-value 60))
+         ""
+         (if (and (< battery-value 61) (> battery-value 25))
+           ""
+           (if (and (< battery-value 26) (> battery-value 2))
+             "" 
+             "")))))
+  (concat battery-icon "  " battery-string "%"))
+
+  (panel/battery)
+
+(defun panel/time ()
+  (setq current-date-time-format "%a %d %b %Y %H:%M")
+  (format-time-string current-date-time-format (current-time)))
+
+(defun panel/print ()
+  (concat (panel/time) "   " (panel/battery)))
+
+(defun panel/write-buffer ()
+  (setq my-panel-buffer (get-buffer-create "*panel*"))
+  (with-current-buffer "*panel*" ; replace with the name of the buffer you want to append
+    (erase-buffer)
+    (insert (panel/print))))
+
+(defun utils/get-next-minute ()
+  (setq hour-minute-format "%H:%M")
+  (format-time-string hour-minute-format (time-add (current-time) (seconds-to-time 60))))
+
+(panel/write-buffer)
+(setq panel/timer (run-at-time (utils/get-next-minute) 60 'panel/write-buffer))
+
+(add-hook 'after-make-frame-functions
+        (lambda (frame)
+          (select-frame frame)
+          (cond
+           ((equal (frame-parameter frame 'name) "panel-frame")
+            (let ((window (frame-root-window frame)))
+              (set-window-parameter window 'mode-line-format 'none)
+              (set-window-parameter window 'header-line-format 'none))
+            (display-buffer "*panel*" nil nil)))
+          (other-window -1)))
+
+(setq panel/list '())
+
+;; TODO make this actually compute the width of a panel by calculating the width in pixel to display the panel content
+(defun panel/get-width ()
+  290)
+
+;; TODO make this actually compute the height of a panel by calculating the height in pixel to display the panel content
+(defun panel/get-height ()
+  16)
+
+(defun panel/make-frame (xrandr-entry)
+  (setq current-panel (make-frame
+   `((name . "panel-frame")
+     (parent-frame . nil)
+     (no-accept-focus . nil)
+     (window-min-width . 1)
+     (window-min-height . 1)
+     (min-width  . t)
+     (min-height . t)
+     (border-width . 0)
+     (internal-border-width . 0)
+     (vertical-scroll-bars . nil)
+     (horizontal-scroll-bars . nil)
+     (left-fringe . 10)
+     (right-fringe . 0)
+     (menu-bar-lines . 0)
+     (tool-bar-lines . 0)
+     (line-spacing . 0)
+     (unsplittable . t)
+     (no-other-frame . t)
+     (undecorated . t)
+     (unsplittable . t)
+     (cursor-type . nil)
+     (minibuffer . nil)
+     (width . 40)
+     (height . 0)
+     (no-special-glyphs . t))))
+  (push current-panel panel/list)
+  (set-frame-position current-panel (- (+ (xrandr/entry-position-x xrandr-entry) (xrandr/entry-resolution-x xrandr-entry)) (panel/get-width)) (- (+ (xrandr/entry-position-y xrandr-entry) (xrandr/entry-resolution-y xrandr-entry)) (panel/get-height))))
+
+(defun panel/clean-frames ()
+  (cl-loop for frame in panel/list
+    collect (delete-frame frame))
+  (setq panel/list '()))
+
+  (message panel/list)
+  (defun panel/display ()
+    (interactive)
+    (panel/clean-frames)
+    (cl-loop for xrandr-entry in xrandr/active-monitors
+      do (panel/make-frame xrandr-entry)))
 
 (defun app/qutebrowser ()
   (interactive)
@@ -322,6 +446,7 @@
   (exwm-input-set-key (kbd "C-s-k") #'windsize-up)
 
   (exwm-enable)
+
   (exwm/refresh-monitors)
   ;; This is for multiscreen support
   (require 'exwm-randr)
@@ -336,102 +461,3 @@
 
   ;; When randr changes, refresh monitor setup
   (add-hook 'exwm-randr-screen-change-hook 'exwm/refresh-monitors))
-
-;; Display time every minute. will be used to display time and battery to a buffer displayed in child fames
-  (require 'battery)
-
-  (defun panel/battery ()
-    (setq battery-string (replace-regexp-in-string "\\[" ""
-      (replace-regexp-in-string "\\..\\%]" ""
-        (battery-format battery-mode-line-format (funcall battery-status-function)))))
-    (setq battery-value (string-to-number battery-string))
-    (setq battery-icon
-      (if (and (> battery-value 95))
-         ""
-         (if (and (< battery-value 96) (> battery-value 60))
-           ""
-           (if (and (< battery-value 61) (> battery-value 25))
-             ""
-             (if (and (< battery-value 26) (> battery-value 2))
-               "" 
-               "")))))
-    (concat battery-icon "  " battery-string "%"))
-
-    (panel/battery)
-
-  (defun panel/time ()
-    (setq current-date-time-format "%a %d %b %Y %H:%M")
-    (format-time-string current-date-time-format (current-time)))
-
-  (defun panel/print ()
-    (concat (panel/time) "   " (panel/battery)))
-
-  (defun panel/write-buffer ()
-    (setq my-panel-buffer (get-buffer-create "*panel*"))
-    (with-current-buffer "*panel*" ; replace with the name of the buffer you want to append
-      (erase-buffer)
-      (insert (panel/print))))
-
-  (defun utils/get-next-minute ()
-    (setq hour-minute-format "%H:%M")
-    (format-time-string hour-minute-format (time-add (current-time) (seconds-to-time 60))))
-
-  (panel/write-buffer)
-  (setq panel/timer (run-at-time (utils/get-next-minute) 60 'panel/write-buffer))
-
-  (add-hook 'after-make-frame-functions
-          (lambda (frame)
-            (select-frame frame)
-            (cond
-             ((equal (frame-parameter frame 'name) "panel-frame")
-              (let ((window (frame-root-window frame)))
-                (set-window-parameter window 'mode-line-format 'none)
-                (set-window-parameter window 'header-line-format 'none))
-              (display-buffer "*panel*" nil nil)))
-            (other-window -1)))
-
-  (setq panel/list '())
-
-  (defun panel/make-frame (x-offset)
-    (setq current-panel (make-frame
-     `((name . "panel-frame")
-       (parent-frame . nil)
-       (no-accept-focus . nil)
-       (window-min-width . 1)
-       (window-min-height . 1)
-       (min-width  . t)
-       (min-height . t)
-       (border-width . 0)
-       (internal-border-width . 0)
-       (vertical-scroll-bars . nil)
-       (horizontal-scroll-bars . nil)
-       (left-fringe . 10)
-       (right-fringe . 0)
-       (menu-bar-lines . 0)
-       (tool-bar-lines . 0)
-       (line-spacing . 0)
-       (unsplittable . t)
-       (no-other-frame . t)
-       (undecorated . t)
-       (unsplittable . t)
-       (cursor-type . nil)
-       (minibuffer . nil)
-       (width . 40)
-       (height . 0)
-       (no-special-glyphs . t))))
-    (push current-panel panel/list)
-    (set-frame-position current-panel (+ (* x-offset 1920) 1630) 1064)
-    (setq index-monitor (+ index-monitor 1)))
-
-(defun panel/clean-frames ()
-  (cl-loop for frame in panel/list
-    collect (delete-frame frame))
-  (setq panel/list '()))
-
-  (message panel/list)
-  (defun panel/display ()
-    (interactive)
-    (panel/clean-frames)
-    (setq index-monitor 0)
-    (cl-loop for monitor in (order-monitors)
-      do (panel/make-frame index-monitor)))
