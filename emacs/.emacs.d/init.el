@@ -36,6 +36,21 @@
 (setq x-select-enable-clipboard t)
 (setq interprogram-paste-function 'x-cut-buffer-or-selection-value)
 
+;; Smooth scrolling
+;; Vertical Scroll
+(setq scroll-step 1)
+(setq scroll-margin 1)
+(setq scroll-conservatively 101)
+(setq scroll-up-aggressively 0.01)
+(setq scroll-down-aggressively 0.01)
+(setq auto-window-vscroll nil)
+(setq fast-but-imprecise-scrolling nil)
+(setq mouse-wheel-scroll-amount '(1 ((shift) . 1)))
+(setq mouse-wheel-progressive-speed nil)
+;; Horizontal Scroll
+(setq hscroll-step 1)
+(setq hscroll-margin 1)
+
 (defun fonts/set-size (font-size)
   (set-face-attribute 'default nil :font "Fira Code" :height font-size)
   ;; Set the fixed pitch face
@@ -276,6 +291,8 @@
   (global-highlight-parentheses-mode 1))
 
 (use-package focus)
+
+(use-package flycheck)
 
 (use-package counsel
   :bind (("M-x" . counsel-M-x)
@@ -530,8 +547,6 @@
 
 (use-package ibuffer-projectile)
 
-(use-package flycheck)
-
 (use-package magit
   :custom
   (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
@@ -543,6 +558,9 @@
 
 (use-package evil-nerd-commenter
   :bind ("M-/" . evilnc-comment-or-uncomment-lines))
+
+(use-package format-all
+  :bind ("C-c C-f" . format-all-buffer))
 
 (use-package dap-mode)
 
@@ -629,53 +647,21 @@
 (use-package docker-compose-mode)
 
 (use-package docker
-:config
-(defun docker/set-format ()
-  (interactive)
-  (setq tabulated-list-format [("Names" 30 t)("Ports" 30 t)("Status" 20 t)("Id" 16 t)("Image" 15 t)("Command" 30 t)("Created" 23 t)])
-  (setq tabulated-list-padding 2)
-  (setq tabulated-list-sort-key docker-container-default-sort-key)
-  (add-hook 'tabulated-list-revert-hook 'docker-container-refresh nil t)
-  (tabulated-list-init-header)
-  (tablist-minor-mode))
+  :config
+  (define-derived-mode docker-container-mode tabulated-list-mode "Containers Menu"
+    "Major mode for handling a list of docker containers."
+    (setq tabulated-list-format [("Id" 5 t)("Image" 5 t)("Command" 10 t)("Created" 10 t)("Status" 10 t)("Ports" 35 t)("Names" 30 t)])
+    (setq tabulated-list-padding 2)
+    (setq tabulated-list-sort-key docker-container-default-sort-key)
+    (add-hook 'tabulated-list-revert-hook 'docker-container-refresh nil t)
+    (tabulated-list-init-header)
+    (tablist-minor-mode))
 
-(defun docker-container-parse (line)
-  "Convert a LINE from \"docker container ls\" to a `tabulated-list-entries' entry."
-  (condition-case nil
-      (let* ((data (json-read-from-string line))
-             (uptime (aref data 6))
-             (status (aref data 2)))
-        (aset data 6 (format-time-string "%F %T" (date-to-time uptime)))
-        (aset data 2 (propertize status 'font-lock-face (docker-container-status-face status)))
-        (list (aref data 1) data))
-    (json-readtable-error
-     (error "Could not read following string as json:\n%s" line))))
-
-(defun docker-container-entries ()
-  "Return the docker containers data for `tabulated-list-entries'."
-  (let* ((fmt "[{{json .Names}},{{json .Ports}},{{json .Status}},{{json .ID}},{{json .Image}},{{json .Command}},{{json .CreatedAt}}]")
-         (data (docker-run-docker "container ls" (docker-container-ls-arguments) (format "--format=\"%s\"" fmt)))
-         (lines (s-split "\n" data t)))
-    (-map #'docker-container-parse lines)))
-
-(defun docker-container-refresh ()
-  "Refresh the containers list."
-  (setq tabulated-list-entries (docker-container-entries)))
-
-(define-derived-mode docker-container-mode tabulated-list-mode "Containers Menu"
-  "Major mode for handling a list of docker containers."
-  (setq tabulated-list-format [("Names" 30 t)("Ports" 40 t)("Status" 20 t)("Id" 16 t)("Image" 15 t)("Command" 30 t)("Created" 23 t)])
-  (setq tabulated-list-padding 2)
-  (setq tabulated-list-sort-key docker-container-default-sort-key)
-  (add-hook 'tabulated-list-revert-hook 'docker-container-refresh nil t)
-  (tabulated-list-init-header)
-  (tablist-minor-mode))
-
-(defun docker/dcup (string-services)
- (interactive "sDocker services to start: ")
- (setq docker-services (split-string string-services))
- (cl-loop for service in docker-services
- collect (docker-compose-run-docker-compose-async "up" service)))
+  (defun docker/dcup (string-services)
+    (interactive "sDocker services to start: ")
+    (setq docker-services (split-string string-services))
+    (cl-loop for service in docker-services
+    collect (docker-compose-run-docker-compose-async "up" service)))
 
   (setq docker-container-shell-file-name "/bin/sh")
 
@@ -693,6 +679,25 @@
 (use-package kubernetes-evil
   :after kubernetes)
 
+(use-package flyspell
+  :ensure nil
+  :diminish
+  :if (executable-find "aspell")
+  :hook (((prog-mode text-mode outline-mode latex-mode) . flyspell-mode))
+  :custom
+  (flyspell-issue-message-flag nil)
+  (ispell-program-name "aspell")
+  (ispell-extra-args
+   '("--sug-mode=ultra" "--lang=en_US"))
+  :config
+  (use-package flyspell-correct-ivy
+    :after ivy
+    :bind
+    (:map flyspell-mode-map
+          ([remap flyspell-correct-word-before-point] . flyspell-correct-wrapper)
+          ("C-." . flyspell-correct-wrapper))
+    :custom (flyspell-correct-interface #'flyspell-correct-ivy)))
+
 (use-package vterm
   :config
   (setq vterm-shell "/bin/zsh")
@@ -700,7 +705,7 @@
 
 (use-package term
   :config
-  (setq explicit-shell-file-name "zsh")
+  (setq explicit-shell-file-name "bash")
 
   ;; Use 'explicit-<shell>-args for shell-specific args
   ;;(setq explicit-zsh-args '())         
