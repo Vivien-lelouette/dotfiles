@@ -139,13 +139,6 @@
 
 (use-package quelpa)
 
-(quelpa
- '(quelpa-use-package
-   :fetcher git
-   :url "https://github.com/quelpa/quelpa-use-package.git"))
-
-(require 'quelpa-use-package)
-
 (use-package general
   :config
   (general-create-definer keys/leader-keys
@@ -559,8 +552,7 @@
 
 (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
 
-(use-package rainbow-mode
-  :quelpa t)
+(use-package rainbow-mode)
 
 (defun efs/lsp-mode-setup ()
   (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
@@ -608,17 +600,18 @@
 
 (add-hook 'sh-mode-hook 'lsp-deferred)
 
-(use-package yaml-mode
-  :quelpa t
-  :config
-  (add-hook 'yaml-mode-hook 'highlight-indent-guides-mode))
+(quelpa
+ '(yaml-mode
+   :fetcher git
+   :url "https://github.com/yoshiki/yaml-mode"))
+(require 'yaml-mode)
+(add-hook 'yaml-mode-hook 'highlight-indent-guides-mode)
 
 (use-package json-mode
   :config
   (add-hook 'json-mode-hook 'highlight-indent-guides-mode))
 
 (use-package restclient
-  :quelpa t
   :hook (restclient-mode . company-mode))
 
 (add-to-list 'auto-mode-alist '("\\.http\\'" . restclient-mode))
@@ -708,8 +701,11 @@
 (use-package eterm-256color
   :hook (term-mode . eterm-256color-mode))
 
-(use-package aweshell
-  :quelpa (aweshell :fetcher github :repo "manateelazycat/aweshell"))
+(quelpa
+ '(aweshell
+   :fetcher git
+   :url "https://github.com/manateelazycat/aweshell"))
+(require 'aweshell)
 
 (use-package windmove)
 
@@ -719,35 +715,35 @@
   :config
   (setq zoom-size '(0.618 . 0.618)))
 
-(use-package eaf
-  :quelpa (eaf :fetcher git :url "https://github.com/manateelazycat/emacs-application-framework.git")
-  :init
-  (use-package epc :defer t)
-  (use-package ctable :defer t)
-  (use-package deferred :defer t)
-  (use-package s :defer t)
-  :config
-  (require 'eaf-evil)
-  (add-to-list 'eaf-wm-focus-fix-wms "EXWM")
-  (eaf-setq eaf-browser-enable-adblocker "true")
-  (eaf-setq eaf-browser-scroll-behavior "smooth")
-  (eaf-setq eaf-browser-blank-page-url "https://duckduckgo.com")
-  (eaf-setq eaf-browser-dark-mode "false")
+(quelpa
+ '(eaf
+   :fetcher git
+   :url "https://github.com/manateelazycat/emacs-application-framework.git"
+   :files ("*")))
+(require 'eaf)
+(require 'eaf-evil)
 
-  (setq eaf-browser-continue-where-left-off t)
-  (setq eaf-browser-search-engines '(("duckduckgo" . "https://duckduckgo.com/?q=%s")))
-  (setq eaf-browser-default-search-engine "duckduckgo")
+(add-to-list 'eaf-wm-focus-fix-wms "EXWM")
+(eaf-setq eaf-browser-enable-adblocker "true")
+(eaf-setq eaf-browser-scroll-behavior "smooth")
+(eaf-setq eaf-browser-blank-page-url "https://duckduckgo.com")
+(eaf-setq eaf-browser-dark-mode "false")
 
-  (keys/leader-keys
-    "i" '(:ignore t :which-key "internet")
-    "ia" '(eaf-open-browser :which-key "address")
-    "ii" '(eaf-open-browser-with-history :which-key "search & history")
-    "ib" '(eaf-open-bookmark :which-key "bookmarks")))
+(setq eaf-browser-continue-where-left-off t)
+(setq eaf-browser-search-engines '(("duckduckgo" . "https://duckduckgo.com/?q=%s")))
+(setq eaf-browser-default-search-engine "duckduckgo")
 
-(use-package bitwarden
-  :quelpa (bitwarden :fetcher git :url "https://github.com/seanfarley/emacs-bitwarden.git")
-  :config
-  (bitwarden-auth-source-enable))
+(keys/leader-keys
+  "i" '(:ignore t :which-key "internet")
+  "ia" '(eaf-open-browser :which-key "address")
+  "ii" '(eaf-open-browser-with-history :which-key "search & history")
+  "ib" '(eaf-open-bookmark :which-key "bookmarks"))
+
+(quelpa
+ '(bitwarden
+   :fetcher git
+   :url "https://github.com/seanfarley/emacs-bitwarden.git"))
+(require 'bitwarden)
 
 (autoload 'exwm-enable "~/.emacs.d/desktop.el")
 

@@ -220,13 +220,6 @@ For those packages, here is quelpa:
 
   (use-package quelpa)
 
-  (quelpa
-   '(quelpa-use-package
-     :fetcher git
-     :url "https://github.com/quelpa/quelpa-use-package.git"))
-
-  (require 'quelpa-use-package)
-
 #+end_src
 
 * Keymap packages
@@ -864,8 +857,7 @@ Prerequisite: Read Supported Languages to see which additional tool you need to 
 ** Rainbow colors
 #+begin_src emacs-lisp
 
-    (use-package rainbow-mode
-      :quelpa t)
+    (use-package rainbow-mode)
 
 #+end_src
 
@@ -975,10 +967,12 @@ Requires you to run: M-x lsp-install-server RET bash RET.
 ** Yaml
 #+begin_src emacs-lisp
 
-  (use-package yaml-mode
-    :quelpa t
-    :config
-    (add-hook 'yaml-mode-hook 'highlight-indent-guides-mode))
+  (quelpa
+   '(yaml-mode
+     :fetcher git
+     :url "https://github.com/yoshiki/yaml-mode"))
+  (require 'yaml-mode)
+  (add-hook 'yaml-mode-hook 'highlight-indent-guides-mode)
 
 #+end_src
 
@@ -995,7 +989,6 @@ Requires you to run: M-x lsp-install-server RET bash RET.
 #+begin_src emacs-lisp
 
   (use-package restclient
-    :quelpa t
     :hook (restclient-mode . company-mode))
 
   (add-to-list 'auto-mode-alist '("\\.http\\'" . restclient-mode))
@@ -1145,8 +1138,11 @@ Flyspell enables on-the-fly spell checking in Emacs and uses Flyspell Correct fo
 ** Eshell
 #+begin_src emacs-lisp
 
-  (use-package aweshell
-    :quelpa (aweshell :fetcher github :repo "manateelazycat/aweshell"))
+  (quelpa
+   '(aweshell
+     :fetcher git
+     :url "https://github.com/manateelazycat/aweshell"))
+  (require 'aweshell)
 
 #+end_src 
 
@@ -1190,15 +1186,14 @@ Install running the install script given in EAF. But it would be better if I cou
 ** Installation
 #+begin_src emacs-lisp
 
-  (use-package eaf
-    :quelpa (eaf :fetcher git :url "https://github.com/manateelazycat/emacs-application-framework.git")
-    :init
-    (use-package epc :defer t)
-    (use-package ctable :defer t)
-    (use-package deferred :defer t)
-    (use-package s :defer t)
-    :config
+    (quelpa
+     '(eaf
+       :fetcher git
+       :url "https://github.com/manateelazycat/emacs-application-framework.git"
+       :files ("*")))
+    (require 'eaf)
     (require 'eaf-evil)
+
     (add-to-list 'eaf-wm-focus-fix-wms "EXWM")
     (eaf-setq eaf-browser-enable-adblocker "true")
     (eaf-setq eaf-browser-scroll-behavior "smooth")
@@ -1213,7 +1208,7 @@ Install running the install script given in EAF. But it would be better if I cou
       "i" '(:ignore t :which-key "internet")
       "ia" '(eaf-open-browser :which-key "address")
       "ii" '(eaf-open-browser-with-history :which-key "search & history")
-      "ib" '(eaf-open-bookmark :which-key "bookmarks")))
+      "ib" '(eaf-open-bookmark :which-key "bookmarks"))
 
 #+end_src
 
@@ -1228,10 +1223,11 @@ Install the bitwarden cli using npm.
 ** Emacs bitwarden
 #+begin_src emacs-lisp
 
-  (use-package bitwarden
-    :quelpa (bitwarden :fetcher git :url "https://github.com/seanfarley/emacs-bitwarden.git")
-    :config
-    (bitwarden-auth-source-enable))
+  (quelpa
+   '(bitwarden
+     :fetcher git
+     :url "https://github.com/seanfarley/emacs-bitwarden.git"))
+  (require 'bitwarden)
 
 #+end_src
 
