@@ -32,6 +32,8 @@ This launcher script is invoked by =EXWM.desktop= to start Emacs and load our de
   # Run the screen compositor
   compton &
 
+  source ~/.python.env/bin/activate
+
   # Fire it up
   exec dbus-launch --exit-with-session ~/Tools/emacs/src/emacs -mm --debug-init --eval "(exwm-enable)"
 
@@ -195,8 +197,9 @@ Workspace 1 & 2 will be allocated to the most left monitor, the 3 & 4 to the one
 
     (defun panel/battery ()
       (setq battery-string (replace-regexp-in-string "\\[" ""
-        (replace-regexp-in-string "\\..\\%]" ""
-          (battery-format battery-mode-line-format (funcall battery-status-function)))))
+        (replace-regexp-in-string "\\+" ""
+          (replace-regexp-in-string "%]" ""
+            (battery-format battery-mode-line-format (funcall battery-status-function))))))
       (setq battery-value (string-to-number battery-string))
       (setq battery-icon
         (if (and (> battery-value 95))

@@ -118,8 +118,9 @@
 
   (defun panel/battery ()
     (setq battery-string (replace-regexp-in-string "\\[" ""
-      (replace-regexp-in-string "\\..\\%]" ""
-        (battery-format battery-mode-line-format (funcall battery-status-function)))))
+      (replace-regexp-in-string "\\+" ""
+        (replace-regexp-in-string "%]" ""
+          (battery-format battery-mode-line-format (funcall battery-status-function))))))
     (setq battery-value (string-to-number battery-string))
     (setq battery-icon
       (if (and (> battery-value 95))
