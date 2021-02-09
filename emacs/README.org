@@ -17,12 +17,11 @@ The snippets below will install emacs from their git master:
 
   mkdir -p ~/Tools
   cd ~/Tools
-  git clone -b master git://git.sv.gnu.org/emacs.git
+  git clone git://git.savannah.gnu.org/emacs.git -b feature/native-comp
   cd emacs
   ./autogen.sh
-  ./configure --with-modules
-  make
-  sudo make install
+  ./configure --with-nativecomp
+  make -j$(nproc)
 
 #+end_src
 
@@ -31,6 +30,7 @@ The snippets below will install emacs from their git master:
 #+begin_src emacs-lisp
 
   (setq gc-cons-threshold 100000000)
+  (setq read-process-output-max (* 1024 1024)) ;; 1mb
 
 #+end_src
 
@@ -52,7 +52,7 @@ The snippets below will install emacs from their git master:
 
   (setq inhibit-startup-message t)
 
-  (scroll-bar-mode -1)        ; Disable visible scrollbar
+  ;; (scroll-bar-mode -1)        ; Disable visible scrollbar
   (tool-bar-mode -1)          ; Disable the toolbar
   (tooltip-mode -1)           ; Disable tooltips
   (set-fringe-mode 10)        ; Give some breathing room
@@ -78,6 +78,9 @@ The snippets below will install emacs from their git master:
   ;; Let emacs use system clipboard as a default behaviour
   (setq x-select-enable-clipboard t)
   (setq interprogram-paste-function 'x-cut-buffer-or-selection-value)
+
+  ;; Winner-mode
+  (winner-mode 1)
 
   ;; Smooth scrolling
   ;; Vertical Scroll
@@ -198,26 +201,31 @@ The snippets below will install emacs from their git master:
 
 #+end_src
 
-** Initialize straight
+** Initialize use-package
 
 #+begin_src emacs-lisp
 
-  (defvar bootstrap-version)
-  (let ((bootstrap-file
-         (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-        (bootstrap-version 5))
-    (unless (file-exists-p bootstrap-file)
-      (with-current-buffer
-          (url-retrieve-synchronously
-           "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
-           'silent 'inhibit-cookies)
-        (goto-char (point-max))
-        (eval-print-last-sexp)))
-    (load bootstrap-file nil 'nomessage))
+  (unless (package-installed-p 'use-package)
+     (package-install 'use-package))
 
-  (straight-use-package 'use-package)
+  (require 'use-package)
+  (setq use-package-always-ensure t) 
 
-  (setq straight-use-package-by-default t)
+#+end_src
+
+** Initialize quelpa
+Most of my packages are managed using use-package and package.el (the standard way). But for some packages, something that looks in github is needed.
+For those packages, here is quelpa:
+#+begin_src emacs-lisp
+
+  (use-package quelpa)
+
+  (quelpa
+   '(quelpa-use-package
+     :fetcher git
+     :url "https://github.com/quelpa/quelpa-use-package.git"))
+
+  (require 'quelpa-use-package)
 
 #+end_src
 
@@ -251,7 +259,6 @@ The snippets below will install emacs from their git master:
 #+begin_src emacs-lisp
 
   (use-package evil
-
     :init
     (setq evil-want-integration t)
     (setq evil-want-keybinding nil)
@@ -286,16 +293,14 @@ The snippets below will install emacs from their git master:
    :config
    (evil-multiedit-default-keybinds))
 
-
-
 #+end_src
 
 ** Evil surround
 #+begin_src emacs-lisp
 
-(use-package evil-surround
-  :config
-  (global-evil-surround-mode 1))
+  (use-package evil-surround
+    :config
+    (global-evil-surround-mode 1))
 
 #+end_src
 
@@ -323,10 +328,11 @@ The first time you load your configuration on a new machine, you'll need to run 
 #+begin_src emacs-lisp
 
   (use-package all-the-icons)
-  (use-package all-the-icons-dired
 
+  (use-package all-the-icons-dired
     :config
     (add-hook 'dired-mode-hook 'all-the-icons-dired-mode))
+
   (use-package all-the-icons-ibuffer)
 
 #+end_src
@@ -353,7 +359,6 @@ The first time you load your configuration on a new machine, you'll need to run 
 #+begin_src emacs-lisp
 
   (use-package doom-modeline
-
     :init (doom-modeline-mode 1)
     :custom ((doom-modeline-height 22)))
 
@@ -363,7 +368,6 @@ The first time you load your configuration on a new machine, you'll need to run 
 #+begin_src emacs-lisp
 
   (use-package rainbow-delimiters
-
     :hook (prog-mode . rainbow-delimiters-mode))
 
 #+end_src
@@ -383,7 +387,6 @@ The first time you load your configuration on a new machine, you'll need to run 
 #+begin_src emacs-lisp
 
   (use-package helpful
-
     :custom
     (counsel-describe-function-function #'helpful-callable)
     (counsel-describe-variable-function #'helpful-variable)
@@ -399,7 +402,6 @@ The first time you load your configuration on a new machine, you'll need to run 
 #+begin_src emacs-lisp
 
   (use-package ace-window
-
     :config
     (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
     (setq aw-background nil)
@@ -427,30 +429,15 @@ The first time you load your configuration on a new machine, you'll need to run 
     (setq right-fringe-width 0))
 
   (use-package treemacs
-
     :config
     (add-hook 'treemacs-mode-hook #'efs/treemacs-set-fringe))
 
   (use-package treemacs-all-the-icons
-
     :config
     (treemacs-load-theme "all-the-icons"))
 
   (efs/treemacs-set-fringe)
  
-#+end_src
-
-** Yascroll
-#+begin_src emacs-lisp
-
-  (use-package yascroll
-
-    :config
-    (global-yascroll-bar-mode 1)
-    (setq yascroll:delay-to-hide nil)
-    ;; Don't hide scrollbar when editing
-    (defadvice yascroll:before-change (around always-show-bar activate) ()))
-
 #+end_src
 
 ** Volatile highlights
@@ -877,8 +864,8 @@ Prerequisite: Read Supported Languages to see which additional tool you need to 
 ** Rainbow colors
 #+begin_src emacs-lisp
 
-  (use-package rainbow-mode
-    :straight (rainbow-mode :type git :host github :repo "emacsmirror/rainbow-mode"))
+    (use-package rainbow-mode
+      :quelpa t)
 
 #+end_src
 
@@ -904,10 +891,12 @@ The =which-key= integration adds helpful descriptions of the various keys so you
     :commands (lsp lsp-deferred)
     :hook (lsp-mode . efs/lsp-mode-setup)
     :config
+    (setq lsp-idle-delay 0.500)
+    (setq lsp-completion-provider :capf)
     (define-key lsp-mode-map (kbd "C-SPC") lsp-command-map)
     (define-key lsp-mode-map (kbd "s-l") nil))
 
- (add-hook 'lsp-mode-hook 'highlight-indent-guides-mode)
+  (add-hook 'lsp-mode-hook 'highlight-indent-guides-mode)
 
 #+end_src
 
@@ -986,11 +975,10 @@ Requires you to run: M-x lsp-install-server RET bash RET.
 ** Yaml
 #+begin_src emacs-lisp
 
- (use-package yaml-mode
-    :straight (yaml-mode :type git :host github :repo "yoshiki/yaml-mode")
+  (use-package yaml-mode
+    :quelpa t
     :config
     (add-hook 'yaml-mode-hook 'highlight-indent-guides-mode))
-
 
 #+end_src
 
@@ -1007,9 +995,9 @@ Requires you to run: M-x lsp-install-server RET bash RET.
 #+begin_src emacs-lisp
 
   (use-package restclient
-    :straight (restclient :type git :host github :repo "pashky/restclient.el")
+    :quelpa t
     :hook (restclient-mode . company-mode))
-      
+
   (add-to-list 'auto-mode-alist '("\\.http\\'" . restclient-mode))
 
   (use-package company-restclient)
@@ -1154,16 +1142,19 @@ Flyspell enables on-the-fly spell checking in Emacs and uses Flyspell Correct fo
 
 #+end_src
 
+** Eshell
+#+begin_src emacs-lisp
+
+  (use-package aweshell
+    :quelpa (aweshell :fetcher github :repo "manateelazycat/aweshell"))
+
+#+end_src 
+
 * Window Management
 ** Windmove
 #+begin_src emacs-lisp
 
   (use-package windmove)
-
-  ;; (use-package framemove
-  ;;   :straight (framemove :type git :host github :repo "emacsmirror/framemove")
-  ;;   :config
-  ;;   (setq framemove-hook-into-windmove t))
 
 #+end_src
 
@@ -1200,7 +1191,7 @@ Install running the install script given in EAF. But it would be better if I cou
 #+begin_src emacs-lisp
 
   (use-package eaf
-    :straight (eaf :type git :host github :repo "manateelazycat/emacs-application-framework" :files ("*.el" "*.py" "*.sh" "core" "app"))
+    :quelpa (eaf :fetcher git :url "https://github.com/manateelazycat/emacs-application-framework.git")
     :init
     (use-package epc :defer t)
     (use-package ctable :defer t)
@@ -1238,7 +1229,7 @@ Install the bitwarden cli using npm.
 #+begin_src emacs-lisp
 
   (use-package bitwarden
-    :straight (bitwarden :type git :host github :repo "seanfarley/emacs-bitwarden")
+    :quelpa (bitwarden :fetcher git :url "https://github.com/seanfarley/emacs-bitwarden.git")
     :config
     (bitwarden-auth-source-enable))
 

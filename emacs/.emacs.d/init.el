@@ -1,4 +1,5 @@
 (setq gc-cons-threshold 100000000)
+(setq read-process-output-max (* 1024 1024)) ;; 1mb
 
 (let ((file-name-handler-alist nil))
   (require 'package)
@@ -9,7 +10,7 @@
 
 (setq inhibit-startup-message t)
 
-(scroll-bar-mode -1)        ; Disable visible scrollbar
+;; (scroll-bar-mode -1)        ; Disable visible scrollbar
 (tool-bar-mode -1)          ; Disable the toolbar
 (tooltip-mode -1)           ; Disable tooltips
 (set-fringe-mode 10)        ; Give some breathing room
@@ -35,6 +36,9 @@
 ;; Let emacs use system clipboard as a default behaviour
 (setq x-select-enable-clipboard t)
 (setq interprogram-paste-function 'x-cut-buffer-or-selection-value)
+
+;; Winner-mode
+(winner-mode 1)
 
 ;; Smooth scrolling
 ;; Vertical Scroll
@@ -127,22 +131,20 @@
 (unless package-archive-contents
   (package-refresh-contents))
 
-(defvar bootstrap-version)
-(let ((bootstrap-file
-       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-      (bootstrap-version 5))
-  (unless (file-exists-p bootstrap-file)
-    (with-current-buffer
-        (url-retrieve-synchronously
-         "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
-         'silent 'inhibit-cookies)
-      (goto-char (point-max))
-      (eval-print-last-sexp)))
-  (load bootstrap-file nil 'nomessage))
+(unless (package-installed-p 'use-package)
+   (package-install 'use-package))
 
-(straight-use-package 'use-package)
+(require 'use-package)
+(setq use-package-always-ensure t)
 
-(setq straight-use-package-by-default t)
+(use-package quelpa)
+
+(quelpa
+ '(quelpa-use-package
+   :fetcher git
+   :url "https://github.com/quelpa/quelpa-use-package.git"))
+
+(require 'quelpa-use-package)
 
 (use-package general
   :config
@@ -160,7 +162,6 @@
   (global-undo-tree-mode 1))
 
 (use-package evil
-
   :init
   (setq evil-want-integration t)
   (setq evil-want-keybinding nil)
@@ -206,10 +207,11 @@
   "ts" '(hydra-text-scale/body :which-key "scale text"))
 
 (use-package all-the-icons)
-(use-package all-the-icons-dired
 
+(use-package all-the-icons-dired
   :config
   (add-hook 'dired-mode-hook 'all-the-icons-dired-mode))
+
 (use-package all-the-icons-ibuffer)
 
 (use-package ibuffer-vc)
@@ -221,12 +223,10 @@
   (set-face-attribute 'fringe nil :background "#1e1e1e" :foreground "#1e1e1e"))
 
 (use-package doom-modeline
-
   :init (doom-modeline-mode 1)
   :custom ((doom-modeline-height 22)))
 
 (use-package rainbow-delimiters
-
   :hook (prog-mode . rainbow-delimiters-mode))
 
 (use-package which-key
@@ -236,7 +236,6 @@
   (setq which-key-idle-delay 1))
 
 (use-package helpful
-
   :custom
   (counsel-describe-function-function #'helpful-callable)
   (counsel-describe-variable-function #'helpful-variable)
@@ -247,7 +246,6 @@
   ([remap describe-key] . helpful-key))
 
 (use-package ace-window
-
   :config
   (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
   (setq aw-background nil)
@@ -265,24 +263,14 @@
   (setq right-fringe-width 0))
 
 (use-package treemacs
-
   :config
   (add-hook 'treemacs-mode-hook #'efs/treemacs-set-fringe))
 
 (use-package treemacs-all-the-icons
-
   :config
   (treemacs-load-theme "all-the-icons"))
 
 (efs/treemacs-set-fringe)
-
-(use-package yascroll
-
-  :config
-  (global-yascroll-bar-mode 1)
-  (setq yascroll:delay-to-hide nil)
-  ;; Don't hide scrollbar when editing
-  (defadvice yascroll:before-change (around always-show-bar activate) ()))
 
 (use-package volatile-highlights)
 
@@ -572,22 +560,24 @@
 (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
 
 (use-package rainbow-mode
-  :straight (rainbow-mode :type git :host github :repo "emacsmirror/rainbow-mode"))
+  :quelpa t)
 
 (defun efs/lsp-mode-setup ()
-   (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
-   (lsp-headerline-breadcrumb-mode)
-   (let ((lsp-keymap-prefix "C-SPC"))
-   (lsp-enable-which-key-integration)))
+  (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
+  (lsp-headerline-breadcrumb-mode)
+  (let ((lsp-keymap-prefix "C-SPC"))
+  (lsp-enable-which-key-integration)))
 
- (use-package lsp-mode
-   :init
-   (setq lsp-keymap-prefix "C-SPC")  ;; Or 'C-l', 's-l'
-   :commands (lsp lsp-deferred)
-   :hook (lsp-mode . efs/lsp-mode-setup)
-   :config
-   (define-key lsp-mode-map (kbd "C-SPC") lsp-command-map)
-   (define-key lsp-mode-map (kbd "s-l") nil))
+(use-package lsp-mode
+  :init
+  (setq lsp-keymap-prefix "C-SPC")  ;; Or 'C-l', 's-l'
+  :commands (lsp lsp-deferred)
+  :hook (lsp-mode . efs/lsp-mode-setup)
+  :config
+  (setq lsp-idle-delay 0.500)
+  (setq lsp-completion-provider :capf)
+  (define-key lsp-mode-map (kbd "C-SPC") lsp-command-map)
+  (define-key lsp-mode-map (kbd "s-l") nil))
 
 (add-hook 'lsp-mode-hook 'highlight-indent-guides-mode)
 
@@ -619,16 +609,16 @@
 (add-hook 'sh-mode-hook 'lsp-deferred)
 
 (use-package yaml-mode
-   :straight (yaml-mode :type git :host github :repo "yoshiki/yaml-mode")
-   :config
-   (add-hook 'yaml-mode-hook 'highlight-indent-guides-mode))
+  :quelpa t
+  :config
+  (add-hook 'yaml-mode-hook 'highlight-indent-guides-mode))
 
 (use-package json-mode
   :config
   (add-hook 'json-mode-hook 'highlight-indent-guides-mode))
 
 (use-package restclient
-  :straight (restclient :type git :host github :repo "pashky/restclient.el")
+  :quelpa t
   :hook (restclient-mode . company-mode))
 
 (add-to-list 'auto-mode-alist '("\\.http\\'" . restclient-mode))
@@ -718,12 +708,10 @@
 (use-package eterm-256color
   :hook (term-mode . eterm-256color-mode))
 
-(use-package windmove)
+(use-package aweshell
+  :quelpa (aweshell :fetcher github :repo "manateelazycat/aweshell"))
 
-;; (use-package framemove
-;;   :straight (framemove :type git :host github :repo "emacsmirror/framemove")
-;;   :config
-;;   (setq framemove-hook-into-windmove t))
+(use-package windmove)
 
 (use-package windsize)
 
@@ -732,7 +720,7 @@
   (setq zoom-size '(0.618 . 0.618)))
 
 (use-package eaf
-  :straight (eaf :type git :host github :repo "manateelazycat/emacs-application-framework" :files ("*.el" "*.py" "*.sh" "core" "app"))
+  :quelpa (eaf :fetcher git :url "https://github.com/manateelazycat/emacs-application-framework.git")
   :init
   (use-package epc :defer t)
   (use-package ctable :defer t)
@@ -757,7 +745,7 @@
     "ib" '(eaf-open-bookmark :which-key "bookmarks")))
 
 (use-package bitwarden
-  :straight (bitwarden :type git :host github :repo "seanfarley/emacs-bitwarden")
+  :quelpa (bitwarden :fetcher git :url "https://github.com/seanfarley/emacs-bitwarden.git")
   :config
   (bitwarden-auth-source-enable))
 

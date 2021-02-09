@@ -114,107 +114,131 @@
   (setq exwm-randr-workspace-monitor-plist (exwm/build-monitors)))
 
 ;; Display time every minute. will be used to display time and battery to a buffer displayed in child fames
-(require 'battery)
+  (require 'battery)
 
-(defun panel/battery ()
-  (setq battery-string (replace-regexp-in-string "\\[" ""
-    (replace-regexp-in-string "\\..\\%]" ""
-      (battery-format battery-mode-line-format (funcall battery-status-function)))))
-  (setq battery-value (string-to-number battery-string))
-  (setq battery-icon
-    (if (and (> battery-value 95))
-       ""
-       (if (and (< battery-value 96) (> battery-value 60))
-         ""
-         (if (and (< battery-value 61) (> battery-value 25))
-           ""
-           (if (and (< battery-value 26) (> battery-value 2))
-             "" 
-             "")))))
-  (concat battery-icon "  " battery-string "%"))
+  (defun panel/battery ()
+    (setq battery-string (replace-regexp-in-string "\\[" ""
+      (replace-regexp-in-string "\\..\\%]" ""
+        (battery-format battery-mode-line-format (funcall battery-status-function)))))
+    (setq battery-value (string-to-number battery-string))
+    (setq battery-icon
+      (if (and (> battery-value 95))
+         ""
+         (if (and (< battery-value 96) (> battery-value 60))
+           ""
+           (if (and (< battery-value 61) (> battery-value 25))
+             ""
+             (if (and (< battery-value 26) (> battery-value 2))
+               "" 
+               "")))))
+    (concat battery-icon "  " battery-string "%"))
 
-  (panel/battery)
+    (panel/battery)
 
-(defun panel/time ()
-  (setq current-date-time-format "%a %d %b %Y %H:%M")
-  (format-time-string current-date-time-format (current-time)))
+  (defun panel/time ()
+    (setq current-date-time-format "%a %d %b %Y %H:%M")
+    (format-time-string current-date-time-format (current-time)))
 
-(defun panel/print ()
-  (concat (panel/time) "   " (panel/battery)))
+  (defun panel/print ()
+    (concat (panel/time) "   " (panel/battery)))
 
-(defun panel/write-buffer ()
-  (setq my-panel-buffer (get-buffer-create "*panel*"))
-  (with-current-buffer "*panel*" ; replace with the name of the buffer you want to append
-    (erase-buffer)
-    (insert (panel/print))))
+  (defun panel/write-buffer ()
+    (setq my-panel-buffer (get-buffer-create "*panel*"))
+    (with-current-buffer "*panel*" ; replace with the name of the buffer you want to append
+      (erase-buffer)
+      (insert (panel/print))))
 
-(defun utils/get-next-minute ()
-  (setq hour-minute-format "%H:%M")
-  (format-time-string hour-minute-format (time-add (current-time) (seconds-to-time 60))))
+  (defun utils/get-next-minute ()
+    (setq hour-minute-format "%H:%M")
+    (format-time-string hour-minute-format (time-add (current-time) (seconds-to-time 60))))
 
-(panel/write-buffer)
-(setq panel/timer (run-at-time (utils/get-next-minute) 60 'panel/write-buffer))
+  (panel/write-buffer)
+  (setq panel/timer (run-at-time (utils/get-next-minute) 60 'panel/write-buffer))
 
-(add-hook 'after-make-frame-functions
-        (lambda (frame)
-          (select-frame frame)
-          (cond
-           ((equal (frame-parameter frame 'name) "panel-frame")
-            (let ((window (frame-root-window frame)))
-              (set-window-parameter window 'mode-line-format 'none)
-              (set-window-parameter window 'header-line-format 'none))
-            (display-buffer "*panel*" nil nil)))
-          (other-window -1)))
+  (setq panel/length 0)
 
-(setq panel/list '())
+  (add-hook 'after-make-frame-functions
+          (lambda (frame)
+            (select-frame frame)
+            (cond
+             ((equal (frame-parameter frame 'name) "panel-frame")
+              (let ((window (frame-root-window frame)))
+                (set-window-parameter window 'mode-line-format 'none)
+                (set-window-parameter window 'header-line-format 'none))
+              (display-buffer "*panel*" nil nil)
+	        (scroll-bar-mode -1)
+              (setq panel/length (point-max))))
+            (other-window -1)))
 
-;; TODO make this actually compute the width of a panel by calculating the width in pixel to display the panel content
-(defun panel/get-width ()
-  290)
+  (setq panel/list '())
 
-;; TODO make this actually compute the height of a panel by calculating the height in pixel to display the panel content
-(defun panel/get-height ()
-  16)
+(defun default-font-width () 
+  "Return the width in pixels of a character in the current
+window's default font.  More precisely, this returns the
+width of the letter ‘m’.  If the font is mono-spaced, this
+will also be the width of all other printable characters."
+  (let ((window (selected-window))
+        (remapping face-remapping-alist))
+    (with-temp-buffer
+      (make-local-variable 'face-remapping-alist)
+      (setq face-remapping-alist remapping)
+      (set-window-buffer window (current-buffer))
+      (insert "m")
+      (aref (aref (font-get-glyphs (font-at 1) 1 2) 0) 4))))
 
-(defun panel/make-frame (xrandr-entry)
-  (setq current-panel (make-frame
-   `((name . "panel-frame")
-     (parent-frame . nil)
-     (no-accept-focus . nil)
-     (window-min-width . 1)
-     (window-min-height . 1)
-     (min-width  . t)
-     (min-height . t)
-     (border-width . 0)
-     (internal-border-width . 0)
-     (vertical-scroll-bars . nil)
-     (horizontal-scroll-bars . nil)
-     (left-fringe . 10)
-     (right-fringe . 0)
-     (menu-bar-lines . 0)
-     (tool-bar-lines . 0)
-     (line-spacing . 0)
-     (unsplittable . t)
-     (no-other-frame . t)
-     (undecorated . t)
-     (unsplittable . t)
-     (cursor-type . nil)
-     (minibuffer . nil)
-     (width . 40)
-     (height . 0)
-     (no-special-glyphs . t))))
-  (push current-panel panel/list)
-  (set-frame-position current-panel (- (+ (xrandr/entry-position-x xrandr-entry) (xrandr/entry-resolution-x xrandr-entry)) (panel/get-width)) (- (+ (xrandr/entry-position-y xrandr-entry) (xrandr/entry-resolution-y xrandr-entry)) (panel/get-height))))
+  ;; Width is the frame width
+  (defun panel/get-width ()
+    238)
+     ;; (+ (* panel/length (default-font-width)) 4))
 
-(defun panel/clean-frames ()
-  (cl-loop for frame in panel/list
-    collect (delete-frame frame))
-  (setq panel/list '()))
+  ;; Height is character height + 4 pixels (2 pixels arround the text)
+  (defun panel/get-height ()
+    (+ (aref (font-info (face-font 'default)) 2) 4))
 
-  (message panel/list)
+(defun panel/resize-and-position (frame xrandr-entry)
+ ;; (set-frame-size frame panel/length 1)
+ (set-frame-size frame 34 1)
+ (set-frame-position frame
+                     (- (+ (xrandr/entry-position-x xrandr-entry) (xrandr/entry-resolution-x xrandr-entry)) (+ (panel/get-width) 90))
+                     (- (+ (xrandr/entry-position-y xrandr-entry) (xrandr/entry-resolution-y xrandr-entry)) (panel/get-height))))
+
+  (defun panel/make-frame (xrandr-entry)
+    (setq current-panel (make-frame
+     `((name . "panel-frame")
+       (parent-frame . nil)
+       (no-accept-focus . nil)
+       (window-min-width . 1)
+       (window-min-height . 1)
+       (min-width  . t)
+       (min-height . t)
+       (border-width . 0)
+       (internal-border-width . 0)
+       (vertical-scroll-bars . nil)
+       (horizontal-scroll-bars . nil)
+       (left-fringe . 10)
+       (right-fringe . 0)
+       (menu-bar-lines . 0)
+       (tool-bar-lines . 0)
+       (line-spacing . 0)
+       (unsplittable . t)
+       (no-other-frame . t)
+       (undecorated . t)
+       (unsplittable . t)
+       (cursor-type . nil)
+       (minibuffer . nil)
+       (no-special-glyphs . t))))
+    (push current-panel panel/list)
+    (panel/resize-and-position current-panel xrandr-entry))
+
+  (defun panel/hide ()
+    (interactive)
+    (cl-loop for frame in panel/list
+      collect (delete-frame frame))
+    (setq panel/list '()))
+
   (defun panel/display ()
     (interactive)
-    (panel/clean-frames)
+    (panel/hide)
     (cl-loop for xrandr-entry in xrandr/active-monitors
       do (panel/make-frame xrandr-entry)))
 
@@ -393,6 +417,9 @@
           ([?\s-V] . my-window-vsplit)
           ([?\s-S] . my-window-split)
 
+          ([?\s-u] . winner-undo)
+          ([?\s-U] . winner-redo)
+
           ([?\s-b] . exwm-workspace-switch-to-buffer)
           ([?\s-B] . ibuffer)
 
@@ -444,6 +471,9 @@
   (exwm-input-set-key (kbd "C-s-l") #'windsize-right)
   (exwm-input-set-key (kbd "C-s-j") #'windsize-down)
   (exwm-input-set-key (kbd "C-s-k") #'windsize-up)
+
+  (require 'exwm-systemtray)
+  (exwm-systemtray-enable)
 
   (exwm-enable)
 
