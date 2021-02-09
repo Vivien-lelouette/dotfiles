@@ -716,10 +716,21 @@
   (setq zoom-size '(0.618 . 0.618)))
 
 (quelpa
+ '(bitwarden
+   :fetcher git
+   :url "https://github.com/seanfarley/emacs-bitwarden.git"))
+(require 'bitwarden)
+
+(quelpa
  '(eaf
    :fetcher git
    :url "https://github.com/manateelazycat/emacs-application-framework.git"
    :files ("*")))
+
+(use-package epc :defer t)
+(use-package ctable :defer t)
+(use-package deferred :defer t)
+(use-package s :defer t)
 (require 'eaf)
 (require 'eaf-evil)
 
@@ -738,12 +749,6 @@
   "ia" '(eaf-open-browser :which-key "address")
   "ii" '(eaf-open-browser-with-history :which-key "search & history")
   "ib" '(eaf-open-bookmark :which-key "bookmarks"))
-
-(quelpa
- '(bitwarden
-   :fetcher git
-   :url "https://github.com/seanfarley/emacs-bitwarden.git"))
-(require 'bitwarden)
 
 (autoload 'exwm-enable "~/.emacs.d/desktop.el")
 

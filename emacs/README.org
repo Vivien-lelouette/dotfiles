@@ -1170,48 +1170,6 @@ Flyspell enables on-the-fly spell checking in Emacs and uses Flyspell Correct fo
 
 #+end_src
 
-* Emacs Application Framework
-** Prerequisites
-Install running the install script given in EAF. But it would be better if I could find a way to just use pip like so:
-#+begin_src shell
-
-  python3 -m venv ~/.emacs.d/python.env
-  source ~/.emacs.d/python.env/bin/activate
-  pip3 install --upgrade pip
-  pip3 install epc pyqt5 pyqt5-sip pyqtwebengine pymupdf qrcode qtconsole retrying 
-  deactivate
-
-#+end_src
-
-** Installation
-#+begin_src emacs-lisp
-
-    (quelpa
-     '(eaf
-       :fetcher git
-       :url "https://github.com/manateelazycat/emacs-application-framework.git"
-       :files ("*")))
-    (require 'eaf)
-    (require 'eaf-evil)
-
-    (add-to-list 'eaf-wm-focus-fix-wms "EXWM")
-    (eaf-setq eaf-browser-enable-adblocker "true")
-    (eaf-setq eaf-browser-scroll-behavior "smooth")
-    (eaf-setq eaf-browser-blank-page-url "https://duckduckgo.com")
-    (eaf-setq eaf-browser-dark-mode "false")
-
-    (setq eaf-browser-continue-where-left-off t)
-    (setq eaf-browser-search-engines '(("duckduckgo" . "https://duckduckgo.com/?q=%s")))
-    (setq eaf-browser-default-search-engine "duckduckgo")
-
-    (keys/leader-keys
-      "i" '(:ignore t :which-key "internet")
-      "ia" '(eaf-open-browser :which-key "address")
-      "ii" '(eaf-open-browser-with-history :which-key "search & history")
-      "ib" '(eaf-open-bookmark :which-key "bookmarks"))
-
-#+end_src
-
 * Bitwarden integration
 ** Prerequisite
 Install the bitwarden cli using npm.
@@ -1228,6 +1186,53 @@ Install the bitwarden cli using npm.
      :fetcher git
      :url "https://github.com/seanfarley/emacs-bitwarden.git"))
   (require 'bitwarden)
+
+#+end_src
+
+* Emacs Application Framework
+** Prerequisites
+Install running the install script given in EAF. But it would be better if I could find a way to just use pip like so:
+#+begin_src shell
+
+  python3 -m venv ~/.python.env
+  source ~/.python.env/bin/activate
+  pip3 install --upgrade pip
+  pip3 install epc pyqt5 pyqt5-sip pyqtwebengine pymupdf qrcode qtconsole retrying 
+  deactivate
+
+#+end_src
+
+** Installation
+#+begin_src emacs-lisp
+
+  (quelpa
+   '(eaf
+     :fetcher git
+     :url "https://github.com/manateelazycat/emacs-application-framework.git"
+     :files ("*")))
+
+  (use-package epc :defer t)
+  (use-package ctable :defer t)
+  (use-package deferred :defer t)
+  (use-package s :defer t)
+  (require 'eaf)
+  (require 'eaf-evil)
+
+  (add-to-list 'eaf-wm-focus-fix-wms "EXWM")
+  (eaf-setq eaf-browser-enable-adblocker "true")
+  (eaf-setq eaf-browser-scroll-behavior "smooth")
+  (eaf-setq eaf-browser-blank-page-url "https://duckduckgo.com")
+  (eaf-setq eaf-browser-dark-mode "false")
+
+  (setq eaf-browser-continue-where-left-off t)
+  (setq eaf-browser-search-engines '(("duckduckgo" . "https://duckduckgo.com/?q=%s")))
+  (setq eaf-browser-default-search-engine "duckduckgo")
+
+  (keys/leader-keys
+    "i" '(:ignore t :which-key "internet")
+    "ia" '(eaf-open-browser :which-key "address")
+    "ii" '(eaf-open-browser-with-history :which-key "search & history")
+    "ib" '(eaf-open-bookmark :which-key "bookmarks"))
 
 #+end_src
 
