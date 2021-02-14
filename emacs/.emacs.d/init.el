@@ -739,12 +739,6 @@
 (use-package eterm-256color
   :hook (term-mode . eterm-256color-mode))
 
-(quelpa
- '(aweshell
-   :fetcher git
-   :url "https://github.com/manateelazycat/aweshell"))
-(require 'aweshell)
-
 (use-package windmove)
 
 (use-package windsize)

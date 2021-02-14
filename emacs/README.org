@@ -1224,17 +1224,6 @@ TODO: add this a prerequisite.
 
 #+end_src
 
-** Eshell
-#+begin_src emacs-lisp
-
-  (quelpa
-   '(aweshell
-     :fetcher git
-     :url "https://github.com/manateelazycat/aweshell"))
-  (require 'aweshell)
-
-#+end_src 
-
 * Window Management
 ** Windmove
 #+begin_src emacs-lisp
