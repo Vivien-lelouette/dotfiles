@@ -6,7 +6,7 @@
   (setq package-enable-at-startup nil)
 
 ;; Avoid blinding white at startup
-(load-theme 'wombat)
+(load-theme 'modus-vivendi)
 
 (setq inhibit-startup-message t)
 
@@ -215,7 +215,7 @@
 (use-package ibuffer-vc)
 
 (use-package doom-themes
-  :init (load-theme 'doom-dark+ t)
+  ;; :init (load-theme 'doom-dark+ t)
   :config
   (setq doom-themes-treemacs-theme "doom-colors")
   (set-face-attribute 'fringe nil :background "#1e1e1e" :foreground "#1e1e1e"))
