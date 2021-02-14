@@ -280,6 +280,10 @@
 
 (use-package flycheck)
 
+(use-package minimap
+  :config
+  (setq minimap-window-location 'right))
+
 (use-package counsel
   :bind (("M-x" . counsel-M-x)
          ("C-x b" . counsel-ibuffer)

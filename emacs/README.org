@@ -473,6 +473,15 @@ The first time you load your configuration on a new machine, you'll need to run 
 
 #+end_src
 
+** Minimap
+#+begin_src emacs-lisp
+
+  (use-package minimap
+    :config
+    (setq minimap-window-location 'right))
+
+#+end_src 
+
 * Search packages  
 ** Counsel
 #+begin_src emacs-lisp
