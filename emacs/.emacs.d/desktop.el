@@ -427,7 +427,8 @@ will also be the width of all other printable characters."
           ([?\s-e] . ranger)
           ([?\s-E] . deer)
 
-          ([?\s-W] . delete-window)
+          ([?\s-W] . delete-other-windows)
+          ([?\s-w] . delete-window)
           ([?\s-X] . kill-current-buffer)
           ([?\s-Q] . (lambda () (interactive) (kill-current-buffer) (delete-window)))
 
