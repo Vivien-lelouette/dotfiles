@@ -764,7 +764,7 @@
 (use-package deferred :defer t)
 (use-package s :defer t)
 (require 'eaf)
-(require 'eaf-evil)
+;; (require 'eaf-evil)
 
 (add-to-list 'eaf-wm-focus-fix-wms "EXWM")
 (eaf-setq eaf-browser-enable-adblocker "true")
