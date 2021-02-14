@@ -160,7 +160,6 @@
                 (set-window-parameter window 'mode-line-format 'none)
                 (set-window-parameter window 'header-line-format 'none))
               (display-buffer "*panel*" nil nil)
-	        (scroll-bar-mode -1)
               (setq panel/length (point-max))))
             (other-window -1)))
 
