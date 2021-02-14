@@ -52,15 +52,17 @@ The snippets below will install emacs from their git master:
 
   (setq inhibit-startup-message t)
 
-  ;; (scroll-bar-mode -1)        ; Disable visible scrollbar
+  (scroll-bar-mode -1)        ; Disable visible scrollbar
   (tool-bar-mode -1)          ; Disable the toolbar
   (tooltip-mode -1)           ; Disable tooltips
   (set-fringe-mode 10)        ; Give some breathing room
 
-  (setq window-divider-default-right-width 5)
-  (setq window-divider-default-bottom-width 5)
-  (menu-bar-bottom-and-right-window-divider)
-  (window-divider-mode 1)
+  ;; (setq-default window-divider-default-right-width 10)
+  ;; (setq-default window-divider-default-bottom-width 10)
+  ;; (setq-default window-divider-default-places 'right-only)
+  ;; (add-hook 'after-init-hook #'window-divider-mode)
+
+
   (menu-bar-mode -1)            ; Disable the menu bar
 
   ;; This determines the style of line numbers in effect. If set to `nil', line
@@ -83,19 +85,13 @@ The snippets below will install emacs from their git master:
   (winner-mode 1)
 
   ;; Smooth scrolling
-  ;; Vertical Scroll
-  (setq scroll-step 1)
-  (setq scroll-margin 1)
-  (setq scroll-conservatively 101)
-  (setq scroll-up-aggressively 0.01)
-  (setq scroll-down-aggressively 0.01)
-  (setq auto-window-vscroll nil)
-  (setq fast-but-imprecise-scrolling nil)
-  (setq mouse-wheel-scroll-amount '(1 ((shift) . 1)))
-  (setq mouse-wheel-progressive-speed nil)
-  ;; Horizontal Scroll
-  (setq hscroll-step 1)
-  (setq hscroll-margin 1)
+  (setq-default scroll-margin 0)
+  (setq-default scroll-preserve-screen-position t)
+  (setq-default scroll-conservatively 1)
+  ; Horizontal Scroll
+  (setq-default hscroll-margin 0)
+
+  (setq package-native-compile t)
 
 #+end_src
 
