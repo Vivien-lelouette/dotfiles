@@ -525,6 +525,8 @@
 
 (setq org-confirm-babel-evaluate nil)
 
+(use-package org-mime)
+
 (use-package projectile
   :diminish projectile-mode
   :config (projectile-mode)

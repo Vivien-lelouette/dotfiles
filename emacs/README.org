@@ -787,6 +787,13 @@ This snippet adds a hook to org-mode buffers so that efs/org-babel-tangle-config
 
 #+end_src
 
+** Org-mime
+#+begin_src emacs-lisp
+
+  (use-package org-mime)
+
+#+end_src 
+
 * Development
 ** Projectile
 #+begin_src emacs-lisp
