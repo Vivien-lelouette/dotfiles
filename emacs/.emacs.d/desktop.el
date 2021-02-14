@@ -1,10 +1,3 @@
-(defun shell/run-in-background (command)
-  (let ((command-parts (split-string command "[ ]+")))
-    (apply #'call-process `(,(car command-parts) nil 0 nil ,@(cdr command-parts)))))
-
-(defun shell/async-command-no-output (command)
-  (call-process-shell-command (concat command " &") nil 0))
-
 (defun exwm/autorandr-refresh ()
   (interactive)
   (shell/async-command-no-output "autorandr --change --force"))

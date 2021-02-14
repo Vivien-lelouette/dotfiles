@@ -782,6 +782,22 @@
   "ii" '(eaf-open-browser-with-history :which-key "search & history")
   "ib" '(eaf-open-bookmark :which-key "bookmarks"))
 
+(defun shell/run-in-background (command)
+  (let ((command-parts (split-string command "[ ]+")))
+    (apply #'call-process `(,(car command-parts) nil 0 nil ,@(cdr command-parts)))))
+
+(defun shell/async-command-no-output (command)
+  (call-process-shell-command (concat command " &") nil 0))
+
+(defun browse-url-qutebrowser (url &optional _new-window)
+  "Ask the Qutebrowser WWW browser to load URL.
+Default to the URL around or before point.
+The optional argument NEW-WINDOW is not used."
+  (interactive (browse-url-interactive-arg "URL: "))
+  (setq url (browse-url-encode-url url))
+  (shell/async-command-no-output (concat "qutebrowser " url)))
+(setq browse-url-browser-function 'browse-url-qutebrowser)
+
 (autoload 'exwm-enable "~/.emacs.d/desktop.el")
 
 )
