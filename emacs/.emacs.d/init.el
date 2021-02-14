@@ -7,6 +7,8 @@
 
 ;; Avoid blinding white at startup
 (load-theme 'modus-vivendi)
+(set-face-attribute 'fringe nil :background "#000000")
+(set-face-attribute 'line-number nil :background "#000000")
 
 (setq inhibit-startup-message t)
 
@@ -167,7 +169,15 @@
 
   (evil-set-initial-state 'messages-buffer-mode 'normal)
   (evil-set-initial-state 'dashboard-mode 'normal)
-  (evil-set-undo-system 'undo-tree))
+  (evil-set-undo-system 'undo-tree)
+
+  ;; Line number styling for mode change
+  (add-hook 'evil-normal-state-entry-hook (lambda () (face-remap-add-relative 'line-number nil :foreground "#707070" :background "#000000")))
+  (add-hook 'evil-normal-state-entry-hook (lambda () (face-remap-add-relative 'line-number-current-line nil :foreground "#ffffff" :background "#323232")))
+  (add-hook 'evil-insert-state-entry-hook (lambda () (face-remap-add-relative 'line-number nil :foreground "#000000" :background "#1b330f")))
+  (add-hook 'evil-insert-state-entry-hook (lambda () (face-remap-add-relative 'line-number-current-line nil :foreground "#000000" :background "#6ed13e")))
+  (add-hook 'evil-visual-state-entry-hook (lambda () (face-remap-add-relative 'line-number nil :foreground "#000000" :background "#00332a")))
+  (add-hook 'evil-visual-state-entry-hook (lambda () (face-remap-add-relative 'line-number-current-line nil :foreground "#000000" :background "#00d1ad"))))
 
 (use-package evil-collection
   :after evil
@@ -217,8 +227,7 @@
 (use-package doom-themes
   ;; :init (load-theme 'doom-dark+ t)
   :config
-  (setq doom-themes-treemacs-theme "doom-colors")
-  (set-face-attribute 'fringe nil :background "#1e1e1e" :foreground "#1e1e1e"))
+  (setq doom-themes-treemacs-theme "doom-colors"))
 
 (use-package doom-modeline
   :init (doom-modeline-mode 1)
