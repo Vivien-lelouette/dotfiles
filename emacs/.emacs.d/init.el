@@ -697,6 +697,18 @@
           ("C-." . flyspell-correct-wrapper))
     :custom (flyspell-correct-interface #'flyspell-correct-ivy)))
 
+(use-package guess-language
+  :config
+  (setq guess-language-languages '(en fr))
+  (add-hook 'flyspell-mode-hook (lambda () (guess-language-mode 1))))
+
+(quelpa
+  '(langtool
+    :fetcher git
+    :url "https://github.com/mhayashi1120/Emacs-langtool"))
+(setq langtool-language-tool-server-jar "~/Tools/LanguageTool/languagetool-server.jar")
+ (require 'langtool)
+
 (use-package vterm
   :config
   (setq vterm-shell "/bin/zsh")

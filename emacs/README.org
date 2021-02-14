@@ -1094,10 +1094,11 @@ Requires you to run: M-x lsp-install-server RET bash RET.
 
 #+end_src
 
-* Utilities
+* Spell checking
 ** Flyspell
 Flyspell enables on-the-fly spell checking in Emacs and uses Flyspell Correct for distraction-free words correction using Ivy.
-
+For french, you will need the package aspell-fr.
+TODO: add this a prerequisite.
 #+begin_src emacs-lisp
 
   (use-package flyspell
@@ -1118,6 +1119,32 @@ Flyspell enables on-the-fly spell checking in Emacs and uses Flyspell Correct fo
             ([remap flyspell-correct-word-before-point] . flyspell-correct-wrapper)
             ("C-." . flyspell-correct-wrapper))
       :custom (flyspell-correct-interface #'flyspell-correct-ivy)))
+
+#+end_src
+
+** Guess language
+This package allows to guess which language you are typing on so that flyspell can check your spelling correctly.
+#+begin_src emacs-lisp
+
+    (use-package guess-language
+      :config
+      (setq guess-language-languages '(en fr))
+      (add-hook 'flyspell-mode-hook (lambda () (guess-language-mode 1))))
+
+#+end_src
+
+** Langtool
+This package allows to guess which language you are typing on so that flyspell can check your spelling correctly.
+This needs languagetool and JAVA 8 or newer. Languagetool can be find here: https://languagetool.org/download/LanguageTool-stable.zip.
+TODO: add this a prerequisite.
+#+begin_src emacs-lisp
+
+  (quelpa
+   '(langtool
+     :fetcher git
+     :url "https://github.com/mhayashi1120/Emacs-langtool"))
+ (setq langtool-language-tool-server-jar "~/Tools/LanguageTool/languagetool-server.jar")
+  (require 'langtool)
 
 #+end_src
 
