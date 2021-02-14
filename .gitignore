@@ -17,3 +17,5 @@ emacs/.emacs.d/amx-items
 /emacs/.emacs.d/bookmarks
 /emacs/.emacs.d/eaf/
 /emacs/.emacs.d/python.env/
+/emacs/.emacs.d/network-security.data
+/emacs/.emacs.d/var/
