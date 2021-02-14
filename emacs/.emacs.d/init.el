@@ -709,6 +709,16 @@
 (setq langtool-language-tool-server-jar "~/Tools/LanguageTool/languagetool-server.jar")
  (require 'langtool)
 
+(use-package async)
+
+(use-package trashed)
+
+(use-package w3m)
+
+(use-package bbdb)
+
+(use-package dianyou)
+
 (use-package vterm
   :config
   (setq vterm-shell "/bin/zsh")

@@ -1148,6 +1148,42 @@ TODO: add this a prerequisite.
 
 #+end_src
 
+* Utilities
+** Emacs-async
+#+begin_src emacs-lisp
+
+  (use-package async)
+
+#+end_src
+
+** Trashed
+#+begin_src emacs-lisp
+
+  (use-package trashed)
+
+#+end_src
+
+** Emacs-w3m
+#+begin_src emacs-lisp
+
+  (use-package w3m)
+
+#+end_src 
+
+** BBDB
+#+begin_src emacs-lisp
+
+  (use-package bbdb)
+
+#+end_src 
+
+** Dianyou (import contact from received mails)
+#+begin_src emacs-lisp
+
+  (use-package dianyou)
+
+#+end_src 
+
 * Shell & Terminals
 ** Vterm
 *** Prerequisites
