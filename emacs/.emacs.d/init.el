@@ -341,11 +341,16 @@
 (use-package company-box
   :hook (company-mode . company-box-mode))
 
-(use-package orderless
+(use-package prescient)
+(use-package ivy-prescient
+  :after counsel
   :config
-  (setq ivy-re-builders-alist '((t . orderless-ivy-re-builder))))
-
-(use-package amx)
+  (ivy-prescient-mode 1))
+(use-package company-prescient
+  :after company
+  :config
+  (company-prescient-mode 1))
+(prescient-persist-mode 1)
 
 (use-package avy
   :config
