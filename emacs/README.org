@@ -771,24 +771,26 @@ Provide a better way of moving arround than plain dired. Files are previewed in 
 #+end_src
 
 ** Auto-tangle configuration files
-This snippet adds a hook to org-mode buffers so that efs/org-babel-tangle-config gets executed each time such a buffer gets saved. This function checks to see if a configuration file being saved, and if so, automatically exports the configuration here to the associated output files.
+This snippet adds a hook to org-mode buffers so that org/org-babel-tangle-config gets executed each time such a buffer gets saved. This function checks to see if a configuration file being saved, and if so, automatically exports the configuration here to the associated output files.
 
 #+begin_src emacs-lisp
 
-    (defun efs/org-babel-tangle-config ()
-      (when (or (string-equal (buffer-file-name)
-                              (expand-file-name "~/dotfiles/README.org"))
-                (string-equal (buffer-file-name)
-                            (expand-file-name "~/dotfiles/qutebrowser/README.org"))
-                (string-equal (buffer-file-name)
-                              (expand-file-name "~/dotfiles/emacs/README.org"))
-                (string-equal (buffer-file-name)
-                            (expand-file-name "~/dotfiles/emacs/desktop.org")))
-        ;; Dynamic scoping to the rescue
-        (let ((org-confirm-babel-evaluate nil))
-          (org-babel-tangle))))
+  (defun org/org-babel-tangle-config ()
+    (when (or (string-equal (buffer-file-name)
+                            (expand-file-name "~/dotfiles/README.org"))
+              (string-equal (buffer-file-name)
+                          (expand-file-name "~/dotfiles/qutebrowser/README.org"))
+              (string-equal (buffer-file-name)
+                            (expand-file-name "~/dotfiles/emacs/README.org"))
+              (string-equal (buffer-file-name)
+                            (expand-file-name "~/dotfiles/emacs/desktop.org"))
+              (string-equal (buffer-file-name)
+                          (expand-file-name "~/dotfiles/emacs/local.org")))
+      ;; Dynamic scoping to the rescue
+      (let ((org-confirm-babel-evaluate nil))
+        (org-babel-tangle))))
 
-    (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'efs/org-babel-tangle-config)))
+  (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'org/org-babel-tangle-config)))
 
 #+end_src
 

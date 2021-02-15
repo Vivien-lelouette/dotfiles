@@ -514,7 +514,7 @@
   :custom
   (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
 
-(defun efs/org-babel-tangle-config ()
+(defun org/org-babel-tangle-config ()
   (when (or (string-equal (buffer-file-name)
                           (expand-file-name "~/dotfiles/README.org"))
             (string-equal (buffer-file-name)
@@ -522,12 +522,14 @@
             (string-equal (buffer-file-name)
                           (expand-file-name "~/dotfiles/emacs/README.org"))
             (string-equal (buffer-file-name)
-                        (expand-file-name "~/dotfiles/emacs/desktop.org")))
+                          (expand-file-name "~/dotfiles/emacs/desktop.org"))
+            (string-equal (buffer-file-name)
+                        (expand-file-name "~/dotfiles/emacs/local.org")))
     ;; Dynamic scoping to the rescue
     (let ((org-confirm-babel-evaluate nil))
       (org-babel-tangle))))
 
-(add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'efs/org-babel-tangle-config)))
+(add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'org/org-babel-tangle-config)))
 
 (org-babel-do-load-languages
  'org-babel-load-languages
