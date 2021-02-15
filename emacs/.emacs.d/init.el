@@ -6,9 +6,7 @@
   (setq package-enable-at-startup nil)
 
 ;; Avoid blinding white at startup
-(load-theme 'modus-vivendi)
-(set-face-attribute 'fringe nil :background "#000000")
-(set-face-attribute 'line-number nil :background "#000000")
+(load-theme 'wombat)
 
 (setq inhibit-startup-message t)
 
@@ -17,10 +15,10 @@
 (tooltip-mode -1)           ; Disable tooltips
 (set-fringe-mode 10)        ; Give some breathing room
 
-;; (setq-default window-divider-default-right-width 10)
-;; (setq-default window-divider-default-bottom-width 10)
-;; (setq-default window-divider-default-places 'right-only)
-;; (add-hook 'after-init-hook #'window-divider-mode)
+(setq-default window-divider-default-right-width 5)
+(setq-default window-divider-default-bottom-width 5)
+(setq-default window-divider-default-places t)
+(add-hook 'after-init-hook #'window-divider-mode)
 
 
 (menu-bar-mode -1)            ; Disable the menu bar
@@ -169,15 +167,7 @@
 
   (evil-set-initial-state 'messages-buffer-mode 'normal)
   (evil-set-initial-state 'dashboard-mode 'normal)
-  (evil-set-undo-system 'undo-tree)
-
-  ;; Line number styling for mode change
-  (add-hook 'evil-normal-state-entry-hook (lambda () (face-remap-add-relative 'line-number nil :foreground "#707070" :background "#000000")))
-  (add-hook 'evil-normal-state-entry-hook (lambda () (face-remap-add-relative 'line-number-current-line nil :foreground "#ffffff" :background "#323232")))
-  (add-hook 'evil-insert-state-entry-hook (lambda () (face-remap-add-relative 'line-number nil :foreground "#000000" :background "#1b330f")))
-  (add-hook 'evil-insert-state-entry-hook (lambda () (face-remap-add-relative 'line-number-current-line nil :foreground "#000000" :background "#6ed13e")))
-  (add-hook 'evil-visual-state-entry-hook (lambda () (face-remap-add-relative 'line-number nil :foreground "#000000" :background "#00332a")))
-  (add-hook 'evil-visual-state-entry-hook (lambda () (face-remap-add-relative 'line-number-current-line nil :foreground "#000000" :background "#00d1ad"))))
+  (evil-set-undo-system 'undo-tree))
 
 (use-package evil-collection
   :after evil
@@ -225,13 +215,28 @@
 (use-package ibuffer-vc)
 
 (use-package doom-themes
-  ;; :init (load-theme 'doom-dark+ t)
+  :init (load-theme 'doom-dark+ t)
   :config
-  (setq doom-themes-treemacs-theme "doom-colors"))
+  (setq doom-themes-treemacs-theme "doom-colors")
+  (set-face-attribute 'fringe nil :background "#1e1e1e")
+  ;; Line number styling for mode change
+  (add-hook 'evil-normal-state-entry-hook (lambda () (face-remap-add-relative 'line-number nil :foreground "#707070" :background "#1e1e1e")))
+  (add-hook 'evil-normal-state-entry-hook (lambda () (face-remap-add-relative 'line-number-current-line nil :foreground "#ffffff" :background "#121212")))
+  (add-hook 'evil-insert-state-entry-hook (lambda () (face-remap-add-relative 'line-number nil :foreground "#707070" :background "#1c3319")))
+  (add-hook 'evil-insert-state-entry-hook (lambda () (face-remap-add-relative 'line-number-current-line nil :foreground "#ffffff" :background "#579c4c")))
+  (add-hook 'evil-visual-state-entry-hook (lambda () (face-remap-add-relative 'line-number nil :foreground "#707070" :background "#00332a")))
+  (add-hook 'evil-visual-state-entry-hook (lambda () (face-remap-add-relative 'line-number-current-line nil :foreground "#ffffff" :background "#009b80"))))
 
-(use-package doom-modeline
-  :init (doom-modeline-mode 1)
-  :custom ((doom-modeline-height 22)))
+(use-package minions)
+
+(defun simple-modeline-segment-minions ()
+  "Displays the current major and minor modes with minions-mode in the mode-line."
+  (concat " " (format-mode-line minions-mode-line-modes)))
+
+(use-package simple-modeline
+ :hook (after-init . simple-modeline-mode)
+ :config
+ (setq simple-modeline-segments '((simple-modeline-segment-modified simple-modeline-segment-buffer-name simple-modeline-segment-position) (simple-modeline-segment-input-method simple-modeline-segment-eol simple-modeline-segment-encoding simple-modeline-segment-vc simple-modeline-segment-misc-info simple-modeline-segment-process simple-modeline-segment-minions)))
 
 (use-package rainbow-delimiters
   :hook (prog-mode . rainbow-delimiters-mode))
@@ -255,9 +260,6 @@
 (use-package ace-window
   :config
   (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
-  (setq aw-background nil)
-  (setq aw-dispatch-always t)
-  (ace-window-display-mode t)
   (keys/leader-keys
     "o" #'ace-window
     "O" #'ace-swap-window)
@@ -391,6 +393,7 @@
   (setq org-agenda-start-with-log-mode t)
   (setq org-log-done 'time)
   (setq org-log-into-drawer t)
+  (setq org-html-inline-images t)
 
   (setq org-agenda-files
         '("~/.org-files/tasks.org"
@@ -681,11 +684,13 @@
 
 (use-package kubernetes
   :config
-  (setq kubernetes-poll-frequency 3600)
-  (setq kubernetes-redraw-frequency 3600))
+  (setq kubernetes-poll-frequency 3600))
+  ;; (setq kubernetes-redraw-frequency 3600))
 
 (use-package kubernetes-evil
   :after kubernetes)
+
+(use-package jenkins)
 
 (use-package flyspell
   :ensure nil
@@ -808,6 +813,10 @@ The optional argument NEW-WINDOW is not used."
 (setq browse-url-browser-function 'browse-url-qutebrowser)
 
 (autoload 'exwm-enable "~/.emacs.d/desktop.el")
+
+(let ((local-settings "~/.emacs.d/local.el"))
+ (when (file-exists-p local-settings)
+   (load-file local-settings)))
 
 )
 (setq gc-cons-threshold (* 100 1024 1024))
