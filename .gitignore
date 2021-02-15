@@ -19,3 +19,8 @@ emacs/.emacs.d/amx-items
 /emacs/.emacs.d/python.env/
 /emacs/.emacs.d/network-security.data
 /emacs/.emacs.d/var/
+/emacs/local.org
+/emacs/.emacs.d/local.el
+/emacs/.emacs.d/request/
+/emacs/.emacs.d/.org-id-locations
+/emacs/.emacs.d/.lsp-eslint-choices
