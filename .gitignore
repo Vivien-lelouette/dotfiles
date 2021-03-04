@@ -24,3 +24,5 @@ emacs/.emacs.d/amx-items
 /emacs/.emacs.d/request/
 /emacs/.emacs.d/.org-id-locations
 /emacs/.emacs.d/.lsp-eslint-choices
+/emacs/.emacs.d/forge-database.sqlite
+/emacs/.emacs.d/undo-fu-session/
