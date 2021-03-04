@@ -10,16 +10,15 @@
 
 (setq inhibit-startup-message t)
 
-(scroll-bar-mode -1)        ; Disable visible scrollbar
+;; (scroll-bar-mode -1)        ; Disable visible scrollbar
 (tool-bar-mode -1)          ; Disable the toolbar
 (tooltip-mode -1)           ; Disable tooltips
-(set-fringe-mode 10)        ; Give some breathing room
+;; (set-fringe-mode 10)        ; Give some breathing room
 
-(setq-default window-divider-default-right-width 5)
-(setq-default window-divider-default-bottom-width 5)
-(setq-default window-divider-default-places t)
-(add-hook 'after-init-hook #'window-divider-mode)
-
+;; (setq-default window-divider-default-right-width 10)
+;; (setq-default window-divider-default-bottom-width 10)
+;; (setq-default window-divider-default-places t)
+;; (add-hook 'after-init-hook #'window-divider-mode)
 
 (menu-bar-mode -1)            ; Disable the menu bar
 
@@ -42,14 +41,22 @@
 ;; Winner-mode
 (winner-mode 1)
 
-;; Smooth scrolling
-(setq-default scroll-margin 0)
-(setq-default scroll-preserve-screen-position t)
-(setq-default scroll-conservatively 1)
-; Horizontal Scroll
-(setq-default hscroll-margin 0)
-
 (setq package-native-compile t)
+(setq-default indent-tabs-mode nil)
+(setq-default tab-width 2)
+
+(defun my-window-vsplit ()
+  (interactive)
+  (evil-window-vsplit)
+  (balance-windows)
+  (run-at-time "0.1 seconds" nil (lambda ()
+                                   (windmove-right))))
+
+(defun my-window-split ()
+  (interactive)
+  (evil-window-split)
+  (run-at-time "0.1 seconds" nil (lambda ()
+                                   (windmove-down))))
 
 (defun fonts/set-size (font-size)
   (set-face-attribute 'default nil :font "Fira Code" :height font-size)
@@ -135,6 +142,14 @@
 
 (use-package quelpa)
 
+(use-package async)
+
+(use-package trashed)
+
+(use-package bbdb)
+
+(use-package dianyou)
+
 (use-package general
   :config
   (general-create-definer keys/leader-keys
@@ -146,45 +161,52 @@
     "t"  '(:ignore t :which-key "toggles")
     "tt" '(counsel-load-theme :which-key "choose theme")))
 
-(use-package undo-tree
+(use-package undo-fu)
+
+(use-package undo-fu-session
   :config
-  (global-undo-tree-mode 1))
+  (setq undo-fu-session-incompatible-files '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'"))
+  (global-undo-fu-session-mode))
 
 (use-package evil
-  :init
-  (setq evil-want-integration t)
-  (setq evil-want-keybinding nil)
-  (setq evil-want-C-u-scroll t)
-  (setq evil-want-C-i-jump nil)
-  :config
-  (evil-mode 1)
-  (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
-  (define-key evil-insert-state-map (kbd "C-h") 'evil-delete-backward-char-and-join)
+    :init
+    (setq evil-want-integration t)
+    (setq evil-want-keybinding nil)
+    (setq evil-want-C-u-scroll t)
+    (setq evil-want-C-i-jump nil)
+    :config
+    (evil-mode 1)
+    (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
+    (define-key evil-insert-state-map (kbd "C-h") 'evil-delete-backward-char-and-join)
 
-  ;; Use visual line motions even outside of visual-line-mode buffers
-  (evil-global-set-key 'motion "j" 'evil-next-visual-line)
-  (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
+    ;; Use visual line motions even outside of visual-line-mode buffers
+    (evil-global-set-key 'motion "j" 'evil-next-visual-line)
+    (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
 
-  (evil-set-initial-state 'messages-buffer-mode 'normal)
-  (evil-set-initial-state 'dashboard-mode 'normal)
-  (evil-set-undo-system 'undo-tree))
+    (evil-set-initial-state 'messages-buffer-mode 'normal)
+    (evil-set-initial-state 'dashboard-mode 'normal)
+    (evil-set-undo-system 'undo-fu))
 
 (use-package evil-collection
   :after evil
   :config
   (evil-collection-init))
 
-(use-package treemacs-evil)
+(use-package treemacs-evil
+  :after evil)
 
 (use-package evil-multiedit
- :config
- (evil-multiedit-default-keybinds))
+  :after evil
+  :config
+  (evil-multiedit-default-keybinds))
 
 (use-package evil-surround
+  :after evil
   :config
   (global-evil-surround-mode 1))
 
 (use-package evil-goggles
+  :after evil
   :config
   (evil-goggles-mode)
   ;; optionally use diff-mode's faces; as a result, deleted text
@@ -193,7 +215,8 @@
   ;; other faces such as `diff-added` will be used for other actions
   (evil-goggles-use-diff-faces))
 
-(use-package hydra)
+(use-package hydra
+  :after general)
 
 (defhydra hydra-text-scale (:timeout 4)
   "scale text"
@@ -207,25 +230,106 @@
 (use-package all-the-icons)
 
 (use-package all-the-icons-dired
+  :after all-the-icons
   :config
   (add-hook 'dired-mode-hook 'all-the-icons-dired-mode))
 
-(use-package all-the-icons-ibuffer)
+(use-package all-the-icons-ibuffer
+  :after all-the-icons)
 
 (use-package ibuffer-vc)
 
+;; Line number styling for mode change
+(setq theme/normal-lines-fg nil)
+(setq theme/normal-lines-bg nil)
+(setq theme/normal-current-line-fg nil)
+(setq theme/normal-current-line-bg nil)
+
+(setq theme/insert-lines-fg nil)
+(setq theme/insert-lines-bg nil)
+(setq theme/insert-current-line-fg nil)
+(setq theme/insert-current-line-bg nil)
+
+(setq theme/visual-lines-fg nil)
+(setq theme/visual-lines-bg nil)
+(setq theme/visual-current-line-fg nil)
+(setq theme/visual-current-line-bg nil)
+
+(defun theme/normal-lines ()
+  (face-remap-add-relative 'line-number nil :foreground theme/normal-lines-fg :background theme/normal-lines-bg))
+
+(defun theme/normal-current-line ()
+  (face-remap-add-relative 'line-number-current-line nil :foreground theme/normal-current-line-fg :background theme/normal-current-line-bg))
+
+(defun theme/insert-lines ()
+  (face-remap-add-relative 'line-number nil :foreground theme/insert-lines-fg :background theme/insert-lines-bg))
+
+(defun theme/insert-current-line ()
+  (face-remap-add-relative 'line-number-current-line nil :foreground theme/insert-current-line-fg :background theme/insert-current-line-bg))
+
+(defun theme/visual-lines ()
+  (face-remap-add-relative 'line-number nil :foreground theme/visual-lines-fg :background theme/visual-lines-bg))
+
+(defun theme/visual-current-line ()
+  (face-remap-add-relative 'line-number-current-line nil :foreground theme/visual-current-line-fg :background theme/visual-current-line-bg))
+
+(add-hook 'evil-normal-state-entry-hook 'theme/normal-lines)
+(add-hook 'evil-normal-state-entry-hook 'theme/normal-current-line)
+
+(add-hook 'evil-insert-state-entry-hook 'theme/insert-lines)
+(add-hook 'evil-insert-state-entry-hook 'theme/insert-current-line)
+
+(add-hook 'evil-visual-state-entry-hook 'theme/visual-lines)
+(add-hook 'evil-visual-state-entry-hook 'theme/visual-current-line)
+
+(defun theme/doom-dark+ ()
+  (interactive)
+  (load-theme 'doom-dark+ t)
+  (set-face-attribute 'fringe nil :background "#1e1e1e")
+  (set-face-attribute 'mode-line-inactive nil :background "#252526")
+
+  ;; Line number styling for mode change
+  (setq theme/normal-lines-fg "#707070")
+  (setq theme/normal-lines-bg "#1e1e1e")
+  (setq theme/normal-current-line-fg "#ffffff")
+  (setq theme/normal-current-line-bg "#121212")
+
+  (setq theme/insert-lines-fg "#707070")
+  (setq theme/insert-lines-bg "#1c3319")
+  (setq theme/insert-current-line-fg "#ffffff")
+  (setq theme/insert-current-line-bg "#579c4c")
+
+  (setq theme/visual-lines-fg "#707070")
+  (setq theme/visual-lines-bg "#00332a")
+  (setq theme/visual-current-line-fg "#ffffff")
+  (setq theme/visual-current-line-bg "#009b80"))
+
+(defun theme/doom-nord ()
+  (interactive)
+  (load-theme 'doom-nord t)
+  (set-face-attribute 'fringe nil :background "#2e3440")
+  (set-face-attribute 'mode-line-inactive nil :background nil)
+
+  ;; Line number styling for mode change
+  (setq theme/normal-lines-fg "#6c7686")
+  (setq theme/normal-lines-bg "#2e3440")
+  (setq theme/normal-current-line-fg "#ffffff")
+  (setq theme/normal-current-line-bg "#242832")
+
+  (setq theme/insert-lines-fg "#2e3440")
+  (setq theme/insert-lines-bg "#515e46")
+  (setq theme/insert-current-line-fg "#ffffff")
+  (setq theme/insert-current-line-bg "#a3be8c")
+
+  (setq theme/visual-lines-fg "#2e3440")
+  (setq theme/visual-lines-bg "#594656")
+  (setq theme/visual-current-line-fg "#ffffff")
+  (setq theme/visual-current-line-bg "#b48ead"))
+
 (use-package doom-themes
-  :init (load-theme 'doom-dark+ t)
   :config
   (setq doom-themes-treemacs-theme "doom-colors")
-  (set-face-attribute 'fringe nil :background "#1e1e1e")
-  ;; Line number styling for mode change
-  (add-hook 'evil-normal-state-entry-hook (lambda () (face-remap-add-relative 'line-number nil :foreground "#707070" :background "#1e1e1e")))
-  (add-hook 'evil-normal-state-entry-hook (lambda () (face-remap-add-relative 'line-number-current-line nil :foreground "#ffffff" :background "#121212")))
-  (add-hook 'evil-insert-state-entry-hook (lambda () (face-remap-add-relative 'line-number nil :foreground "#707070" :background "#1c3319")))
-  (add-hook 'evil-insert-state-entry-hook (lambda () (face-remap-add-relative 'line-number-current-line nil :foreground "#ffffff" :background "#579c4c")))
-  (add-hook 'evil-visual-state-entry-hook (lambda () (face-remap-add-relative 'line-number nil :foreground "#707070" :background "#00332a")))
-  (add-hook 'evil-visual-state-entry-hook (lambda () (face-remap-add-relative 'line-number-current-line nil :foreground "#ffffff" :background "#009b80"))))
+  (theme/doom-nord))
 
 (use-package minions)
 
@@ -236,7 +340,7 @@
 (use-package simple-modeline
  :hook (after-init . simple-modeline-mode)
  :config
- (setq simple-modeline-segments '((simple-modeline-segment-modified simple-modeline-segment-buffer-name simple-modeline-segment-position) (simple-modeline-segment-input-method simple-modeline-segment-eol simple-modeline-segment-encoding simple-modeline-segment-vc simple-modeline-segment-misc-info simple-modeline-segment-process simple-modeline-segment-minions)))
+ (setq simple-modeline-segments '((simple-modeline-segment-modified simple-modeline-segment-buffer-name simple-modeline-segment-position) (simple-modeline-segment-input-method simple-modeline-segment-eol simple-modeline-segment-encoding simple-modeline-segment-vc simple-modeline-segment-misc-info simple-modeline-segment-process simple-modeline-segment-minions))))
 
 (use-package rainbow-delimiters
   :hook (prog-mode . rainbow-delimiters-mode))
@@ -257,15 +361,10 @@
   ([remap describe-variable] . counsel-describe-variable)
   ([remap describe-key] . helpful-key))
 
-(use-package ace-window
+(use-package ace-jump-mode
   :config
-  (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
   (keys/leader-keys
-    "o" #'ace-window
-    "O" #'ace-swap-window)
-  )
-
-(use-package ace-jump-mode)
+    "f" '(evil-ace-jump-word-mode :which-key "Go to word")))
 
 (defun efs/treemacs-set-fringe ()
   (setq left-fringe-width 0)
@@ -276,6 +375,7 @@
   (add-hook 'treemacs-mode-hook #'efs/treemacs-set-fringe))
 
 (use-package treemacs-all-the-icons
+  :after all-the-icons
   :config
   (treemacs-load-theme "all-the-icons"))
 
@@ -287,13 +387,11 @@
   :config
   (global-highlight-parentheses-mode 1))
 
-(use-package focus)
-
 (use-package flycheck)
 
-(use-package minimap
+(use-package writeroom-mode
   :config
-  (setq minimap-window-location 'right))
+  (setq writeroom-global-effects '(writeroom-set-alpha writeroom-set-menu-bar-lines writeroom-set-tool-bar-lines writeroom-set-vertical-scroll-bars writeroom-set-bottom-divider-width)))
 
 (use-package counsel
   :bind (("M-x" . counsel-M-x)
@@ -332,6 +430,7 @@
   (setq ivy-initial-inputs-alist nil))
 
 (use-package ivy-rich
+  :after ivy
   :init
   (ivy-rich-mode 1))
 
@@ -350,9 +449,11 @@
   (global-company-mode 1))
 
 (use-package company-box
+  :after company
   :hook (company-mode . company-box-mode))
 
 (use-package prescient)
+
 (use-package ivy-prescient
   :after counsel
   :config
@@ -363,10 +464,7 @@
   (company-prescient-mode 1))
 (prescient-persist-mode 1)
 
-(use-package avy
-  :config
-  (keys/leader-keys
-    "f" '(avy-goto-word-0 :which-key "Go to word")))
+(use-package avy)
 
 (use-package image-dired)
 
@@ -383,7 +481,6 @@
                              (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•")))))))
 
 (use-package org
-
   :hook (org-mode . efs/org-mode-setup)
   :config
   (require 'org-tempo)
@@ -394,6 +491,9 @@
   (setq org-log-done 'time)
   (setq org-log-into-drawer t)
   (setq org-html-inline-images t)
+  (setq org-hide-emphasis-markers t)
+
+
 
   (setq org-agenda-files
         '("~/.org-files/tasks.org"
@@ -508,6 +608,45 @@
 
   (efs/org-font-setup))
 
+(use-package hide-mode-line)
+
+(defun org/presentation-setup ()
+  ;; Hide the mode line
+  ;; (hide-mode-line-mode 1)
+
+  (display-line-numbers-mode 0)
+
+  ;; Display images inline
+  (org-display-inline-images) ;; Can also use org-startup-with-inline-images
+
+  ;; Scale the text.  The next line is for basic scaling:
+  (setq text-scale-mode-amount 3)
+  (text-scale-mode 1)
+  (writeroom-mode 1))
+
+(defun org/presentation-end ()
+  ;; Show the mode line again
+  ;; (hide-mode-line-mode 0)
+
+  (display-line-numbers-mode 1)
+
+  ;; Turn off text scale mode (or use the next line if you didn't use text-scale-mode)
+  (text-scale-mode 0)
+  (writeroom-mode 0))
+
+(use-package org-tree-slide
+  :hook ((org-tree-slide-play . org/presentation-setup)
+         (org-tree-slide-stop . org/presentation-end))
+  :custom
+  (org-tree-slide-activate-message "Presentation started!")
+  (org-tree-slide-deactivate-message "Presentation finished!")
+  (org-tree-slide-breadcrumbs " > ")
+  (org-tree-slide-skip-outline-level 4)
+  (org-tree-slide-slide-in-effect nil)
+  (org-tree-slide-header t)
+  (org-tree-slide-fold-subtrees-skipped nil)
+  (org-image-actual-width nil))
+
 (use-package org-bullets
   :after org
   :hook (org-mode . org-bullets-mode)
@@ -539,7 +678,11 @@
 
 (setq org-confirm-babel-evaluate nil)
 
-(use-package org-mime)
+(use-package org-mime
+  :after org)
+
+(use-package org-web-tools
+  :after org)
 
 (use-package projectile
   :diminish projectile-mode
@@ -554,6 +697,7 @@
   (setq projectile-switch-project-action #'projectile-dired))
 
 (use-package counsel-projectile
+  :after counsel
   :config (counsel-projectile-mode))
 
 (use-package ibuffer-projectile)
@@ -565,9 +709,11 @@
   (keys/leader-keys
     "gg" '(magit :which-key "magit status")))
 
-;; (use-package forge)
+(use-package forge
+  :after magit)
 
 (use-package evil-nerd-commenter
+  :after evil
   :bind ("M-/" . evilnc-comment-or-uncomment-lines))
 
 (use-package format-all
@@ -584,7 +730,25 @@
 
 (use-package rainbow-mode)
 
+(use-package yasnippet)
+
+(defun my-setup-indent (n)
+  ;; java/c/c++
+  (setq-local c-basic-offset n)
+  ;; web development
+  (setq-local coffee-tab-width n) ; coffeescript
+  (setq-local javascript-indent-level n) ; javascript-mode
+  (setq-local js-indent-level n) ; js-mode
+  (setq-local rjsx-basic-offset n)
+  (setq-local rjsx-indent-level n)
+  (setq-local web-mode-markup-indent-offset n) ; web-mode, html tag in html file
+  (setq-local web-mode-css-indent-offset n) ; web-mode, css in html file
+  (setq-local web-mode-code-indent-offset n) ; web-mode, js code in html file
+  (setq-local css-indent-offset n) ; css-mode
+)
+
 (defun efs/lsp-mode-setup ()
+  (my-setup-indent 2)
   (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
   (lsp-headerline-breadcrumb-mode)
   (let ((lsp-keymap-prefix "C-SPC"))
@@ -604,6 +768,7 @@
 (add-hook 'lsp-mode-hook 'highlight-indent-guides-mode)
 
 (use-package lsp-ui
+  :after lsp
   :hook (lsp-mode . lsp-ui-mode)
   :config
   (setq lsp-ui-doc-position 'at-point))
@@ -611,7 +776,8 @@
 (use-package lsp-treemacs
   :after lsp)
 
-(use-package lsp-ivy)
+(use-package lsp-ivy
+  :after lsp)
 
 (use-package typescript-mode
   :mode ("\\.ts\\'")
@@ -642,18 +808,17 @@
   (add-hook 'json-mode-hook 'highlight-indent-guides-mode))
 
 (use-package restclient
-  :hook (restclient-mode . company-mode))
+  :config
+  (add-to-list 'auto-mode-alist '("\\.http\\'" . restclient-mode)))
 
-(add-to-list 'auto-mode-alist '("\\.http\\'" . restclient-mode))
-
-(use-package company-restclient)
-
-(add-to-list 'company-backends 'company-restclient)
+(use-package company-restclient
+  :after restclient
+  :config
+  (add-to-list 'company-backends 'company-restclient))
 
 (use-package adoc-mode
-  :hook (adoc-mode . company-mode))
-
-(add-to-list 'auto-mode-alist '("\\.adoc\\'" . adoc-mode))
+  :config
+  (add-to-list 'auto-mode-alist '("\\.adoc\\'" . adoc-mode)))
 
 (use-package dockerfile-mode)
 
@@ -686,19 +851,23 @@
 
 (use-package kubernetes
   :config
+  (setq kubernetes-redraw-frequency 3600)
   (setq kubernetes-poll-frequency 3600))
-  ;; (setq kubernetes-redraw-frequency 3600))
 
-(use-package kubernetes-evil
-  :after kubernetes)
+(use-package kubernetes-evil)
 
-(use-package jenkins)
+(defun kubernetes/refresh ()
+  (interactive)
+  (kubernetes-statefulsets-refresh)
+  (kubernetes-deployments-refresh-now)
+  (kubernetes-jobs-refresh-now)
+  (kubernetes-pods-refresh-now))
 
 (use-package flyspell
   :ensure nil
   :diminish
   :if (executable-find "aspell")
-  :hook (((prog-mode text-mode outline-mode latex-mode) . flyspell-mode))
+  :hook (((text-mode outline-mode latex-mode) . flyspell-mode))
   :custom
   (flyspell-issue-message-flag nil)
   (ispell-program-name "aspell")
@@ -714,35 +883,27 @@
     :custom (flyspell-correct-interface #'flyspell-correct-ivy)))
 
 (use-package guess-language
+
   :config
   (setq guess-language-languages '(en fr))
   (add-hook 'flyspell-mode-hook (lambda () (guess-language-mode 1))))
 
 (quelpa
-  '(langtool
-    :fetcher git
-    :url "https://github.com/mhayashi1120/Emacs-langtool"))
+ '(langtool
+   :fetcher git
+   :url "https://github.com/mhayashi1120/Emacs-langtool"))
 (setq langtool-language-tool-server-jar "~/Tools/LanguageTool/languagetool-server.jar")
- (require 'langtool)
-
-(use-package async)
-
-(use-package trashed)
-
-(use-package w3m)
-
-(use-package bbdb)
-
-(use-package dianyou)
+(require 'langtool)
 
 (use-package vterm
+
   :config
   (setq vterm-shell "/bin/zsh")
   (setq vterm-buffer-name-string "vterm: %s"))
 
 (use-package term
   :config
-  (setq explicit-shell-file-name "bash")
+  (setq explicit-shell-file-name "sh")
 
   ;; Use 'explicit-<shell>-args for shell-specific args
   ;;(setq explicit-zsh-args '())         
@@ -763,40 +924,229 @@
   :config
   (setq zoom-size '(0.618 . 0.618)))
 
+(use-package frames-only-mode)
+
 (quelpa
  '(bitwarden
    :fetcher git
    :url "https://github.com/seanfarley/emacs-bitwarden.git"))
 (require 'bitwarden)
 
-(quelpa
- '(eaf
-   :fetcher git
-   :url "https://github.com/manateelazycat/emacs-application-framework.git"
-   :files ("*")))
+(use-package shr
+  :config
+  (setq gnus-inhibit-images nil)
+  (setq shr-use-fonts nil)
+  (setq shr-use-colors nil)
+  (setq shr-max-image-proportion 1)
+  (setq shr-width nil)
+  (setq shr-folding-mode t))
 
-(use-package epc :defer t)
-(use-package ctable :defer t)
-(use-package deferred :defer t)
-(use-package s :defer t)
-(require 'eaf)
-;; (require 'eaf-evil)
+;; Used to highlight code
+(use-package shr-tag-pre-highlight
+  :ensure t
+  :after shr
+  :config
+  (add-to-list 'shr-external-rendering-functions
+               '(pre . shr-tag-pre-highlight))
+  (when (version< emacs-version "26")
+    (with-eval-after-load 'eww
+      (advice-add 'eww-display-html :around
+                  'eww-display-html--override-shr-external-rendering-functions))))
 
-(add-to-list 'eaf-wm-focus-fix-wms "EXWM")
-(eaf-setq eaf-browser-enable-adblocker "true")
-(eaf-setq eaf-browser-scroll-behavior "smooth")
-(eaf-setq eaf-browser-blank-page-url "https://duckduckgo.com")
-(eaf-setq eaf-browser-dark-mode "false")
+(use-package shrface
+  :config
+  (shrface-basic)
+  (shrface-trial)
+  (shrface-default-keybindings)
+  (setq shrface-href-versatile t)
 
-(setq eaf-browser-continue-where-left-off t)
-(setq eaf-browser-search-engines '(("duckduckgo" . "https://duckduckgo.com/?q=%s")))
-(setq eaf-browser-default-search-engine "duckduckgo")
+  ;; Code highlighting
+  (require 'shr-tag-pre-highlight)
+  (add-to-list 'shr-external-rendering-functions '(pre . shrface-shr-tag-pre-highlight))
+  (defun shrface-shr-tag-pre-highlight (pre)
+    "Highlighting code in PRE."
+    (let* ((shr-folding-mode 'none)
+           (shr-current-font 'default)
+           (code (with-temp-buffer
+                   (shr-generic pre)
+                   (setq-local fill-column 120)
+                   (indent-rigidly (point-min) (point-max) 2)
+                   (if (eq "" (dom-texts pre))
+                       nil
+                     (progn
+                       (setq-local fill-column shrface-paragraph-fill-column)
+                       (indent-rigidly (point-min) (point-max) shrface-paragraph-indentation)))
+                   (buffer-string)))
+           (lang (or (shr-tag-pre-highlight-guess-language-attr pre)
+                     (let ((sym (language-detection-string code)))
+                       (and sym (symbol-name sym)))))
+           (mode (and lang
+                      (shr-tag-pre-highlight--get-lang-mode lang))))
+      (shr-ensure-newline)
+      (insert (propertize (concat "#+BEGIN_SRC " lang) 'face 'org-block-begin-line))
+      (shr-ensure-newline)
+      (setq start (point))
+      (insert
+       (or (and (fboundp mode)
+                (with-demoted-errors "Error while fontifying: %S"
+                  (shrface-tag-pre-highlight-fontify code mode)
+                  ))
+           code))
+      (shr-ensure-newline)
+      (setq end (point))
+      (insert (propertize "#+END_SRC" 'face 'org-block-end-line ) )
+      (shr-ensure-newline)
+      (insert "\n"))))
 
-(keys/leader-keys
-  "i" '(:ignore t :which-key "internet")
-  "ia" '(eaf-open-browser :which-key "address")
-  "ii" '(eaf-open-browser-with-history :which-key "search & history")
-  "ib" '(eaf-open-bookmark :which-key "bookmarks"))
+(use-package eww
+  :init
+  (add-hook 'eww-after-render-hook #'shrface-mode)
+  :config
+  (define-key eww-image-link-keymap (kbd "TAB") nil)
+  (define-key eww-link-keymap (kbd "TAB") nil)
+  (define-key eww-mode-map (kbd "TAB") nil)
+  (define-key eww-text-map (kbd "TAB") nil)
+  (define-key eww-textarea-map (kbd "TAB") nil)
+  (define-key eww-mode-map (kbd "<normal-state> ^") nil)
+  (define-key eww-mode-map (kbd "<normal-state> <tab>") 'shrface-outline-cycle)
+  (define-key eww-mode-map (kbd "<normal-state> <backtab>") nil)
+
+  (require 'shrface))
+
+(use-package gnus
+  :init
+  (add-hook 'gnus-article-mode-hook #'shrface-mode)
+  :config
+  (require 'nnir)
+
+  ;; Please note mail folders in `gnus-select-method' have NO prefix like "nnimap+hotmail:" or "nnimap+gmail:"
+  (setq gnus-select-method '(nnnil)) ;; Read feeds/atom through gwene
+
+  ;; ask encryption password once
+  (setq epa-file-cache-passphrase-for-symmetric-encryption t)
+
+  ;; @see http://gnus.org/manual/gnus_397.html
+  (defun gnus/add-gmail-select-method (account-name)
+    (add-to-list 'gnus-secondary-select-methods
+                 (list 'nnimap account-name
+                       (list 'Nnimap-address "imap.gmail.com")
+                       (list 'Nnimap-server-port 993)
+                       (list 'Nnimap-stream 'ssl)
+                       (list 'Nnir-search-engine 'imap)
+                       ;; @see http://www.gnu.org/software/emacs/manual/html_node/gnus/Expiring-Mail.html
+                       ;; press 'E' to expire email
+                       (list 'nnmail-expiry-target (concat "nnimap+" account-name ":[Gmail]/Corbeille"))
+                       (list 'nnmail-expiry-wait 90))))
+
+  (defun gnus/add-gmail-topic (account-name)
+    (list account-name ; the key of topic
+          (concat "nnimap+" account-name ":INBOX")
+          (concat "nnimap+" account-name ":[Gmail]/Brouillons")
+          (concat "nnimap+" account-name ":[Gmail]/Messages envoyés")
+          (concat "nnimap+" account-name ":[Gmail]/Important")
+          (concat "nnimap+" account-name ":[Gmail]/Tous les messages")
+          (concat "nnimap+" account-name ":[Gmail]/Corbeille")
+          (concat "nnimap+" account-name ":[Gmail]/Suivis")
+          (concat "nnimap+" account-name ":[Gmail]/Spam")
+          (concat "nnimap+" account-name ":Planifié")
+          (concat "nnimap+" account-name ":Archive")
+          (concat "nnimap+" account-name ":Trash")
+          (concat "nnimap+" account-name ":Sent")
+          (concat "nnimap+" account-name ":Conversation History")
+          (concat "nnimap+" account-name ":Accusés de réception")
+          (concat "nnimap+" account-name ":Professionnel")
+          (concat "nnimap+" account-name ":Professionnel/OPTRAJ")))
+
+  (add-to-list 'gnus-secondary-select-methods
+               '(nnimap "vivperso"
+                        (nnimap-address "imap.gmail.com")
+                        (nnimap-server-port 993)
+                        (nnimap-stream ssl)
+                        (nnir-search-engine imap)
+                        ;; @see http://www.gnu.org/software/emacs/manual/html_node/gnus/Expiring-Mail.html
+                        ;; press 'E' to expire email
+                        (nnmail-expiry-target "nnimap+vivperso:[Gmail]/Corbeille")
+                        (nnmail-expiry-wait 90)))
+
+  (add-to-list 'gnus-secondary-select-methods
+               '(nnimap "lelouette.vivien"
+                        (nnimap-address "imap.gmail.com")
+                        (nnimap-server-port 993)
+                        (nnimap-stream ssl)
+                        (nnir-search-engine imap)
+                        ;; @see http://www.gnu.org/software/emacs/manual/html_node/gnus/Expiring-Mail.html
+                        ;; press 'E' to expire email
+                        (nnmail-expiry-target "nnimap+lelouette.vivien:[Gmail]/Corbeille")
+                        (nnmail-expiry-wait 90)))
+
+  (setq gnus-thread-sort-functions
+        '(gnus-thread-sort-by-most-recent-date
+          (not gnus-thread-sort-by-number)))
+
+
+  ;; press "o" to view all groups
+  (defun gnus/group-list-subscribed-groups ()
+    "List all subscribed groups with or without un-read messages"
+    (interactive)
+    (gnus-group-list-all-groups 5))
+
+  ;; BBDB: Address list
+  (add-to-list 'load-path "~/.emacs.d/contacts-bbdb/")
+  (require 'bbdb)
+  (bbdb-initialize 'message 'gnus 'sendmail)
+  (add-hook 'gnus-startup-hook 'bbdb-insinuate-gnus)
+  (setq bbdb/mail-auto-create-p t
+        bbdb/news-auto-create-p t)
+
+  ;; Fetch only part of the article if we can.
+  ;; I saw this in someone's .gnus
+  (setq gnus-read-active-file 'some)
+
+  ;; open attachment
+  (eval-after-load 'mailcap
+    '(progn
+       (cond
+        ;; on macOS, maybe change mailcap-mime-data?
+        ((eq system-type 'darwin))
+        ;; on Windows, maybe change mailcap-mime-data?
+        ((eq system-type 'windows-nt))
+        (t
+         ;; Linux, read ~/.mailcap
+         (mailcap-parse-mailcaps)))))
+
+  ;; Tree view for groups.
+  (add-hook 'gnus-group-mode-hook 'gnus-topic-mode)
+
+  (setq gnus-use-cache t)
+  (setq gnus-use-full-window nil)
+
+  (setq gnus-asynchronous t)
+  (setq gnus-use-article-prefetch 15)
+
+  ;; http://www.gnu.org/software/emacs/manual/html_node/gnus/_005b9_002e2_005d.html
+  (setq gnus-use-correct-string-widths nil)
+
+  ;; Threads!  I hate reading un-threaded email -- especially mailing
+  ;; lists.  This helps a ton!
+  (setq gnus-summary-thread-gathering-function 'gnus-gather-threads-by-subject)
+
+  ;; Also, I prefer to see only the top level message.  If a message has
+  ;; several replies or is part of a thread, only show the first message.
+  ;; `gnus-thread-ignore-subject' will ignore the subject and
+  ;; look at 'In-Reply-To:' and 'References:' headers.
+  (setq gnus-thread-hide-subtree t)
+  (setq gnus-thread-ignore-subject t)
+
+  ;; Read HTML mail:
+  ;; You need install the command line web browser 'w3m' and Emacs plugin 'w3m'
+  ;; manually. It specify the html render as w3m so my setup works on all versions
+  ;; of Emacs.
+  ;;
+  ;; Since Emacs 24+, a default html rendering engine `shr' is provided:
+  ;;   - It works out of box without any cli program dependency or setup
+  ;;   - It can render html color
+  ;; So below line is optional.
+  (setq mm-text-html-renderer 'shr))
 
 (defun shell/run-in-background (command)
   (let ((command-parts (split-string command "[ ]+")))
@@ -812,7 +1162,7 @@ The optional argument NEW-WINDOW is not used."
   (interactive (browse-url-interactive-arg "URL: "))
   (setq url (browse-url-encode-url url))
   (shell/async-command-no-output (concat "qutebrowser " url)))
-(setq browse-url-browser-function 'browse-url-qutebrowser)
+;; (setq browse-url-browser-function 'browse-url-qutebrowser)
 
 (autoload 'exwm-enable "~/.emacs.d/desktop.el")
 
@@ -820,6 +1170,31 @@ The optional argument NEW-WINDOW is not used."
  (when (file-exists-p local-settings)
    (load-file local-settings)))
 
+;; easy window resize
+(global-set-key (kbd "C-s-h") #'windsize-left)
+(global-set-key (kbd "C-s-l") #'windsize-right)
+(global-set-key (kbd "C-s-j") #'windsize-down)
+(global-set-key (kbd "C-s-k") #'windsize-up)
+
+(global-set-key (kbd "C-s-<left>") #'windsize-left)
+(global-set-key (kbd "C-s-<down>") #'windsize-down)
+(global-set-key (kbd "C-s-<up>") #'windsize-up)
+(global-set-key (kbd "C-s-<right>") #'windsize-right)
+
+(global-set-key (kbd "s-b") #'counsel-switch-buffer)
+(global-set-key (kbd "s-B") #'ibuffer)
+
+(global-set-key (kbd "s-p") #'treemacs)
+
+(global-set-key (kbd "s-e") #'ranger)
+(global-set-key (kbd "s-E") #'deer)
+
+(global-set-key (kbd "s-X") #'kill-current-buffer)
+(global-set-key (kbd "s-Q") #'(lambda () (interactive) (kill-current-buffer) (delete-window)))
+
+(global-set-key (kbd "s-x") #'counsel-M-x)
+(global-set-key (kbd "s-.") #'counsel-find-file)
+
 )
-(setq gc-cons-threshold (* 100 1024 1024))
+(setq gc-cons-threshold (* 2 1000 1000))
 (provide 'init)

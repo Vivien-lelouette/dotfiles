@@ -1,7 +1,7 @@
 #+title Emacs configuration
 #+PROPERTY: header-args:emacs-lisp :tangle .emacs.d/init.el :mkdirp yes
 
-* Installation
+* installation
 ** Prerequisites
 *** Ubuntu
 #+begin_src shell :tangle .scripts/emacs/init-ubuntu.sh :shebang #!/bin/sh :mkdirp yes
@@ -16,12 +16,15 @@ The snippets below will install emacs from their git master:
 #+begin_src shell :tangle .scripts/emacs/install.sh :shebang #!/bin/sh :mkdirp yes
 
   mkdir -p ~/Tools
+  mkdir -p ~/.bin/emacs
   cd ~/Tools
   git clone git://git.savannah.gnu.org/emacs.git -b feature/native-comp
   cd emacs
+  export CC=/usr/bin/gcc-10 CXX=/usr/bin/gcc-10
   ./autogen.sh
-  ./configure --with-nativecomp --with-modules --with-xwidgets --with-cairo --with-mailutils --with-jansson
-  make -j 8
+  ./configure --prefix=$(pwd ~)/.bin/emacs --without-all --without-x --with-zlib --with-nativecomp --disable-silent-rules --with-modules --with-file-notification=inotify --with-mailutils --with-lcms2 --with-imagemagick --with-json CFLAGS="-O3 -s -mtune=native -march=native -fomit-frame-pointer"
+  make -j 8 NATIVE_FULL_AOT=1
+  make install
 
 #+end_src
 
@@ -53,16 +56,15 @@ The snippets below will install emacs from their git master:
 
   (setq inhibit-startup-message t)
 
-  (scroll-bar-mode -1)        ; Disable visible scrollbar
+  ;; (scroll-bar-mode -1)        ; Disable visible scrollbar
   (tool-bar-mode -1)          ; Disable the toolbar
   (tooltip-mode -1)           ; Disable tooltips
-  (set-fringe-mode 10)        ; Give some breathing room
+  ;; (set-fringe-mode 10)        ; Give some breathing room
 
-  (setq-default window-divider-default-right-width 5)
-  (setq-default window-divider-default-bottom-width 5)
-  (setq-default window-divider-default-places t)
-  (add-hook 'after-init-hook #'window-divider-mode)
-
+  ;; (setq-default window-divider-default-right-width 10)
+  ;; (setq-default window-divider-default-bottom-width 10)
+  ;; (setq-default window-divider-default-places t)
+  ;; (add-hook 'after-init-hook #'window-divider-mode)
 
   (menu-bar-mode -1)            ; Disable the menu bar
 
@@ -85,14 +87,29 @@ The snippets below will install emacs from their git master:
   ;; Winner-mode
   (winner-mode 1)
 
-  ;; Smooth scrolling
-  (setq-default scroll-margin 0)
-  (setq-default scroll-preserve-screen-position t)
-  (setq-default scroll-conservatively 1)
-  ; Horizontal Scroll
-  (setq-default hscroll-margin 0)
-
   (setq package-native-compile t)
+  (setq-default indent-tabs-mode nil)
+  (setq-default tab-width 2)
+
+#+end_src
+
+** Window split
+Functions to split and move to the new split.
+
+#+begin_src emacs-lisp
+
+  (defun my-window-vsplit ()
+    (interactive)
+    (evil-window-vsplit)
+    (balance-windows)
+    (run-at-time "0.1 seconds" nil (lambda ()
+                                     (windmove-right))))
+
+  (defun my-window-split ()
+    (interactive)
+    (evil-window-split)
+    (run-at-time "0.1 seconds" nil (lambda ()
+                                     (windmove-down))))
 
 #+end_src
 
@@ -219,6 +236,35 @@ For those packages, here is quelpa:
 
 #+end_src
 
+* Utilities
+** Emacs-async
+#+begin_src emacs-lisp
+
+  (use-package async)
+
+#+end_src
+
+** Trashed
+#+begin_src emacs-lisp
+
+  (use-package trashed)
+
+#+end_src
+
+** BBDB
+#+begin_src emacs-lisp
+
+  (use-package bbdb)
+
+#+end_src 
+
+** Dianyou (import contact from received mails)
+#+begin_src emacs-lisp
+
+  (use-package dianyou)
+
+#+end_src 
+
 * Keymap packages
 ** General
 #+begin_src emacs-lisp
@@ -236,43 +282,47 @@ For those packages, here is quelpa:
 
 #+end_src
 
-** Undo tree
+** Undo fu
 #+begin_src emacs-lisp
 
-  (use-package undo-tree
+  (use-package undo-fu)
+
+  (use-package undo-fu-session
     :config
-    (global-undo-tree-mode 1))
+    (setq undo-fu-session-incompatible-files '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'"))
+    (global-undo-fu-session-mode))
 
 #+end_src
 
 ** Evil
 #+begin_src emacs-lisp
 
-  (use-package evil
-    :init
-    (setq evil-want-integration t)
-    (setq evil-want-keybinding nil)
-    (setq evil-want-C-u-scroll t)
-    (setq evil-want-C-i-jump nil)
-    :config
-    (evil-mode 1)
-    (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
-    (define-key evil-insert-state-map (kbd "C-h") 'evil-delete-backward-char-and-join)
+    (use-package evil
+      :init
+      (setq evil-want-integration t)
+      (setq evil-want-keybinding nil)
+      (setq evil-want-C-u-scroll t)
+      (setq evil-want-C-i-jump nil)
+      :config
+      (evil-mode 1)
+      (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
+      (define-key evil-insert-state-map (kbd "C-h") 'evil-delete-backward-char-and-join)
 
-    ;; Use visual line motions even outside of visual-line-mode buffers
-    (evil-global-set-key 'motion "j" 'evil-next-visual-line)
-    (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
+      ;; Use visual line motions even outside of visual-line-mode buffers
+      (evil-global-set-key 'motion "j" 'evil-next-visual-line)
+      (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
 
-    (evil-set-initial-state 'messages-buffer-mode 'normal)
-    (evil-set-initial-state 'dashboard-mode 'normal)
-    (evil-set-undo-system 'undo-tree))
+      (evil-set-initial-state 'messages-buffer-mode 'normal)
+      (evil-set-initial-state 'dashboard-mode 'normal)
+      (evil-set-undo-system 'undo-fu))
 
   (use-package evil-collection
     :after evil
     :config
     (evil-collection-init))
 
-  (use-package treemacs-evil)
+  (use-package treemacs-evil
+    :after evil)
 
 #+end_src
 
@@ -280,8 +330,9 @@ For those packages, here is quelpa:
 #+begin_src emacs-lisp
 
   (use-package evil-multiedit
-   :config
-   (evil-multiedit-default-keybinds))
+    :after evil
+    :config
+    (evil-multiedit-default-keybinds))
 
 #+end_src
 
@@ -289,6 +340,7 @@ For those packages, here is quelpa:
 #+begin_src emacs-lisp
 
   (use-package evil-surround
+    :after evil
     :config
     (global-evil-surround-mode 1))
 
@@ -298,6 +350,7 @@ For those packages, here is quelpa:
 #+begin_src emacs-lisp
 
   (use-package evil-goggles
+    :after evil
     :config
     (evil-goggles-mode)
     ;; optionally use diff-mode's faces; as a result, deleted text
@@ -311,7 +364,8 @@ For those packages, here is quelpa:
 ** Hydra
 #+begin_src emacs-lisp
 
-  (use-package hydra)
+  (use-package hydra
+    :after general)
 
   (defhydra hydra-text-scale (:timeout 4)
     "scale text"
@@ -334,10 +388,12 @@ The first time you load your configuration on a new machine, you'll need to run 
   (use-package all-the-icons)
 
   (use-package all-the-icons-dired
+    :after all-the-icons
     :config
     (add-hook 'dired-mode-hook 'all-the-icons-dired-mode))
 
-  (use-package all-the-icons-ibuffer)
+  (use-package all-the-icons-ibuffer
+    :after all-the-icons)
 
 #+end_src
 
@@ -351,19 +407,99 @@ The first time you load your configuration on a new machine, you'll need to run 
 ** Doom themes
 #+begin_src emacs-lisp
 
- (use-package doom-themes
-   :init (load-theme 'doom-dark+ t)
-   :config
-   (setq doom-themes-treemacs-theme "doom-colors")
-   (set-face-attribute 'fringe nil :background "#1e1e1e")
-   ;; Line number styling for mode change
-   (add-hook 'evil-normal-state-entry-hook (lambda () (face-remap-add-relative 'line-number nil :foreground "#707070" :background "#1e1e1e")))
-   (add-hook 'evil-normal-state-entry-hook (lambda () (face-remap-add-relative 'line-number-current-line nil :foreground "#ffffff" :background "#121212")))
-   (add-hook 'evil-insert-state-entry-hook (lambda () (face-remap-add-relative 'line-number nil :foreground "#707070" :background "#1c3319")))
-   (add-hook 'evil-insert-state-entry-hook (lambda () (face-remap-add-relative 'line-number-current-line nil :foreground "#ffffff" :background "#579c4c")))
-   (add-hook 'evil-visual-state-entry-hook (lambda () (face-remap-add-relative 'line-number nil :foreground "#707070" :background "#00332a")))
-   (add-hook 'evil-visual-state-entry-hook (lambda () (face-remap-add-relative 'line-number-current-line nil :foreground "#ffffff" :background "#009b80"))))
+  ;; Line number styling for mode change
+  (setq theme/normal-lines-fg nil)
+  (setq theme/normal-lines-bg nil)
+  (setq theme/normal-current-line-fg nil)
+  (setq theme/normal-current-line-bg nil)
+  
+  (setq theme/insert-lines-fg nil)
+  (setq theme/insert-lines-bg nil)
+  (setq theme/insert-current-line-fg nil)
+  (setq theme/insert-current-line-bg nil)
+  
+  (setq theme/visual-lines-fg nil)
+  (setq theme/visual-lines-bg nil)
+  (setq theme/visual-current-line-fg nil)
+  (setq theme/visual-current-line-bg nil)
 
+  (defun theme/normal-lines ()
+    (face-remap-add-relative 'line-number nil :foreground theme/normal-lines-fg :background theme/normal-lines-bg))
+
+  (defun theme/normal-current-line ()
+    (face-remap-add-relative 'line-number-current-line nil :foreground theme/normal-current-line-fg :background theme/normal-current-line-bg))
+
+  (defun theme/insert-lines ()
+    (face-remap-add-relative 'line-number nil :foreground theme/insert-lines-fg :background theme/insert-lines-bg))
+
+  (defun theme/insert-current-line ()
+    (face-remap-add-relative 'line-number-current-line nil :foreground theme/insert-current-line-fg :background theme/insert-current-line-bg))
+
+  (defun theme/visual-lines ()
+    (face-remap-add-relative 'line-number nil :foreground theme/visual-lines-fg :background theme/visual-lines-bg))
+
+  (defun theme/visual-current-line ()
+    (face-remap-add-relative 'line-number-current-line nil :foreground theme/visual-current-line-fg :background theme/visual-current-line-bg))
+
+  (add-hook 'evil-normal-state-entry-hook 'theme/normal-lines)
+  (add-hook 'evil-normal-state-entry-hook 'theme/normal-current-line)
+
+  (add-hook 'evil-insert-state-entry-hook 'theme/insert-lines)
+  (add-hook 'evil-insert-state-entry-hook 'theme/insert-current-line)
+
+  (add-hook 'evil-visual-state-entry-hook 'theme/visual-lines)
+  (add-hook 'evil-visual-state-entry-hook 'theme/visual-current-line)
+
+  (defun theme/doom-dark+ ()
+    (interactive)
+    (load-theme 'doom-dark+ t)
+    (set-face-attribute 'fringe nil :background "#1e1e1e")
+    (set-face-attribute 'mode-line-inactive nil :background "#252526")
+
+    ;; Line number styling for mode change
+    (setq theme/normal-lines-fg "#707070")
+    (setq theme/normal-lines-bg "#1e1e1e")
+    (setq theme/normal-current-line-fg "#ffffff")
+    (setq theme/normal-current-line-bg "#121212")
+  
+    (setq theme/insert-lines-fg "#707070")
+    (setq theme/insert-lines-bg "#1c3319")
+    (setq theme/insert-current-line-fg "#ffffff")
+    (setq theme/insert-current-line-bg "#579c4c")
+  
+    (setq theme/visual-lines-fg "#707070")
+    (setq theme/visual-lines-bg "#00332a")
+    (setq theme/visual-current-line-fg "#ffffff")
+    (setq theme/visual-current-line-bg "#009b80"))
+
+  (defun theme/doom-nord ()
+    (interactive)
+    (load-theme 'doom-nord t)
+    (set-face-attribute 'fringe nil :background "#2e3440")
+    (set-face-attribute 'mode-line-inactive nil :background nil)
+
+    ;; Line number styling for mode change
+    (setq theme/normal-lines-fg "#6c7686")
+    (setq theme/normal-lines-bg "#2e3440")
+    (setq theme/normal-current-line-fg "#ffffff")
+    (setq theme/normal-current-line-bg "#242832")
+  
+    (setq theme/insert-lines-fg "#2e3440")
+    (setq theme/insert-lines-bg "#515e46")
+    (setq theme/insert-current-line-fg "#ffffff")
+    (setq theme/insert-current-line-bg "#a3be8c")
+  
+    (setq theme/visual-lines-fg "#2e3440")
+    (setq theme/visual-lines-bg "#594656")
+    (setq theme/visual-current-line-fg "#ffffff")
+    (setq theme/visual-current-line-bg "#b48ead"))
+
+  (use-package doom-themes
+    :config
+    (setq doom-themes-treemacs-theme "doom-colors")
+    (theme/doom-nord))
+
+  
 #+end_src
 
 ** Minions
@@ -383,7 +519,7 @@ The first time you load your configuration on a new machine, you'll need to run 
   (use-package simple-modeline
    :hook (after-init . simple-modeline-mode)
    :config
-   (setq simple-modeline-segments '((simple-modeline-segment-modified simple-modeline-segment-buffer-name simple-modeline-segment-position) (simple-modeline-segment-input-method simple-modeline-segment-eol simple-modeline-segment-encoding simple-modeline-segment-vc simple-modeline-segment-misc-info simple-modeline-segment-process simple-modeline-segment-minions))) 
+   (setq simple-modeline-segments '((simple-modeline-segment-modified simple-modeline-segment-buffer-name simple-modeline-segment-position) (simple-modeline-segment-input-method simple-modeline-segment-eol simple-modeline-segment-encoding simple-modeline-segment-vc simple-modeline-segment-misc-info simple-modeline-segment-process simple-modeline-segment-minions))))
 
 #+end_src 
 
@@ -421,23 +557,13 @@ The first time you load your configuration on a new machine, you'll need to run 
 
 #+end_src
 
-** Ace-window
-#+begin_src emacs-lisp
-
-  (use-package ace-window
-    :config
-    (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
-    (keys/leader-keys
-      "o" #'ace-window
-      "O" #'ace-swap-window)
-    )
-
-#+end_src
-
 ** Ace-jump
 #+begin_src emacs-lisp
 
-  (use-package ace-jump-mode)
+  (use-package ace-jump-mode
+    :config
+    (keys/leader-keys
+      "f" '(evil-ace-jump-word-mode :which-key "Go to word")))
 
 #+end_src
 
@@ -453,6 +579,7 @@ The first time you load your configuration on a new machine, you'll need to run 
     (add-hook 'treemacs-mode-hook #'efs/treemacs-set-fringe))
 
   (use-package treemacs-all-the-icons
+    :after all-the-icons
     :config
     (treemacs-load-theme "all-the-icons"))
 
@@ -476,13 +603,6 @@ The first time you load your configuration on a new machine, you'll need to run 
 
 #+end_src
 
-** Focus
-#+begin_src emacs-lisp
-
-  (use-package focus)
-
-#+end_src
-
 ** Flycheck
 #+begin_src emacs-lisp
 
@@ -490,14 +610,14 @@ The first time you load your configuration on a new machine, you'll need to run 
 
 #+end_src
 
-** Minimap
+** Writeroom
 #+begin_src emacs-lisp
 
-  (use-package minimap
+  (use-package writeroom-mode
     :config
-    (setq minimap-window-location 'right))
+    (setq writeroom-global-effects '(writeroom-set-alpha writeroom-set-menu-bar-lines writeroom-set-tool-bar-lines writeroom-set-vertical-scroll-bars writeroom-set-bottom-divider-width)))
 
-#+end_src 
+#+end_src
 
 * Search packages  
 ** Counsel
@@ -545,6 +665,7 @@ The first time you load your configuration on a new machine, you'll need to run 
     (setq ivy-initial-inputs-alist nil))
 
   (use-package ivy-rich
+    :after ivy
     :init
     (ivy-rich-mode 1))
 
@@ -573,6 +694,7 @@ The first time you load your configuration on a new machine, you'll need to run 
     (global-company-mode 1))
 
   (use-package company-box
+    :after company
     :hook (company-mode . company-box-mode))
 
 #+end_src
@@ -581,6 +703,7 @@ The first time you load your configuration on a new machine, you'll need to run 
 #+begin_src emacs-lisp
 
   (use-package prescient)
+
   (use-package ivy-prescient
     :after counsel
     :config
@@ -596,10 +719,7 @@ The first time you load your configuration on a new machine, you'll need to run 
 ** Avy
 #+begin_src emacs-lisp
 
-  (use-package avy
-    :config
-    (keys/leader-keys
-      "f" '(avy-goto-word-0 :which-key "Go to word")))
+  (use-package avy)
 
 #+end_src
 
@@ -631,7 +751,6 @@ Provide a better way of moving arround than plain dired. Files are previewed in 
                                (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•")))))))
 
   (use-package org
-
     :hook (org-mode . efs/org-mode-setup)
     :config
     (require 'org-tempo)
@@ -642,6 +761,9 @@ Provide a better way of moving arround than plain dired. Files are previewed in 
     (setq org-log-done 'time)
     (setq org-log-into-drawer t)
     (setq org-html-inline-images t)
+    (setq org-hide-emphasis-markers t)
+
+ 
 
     (setq org-agenda-files
           '("~/.org-files/tasks.org"
@@ -758,6 +880,50 @@ Provide a better way of moving arround than plain dired. Files are previewed in 
 
 #+end_src
 
+** Org slides
+#+begin_src emacs-lisp
+
+  (use-package hide-mode-line)
+
+  (defun org/presentation-setup ()
+    ;; Hide the mode line
+    ;; (hide-mode-line-mode 1)
+
+    (display-line-numbers-mode 0)
+
+    ;; Display images inline
+    (org-display-inline-images) ;; Can also use org-startup-with-inline-images
+
+    ;; Scale the text.  The next line is for basic scaling:
+    (setq text-scale-mode-amount 3)
+    (text-scale-mode 1)
+    (writeroom-mode 1))
+
+  (defun org/presentation-end ()
+    ;; Show the mode line again
+    ;; (hide-mode-line-mode 0)
+
+    (display-line-numbers-mode 1)
+
+    ;; Turn off text scale mode (or use the next line if you didn't use text-scale-mode)
+    (text-scale-mode 0)
+    (writeroom-mode 0))
+
+  (use-package org-tree-slide
+    :hook ((org-tree-slide-play . org/presentation-setup)
+           (org-tree-slide-stop . org/presentation-end))
+    :custom
+    (org-tree-slide-activate-message "Presentation started!")
+    (org-tree-slide-deactivate-message "Presentation finished!")
+    (org-tree-slide-breadcrumbs " > ")
+    (org-tree-slide-skip-outline-level 4)
+    (org-tree-slide-slide-in-effect nil)
+    (org-tree-slide-header t)
+    (org-tree-slide-fold-subtrees-skipped nil)
+    (org-image-actual-width nil))
+
+#+end_src
+
 ** Configure org-bullets
 
 #+begin_src emacs-lisp
@@ -810,9 +976,21 @@ This snippet adds a hook to org-mode buffers so that org/org-babel-tangle-config
 ** Org-mime
 #+begin_src emacs-lisp
 
-  (use-package org-mime)
+  (use-package org-mime
+    :after org)
 
 #+end_src 
+
+** Org-web-tools
+*** Prerequisites
+Pandoc must be downloaded.
+*** Package
+#+begin_src emacs-lisp
+
+  (use-package org-web-tools
+    :after org)
+
+#+end_src
 
 * Development
 ** Projectile
@@ -831,6 +1009,7 @@ This snippet adds a hook to org-mode buffers so that org/org-babel-tangle-config
     (setq projectile-switch-project-action #'projectile-dired))
 
   (use-package counsel-projectile
+    :after counsel
     :config (counsel-projectile-mode))
 
   (use-package ibuffer-projectile)
@@ -857,7 +1036,8 @@ NOTE: Make sure to configure a GitHub token before using this package!
 
 #+begin_src emacs-lisp
 
-  ;; (use-package forge)
+  (use-package forge
+    :after magit)
 
 #+end_src
 
@@ -865,6 +1045,7 @@ NOTE: Make sure to configure a GitHub token before using this package!
 #+begin_src emacs-lisp
 
   (use-package evil-nerd-commenter
+    :after evil
     :bind ("M-/" . evilnc-comment-or-uncomment-lines))
 
 #+end_src
@@ -876,8 +1057,8 @@ Prerequisite: Read Supported Languages to see which additional tool you need to 
 
 #+begin_src emacs-lisp
 
-(use-package format-all
-  :bind ("C-c C-f" . format-all-buffer))
+  (use-package format-all
+    :bind ("C-c C-f" . format-all-buffer))
 
 #+end_src 
 
@@ -903,7 +1084,15 @@ Prerequisite: Read Supported Languages to see which additional tool you need to 
 ** Rainbow colors
 #+begin_src emacs-lisp
 
-    (use-package rainbow-mode)
+  (use-package rainbow-mode)
+
+#+end_src
+
+** Yasnippet
+
+#+begin_src emacs-lisp
+
+  (use-package yasnippet)
 
 #+end_src
 
@@ -917,7 +1106,23 @@ The =lsp-keymap-prefix= setting enables you to define a prefix for where =lsp-mo
 The =which-key= integration adds helpful descriptions of the various keys so you should be able to learn a lot just by pressing =C-c l= in a =lsp-mode= buffer and trying different things that you find there.
 #+begin_src emacs-lisp
 
+  (defun my-setup-indent (n)
+    ;; java/c/c++
+    (setq-local c-basic-offset n)
+    ;; web development
+    (setq-local coffee-tab-width n) ; coffeescript
+    (setq-local javascript-indent-level n) ; javascript-mode
+    (setq-local js-indent-level n) ; js-mode
+    (setq-local rjsx-basic-offset n)
+    (setq-local rjsx-indent-level n)
+    (setq-local web-mode-markup-indent-offset n) ; web-mode, html tag in html file
+    (setq-local web-mode-css-indent-offset n) ; web-mode, css in html file
+    (setq-local web-mode-code-indent-offset n) ; web-mode, js code in html file
+    (setq-local css-indent-offset n) ; css-mode
+  )
+
   (defun efs/lsp-mode-setup ()
+    (my-setup-indent 2)
     (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
     (lsp-headerline-breadcrumb-mode)
     (let ((lsp-keymap-prefix "C-SPC"))
@@ -942,6 +1147,7 @@ The =which-key= integration adds helpful descriptions of the various keys so you
 #+begin_src emacs-lisp
 
   (use-package lsp-ui
+    :after lsp
     :hook (lsp-mode . lsp-ui-mode)
     :config
     (setq lsp-ui-doc-position 'at-point))
@@ -959,7 +1165,8 @@ The =which-key= integration adds helpful descriptions of the various keys so you
 *** lsp-ivy
 #+begin_src emacs-lisp
 
-  (use-package lsp-ivy)
+  (use-package lsp-ivy
+    :after lsp)
 
 #+end_src
 
@@ -1035,13 +1242,13 @@ Requires you to run: M-x lsp-install-server RET bash RET.
 #+begin_src emacs-lisp
 
   (use-package restclient
-    :hook (restclient-mode . company-mode))
+    :config
+    (add-to-list 'auto-mode-alist '("\\.http\\'" . restclient-mode)))
 
-  (add-to-list 'auto-mode-alist '("\\.http\\'" . restclient-mode))
-
-  (use-package company-restclient)
-
-  (add-to-list 'company-backends 'company-restclient)
+  (use-package company-restclient
+    :after restclient
+    :config
+    (add-to-list 'company-backends 'company-restclient))
 
 #+end_src
 
@@ -1049,9 +1256,8 @@ Requires you to run: M-x lsp-install-server RET bash RET.
 #+begin_src emacs-lisp
 
   (use-package adoc-mode
-    :hook (adoc-mode . company-mode))
-
-  (add-to-list 'auto-mode-alist '("\\.adoc\\'" . adoc-mode))
+    :config
+    (add-to-list 'auto-mode-alist '("\\.adoc\\'" . adoc-mode)))
 
 #+end_src
 
@@ -1106,18 +1312,17 @@ Requires you to run: M-x lsp-install-server RET bash RET.
 
   (use-package kubernetes
     :config
+    (setq kubernetes-redraw-frequency 3600)
     (setq kubernetes-poll-frequency 3600))
-    ;; (setq kubernetes-redraw-frequency 3600))
-
-  (use-package kubernetes-evil
-    :after kubernetes)
-
-#+end_src
-
-** Kubernetes
-#+begin_src emacs-lisp
-
-  (use-package jenkins)
+  
+  (use-package kubernetes-evil)
+    
+  (defun kubernetes/refresh ()
+    (interactive)
+    (kubernetes-statefulsets-refresh)
+    (kubernetes-deployments-refresh-now)
+    (kubernetes-jobs-refresh-now)
+    (kubernetes-pods-refresh-now))
 
 #+end_src
 
@@ -1132,7 +1337,7 @@ TODO: add this a prerequisite.
     :ensure nil
     :diminish
     :if (executable-find "aspell")
-    :hook (((prog-mode text-mode outline-mode latex-mode) . flyspell-mode))
+    :hook (((text-mode outline-mode latex-mode) . flyspell-mode))
     :custom
     (flyspell-issue-message-flag nil)
     (ispell-program-name "aspell")
@@ -1154,6 +1359,7 @@ This package allows to guess which language you are typing on so that flyspell c
 #+begin_src emacs-lisp
 
     (use-package guess-language
+     
       :config
       (setq guess-language-languages '(en fr))
       (add-hook 'flyspell-mode-hook (lambda () (guess-language-mode 1))))
@@ -1170,46 +1376,10 @@ TODO: add this a prerequisite.
    '(langtool
      :fetcher git
      :url "https://github.com/mhayashi1120/Emacs-langtool"))
- (setq langtool-language-tool-server-jar "~/Tools/LanguageTool/languagetool-server.jar")
+  (setq langtool-language-tool-server-jar "~/Tools/LanguageTool/languagetool-server.jar")
   (require 'langtool)
 
 #+end_src
-
-* Utilities
-** Emacs-async
-#+begin_src emacs-lisp
-
-  (use-package async)
-
-#+end_src
-
-** Trashed
-#+begin_src emacs-lisp
-
-  (use-package trashed)
-
-#+end_src
-
-** Emacs-w3m
-#+begin_src emacs-lisp
-
-  (use-package w3m)
-
-#+end_src 
-
-** BBDB
-#+begin_src emacs-lisp
-
-  (use-package bbdb)
-
-#+end_src 
-
-** Dianyou (import contact from received mails)
-#+begin_src emacs-lisp
-
-  (use-package dianyou)
-
-#+end_src 
 
 * Shell & Terminals
 ** Vterm
@@ -1225,6 +1395,7 @@ TODO: add this a prerequisite.
 #+begin_src emacs-lisp
 
     (use-package vterm
+     
       :config
       (setq vterm-shell "/bin/zsh")
       (setq vterm-buffer-name-string "vterm: %s"))
@@ -1236,7 +1407,7 @@ TODO: add this a prerequisite.
 
   (use-package term
     :config
-    (setq explicit-shell-file-name "bash")
+    (setq explicit-shell-file-name "sh")
 
     ;; Use 'explicit-<shell>-args for shell-specific args
     ;;(setq explicit-zsh-args '())         
@@ -1275,6 +1446,13 @@ TODO: add this a prerequisite.
 
 #+end_src
 
+** Frames only
+#+begin_src emacs-lisp
+
+  (use-package frames-only-mode)
+
+#+end_src
+
 * Bitwarden integration
 ** Prerequisite
 Install the bitwarden cli using npm.
@@ -1283,6 +1461,7 @@ Install the bitwarden cli using npm.
  sudo npm install -g @bitwarden/cli
 
 #+end_src
+
 ** Emacs bitwarden
 #+begin_src emacs-lisp
 
@@ -1291,55 +1470,247 @@ Install the bitwarden cli using npm.
      :fetcher git
      :url "https://github.com/seanfarley/emacs-bitwarden.git"))
   (require 'bitwarden)
-
 #+end_src
 
-* Emacs Application Framework
-** Prerequisites
-Install running the install script given in EAF. But it would be better if I could find a way to just use pip like so:
-#+begin_src shell
+#+RESULTS:
+: bitwarden
 
-  python3 -m venv ~/.python.env
-  source ~/.python.env/bin/activate
-  pip3 install --upgrade pip
-  pip3 install epc pyqt5 pyqt5-sip pyqtwebengine pymupdf qrcode qtconsole retrying 
-  deactivate
-
-#+end_src
-
-** Installation
+* Web browsing
+** Shr (html renderer)
 #+begin_src emacs-lisp
 
-  (quelpa
-   '(eaf
-     :fetcher git
-     :url "https://github.com/manateelazycat/emacs-application-framework.git"
-     :files ("*")))
+  (use-package shr
+    :config
+    (setq gnus-inhibit-images nil)
+    (setq shr-use-fonts nil)
+    (setq shr-use-colors nil)
+    (setq shr-max-image-proportion 1)
+    (setq shr-width nil)
+    (setq shr-folding-mode t))
 
-  (use-package epc :defer t)
-  (use-package ctable :defer t)
-  (use-package deferred :defer t)
-  (use-package s :defer t)
-  (require 'eaf)
-  ;; (require 'eaf-evil)
+#+end_src 
 
-  (add-to-list 'eaf-wm-focus-fix-wms "EXWM")
-  (eaf-setq eaf-browser-enable-adblocker "true")
-  (eaf-setq eaf-browser-scroll-behavior "smooth")
-  (eaf-setq eaf-browser-blank-page-url "https://duckduckgo.com")
-  (eaf-setq eaf-browser-dark-mode "false")
+** Shrface
+#+begin_src emacs-lisp
 
-  (setq eaf-browser-continue-where-left-off t)
-  (setq eaf-browser-search-engines '(("duckduckgo" . "https://duckduckgo.com/?q=%s")))
-  (setq eaf-browser-default-search-engine "duckduckgo")
+  ;; Used to highlight code
+  (use-package shr-tag-pre-highlight
+    :ensure t
+    :after shr
+    :config
+    (add-to-list 'shr-external-rendering-functions
+                 '(pre . shr-tag-pre-highlight))
+    (when (version< emacs-version "26")
+      (with-eval-after-load 'eww
+        (advice-add 'eww-display-html :around
+                    'eww-display-html--override-shr-external-rendering-functions))))
 
-  (keys/leader-keys
-    "i" '(:ignore t :which-key "internet")
-    "ia" '(eaf-open-browser :which-key "address")
-    "ii" '(eaf-open-browser-with-history :which-key "search & history")
-    "ib" '(eaf-open-bookmark :which-key "bookmarks"))
+  (use-package shrface
+    :config
+    (shrface-basic)
+    (shrface-trial)
+    (shrface-default-keybindings)
+    (setq shrface-href-versatile t)
 
-#+end_src
+    ;; Code highlighting
+    (require 'shr-tag-pre-highlight)
+    (add-to-list 'shr-external-rendering-functions '(pre . shrface-shr-tag-pre-highlight))
+    (defun shrface-shr-tag-pre-highlight (pre)
+      "Highlighting code in PRE."
+      (let* ((shr-folding-mode 'none)
+             (shr-current-font 'default)
+             (code (with-temp-buffer
+                     (shr-generic pre)
+                     (setq-local fill-column 120)
+                     (indent-rigidly (point-min) (point-max) 2)
+                     (if (eq "" (dom-texts pre))
+                         nil
+                       (progn
+                         (setq-local fill-column shrface-paragraph-fill-column)
+                         (indent-rigidly (point-min) (point-max) shrface-paragraph-indentation)))
+                     (buffer-string)))
+             (lang (or (shr-tag-pre-highlight-guess-language-attr pre)
+                       (let ((sym (language-detection-string code)))
+                         (and sym (symbol-name sym)))))
+             (mode (and lang
+                        (shr-tag-pre-highlight--get-lang-mode lang))))
+        (shr-ensure-newline)
+        (insert (propertize (concat "#+BEGIN_SRC " lang) 'face 'org-block-begin-line))
+        (shr-ensure-newline)
+        (setq start (point))
+        (insert
+         (or (and (fboundp mode)
+                  (with-demoted-errors "Error while fontifying: %S"
+                    (shrface-tag-pre-highlight-fontify code mode)
+                    ))
+             code))
+        (shr-ensure-newline)
+        (setq end (point))
+        (insert (propertize "#+END_SRC" 'face 'org-block-end-line ) )
+        (shr-ensure-newline)
+        (insert "\n"))))
+#+end_src 
+
+** Eww
+#+begin_src emacs-lisp
+
+  (use-package eww
+    :init
+    (add-hook 'eww-after-render-hook #'shrface-mode)
+    :config
+    (define-key eww-image-link-keymap (kbd "TAB") nil)
+    (define-key eww-link-keymap (kbd "TAB") nil)
+    (define-key eww-mode-map (kbd "TAB") nil)
+    (define-key eww-text-map (kbd "TAB") nil)
+    (define-key eww-textarea-map (kbd "TAB") nil)
+    (define-key eww-mode-map (kbd "<normal-state> ^") nil)
+    (define-key eww-mode-map (kbd "<normal-state> <tab>") 'shrface-outline-cycle)
+    (define-key eww-mode-map (kbd "<normal-state> <backtab>") nil)
+
+    (require 'shrface))
+
+#+end_src 
+
+* Mails
+** gnus
+#+begin_src emacs-lisp
+
+  (use-package gnus
+    :init
+    (add-hook 'gnus-article-mode-hook #'shrface-mode)
+    :config
+    (require 'nnir)
+
+    ;; Please note mail folders in `gnus-select-method' have NO prefix like "nnimap+hotmail:" or "nnimap+gmail:"
+    (setq gnus-select-method '(nnnil)) ;; Read feeds/atom through gwene
+
+    ;; ask encryption password once
+    (setq epa-file-cache-passphrase-for-symmetric-encryption t)
+
+    ;; @see http://gnus.org/manual/gnus_397.html
+    (defun gnus/add-gmail-select-method (account-name)
+      (add-to-list 'gnus-secondary-select-methods
+                   (list 'nnimap account-name
+                         (list 'Nnimap-address "imap.gmail.com")
+                         (list 'Nnimap-server-port 993)
+                         (list 'Nnimap-stream 'ssl)
+                         (list 'Nnir-search-engine 'imap)
+                         ;; @see http://www.gnu.org/software/emacs/manual/html_node/gnus/Expiring-Mail.html
+                         ;; press 'E' to expire email
+                         (list 'nnmail-expiry-target (concat "nnimap+" account-name ":[Gmail]/Corbeille"))
+                         (list 'nnmail-expiry-wait 90))))
+
+    (defun gnus/add-gmail-topic (account-name)
+      (list account-name ; the key of topic
+            (concat "nnimap+" account-name ":INBOX")
+            (concat "nnimap+" account-name ":[Gmail]/Brouillons")
+            (concat "nnimap+" account-name ":[Gmail]/Messages envoyés")
+            (concat "nnimap+" account-name ":[Gmail]/Important")
+            (concat "nnimap+" account-name ":[Gmail]/Tous les messages")
+            (concat "nnimap+" account-name ":[Gmail]/Corbeille")
+            (concat "nnimap+" account-name ":[Gmail]/Suivis")
+            (concat "nnimap+" account-name ":[Gmail]/Spam")
+            (concat "nnimap+" account-name ":Planifié")
+            (concat "nnimap+" account-name ":Archive")
+            (concat "nnimap+" account-name ":Trash")
+            (concat "nnimap+" account-name ":Sent")
+            (concat "nnimap+" account-name ":Conversation History")
+            (concat "nnimap+" account-name ":Accusés de réception")
+            (concat "nnimap+" account-name ":Professionnel")
+            (concat "nnimap+" account-name ":Professionnel/OPTRAJ")))
+
+    (add-to-list 'gnus-secondary-select-methods
+                 '(nnimap "vivperso"
+                          (nnimap-address "imap.gmail.com")
+                          (nnimap-server-port 993)
+                          (nnimap-stream ssl)
+                          (nnir-search-engine imap)
+                          ;; @see http://www.gnu.org/software/emacs/manual/html_node/gnus/Expiring-Mail.html
+                          ;; press 'E' to expire email
+                          (nnmail-expiry-target "nnimap+vivperso:[Gmail]/Corbeille")
+                          (nnmail-expiry-wait 90)))
+
+    (add-to-list 'gnus-secondary-select-methods
+                 '(nnimap "lelouette.vivien"
+                          (nnimap-address "imap.gmail.com")
+                          (nnimap-server-port 993)
+                          (nnimap-stream ssl)
+                          (nnir-search-engine imap)
+                          ;; @see http://www.gnu.org/software/emacs/manual/html_node/gnus/Expiring-Mail.html
+                          ;; press 'E' to expire email
+                          (nnmail-expiry-target "nnimap+lelouette.vivien:[Gmail]/Corbeille")
+                          (nnmail-expiry-wait 90)))
+
+    (setq gnus-thread-sort-functions
+          '(gnus-thread-sort-by-most-recent-date
+            (not gnus-thread-sort-by-number)))
+
+
+    ;; press "o" to view all groups
+    (defun gnus/group-list-subscribed-groups ()
+      "List all subscribed groups with or without un-read messages"
+      (interactive)
+      (gnus-group-list-all-groups 5))
+
+    ;; BBDB: Address list
+    (add-to-list 'load-path "~/.emacs.d/contacts-bbdb/")
+    (require 'bbdb)
+    (bbdb-initialize 'message 'gnus 'sendmail)
+    (add-hook 'gnus-startup-hook 'bbdb-insinuate-gnus)
+    (setq bbdb/mail-auto-create-p t
+          bbdb/news-auto-create-p t)
+
+    ;; Fetch only part of the article if we can.
+    ;; I saw this in someone's .gnus
+    (setq gnus-read-active-file 'some)
+
+    ;; open attachment
+    (eval-after-load 'mailcap
+      '(progn
+         (cond
+          ;; on macOS, maybe change mailcap-mime-data?
+          ((eq system-type 'darwin))
+          ;; on Windows, maybe change mailcap-mime-data?
+          ((eq system-type 'windows-nt))
+          (t
+           ;; Linux, read ~/.mailcap
+           (mailcap-parse-mailcaps)))))
+
+    ;; Tree view for groups.
+    (add-hook 'gnus-group-mode-hook 'gnus-topic-mode)
+
+    (setq gnus-use-cache t)
+    (setq gnus-use-full-window nil)
+
+    (setq gnus-asynchronous t)
+    (setq gnus-use-article-prefetch 15)
+
+    ;; http://www.gnu.org/software/emacs/manual/html_node/gnus/_005b9_002e2_005d.html
+    (setq gnus-use-correct-string-widths nil)
+
+    ;; Threads!  I hate reading un-threaded email -- especially mailing
+    ;; lists.  This helps a ton!
+    (setq gnus-summary-thread-gathering-function 'gnus-gather-threads-by-subject)
+
+    ;; Also, I prefer to see only the top level message.  If a message has
+    ;; several replies or is part of a thread, only show the first message.
+    ;; `gnus-thread-ignore-subject' will ignore the subject and
+    ;; look at 'In-Reply-To:' and 'References:' headers.
+    (setq gnus-thread-hide-subtree t)
+    (setq gnus-thread-ignore-subject t)
+
+    ;; Read HTML mail:
+    ;; You need install the command line web browser 'w3m' and Emacs plugin 'w3m'
+    ;; manually. It specify the html render as w3m so my setup works on all versions
+    ;; of Emacs.
+    ;;
+    ;; Since Emacs 24+, a default html rendering engine `shr' is provided:
+    ;;   - It works out of box without any cli program dependency or setup
+    ;;   - It can render html color
+    ;; So below line is optional.
+    (setq mm-text-html-renderer 'shr))
+
+#+end_src 
 
 * Shell command runner
 #+begin_src emacs-lisp
@@ -1363,7 +1734,7 @@ Install running the install script given in EAF. But it would be better if I cou
     (interactive (browse-url-interactive-arg "URL: "))
     (setq url (browse-url-encode-url url))
     (shell/async-command-no-output (concat "qutebrowser " url)))
-  (setq browse-url-browser-function 'browse-url-qutebrowser)
+  ;; (setq browse-url-browser-function 'browse-url-qutebrowser)
 
 #+end_src 
 
@@ -1385,11 +1756,43 @@ If a setup is specific to a machine, add it on this file.
 
 #+end_src
 
+* Shortcuts
+
+#+begin_src emacs-lisp
+
+  ;; easy window resize
+  (global-set-key (kbd "C-s-h") #'windsize-left)
+  (global-set-key (kbd "C-s-l") #'windsize-right)
+  (global-set-key (kbd "C-s-j") #'windsize-down)
+  (global-set-key (kbd "C-s-k") #'windsize-up)
+
+  (global-set-key (kbd "C-s-<left>") #'windsize-left)
+  (global-set-key (kbd "C-s-<down>") #'windsize-down)
+  (global-set-key (kbd "C-s-<up>") #'windsize-up)
+  (global-set-key (kbd "C-s-<right>") #'windsize-right)
+
+  (global-set-key (kbd "s-b") #'counsel-switch-buffer)
+  (global-set-key (kbd "s-B") #'ibuffer)
+
+  (global-set-key (kbd "s-p") #'treemacs)
+
+  (global-set-key (kbd "s-e") #'ranger)
+  (global-set-key (kbd "s-E") #'deer)
+
+  (global-set-key (kbd "s-X") #'kill-current-buffer)
+  (global-set-key (kbd "s-Q") #'(lambda () (interactive) (kill-current-buffer) (delete-window)))
+
+  (global-set-key (kbd "s-x") #'counsel-M-x)
+  (global-set-key (kbd "s-.") #'counsel-find-file)
+
+#+end_src
+
 * End of the wrap
 #+begin_src emacs-lisp
 
   )
-  (setq gc-cons-threshold (* 100 1024 1024))
+  (setq gc-cons-threshold (* 2 1000 1000))
   (provide 'init)
 
 #+end_src
+
