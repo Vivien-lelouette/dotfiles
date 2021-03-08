@@ -41,9 +41,14 @@
 ;; Winner-mode
 (winner-mode 1)
 
-(setq package-native-compile t)
 (setq-default indent-tabs-mode nil)
 (setq-default tab-width 2)
+
+;; Nativ comp flags
+(setq comp-speed 3)
+(setq comp-async-report-warnings-errors nil)
+(setq package-native-compile t)
+(setq comp-deferred-compilation t)
 
 (defun my-window-vsplit ()
   (interactive)
