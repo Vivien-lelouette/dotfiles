@@ -745,14 +745,326 @@ The first time you load your configuration on a new machine, you'll need to run 
 #+end_src
 
 * File explorer
-** Ranger
+** Dired
 Provide a better way of moving arround than plain dired. Files are previewed in emacs, and folder are previewed in a dired buffer.
 
 #+begin_src emacs-lisp
 
   (use-package image-dired)
 
+  (use-package dired
+    :ensure nil
+    :hook (dired-mode . dired-hide-details-mode)
+    :commands (dired dired-jump)
+    :bind (("C-x C-j" . dired-jump))
+    :custom ((dired-listing-switches "-agho --group-directories-first"))
+    :config
+    (evil-collection-define-key 'normal 'dired-mode-map
+      "\C-H" 'dired-do-hardlink
+      "\C-L" 'dired-do-load))
+
+  (use-package dired-single
+    :config
+    (evil-collection-define-key 'normal 'dired-mode-map
+      "H" 'dired-single-up-directory
+      "L" 'dired-single-buffer))
+
+  (use-package dired-hide-dotfiles
+    :hook (dired-mode . dired-hide-dotfiles-mode)
+    :config
+    (evil-collection-define-key 'normal 'dired-mode-map
+      "\M-h" 'dired-hide-dotfiles-mode))
+
+  (use-package dired-subtree
+    :after dired
+    :config
+    (bind-key "<tab>" #'dired-subtree-toggle dired-mode-map)
+    (bind-key "<backtab>" #'dired-subtree-cycle dired-mode-map))
+
+#+end_src
+
+** Ranger
+Provide a better way of moving arround than plain dired. Files are previewed in emacs, and folder are previewed in a dired buffer.
+
+#+begin_src emacs-lisp
+
   (use-package ranger)
+
+#+end_src
+
+* Development
+** Projectile
+#+begin_src emacs-lisp
+
+  (use-package projectile
+    :diminish projectile-mode
+    :config (projectile-mode)
+    :custom ((projectile-completion-system 'ivy))
+    :bind-keymap
+    ("C-c p" . projectile-command-map)
+    :init
+    ;; NOTE: Set this to the folder where you keep your Git repos!
+    (when (file-directory-p "~/Projects/Code")
+      (setq projectile-project-search-path '("~/Projects/Code")))
+    (setq projectile-switch-project-action #'projectile-dired))
+
+  (use-package counsel-projectile
+    :after counsel
+    :config (counsel-projectile-mode))
+
+  (use-package ibuffer-projectile)
+
+#+end_src
+
+** Magit & Forge
+*** Magit
+#+begin_src emacs-lisp
+
+  (use-package magit
+    :config
+    (keys/leader-keys
+      "gg" '(magit :which-key "magit status"))
+     (keys/leader-keys
+      "gf" '(magit-log-buffer-file :which-key "magit file history")))
+
+#+end_src
+
+*** Forge
+NOTE: Make sure to configure a GitHub token before using this package!
+- https://magit.vc/manual/forge/Token-Creation.html#Token-Creation
+- https://magit.vc/manual/ghub/Getting-Started.html#Getting-Started
+
+#+begin_src emacs-lisp
+
+  (use-package forge
+    :after magit)
+
+#+end_src
+
+** Commenting
+#+begin_src emacs-lisp
+
+  (use-package evil-nerd-commenter
+    :after evil
+    :bind ("M-/" . evilnc-comment-or-uncomment-lines))
+
+#+end_src
+
+** Format all
+Format all, a feature that lets you auto-format source code.
+
+Prerequisite: Read Supported Languages to see which additional tool you need to install for the specific language.
+
+#+begin_src emacs-lisp
+
+  (use-package format-all
+    :bind ("C-c C-f" . format-all-buffer))
+
+#+end_src 
+
+** Dap
+#+begin_src emacs-lisp
+
+  (use-package dap-mode)
+
+#+end_src
+
+** Highlight ident
+#+begin_src emacs-lisp
+
+  (use-package highlight-indent-guides
+    :custom
+    (highlight-indent-guides-method 'character)
+    (highlight-indent-guides-responsive 'top))
+
+  (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
+
+#+end_src
+
+** Rainbow colors
+#+begin_src emacs-lisp
+
+  (use-package rainbow-mode)
+
+#+end_src
+
+** Yasnippet
+
+#+begin_src emacs-lisp
+
+  (use-package yasnippet)
+
+#+end_src
+
+** Lsp
+*** lsp-mode
+
+We use the excellent [[https://emacs-lsp.github.io/lsp-mode/][lsp-mode]] to enable IDE-like functionality for many different programming languages via "language servers" that speak the [[https://microsoft.github.io/language-server-protocol/][Language Server Protocol]].  Before trying to set up =lsp-mode= for a particular language, check out the [[https://emacs-lsp.github.io/lsp-mode/page/languages/][documentation for your language]] so that you can learn which language servers are available and how to install them.
+
+The =lsp-keymap-prefix= setting enables you to define a prefix for where =lsp-mode='s default keybindings will be added.  I *highly recommend* using the prefix to find out what you can do with =lsp-mode= in a buffer.
+
+The =which-key= integration adds helpful descriptions of the various keys so you should be able to learn a lot just by pressing =C-c l= in a =lsp-mode= buffer and trying different things that you find there.
+#+begin_src emacs-lisp
+
+  (defun my-setup-indent (n)
+    ;; java/c/c++
+    (setq-local c-basic-offset n)
+    ;; web development
+    (setq-local coffee-tab-width n) ; coffeescript
+    (setq-local javascript-indent-level n) ; javascript-mode
+    (setq-local js-indent-level n) ; js-mode
+    (setq-local rjsx-basic-offset n)
+    (setq-local rjsx-indent-level n)
+    (setq-local web-mode-markup-indent-offset n) ; web-mode, html tag in html file
+    (setq-local web-mode-css-indent-offset n) ; web-mode, css in html file
+    (setq-local web-mode-code-indent-offset n) ; web-mode, js code in html file
+    (setq-local css-indent-offset n) ; css-mode
+  )
+
+  (defun efs/lsp-mode-setup ()
+    (my-setup-indent 2)
+    (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
+    (lsp-headerline-breadcrumb-mode)
+    (let ((lsp-keymap-prefix "C-SPC"))
+    (lsp-enable-which-key-integration)))
+
+  (use-package lsp-mode
+    :init
+    (setq lsp-keymap-prefix "C-SPC")  ;; Or 'C-l', 's-l'
+    :commands (lsp lsp-deferred)
+    :hook (lsp-mode . efs/lsp-mode-setup)
+    :config
+    (setq lsp-idle-delay 0.500)
+    (setq lsp-completion-provider :capf)
+    (define-key lsp-mode-map (kbd "C-SPC") lsp-command-map)
+    (define-key lsp-mode-map (kbd "s-l") nil))
+
+  (add-hook 'lsp-mode-hook 'highlight-indent-guides-mode)
+
+#+end_src
+
+*** lsp-ui
+#+begin_src emacs-lisp
+
+  (use-package lsp-ui
+    :after lsp
+    :hook (lsp-mode . lsp-ui-mode)
+    :config
+    (setq lsp-ui-doc-position 'at-point))
+
+#+end_src
+
+*** lsp-treemacs
+#+begin_src emacs-lisp
+
+  (use-package lsp-treemacs
+    :after lsp)
+
+#+end_src
+
+*** lsp-ivy
+#+begin_src emacs-lisp
+
+  (use-package lsp-ivy
+    :after lsp)
+
+#+end_src
+
+*** Javascript/Typescript
+**** Prerequisite
+For =lsp-mode= to work with TypeScript (and JavaScript) you will need to install a language server on your machine.  If you have Node.js installed, the easiest way to do that is by running the following command:
+
+#+begin_src shell :tangle no
+
+  npm install -g typescript-language-server typescript
+
+#+end_src
+
+This will install the [[https://github.com/theia-ide/typescript-language-server][typescript-language-server]] and the TypeScript compiler package.
+
+**** Tyepscript
+This is a basic configuration for the TypeScript language so that =.ts= files activate =typescript-mode= when opened.  We're also adding a hook to =typescript-mode-hook= to call =lsp-deferred= so that we activate =lsp-mode= to get LSP features every time we edit TypeScript code.
+
+#+begin_src emacs-lisp
+
+  (use-package typescript-mode
+    :mode ("\\.ts\\'")
+    :hook (typescript-mode . lsp-deferred)
+    :config
+    (setq typescript-indent-level 2)
+    (require 'dap-node)
+    (dap-node-setup))
+
+#+end_src
+
+**** Javascript
+#+begin_src emacs-lisp
+
+  (defun efs/js-mode-setup ()
+    (lsp-deferred)
+    (require 'dap-node)
+    (dap-node-setup))
+
+  (add-hook 'js-mode-hook 'efs/js-mode-setup)
+
+#+end_src
+
+*** Bash
+Requires you to run: M-x lsp-install-server RET bash RET.
+#+begin_src emacs-lisp
+
+  (add-hook 'sh-mode-hook 'lsp-deferred)
+
+#+end_src
+
+** Yaml
+#+begin_src emacs-lisp
+
+  (quelpa
+   '(yaml-mode
+     :fetcher git
+     :url "https://github.com/yoshiki/yaml-mode"))
+  (require 'yaml-mode)
+  (add-hook 'yaml-mode-hook 'highlight-indent-guides-mode)
+
+#+end_src
+
+** Json
+#+begin_src emacs-lisp
+
+  (use-package json-mode
+    :config
+    (add-hook 'json-mode-hook 'highlight-indent-guides-mode))
+
+#+end_src
+
+** Jq
+#+begin_src emacs-lisp
+
+  (use-package jq-mode)
+
+#+end_src
+
+** Rest client
+#+begin_src emacs-lisp
+
+  (use-package restclient
+    :config
+    (add-to-list 'auto-mode-alist '("\\.http\\'" . restclient-mode)))
+
+  (use-package company-restclient
+    :after restclient
+    :config
+    (add-to-list 'company-backends 'company-restclient))
+
+#+end_src
+
+** Asciidoc
+#+begin_src emacs-lisp
+
+  (use-package adoc-mode
+    :config
+    (add-to-list 'auto-mode-alist '("\\.adoc\\'" . adoc-mode)))
 
 #+end_src
 
@@ -1013,274 +1325,17 @@ Pandoc must be downloaded.
 
 #+end_src
 
-* Development
-** Projectile
+** Org-mime
 #+begin_src emacs-lisp
 
-  (use-package projectile
-    :diminish projectile-mode
-    :config (projectile-mode)
-    :custom ((projectile-completion-system 'ivy))
-    :bind-keymap
-    ("C-c p" . projectile-command-map)
-    :init
-    ;; NOTE: Set this to the folder where you keep your Git repos!
-    (when (file-directory-p "~/Projects/Code")
-      (setq projectile-project-search-path '("~/Projects/Code")))
-    (setq projectile-switch-project-action #'projectile-dired))
-
-  (use-package counsel-projectile
-    :after counsel
-    :config (counsel-projectile-mode))
-
-  (use-package ibuffer-projectile)
-
-#+end_src
-
-** Magit & Forge
-*** Magit
-#+begin_src emacs-lisp
-
-  (use-package magit
-    :custom
-    (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
+  (use-package ob-restclient
+    :after org
     :config
-    (keys/leader-keys
-      "gg" '(magit :which-key "magit status")))
-
-#+end_src
-
-*** Forge
-NOTE: Make sure to configure a GitHub token before using this package!
-- https://magit.vc/manual/forge/Token-Creation.html#Token-Creation
-- https://magit.vc/manual/ghub/Getting-Started.html#Getting-Started
-
-#+begin_src emacs-lisp
-
-  (use-package forge
-    :after magit)
-
-#+end_src
-
-** Commenting
-#+begin_src emacs-lisp
-
-  (use-package evil-nerd-commenter
-    :after evil
-    :bind ("M-/" . evilnc-comment-or-uncomment-lines))
-
-#+end_src
-
-** Format all
-Format all, a feature that lets you auto-format source code.
-
-Prerequisite: Read Supported Languages to see which additional tool you need to install for the specific language.
-
-#+begin_src emacs-lisp
-
-  (use-package format-all
-    :bind ("C-c C-f" . format-all-buffer))
+    (org-babel-do-load-languages
+     'org-babel-load-languages
+     '((restclient . t))))
 
 #+end_src 
-
-** Dap
-#+begin_src emacs-lisp
-
-  (use-package dap-mode)
-
-#+end_src
-
-** Highlight ident
-#+begin_src emacs-lisp
-
-  (use-package highlight-indent-guides
-    :custom
-    (highlight-indent-guides-method 'character)
-    (highlight-indent-guides-responsive 'top))
-
-  (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
-
-#+end_src
-
-** Rainbow colors
-#+begin_src emacs-lisp
-
-  (use-package rainbow-mode)
-
-#+end_src
-
-** Yasnippet
-
-#+begin_src emacs-lisp
-
-  (use-package yasnippet)
-
-#+end_src
-
-** Lsp
-*** lsp-mode
-
-We use the excellent [[https://emacs-lsp.github.io/lsp-mode/][lsp-mode]] to enable IDE-like functionality for many different programming languages via "language servers" that speak the [[https://microsoft.github.io/language-server-protocol/][Language Server Protocol]].  Before trying to set up =lsp-mode= for a particular language, check out the [[https://emacs-lsp.github.io/lsp-mode/page/languages/][documentation for your language]] so that you can learn which language servers are available and how to install them.
-
-The =lsp-keymap-prefix= setting enables you to define a prefix for where =lsp-mode='s default keybindings will be added.  I *highly recommend* using the prefix to find out what you can do with =lsp-mode= in a buffer.
-
-The =which-key= integration adds helpful descriptions of the various keys so you should be able to learn a lot just by pressing =C-c l= in a =lsp-mode= buffer and trying different things that you find there.
-#+begin_src emacs-lisp
-
-  (defun my-setup-indent (n)
-    ;; java/c/c++
-    (setq-local c-basic-offset n)
-    ;; web development
-    (setq-local coffee-tab-width n) ; coffeescript
-    (setq-local javascript-indent-level n) ; javascript-mode
-    (setq-local js-indent-level n) ; js-mode
-    (setq-local rjsx-basic-offset n)
-    (setq-local rjsx-indent-level n)
-    (setq-local web-mode-markup-indent-offset n) ; web-mode, html tag in html file
-    (setq-local web-mode-css-indent-offset n) ; web-mode, css in html file
-    (setq-local web-mode-code-indent-offset n) ; web-mode, js code in html file
-    (setq-local css-indent-offset n) ; css-mode
-  )
-
-  (defun efs/lsp-mode-setup ()
-    (my-setup-indent 2)
-    (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
-    (lsp-headerline-breadcrumb-mode)
-    (let ((lsp-keymap-prefix "C-SPC"))
-    (lsp-enable-which-key-integration)))
-
-  (use-package lsp-mode
-    :init
-    (setq lsp-keymap-prefix "C-SPC")  ;; Or 'C-l', 's-l'
-    :commands (lsp lsp-deferred)
-    :hook (lsp-mode . efs/lsp-mode-setup)
-    :config
-    (setq lsp-idle-delay 0.500)
-    (setq lsp-completion-provider :capf)
-    (define-key lsp-mode-map (kbd "C-SPC") lsp-command-map)
-    (define-key lsp-mode-map (kbd "s-l") nil))
-
-  (add-hook 'lsp-mode-hook 'highlight-indent-guides-mode)
-
-#+end_src
-
-*** lsp-ui
-#+begin_src emacs-lisp
-
-  (use-package lsp-ui
-    :after lsp
-    :hook (lsp-mode . lsp-ui-mode)
-    :config
-    (setq lsp-ui-doc-position 'at-point))
-
-#+end_src
-
-*** lsp-treemacs
-#+begin_src emacs-lisp
-
-  (use-package lsp-treemacs
-    :after lsp)
-
-#+end_src
-
-*** lsp-ivy
-#+begin_src emacs-lisp
-
-  (use-package lsp-ivy
-    :after lsp)
-
-#+end_src
-
-*** Javascript/Typescript
-**** Prerequisite
-For =lsp-mode= to work with TypeScript (and JavaScript) you will need to install a language server on your machine.  If you have Node.js installed, the easiest way to do that is by running the following command:
-
-#+begin_src shell :tangle no
-
-  npm install -g typescript-language-server typescript
-
-#+end_src
-
-This will install the [[https://github.com/theia-ide/typescript-language-server][typescript-language-server]] and the TypeScript compiler package.
-
-**** Tyepscript
-This is a basic configuration for the TypeScript language so that =.ts= files activate =typescript-mode= when opened.  We're also adding a hook to =typescript-mode-hook= to call =lsp-deferred= so that we activate =lsp-mode= to get LSP features every time we edit TypeScript code.
-
-#+begin_src emacs-lisp
-
-  (use-package typescript-mode
-    :mode ("\\.ts\\'")
-    :hook (typescript-mode . lsp-deferred)
-    :config
-    (setq typescript-indent-level 2)
-    (require 'dap-node)
-    (dap-node-setup))
-
-#+end_src
-
-**** Javascript
-#+begin_src emacs-lisp
-
-  (defun efs/js-mode-setup ()
-    (lsp-deferred)
-    (require 'dap-node)
-    (dap-node-setup))
-
-  (add-hook 'js-mode-hook 'efs/js-mode-setup)
-
-#+end_src
-
-*** Bash
-Requires you to run: M-x lsp-install-server RET bash RET.
-#+begin_src emacs-lisp
-
-  (add-hook 'sh-mode-hook 'lsp-deferred)
-
-#+end_src
-
-** Yaml
-#+begin_src emacs-lisp
-
-  (quelpa
-   '(yaml-mode
-     :fetcher git
-     :url "https://github.com/yoshiki/yaml-mode"))
-  (require 'yaml-mode)
-  (add-hook 'yaml-mode-hook 'highlight-indent-guides-mode)
-
-#+end_src
-
-** Json
-#+begin_src emacs-lisp
-
-  (use-package json-mode
-    :config
-    (add-hook 'json-mode-hook 'highlight-indent-guides-mode))
-
-#+end_src
-
-** Rest client
-#+begin_src emacs-lisp
-
-  (use-package restclient
-    :config
-    (add-to-list 'auto-mode-alist '("\\.http\\'" . restclient-mode)))
-
-  (use-package company-restclient
-    :after restclient
-    :config
-    (add-to-list 'company-backends 'company-restclient))
-
-#+end_src
-
-** Asciidoc
-#+begin_src emacs-lisp
-
-  (use-package adoc-mode
-    :config
-    (add-to-list 'auto-mode-alist '("\\.adoc\\'" . adoc-mode)))
-
-#+end_src
 
 * Devops
 ** Docker

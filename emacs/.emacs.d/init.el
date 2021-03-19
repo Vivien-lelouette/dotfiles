@@ -473,7 +473,174 @@
 
 (use-package image-dired)
 
+(use-package dired
+  :ensure nil
+  :hook (dired-mode . dired-hide-details-mode)
+  :commands (dired dired-jump)
+  :bind (("C-x C-j" . dired-jump))
+  :custom ((dired-listing-switches "-agho --group-directories-first"))
+  :config
+  (evil-collection-define-key 'normal 'dired-mode-map
+    "\C-H" 'dired-do-hardlink
+    "\C-L" 'dired-do-load))
+
+(use-package dired-single
+  :config
+  (evil-collection-define-key 'normal 'dired-mode-map
+    "H" 'dired-single-up-directory
+    "L" 'dired-single-buffer))
+
+(use-package dired-hide-dotfiles
+  :hook (dired-mode . dired-hide-dotfiles-mode)
+  :config
+  (evil-collection-define-key 'normal 'dired-mode-map
+    "\M-h" 'dired-hide-dotfiles-mode))
+
+(use-package dired-subtree
+  :after dired
+  :config
+  (bind-key "<tab>" #'dired-subtree-toggle dired-mode-map)
+  (bind-key "<backtab>" #'dired-subtree-cycle dired-mode-map))
+
 (use-package ranger)
+
+(use-package projectile
+  :diminish projectile-mode
+  :config (projectile-mode)
+  :custom ((projectile-completion-system 'ivy))
+  :bind-keymap
+  ("C-c p" . projectile-command-map)
+  :init
+  ;; NOTE: Set this to the folder where you keep your Git repos!
+  (when (file-directory-p "~/Projects/Code")
+    (setq projectile-project-search-path '("~/Projects/Code")))
+  (setq projectile-switch-project-action #'projectile-dired))
+
+(use-package counsel-projectile
+  :after counsel
+  :config (counsel-projectile-mode))
+
+(use-package ibuffer-projectile)
+
+(use-package magit
+  :config
+  (keys/leader-keys
+    "gg" '(magit :which-key "magit status"))
+   (keys/leader-keys
+    "gf" '(magit-log-buffer-file :which-key "magit file history")))
+
+(use-package forge
+  :after magit)
+
+(use-package evil-nerd-commenter
+  :after evil
+  :bind ("M-/" . evilnc-comment-or-uncomment-lines))
+
+(use-package format-all
+  :bind ("C-c C-f" . format-all-buffer))
+
+(use-package dap-mode)
+
+(use-package highlight-indent-guides
+  :custom
+  (highlight-indent-guides-method 'character)
+  (highlight-indent-guides-responsive 'top))
+
+(add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
+
+(use-package rainbow-mode)
+
+(use-package yasnippet)
+
+(defun my-setup-indent (n)
+  ;; java/c/c++
+  (setq-local c-basic-offset n)
+  ;; web development
+  (setq-local coffee-tab-width n) ; coffeescript
+  (setq-local javascript-indent-level n) ; javascript-mode
+  (setq-local js-indent-level n) ; js-mode
+  (setq-local rjsx-basic-offset n)
+  (setq-local rjsx-indent-level n)
+  (setq-local web-mode-markup-indent-offset n) ; web-mode, html tag in html file
+  (setq-local web-mode-css-indent-offset n) ; web-mode, css in html file
+  (setq-local web-mode-code-indent-offset n) ; web-mode, js code in html file
+  (setq-local css-indent-offset n) ; css-mode
+)
+
+(defun efs/lsp-mode-setup ()
+  (my-setup-indent 2)
+  (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
+  (lsp-headerline-breadcrumb-mode)
+  (let ((lsp-keymap-prefix "C-SPC"))
+  (lsp-enable-which-key-integration)))
+
+(use-package lsp-mode
+  :init
+  (setq lsp-keymap-prefix "C-SPC")  ;; Or 'C-l', 's-l'
+  :commands (lsp lsp-deferred)
+  :hook (lsp-mode . efs/lsp-mode-setup)
+  :config
+  (setq lsp-idle-delay 0.500)
+  (setq lsp-completion-provider :capf)
+  (define-key lsp-mode-map (kbd "C-SPC") lsp-command-map)
+  (define-key lsp-mode-map (kbd "s-l") nil))
+
+(add-hook 'lsp-mode-hook 'highlight-indent-guides-mode)
+
+(use-package lsp-ui
+  :after lsp
+  :hook (lsp-mode . lsp-ui-mode)
+  :config
+  (setq lsp-ui-doc-position 'at-point))
+
+(use-package lsp-treemacs
+  :after lsp)
+
+(use-package lsp-ivy
+  :after lsp)
+
+(use-package typescript-mode
+  :mode ("\\.ts\\'")
+  :hook (typescript-mode . lsp-deferred)
+  :config
+  (setq typescript-indent-level 2)
+  (require 'dap-node)
+  (dap-node-setup))
+
+(defun efs/js-mode-setup ()
+  (lsp-deferred)
+  (require 'dap-node)
+  (dap-node-setup))
+
+(add-hook 'js-mode-hook 'efs/js-mode-setup)
+
+(add-hook 'sh-mode-hook 'lsp-deferred)
+
+(quelpa
+ '(yaml-mode
+   :fetcher git
+   :url "https://github.com/yoshiki/yaml-mode"))
+(require 'yaml-mode)
+(add-hook 'yaml-mode-hook 'highlight-indent-guides-mode)
+
+(use-package json-mode
+  :config
+  (add-hook 'json-mode-hook 'highlight-indent-guides-mode))
+
+(use-package jq-mode)
+
+(use-package restclient
+  :config
+  (add-to-list 'auto-mode-alist '("\\.http\\'" . restclient-mode)))
+
+(use-package company-restclient
+  :after restclient
+  :config
+  (add-to-list 'company-backends 'company-restclient))
+
+(use-package adoc-mode
+  :config
+  (add-to-list 'auto-mode-alist '("\\.adoc\\'" . adoc-mode)))
 
 (defun efs/org-mode-setup ()
   (org-indent-mode)
@@ -689,141 +856,12 @@
 (use-package org-web-tools
   :after org)
 
-(use-package projectile
-  :diminish projectile-mode
-  :config (projectile-mode)
-  :custom ((projectile-completion-system 'ivy))
-  :bind-keymap
-  ("C-c p" . projectile-command-map)
-  :init
-  ;; NOTE: Set this to the folder where you keep your Git repos!
-  (when (file-directory-p "~/Projects/Code")
-    (setq projectile-project-search-path '("~/Projects/Code")))
-  (setq projectile-switch-project-action #'projectile-dired))
-
-(use-package counsel-projectile
-  :after counsel
-  :config (counsel-projectile-mode))
-
-(use-package ibuffer-projectile)
-
-(use-package magit
-  :custom
-  (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
+(use-package ob-restclient
+  :after org
   :config
-  (keys/leader-keys
-    "gg" '(magit :which-key "magit status")))
-
-(use-package forge
-  :after magit)
-
-(use-package evil-nerd-commenter
-  :after evil
-  :bind ("M-/" . evilnc-comment-or-uncomment-lines))
-
-(use-package format-all
-  :bind ("C-c C-f" . format-all-buffer))
-
-(use-package dap-mode)
-
-(use-package highlight-indent-guides
-  :custom
-  (highlight-indent-guides-method 'character)
-  (highlight-indent-guides-responsive 'top))
-
-(add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
-
-(use-package rainbow-mode)
-
-(use-package yasnippet)
-
-(defun my-setup-indent (n)
-  ;; java/c/c++
-  (setq-local c-basic-offset n)
-  ;; web development
-  (setq-local coffee-tab-width n) ; coffeescript
-  (setq-local javascript-indent-level n) ; javascript-mode
-  (setq-local js-indent-level n) ; js-mode
-  (setq-local rjsx-basic-offset n)
-  (setq-local rjsx-indent-level n)
-  (setq-local web-mode-markup-indent-offset n) ; web-mode, html tag in html file
-  (setq-local web-mode-css-indent-offset n) ; web-mode, css in html file
-  (setq-local web-mode-code-indent-offset n) ; web-mode, js code in html file
-  (setq-local css-indent-offset n) ; css-mode
-)
-
-(defun efs/lsp-mode-setup ()
-  (my-setup-indent 2)
-  (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
-  (lsp-headerline-breadcrumb-mode)
-  (let ((lsp-keymap-prefix "C-SPC"))
-  (lsp-enable-which-key-integration)))
-
-(use-package lsp-mode
-  :init
-  (setq lsp-keymap-prefix "C-SPC")  ;; Or 'C-l', 's-l'
-  :commands (lsp lsp-deferred)
-  :hook (lsp-mode . efs/lsp-mode-setup)
-  :config
-  (setq lsp-idle-delay 0.500)
-  (setq lsp-completion-provider :capf)
-  (define-key lsp-mode-map (kbd "C-SPC") lsp-command-map)
-  (define-key lsp-mode-map (kbd "s-l") nil))
-
-(add-hook 'lsp-mode-hook 'highlight-indent-guides-mode)
-
-(use-package lsp-ui
-  :after lsp
-  :hook (lsp-mode . lsp-ui-mode)
-  :config
-  (setq lsp-ui-doc-position 'at-point))
-
-(use-package lsp-treemacs
-  :after lsp)
-
-(use-package lsp-ivy
-  :after lsp)
-
-(use-package typescript-mode
-  :mode ("\\.ts\\'")
-  :hook (typescript-mode . lsp-deferred)
-  :config
-  (setq typescript-indent-level 2)
-  (require 'dap-node)
-  (dap-node-setup))
-
-(defun efs/js-mode-setup ()
-  (lsp-deferred)
-  (require 'dap-node)
-  (dap-node-setup))
-
-(add-hook 'js-mode-hook 'efs/js-mode-setup)
-
-(add-hook 'sh-mode-hook 'lsp-deferred)
-
-(quelpa
- '(yaml-mode
-   :fetcher git
-   :url "https://github.com/yoshiki/yaml-mode"))
-(require 'yaml-mode)
-(add-hook 'yaml-mode-hook 'highlight-indent-guides-mode)
-
-(use-package json-mode
-  :config
-  (add-hook 'json-mode-hook 'highlight-indent-guides-mode))
-
-(use-package restclient
-  :config
-  (add-to-list 'auto-mode-alist '("\\.http\\'" . restclient-mode)))
-
-(use-package company-restclient
-  :after restclient
-  :config
-  (add-to-list 'company-backends 'company-restclient))
-
-(use-package adoc-mode
-  :config
-  (add-to-list 'auto-mode-alist '("\\.adoc\\'" . adoc-mode)))
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((restclient . t))))
 
 (use-package dockerfile-mode)
 
