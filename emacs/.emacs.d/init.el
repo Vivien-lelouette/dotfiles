@@ -36,7 +36,7 @@
 
 ;; Let emacs use system clipboard as a default behaviour
 (setq x-select-enable-clipboard t)
-(setq interprogram-paste-function 'x-cut-buffer-or-selection-value)
+(setq interprogram-paste-function 'x-selection-value)
 
 ;; Winner-mode
 (winner-mode 1)
@@ -1191,14 +1191,35 @@ The optional argument NEW-WINDOW is not used."
 
 (global-set-key (kbd "s-p") #'treemacs)
 
-(global-set-key (kbd "s-e") #'ranger)
-(global-set-key (kbd "s-E") #'deer)
-
 (global-set-key (kbd "s-X") #'kill-current-buffer)
 (global-set-key (kbd "s-Q") #'(lambda () (interactive) (kill-current-buffer) (delete-window)))
 
 (global-set-key (kbd "s-x") #'counsel-M-x)
 (global-set-key (kbd "s-.") #'counsel-find-file)
+
+(global-set-key (kbd "C-H-s-h") #'windsize-left)
+(global-set-key (kbd "C-H-s-l") #'windsize-right)
+(global-set-key (kbd "C-H-s-j") #'windsize-down)
+(global-set-key (kbd "C-H-s-k") #'windsize-up)
+
+(global-set-key (kbd "C-H-s-<left>") #'windsize-left)
+(global-set-key (kbd "C-H-s-<down>") #'windsize-down)
+(global-set-key (kbd "C-H-s-<up>") #'windsize-up)
+(global-set-key (kbd "C-H-s-<right>") #'windsize-right)
+
+(global-set-key (kbd "H-s-b") #'counsel-switch-buffer)
+(global-set-key (kbd "H-s-B") #'ibuffer)
+
+(global-set-key (kbd "H-s-p") #'treemacs)
+
+(global-set-key (kbd "H-s-e") #'ranger)
+(global-set-key (kbd "H-s-E") #'deer)
+
+(global-set-key (kbd "H-s-X") #'kill-current-buffer)
+(global-set-key (kbd "H-s-Q") #'(lambda () (interactive) (kill-current-buffer) (delete-window)))
+
+(global-set-key (kbd "H-s-x") #'counsel-M-x)
+(global-set-key (kbd "H-s-.") #'counsel-find-file)
 
 )
 (setq gc-cons-threshold (* 2 1000 1000))
