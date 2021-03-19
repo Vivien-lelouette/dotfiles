@@ -26,3 +26,4 @@ emacs/.emacs.d/amx-items
 /emacs/.emacs.d/.lsp-eslint-choices
 /emacs/.emacs.d/forge-database.sqlite
 /emacs/.emacs.d/undo-fu-session/
+/emacs/.emacs.d/eln-cache/
