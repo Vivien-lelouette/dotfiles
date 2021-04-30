@@ -38,7 +38,7 @@ The snippets below will install emacs from their git master:
   ./autogen.sh
   ./configure --with-dbus --with-gif --with-jpeg --with-png --with-rsvg \
            --with-tiff --with-xft --with-xpm --with-gpm=no \
-           --with-xwidgets --with-modules --with-native-comp --with-pgtk --with-cairo
+           --with-modules --with-native-compilation --with-pgtk --with-cairo
   make -j 8 NATIVE_FULL_AOT=1
   sudo make install
 
@@ -207,15 +207,16 @@ Functions to split and move to the new split.
     )
    )
 
-  (add-hook 'ibuffer-mode-hook
-            (lambda ()
-              (setq ibuffer-saved-filter-groups
-               (list
-                (append
-                 '("custom")
-                 (ibuffer-custom-filter-groups))))
-                 (ibuffer-switch-to-saved-filter-groups "custom")
-              (ibuffer-auto-mode 1)))
+  ;; Useful when using exwm
+  ;; (add-hook 'ibuffer-mode-hook
+  ;;           (lambda ()
+  ;;             (setq ibuffer-saved-filter-groups
+  ;;              (list
+  ;;               (append
+  ;;                '("custom")
+  ;;                (ibuffer-custom-filter-groups))))
+  ;;                (ibuffer-switch-to-saved-filter-groups "custom")
+  ;;             (ibuffer-auto-mode 1)))
 
 #+end_src
 
@@ -1857,6 +1858,7 @@ If a setup is specific to a machine, add it on this file.
 
   (global-set-key (kbd "s-x") #'counsel-M-x)
   (global-set-key (kbd "s-.") #'counsel-find-file)
+  (global-set-key (kbd "C-H-s-s") #'counsel-projectile-ag)
 
   (global-set-key (kbd "C-H-s-h") #'windsize-left)
   (global-set-key (kbd "C-H-s-l") #'windsize-right)

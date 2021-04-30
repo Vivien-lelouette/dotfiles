@@ -119,15 +119,16 @@
   )
  )
 
-(add-hook 'ibuffer-mode-hook
-          (lambda ()
-            (setq ibuffer-saved-filter-groups
-             (list
-              (append
-               '("custom")
-               (ibuffer-custom-filter-groups))))
-               (ibuffer-switch-to-saved-filter-groups "custom")
-            (ibuffer-auto-mode 1)))
+;; Useful when using exwm
+;; (add-hook 'ibuffer-mode-hook
+;;           (lambda ()
+;;             (setq ibuffer-saved-filter-groups
+;;              (list
+;;               (append
+;;                '("custom")
+;;                (ibuffer-custom-filter-groups))))
+;;                (ibuffer-switch-to-saved-filter-groups "custom")
+;;             (ibuffer-auto-mode 1)))
 
 (require 'package)
 
@@ -1234,6 +1235,7 @@ The optional argument NEW-WINDOW is not used."
 
 (global-set-key (kbd "s-x") #'counsel-M-x)
 (global-set-key (kbd "s-.") #'counsel-find-file)
+(global-set-key (kbd "C-H-s-s") #'counsel-projectile-ag)
 
 (global-set-key (kbd "C-H-s-h") #'windsize-left)
 (global-set-key (kbd "C-H-s-l") #'windsize-right)
