@@ -115,9 +115,9 @@
                       (not (name . "Firefox:.*"))))
      ("Qutebrowser" (name . "qutebrowser:.*"))
      ("Firefox" (name . "Firefox:.*")))
-    (ibuffer-projectile-generate-filter-groups)
+   (ibuffer-projectile-generate-filter-groups)
+   )
   )
- )
 
 ;; Useful when using exwm
 ;; (add-hook 'ibuffer-mode-hook
@@ -129,6 +129,13 @@
 ;;                (ibuffer-custom-filter-groups))))
 ;;                (ibuffer-switch-to-saved-filter-groups "custom")
 ;;             (ibuffer-auto-mode 1)))
+
+(add-hook 'ibuffer-hook
+          (lambda ()
+            (ibuffer-projectile-set-filter-groups)
+            (unless (eq ibuffer-sorting-mode 'alphabetic)
+              (ibuffer-do-sort-by-alphabetic))
+            (ibuffer-auto-mode 1)))
 
 (require 'package)
 
