@@ -137,23 +137,21 @@
               (ibuffer-do-sort-by-alphabetic))
             (ibuffer-auto-mode 1)))
 
-(require 'package)
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+      (bootstrap-version 5))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
 
-(setq package-archives '(("melpa" . "https://melpa.org/packages/")
-                         ("org" . "https://orgmode.org/elpa/")
-                         ("elpa" . "https://elpa.gnu.org/packages/")))
-
-(package-initialize)
-(unless package-archive-contents
-  (package-refresh-contents))
-
-(unless (package-installed-p 'use-package)
-   (package-install 'use-package))
-
-(require 'use-package)
-(setq use-package-always-ensure t)
-
-(use-package quelpa)
+(straight-use-package 'use-package)
+(setq straight-use-package-by-default t)
 
 (use-package async)
 
@@ -322,6 +320,7 @@
   (load-theme 'doom-nord t)
   (set-face-attribute 'fringe nil :background "#2e3440")
   (set-face-attribute 'mode-line-inactive nil :background nil)
+  ;; (set-face-attribute 'scroll-bar nil :background "#2b323d")
 
   ;; Line number styling for mode change
   (setq theme/normal-lines-fg "#6c7686")
@@ -420,7 +419,6 @@
   :init (add-hook 'after-init-hook 'all-the-icons-ivy-setup))
 
 (use-package all-the-icons-ivy-rich
-  :ensure t
   :init (all-the-icons-ivy-rich-mode 1))
 
 (use-package ivy
@@ -482,7 +480,7 @@
 (use-package image-dired)
 
 (use-package dired
-  :ensure nil
+  :straight (:type built-in)
   :hook (dired-mode . dired-hide-details-mode)
   :commands (dired dired-jump)
   :bind (("C-x C-j" . dired-jump))
@@ -624,12 +622,10 @@
 
 (add-hook 'sh-mode-hook 'lsp-deferred)
 
-(quelpa
- '(yaml-mode
-   :fetcher git
-   :url "https://github.com/yoshiki/yaml-mode"))
-(require 'yaml-mode)
-(add-hook 'yaml-mode-hook 'highlight-indent-guides-mode)
+(use-package yaml-mode
+  :straight (yaml-mode :type git :host github :repo "yoshiki/yaml-mode")
+  :config
+  (add-hook 'yaml-mode-hook 'highlight-indent-guides-mode))
 
 (use-package json-mode
   :config
@@ -915,7 +911,7 @@
   (kubernetes-pods-refresh-now))
 
 (use-package flyspell
-  :ensure nil
+  :straight (:type built-in)
   :diminish
   :if (executable-find "aspell")
   :hook (((text-mode outline-mode latex-mode) . flyspell-mode))
@@ -934,17 +930,14 @@
     :custom (flyspell-correct-interface #'flyspell-correct-ivy)))
 
 (use-package guess-language
-
   :config
   (setq guess-language-languages '(en fr))
   (add-hook 'flyspell-mode-hook (lambda () (guess-language-mode 1))))
 
-(quelpa
- '(langtool
-   :fetcher git
-   :url "https://github.com/mhayashi1120/Emacs-langtool"))
-(setq langtool-language-tool-server-jar "~/Tools/LanguageTool/languagetool-server.jar")
-(require 'langtool)
+(use-package langtool
+  :straight (langtool :type git :host github :repo "mhayashi1120/Emacs-langtool")
+  :config
+  (setq langtool-language-tool-server-jar "~/Tools/LanguageTool/languagetool-server.jar"))
 
 (use-package vterm
 
@@ -977,12 +970,6 @@
 
 (use-package frames-only-mode)
 
-(quelpa
- '(bitwarden
-   :fetcher git
-   :url "https://github.com/seanfarley/emacs-bitwarden.git"))
-(require 'bitwarden)
-
 (use-package shr
   :config
   (setq gnus-inhibit-images nil)
@@ -994,7 +981,6 @@
 
 ;; Used to highlight code
 (use-package shr-tag-pre-highlight
-  :ensure t
   :after shr
   :config
   (add-to-list 'shr-external-rendering-functions

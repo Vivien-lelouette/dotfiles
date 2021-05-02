@@ -30,15 +30,15 @@ The snippets below will install emacs from their git master:
 #+begin_src shell :tangle .scripts/emacs/install.sh :shebang #!/bin/sh :mkdirp yes
 
   mkdir -p ~/Tools/emacs-pgtk-nativ-comp
-  # cd ~/Tools
-  # git clone git://git.savannah.gnu.org/emacs.git -b feature/native-comp
-  cd ~/Tools/emacs-pgtk-nativ-comp
+  cd ~/Tools
+  git clone git://git.savannah.gnu.org/emacs.git
   cd emacs
   export CC=/usr/bin/gcc-10 CXX=/usr/bin/gcc-10
   ./autogen.sh
+  # Will add --with-pgtk when merged to master
   ./configure --with-dbus --with-gif --with-jpeg --with-png --with-rsvg \
            --with-tiff --with-xft --with-xpm --with-gpm=no \
-           --with-modules --with-native-compilation --with-pgtk --with-cairo
+           --with-modules --with-native-compilation --with-cairo
   make -j 8 NATIVE_FULL_AOT=1
   sudo make install
 
@@ -228,19 +228,22 @@ Functions to split and move to the new split.
 #+end_src
 
 * Package manager configuration
-** Initialize package sources
 
+** Initialize straight
 #+begin_src emacs-lisp
 
-  (require 'package)
-
-  (setq package-archives '(("melpa" . "https://melpa.org/packages/")
-                           ("org" . "https://orgmode.org/elpa/")
-                           ("elpa" . "https://elpa.gnu.org/packages/")))
-
-  (package-initialize)
-  (unless package-archive-contents
-    (package-refresh-contents))
+  (defvar bootstrap-version)
+  (let ((bootstrap-file
+         (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+        (bootstrap-version 5))
+    (unless (file-exists-p bootstrap-file)
+      (with-current-buffer
+          (url-retrieve-synchronously
+           "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+           'silent 'inhibit-cookies)
+        (goto-char (point-max))
+        (eval-print-last-sexp)))
+    (load bootstrap-file nil 'nomessage))
 
 #+end_src
 
@@ -248,20 +251,8 @@ Functions to split and move to the new split.
 
 #+begin_src emacs-lisp
 
-  (unless (package-installed-p 'use-package)
-     (package-install 'use-package))
-
-  (require 'use-package)
-  (setq use-package-always-ensure t) 
-
-#+end_src
-
-** Initialize quelpa
-Most of my packages are managed using use-package and package.el (the standard way). But for some packages, something that looks in github is needed.
-For those packages, here is quelpa:
-#+begin_src emacs-lisp
-
-  (use-package quelpa)
+  (straight-use-package 'use-package)
+  (setq straight-use-package-by-default t)
 
 #+end_src
 
@@ -441,12 +432,12 @@ The first time you load your configuration on a new machine, you'll need to run 
   (setq theme/normal-lines-bg nil)
   (setq theme/normal-current-line-fg nil)
   (setq theme/normal-current-line-bg nil)
-  
+
   (setq theme/insert-lines-fg nil)
   (setq theme/insert-lines-bg nil)
   (setq theme/insert-current-line-fg nil)
   (setq theme/insert-current-line-bg nil)
-  
+
   (setq theme/visual-lines-fg nil)
   (setq theme/visual-lines-bg nil)
   (setq theme/visual-current-line-fg nil)
@@ -490,12 +481,12 @@ The first time you load your configuration on a new machine, you'll need to run 
     (setq theme/normal-lines-bg "#1e1e1e")
     (setq theme/normal-current-line-fg "#ffffff")
     (setq theme/normal-current-line-bg "#121212")
-  
+
     (setq theme/insert-lines-fg "#707070")
     (setq theme/insert-lines-bg "#1c3319")
     (setq theme/insert-current-line-fg "#ffffff")
     (setq theme/insert-current-line-bg "#579c4c")
-  
+
     (setq theme/visual-lines-fg "#707070")
     (setq theme/visual-lines-bg "#00332a")
     (setq theme/visual-current-line-fg "#ffffff")
@@ -506,18 +497,19 @@ The first time you load your configuration on a new machine, you'll need to run 
     (load-theme 'doom-nord t)
     (set-face-attribute 'fringe nil :background "#2e3440")
     (set-face-attribute 'mode-line-inactive nil :background nil)
+    ;; (set-face-attribute 'scroll-bar nil :background "#2b323d")
 
     ;; Line number styling for mode change
     (setq theme/normal-lines-fg "#6c7686")
     (setq theme/normal-lines-bg "#2e3440")
     (setq theme/normal-current-line-fg "#ffffff")
     (setq theme/normal-current-line-bg "#242832")
-  
+
     (setq theme/insert-lines-fg "#2e3440")
     (setq theme/insert-lines-bg "#515e46")
     (setq theme/insert-current-line-fg "#ffffff")
     (setq theme/insert-current-line-bg "#a3be8c")
-  
+
     (setq theme/visual-lines-fg "#2e3440")
     (setq theme/visual-lines-bg "#594656")
     (setq theme/visual-current-line-fg "#ffffff")
@@ -528,7 +520,7 @@ The first time you load your configuration on a new machine, you'll need to run 
     (setq doom-themes-treemacs-theme "doom-colors")
     (theme/doom-nord))
 
-  
+
 #+end_src
 
 ** Minions
@@ -671,7 +663,6 @@ The first time you load your configuration on a new machine, you'll need to run 
     :init (add-hook 'after-init-hook 'all-the-icons-ivy-setup))
 
   (use-package all-the-icons-ivy-rich
-    :ensure t
     :init (all-the-icons-ivy-rich-mode 1))
 
   (use-package ivy
@@ -761,7 +752,7 @@ Provide a better way of moving arround than plain dired. Files are previewed in 
   (use-package image-dired)
 
   (use-package dired
-    :ensure nil
+    :straight (:type built-in)
     :hook (dired-mode . dired-hide-details-mode)
     :commands (dired dired-jump)
     :bind (("C-x C-j" . dired-jump))
@@ -1028,12 +1019,10 @@ Requires you to run: M-x lsp-install-server RET bash RET.
 ** Yaml
 #+begin_src emacs-lisp
 
-  (quelpa
-   '(yaml-mode
-     :fetcher git
-     :url "https://github.com/yoshiki/yaml-mode"))
-  (require 'yaml-mode)
-  (add-hook 'yaml-mode-hook 'highlight-indent-guides-mode)
+  (use-package yaml-mode
+    :straight (yaml-mode :type git :host github :repo "yoshiki/yaml-mode")
+    :config
+    (add-hook 'yaml-mode-hook 'highlight-indent-guides-mode))
 
 #+end_src
 
@@ -1418,7 +1407,7 @@ TODO: add this a prerequisite.
 #+begin_src emacs-lisp
 
   (use-package flyspell
-    :ensure nil
+    :straight (:type built-in)
     :diminish
     :if (executable-find "aspell")
     :hook (((text-mode outline-mode latex-mode) . flyspell-mode))
@@ -1442,11 +1431,10 @@ TODO: add this a prerequisite.
 This package allows to guess which language you are typing on so that flyspell can check your spelling correctly.
 #+begin_src emacs-lisp
 
-    (use-package guess-language
-     
-      :config
-      (setq guess-language-languages '(en fr))
-      (add-hook 'flyspell-mode-hook (lambda () (guess-language-mode 1))))
+  (use-package guess-language
+    :config
+    (setq guess-language-languages '(en fr))
+    (add-hook 'flyspell-mode-hook (lambda () (guess-language-mode 1))))
 
 #+end_src
 
@@ -1456,12 +1444,10 @@ This needs languagetool and JAVA 8 or newer. Languagetool can be find here: http
 TODO: add this a prerequisite.
 #+begin_src emacs-lisp
 
-  (quelpa
-   '(langtool
-     :fetcher git
-     :url "https://github.com/mhayashi1120/Emacs-langtool"))
-  (setq langtool-language-tool-server-jar "~/Tools/LanguageTool/languagetool-server.jar")
-  (require 'langtool)
+  (use-package langtool
+    :straight (langtool :type git :host github :repo "mhayashi1120/Emacs-langtool")
+    :config
+    (setq langtool-language-tool-server-jar "~/Tools/LanguageTool/languagetool-server.jar"))
 
 #+end_src
 
@@ -1537,28 +1523,6 @@ TODO: add this a prerequisite.
 
 #+end_src
 
-* Bitwarden integration
-** Prerequisite
-Install the bitwarden cli using npm.
-#+begin_src shell
-
- sudo npm install -g @bitwarden/cli
-
-#+end_src
-
-** Emacs bitwarden
-#+begin_src emacs-lisp
-
-  (quelpa
-   '(bitwarden
-     :fetcher git
-     :url "https://github.com/seanfarley/emacs-bitwarden.git"))
-  (require 'bitwarden)
-#+end_src
-
-#+RESULTS:
-: bitwarden
-
 * Web browsing
 ** Shr (html renderer)
 #+begin_src emacs-lisp
@@ -1579,7 +1543,6 @@ Install the bitwarden cli using npm.
 
   ;; Used to highlight code
   (use-package shr-tag-pre-highlight
-    :ensure t
     :after shr
     :config
     (add-to-list 'shr-external-rendering-functions
