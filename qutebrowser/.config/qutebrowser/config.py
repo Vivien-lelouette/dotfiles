@@ -18,7 +18,7 @@ config.bind('<Ctrl-j>', 'completion-item-focus --history next', mode='command')
 config.bind('<Ctrl-k>', 'completion-item-focus --history prev', mode='command')
 
 # Open every tab as a new window, Vimb style
-c.tabs.tabs_are_windows = False
+c.tabs.tabs_are_windows = True
 c.tabs.show = "multiple"
 c.tabs.last_close = "close"
 
@@ -28,13 +28,13 @@ c.session.lazy_restore = True
 c.content.autoplay = False
 
 # Scale pages and UI better for hidpi
-c.zoom.default = "90%"
+c.zoom.default = "100%"
 
-c.statusbar.show = "in-mode"
+# c.statusbar.show = "in-mode"
 
 # Use dark mode where possible
-c.colors.webpage.darkmode.enabled = True
-c.colors.webpage.prefers_color_scheme_dark = True
+# c.colors.webpage.darkmode.enabled = True
+# c.colors.webpage.prefers_color_scheme_dark = True
 
 nord = {
     # Polar Night
@@ -368,6 +368,6 @@ c.colors.tabs.selected.odd.bg = nord['nord0']
 # ## Type: QtColor
 c.colors.tabs.selected.odd.fg = nord['nord5']
 
-c.colors.webpage.bg = nord['nord0']
+# c.colors.webpage.bg = nord['nord0']
 
 config.load_autoconfig()
