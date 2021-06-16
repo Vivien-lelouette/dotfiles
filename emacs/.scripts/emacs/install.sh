@@ -1,5 +1,6 @@
 #!/bin/sh
 mkdir -p ~/Tools/emacs-pgtk-nativ-comp
+
 cd ~/Tools
 git clone git://git.savannah.gnu.org/emacs.git
 cd emacs
