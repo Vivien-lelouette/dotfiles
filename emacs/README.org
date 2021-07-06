@@ -721,21 +721,21 @@ The first time you load your configuration on a new machine, you'll need to run 
 
 ** Company
 #+begin_src emacs-lisp
-
+  
   (use-package company
     :bind (:map company-active-map
                 ("<tab>" . company-select-next)
                 ("<backtab>" . company-select-previous))
     :custom
     (company-minimum-prefix-length 1)
-    (company-idle-delay 0.2)
+    (company-idle-delay 0)
     :config
     (global-company-mode 1))
-
+  
   (use-package company-box
     :after company
     :hook (company-mode . company-box-mode))
-
+  
 #+end_src
 
 ** Prescient

@@ -467,7 +467,7 @@
               ("<backtab>" . company-select-previous))
   :custom
   (company-minimum-prefix-length 1)
-  (company-idle-delay 0.2)
+  (company-idle-delay 0)
   :config
   (global-company-mode 1))
 
