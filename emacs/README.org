@@ -740,19 +740,21 @@ The first time you load your configuration on a new machine, you'll need to run 
 
 ** Prescient
 #+begin_src emacs-lisp
-
-  (use-package prescient)
-
+  
+  (use-package prescient
+    :config
+    (prescient-persist-mode 1))
+  
   (use-package ivy-prescient
     :after counsel
     :config
     (ivy-prescient-mode 1))
+  
   (use-package company-prescient
     :after company
     :config
     (company-prescient-mode 1))
-  (prescient-persist-mode 1)
-
+  
 #+end_src
 
 ** Avy
@@ -963,13 +965,13 @@ The =which-key= integration adds helpful descriptions of the various keys so you
 
 *** lsp-ui
 #+begin_src emacs-lisp
-
+  
   (use-package lsp-ui
     :after lsp
     :hook (lsp-mode . lsp-ui-mode)
     :config
     (setq lsp-ui-doc-position 'at-point))
-
+  
 #+end_src
 
 *** lsp-treemacs
@@ -1063,16 +1065,16 @@ Requires you to run: M-x lsp-install-server RET bash RET.
 
 ** Rest client
 #+begin_src emacs-lisp
-
+  
   (use-package restclient
     :config
     (add-to-list 'auto-mode-alist '("\\.http\\'" . restclient-mode)))
-
+  
   (use-package company-restclient
     :after restclient
     :config
     (add-to-list 'company-backends 'company-restclient))
-
+  
 #+end_src
 
 ** Asciidoc

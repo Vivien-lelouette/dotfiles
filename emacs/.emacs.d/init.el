@@ -475,17 +475,19 @@
   :after company
   :hook (company-mode . company-box-mode))
 
-(use-package prescient)
+(use-package prescient
+  :config
+  (prescient-persist-mode 1))
 
 (use-package ivy-prescient
   :after counsel
   :config
   (ivy-prescient-mode 1))
+
 (use-package company-prescient
   :after company
   :config
   (company-prescient-mode 1))
-(prescient-persist-mode 1)
 
 (use-package avy)
 
