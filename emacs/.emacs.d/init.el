@@ -39,7 +39,7 @@
 (setq interprogram-paste-function 'x-selection-value)
 
 ;; Winner-mode
-(winner-mode 1)
+;; (winner-mode 1)
 
 (setq-default indent-tabs-mode nil)
 (setq-default tab-width 2)
