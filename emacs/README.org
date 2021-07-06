@@ -28,9 +28,9 @@
 The snippets below will install emacs from their git master:
 
 #+begin_src shell :tangle .scripts/emacs/install.sh :shebang #!/bin/sh :mkdirp yes
-
+  
   mkdir -p ~/Tools/emacs-pgtk-nativ-comp
-
+  
   cd ~/Tools
   git clone git://git.savannah.gnu.org/emacs.git
   cd emacs
@@ -39,10 +39,10 @@ The snippets below will install emacs from their git master:
   # Will add --with-pgtk when merged to master
   ./configure --with-dbus --with-gif --with-jpeg --with-png --with-rsvg \
            --with-tiff --with-xft --with-xpm --with-gpm=no \
-           --with-modules --with-native-compilation --with-cairo
+           --with-modules --with-native-compilation --with-cairo --with-pgtk
   make -j 8 NATIVE_FULL_AOT=1
   sudo make install
-
+  
 #+end_src
 
 * Wrap to improve startup time
@@ -925,7 +925,7 @@ The =lsp-keymap-prefix= setting enables you to define a prefix for where =lsp-mo
 
 The =which-key= integration adds helpful descriptions of the various keys so you should be able to learn a lot just by pressing =C-c l= in a =lsp-mode= buffer and trying different things that you find there.
 #+begin_src emacs-lisp
-
+  
   (defun my-setup-indent (n)
     ;; java/c/c++
     (setq-local c-basic-offset n)
@@ -939,15 +939,15 @@ The =which-key= integration adds helpful descriptions of the various keys so you
     (setq-local web-mode-css-indent-offset n) ; web-mode, css in html file
     (setq-local web-mode-code-indent-offset n) ; web-mode, js code in html file
     (setq-local css-indent-offset n) ; css-mode
-  )
-
+    )
+  
   (defun efs/lsp-mode-setup ()
     (my-setup-indent 2)
     (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
     (lsp-headerline-breadcrumb-mode)
     (let ((lsp-keymap-prefix "C-SPC"))
-    (lsp-enable-which-key-integration)))
-
+      (lsp-enable-which-key-integration)))
+  
   (use-package lsp-mode
     :init
     (setq lsp-keymap-prefix "C-SPC")  ;; Or 'C-l', 's-l'
@@ -957,10 +957,11 @@ The =which-key= integration adds helpful descriptions of the various keys so you
     (setq lsp-idle-delay 0.500)
     (setq lsp-completion-provider :capf)
     (define-key lsp-mode-map (kbd "C-SPC") lsp-command-map)
-    (define-key lsp-mode-map (kbd "s-l") nil))
-
+    (define-key lsp-mode-map (kbd "s-l") nil)
+    (setenv "TSSERVER_LOG_FILE" "/tmp/tsserver.log"))
+  
   (add-hook 'lsp-mode-hook 'highlight-indent-guides-mode)
-
+  
 #+end_src
 
 *** lsp-ui

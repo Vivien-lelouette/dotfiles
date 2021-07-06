@@ -585,14 +585,14 @@
   (setq-local web-mode-css-indent-offset n) ; web-mode, css in html file
   (setq-local web-mode-code-indent-offset n) ; web-mode, js code in html file
   (setq-local css-indent-offset n) ; css-mode
-)
+  )
 
 (defun efs/lsp-mode-setup ()
   (my-setup-indent 2)
   (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
   (lsp-headerline-breadcrumb-mode)
   (let ((lsp-keymap-prefix "C-SPC"))
-  (lsp-enable-which-key-integration)))
+    (lsp-enable-which-key-integration)))
 
 (use-package lsp-mode
   :init
@@ -603,7 +603,8 @@
   (setq lsp-idle-delay 0.500)
   (setq lsp-completion-provider :capf)
   (define-key lsp-mode-map (kbd "C-SPC") lsp-command-map)
-  (define-key lsp-mode-map (kbd "s-l") nil))
+  (define-key lsp-mode-map (kbd "s-l") nil)
+  (setenv "TSSERVER_LOG_FILE" "/tmp/tsserver.log"))
 
 (add-hook 'lsp-mode-hook 'highlight-indent-guides-mode)
 

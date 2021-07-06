@@ -9,6 +9,6 @@ export CC=/usr/bin/gcc-10 CXX=/usr/bin/gcc-10
 # Will add --with-pgtk when merged to master
 ./configure --with-dbus --with-gif --with-jpeg --with-png --with-rsvg \
          --with-tiff --with-xft --with-xpm --with-gpm=no \
-         --with-modules --with-native-compilation --with-cairo
+         --with-modules --with-native-compilation --with-cairo --with-pgtk
 make -j 8 NATIVE_FULL_AOT=1
 sudo make install
