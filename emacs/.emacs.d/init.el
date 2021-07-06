@@ -45,10 +45,10 @@
 (setq-default tab-width 2)
 
 ;; Nativ comp flags
-(setq comp-speed 3)
-(setq comp-async-report-warnings-errors nil)
+(setq native-comp-speed 3)
+(setq native-comp-async-report-warnings-errors nil)
 (setq package-native-compile t)
-(setq comp-deferred-compilation nil)
+(setq native-comp-deferred-compilation nil)
 
 (defun my-window-vsplit ()
   (interactive)

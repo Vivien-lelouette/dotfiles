@@ -108,10 +108,10 @@ The snippets below will install emacs from their git master:
   (setq-default tab-width 2)
   
   ;; Nativ comp flags
-  (setq comp-speed 3)
-  (setq comp-async-report-warnings-errors nil)
+  (setq native-comp-speed 3)
+  (setq native-comp-async-report-warnings-errors nil)
   (setq package-native-compile t)
-  (setq comp-deferred-compilation nil)
+  (setq native-comp-deferred-compilation nil)
 
 #+end_src
 
