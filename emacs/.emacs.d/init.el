@@ -1220,6 +1220,9 @@ The optional argument NEW-WINDOW is not used."
  (when (file-exists-p local-settings)
    (load-file local-settings)))
 
+(fonts/small-size)
+(frames-only-mode)
+
 ;; easy window resize
 (global-set-key (kbd "C-s-h") #'windsize-left)
 (global-set-key (kbd "C-s-l") #'windsize-right)

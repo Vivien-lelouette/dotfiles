@@ -1823,6 +1823,14 @@ If a setup is specific to a machine, add it on this file.
 
 #+end_src
 
+* Startup scripts
+#+begin_src emacs-lisp
+
+  (fonts/small-size)
+  (frames-only-mode)
+
+#+end_src
+
 * Shortcuts
 
 #+begin_src emacs-lisp
