@@ -250,18 +250,6 @@
 (keys/leader-keys
   "ts" '(hydra-text-scale/body :which-key "scale text"))
 
-(use-package all-the-icons)
-
-(use-package all-the-icons-dired
-  :after all-the-icons
-  :config
-  (add-hook 'dired-mode-hook 'all-the-icons-dired-mode))
-
-(use-package all-the-icons-ibuffer
-  :after all-the-icons)
-
-(use-package ibuffer-vc)
-
 ;; Line number styling for mode change
 (setq theme/normal-lines-fg nil)
 (setq theme/normal-lines-bg nil)
@@ -352,8 +340,46 @@
 
 (use-package doom-themes
   :config
-  (setq doom-themes-treemacs-theme "doom-colors")
-  (theme/doom-nord))
+  (setq doom-themes-treemacs-theme "doom-colors"))
+
+(defun theme/nord ()
+  (interactive)
+  (load-theme 'nord t)
+  (set-face-attribute 'fringe nil :background "#2e3440")
+  (set-face-attribute 'mode-line-inactive nil :background nil)
+  ;; (set-face-attribute 'scroll-bar nil :background "#2b323d")
+
+  ;; Line number styling for mode change
+  (setq theme/normal-lines-fg "#6c7686")
+  (setq theme/normal-lines-bg "#2e3440")
+  (setq theme/normal-current-line-fg "#ffffff")
+  (setq theme/normal-current-line-bg "#242832")
+
+  (setq theme/insert-lines-fg "#2e3440")
+  (setq theme/insert-lines-bg "#515e46")
+  (setq theme/insert-current-line-fg "#ffffff")
+  (setq theme/insert-current-line-bg "#a3be8c")
+
+  (setq theme/visual-lines-fg "#2e3440")
+  (setq theme/visual-lines-bg "#594656")
+  (setq theme/visual-current-line-fg "#ffffff")
+  (setq theme/visual-current-line-bg "#b48ead"))
+
+(use-package nord-theme
+  :config
+  (theme/nord))
+
+(use-package all-the-icons)
+
+(use-package all-the-icons-dired
+  :after all-the-icons
+  :config
+  (add-hook 'dired-mode-hook 'all-the-icons-dired-mode))
+
+(use-package all-the-icons-ibuffer
+  :after all-the-icons)
+
+(use-package ibuffer-vc)
 
 (use-package minions)
 

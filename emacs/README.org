@@ -417,6 +417,141 @@ Functions to split and move to the new split.
 
 #+end_src
 
+* Themes
+** Fringe theme
+#+begin_src emacs-lisp
+  
+  ;; Line number styling for mode change
+  (setq theme/normal-lines-fg nil)
+  (setq theme/normal-lines-bg nil)
+  (setq theme/normal-current-line-fg nil)
+  (setq theme/normal-current-line-bg nil)
+  
+  (setq theme/insert-lines-fg nil)
+  (setq theme/insert-lines-bg nil)
+  (setq theme/insert-current-line-fg nil)
+  (setq theme/insert-current-line-bg nil)
+  
+  (setq theme/visual-lines-fg nil)
+  (setq theme/visual-lines-bg nil)
+  (setq theme/visual-current-line-fg nil)
+  (setq theme/visual-current-line-bg nil)
+  
+  (defun theme/normal-lines ()
+    (face-remap-add-relative 'line-number nil :foreground theme/normal-lines-fg :background theme/normal-lines-bg))
+  
+  (defun theme/normal-current-line ()
+    (face-remap-add-relative 'line-number-current-line nil :foreground theme/normal-current-line-fg :background theme/normal-current-line-bg))
+  
+  (defun theme/insert-lines ()
+    (face-remap-add-relative 'line-number nil :foreground theme/insert-lines-fg :background theme/insert-lines-bg))
+  
+  (defun theme/insert-current-line ()
+    (face-remap-add-relative 'line-number-current-line nil :foreground theme/insert-current-line-fg :background theme/insert-current-line-bg))
+  
+  (defun theme/visual-lines ()
+    (face-remap-add-relative 'line-number nil :foreground theme/visual-lines-fg :background theme/visual-lines-bg))
+  
+  (defun theme/visual-current-line ()
+    (face-remap-add-relative 'line-number-current-line nil :foreground theme/visual-current-line-fg :background theme/visual-current-line-bg))
+  
+  (add-hook 'evil-normal-state-entry-hook 'theme/normal-lines)
+  (add-hook 'evil-normal-state-entry-hook 'theme/normal-current-line)
+  
+  (add-hook 'evil-insert-state-entry-hook 'theme/insert-lines)
+  (add-hook 'evil-insert-state-entry-hook 'theme/insert-current-line)
+  
+  (add-hook 'evil-visual-state-entry-hook 'theme/visual-lines)
+  (add-hook 'evil-visual-state-entry-hook 'theme/visual-current-line)
+
+#+end_src
+
+** Doom themes
+#+begin_src emacs-lisp
+
+  (defun theme/doom-dark+ ()
+    (interactive)
+    (load-theme 'doom-dark+ t)
+    (set-face-attribute 'fringe nil :background "#1e1e1e")
+    (set-face-attribute 'mode-line-inactive nil :background "#252526")
+  
+    ;; Line number styling for mode change
+    (setq theme/normal-lines-fg "#707070")
+    (setq theme/normal-lines-bg "#1e1e1e")
+    (setq theme/normal-current-line-fg "#ffffff")
+    (setq theme/normal-current-line-bg "#121212")
+  
+    (setq theme/insert-lines-fg "#707070")
+    (setq theme/insert-lines-bg "#1c3319")
+    (setq theme/insert-current-line-fg "#ffffff")
+    (setq theme/insert-current-line-bg "#579c4c")
+  
+    (setq theme/visual-lines-fg "#707070")
+    (setq theme/visual-lines-bg "#00332a")
+    (setq theme/visual-current-line-fg "#ffffff")
+    (setq theme/visual-current-line-bg "#009b80"))
+  
+  (defun theme/doom-nord ()
+    (interactive)
+    (load-theme 'doom-nord t)
+    (set-face-attribute 'fringe nil :background "#2e3440")
+    (set-face-attribute 'mode-line-inactive nil :background nil)
+    ;; (set-face-attribute 'scroll-bar nil :background "#2b323d")
+  
+    ;; Line number styling for mode change
+    (setq theme/normal-lines-fg "#6c7686")
+    (setq theme/normal-lines-bg "#2e3440")
+    (setq theme/normal-current-line-fg "#ffffff")
+    (setq theme/normal-current-line-bg "#242832")
+  
+    (setq theme/insert-lines-fg "#2e3440")
+    (setq theme/insert-lines-bg "#515e46")
+    (setq theme/insert-current-line-fg "#ffffff")
+    (setq theme/insert-current-line-bg "#a3be8c")
+  
+    (setq theme/visual-lines-fg "#2e3440")
+    (setq theme/visual-lines-bg "#594656")
+    (setq theme/visual-current-line-fg "#ffffff")
+    (setq theme/visual-current-line-bg "#b48ead"))
+  
+  (use-package doom-themes
+    :config
+    (setq doom-themes-treemacs-theme "doom-colors"))
+  
+#+end_src
+
+** Nord themes
+#+begin_src emacs-lisp
+  
+  (defun theme/nord ()
+    (interactive)
+    (load-theme 'nord t)
+    (set-face-attribute 'fringe nil :background "#2e3440")
+    (set-face-attribute 'mode-line-inactive nil :background nil)
+    ;; (set-face-attribute 'scroll-bar nil :background "#2b323d")
+  
+    ;; Line number styling for mode change
+    (setq theme/normal-lines-fg "#6c7686")
+    (setq theme/normal-lines-bg "#2e3440")
+    (setq theme/normal-current-line-fg "#ffffff")
+    (setq theme/normal-current-line-bg "#242832")
+  
+    (setq theme/insert-lines-fg "#2e3440")
+    (setq theme/insert-lines-bg "#515e46")
+    (setq theme/insert-current-line-fg "#ffffff")
+    (setq theme/insert-current-line-bg "#a3be8c")
+  
+    (setq theme/visual-lines-fg "#2e3440")
+    (setq theme/visual-lines-bg "#594656")
+    (setq theme/visual-current-line-fg "#ffffff")
+    (setq theme/visual-current-line-bg "#b48ead"))
+ 
+  (use-package nord-theme
+    :config
+    (theme/nord))
+  
+#+end_src
+
 * UI packages
 ** All the icons
 The first time you load your configuration on a new machine, you'll need to run the following command interactively so that mode line icons display correctly:
@@ -440,105 +575,6 @@ The first time you load your configuration on a new machine, you'll need to run 
 #+begin_src emacs-lisp
 
   (use-package ibuffer-vc)
-
-#+end_src
-
-** Doom themes
-#+begin_src emacs-lisp
-
-  ;; Line number styling for mode change
-  (setq theme/normal-lines-fg nil)
-  (setq theme/normal-lines-bg nil)
-  (setq theme/normal-current-line-fg nil)
-  (setq theme/normal-current-line-bg nil)
-
-  (setq theme/insert-lines-fg nil)
-  (setq theme/insert-lines-bg nil)
-  (setq theme/insert-current-line-fg nil)
-  (setq theme/insert-current-line-bg nil)
-
-  (setq theme/visual-lines-fg nil)
-  (setq theme/visual-lines-bg nil)
-  (setq theme/visual-current-line-fg nil)
-  (setq theme/visual-current-line-bg nil)
-
-  (defun theme/normal-lines ()
-    (face-remap-add-relative 'line-number nil :foreground theme/normal-lines-fg :background theme/normal-lines-bg))
-
-  (defun theme/normal-current-line ()
-    (face-remap-add-relative 'line-number-current-line nil :foreground theme/normal-current-line-fg :background theme/normal-current-line-bg))
-
-  (defun theme/insert-lines ()
-    (face-remap-add-relative 'line-number nil :foreground theme/insert-lines-fg :background theme/insert-lines-bg))
-
-  (defun theme/insert-current-line ()
-    (face-remap-add-relative 'line-number-current-line nil :foreground theme/insert-current-line-fg :background theme/insert-current-line-bg))
-
-  (defun theme/visual-lines ()
-    (face-remap-add-relative 'line-number nil :foreground theme/visual-lines-fg :background theme/visual-lines-bg))
-
-  (defun theme/visual-current-line ()
-    (face-remap-add-relative 'line-number-current-line nil :foreground theme/visual-current-line-fg :background theme/visual-current-line-bg))
-
-  (add-hook 'evil-normal-state-entry-hook 'theme/normal-lines)
-  (add-hook 'evil-normal-state-entry-hook 'theme/normal-current-line)
-
-  (add-hook 'evil-insert-state-entry-hook 'theme/insert-lines)
-  (add-hook 'evil-insert-state-entry-hook 'theme/insert-current-line)
-
-  (add-hook 'evil-visual-state-entry-hook 'theme/visual-lines)
-  (add-hook 'evil-visual-state-entry-hook 'theme/visual-current-line)
-
-  (defun theme/doom-dark+ ()
-    (interactive)
-    (load-theme 'doom-dark+ t)
-    (set-face-attribute 'fringe nil :background "#1e1e1e")
-    (set-face-attribute 'mode-line-inactive nil :background "#252526")
-
-    ;; Line number styling for mode change
-    (setq theme/normal-lines-fg "#707070")
-    (setq theme/normal-lines-bg "#1e1e1e")
-    (setq theme/normal-current-line-fg "#ffffff")
-    (setq theme/normal-current-line-bg "#121212")
-
-    (setq theme/insert-lines-fg "#707070")
-    (setq theme/insert-lines-bg "#1c3319")
-    (setq theme/insert-current-line-fg "#ffffff")
-    (setq theme/insert-current-line-bg "#579c4c")
-
-    (setq theme/visual-lines-fg "#707070")
-    (setq theme/visual-lines-bg "#00332a")
-    (setq theme/visual-current-line-fg "#ffffff")
-    (setq theme/visual-current-line-bg "#009b80"))
-
-  (defun theme/doom-nord ()
-    (interactive)
-    (load-theme 'doom-nord t)
-    (set-face-attribute 'fringe nil :background "#2e3440")
-    (set-face-attribute 'mode-line-inactive nil :background nil)
-    ;; (set-face-attribute 'scroll-bar nil :background "#2b323d")
-
-    ;; Line number styling for mode change
-    (setq theme/normal-lines-fg "#6c7686")
-    (setq theme/normal-lines-bg "#2e3440")
-    (setq theme/normal-current-line-fg "#ffffff")
-    (setq theme/normal-current-line-bg "#242832")
-
-    (setq theme/insert-lines-fg "#2e3440")
-    (setq theme/insert-lines-bg "#515e46")
-    (setq theme/insert-current-line-fg "#ffffff")
-    (setq theme/insert-current-line-bg "#a3be8c")
-
-    (setq theme/visual-lines-fg "#2e3440")
-    (setq theme/visual-lines-bg "#594656")
-    (setq theme/visual-current-line-fg "#ffffff")
-    (setq theme/visual-current-line-bg "#b48ead"))
-
-  (use-package doom-themes
-    :config
-    (setq doom-themes-treemacs-theme "doom-colors")
-    (theme/doom-nord))
-
 
 #+end_src
 
