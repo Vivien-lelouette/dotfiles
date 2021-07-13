@@ -369,6 +369,29 @@
   :config
   (theme/nord))
 
+(defun theme/modus-vivendi ()
+    (interactive)
+    (load-theme 'modus-vivendi t)
+    (set-face-attribute 'fringe nil :background "#2e3440")
+    (set-face-attribute 'mode-line-inactive nil :background nil)
+    ;; (set-face-attribute 'scroll-bar nil :background "#2d323e")
+
+    ;; Line number styling for mode change
+    (setq theme/normal-lines-fg "#a3a3a3")
+    (setq theme/normal-lines-bg "#100f10")
+    (setq theme/normal-current-line-fg "#ffffff")
+    (setq theme/normal-current-line-bg "#303030")
+
+    (setq theme/insert-lines-fg "#000000")
+    (setq theme/insert-lines-bg "#515e46")
+    (setq theme/insert-current-line-fg "#ffffff")
+    (setq theme/insert-current-line-bg "#a3be8c")
+
+    (setq theme/visual-lines-fg "#000000")
+    (setq theme/visual-lines-bg "#594656")
+    (setq theme/visual-current-line-fg "#ffffff")
+    (setq theme/visual-current-line-bg "#b48ead"))
+
 (use-package all-the-icons)
 
 (use-package all-the-icons-dired
@@ -436,6 +459,10 @@
 (use-package highlight-parentheses
   :config
   (global-highlight-parentheses-mode 1))
+
+(use-package smartparens
+  :config
+  (add-hook 'lsp-mode-hook #'smartparens-mode))
 
 (use-package flycheck)
 
@@ -573,10 +600,17 @@
   (keys/leader-keys
     "gg" '(magit :which-key "magit status"))
    (keys/leader-keys
-    "gf" '(magit-log-buffer-file :which-key "magit file history")))
+    "gf" '(magit-file-dispatch :which-key "magit file history")))
 
 (use-package forge
   :after magit)
+
+(use-package diff-hl
+  :after magit
+  :config
+  (add-hook 'magit-pre-refresh-hook 'diff-hl-magit-pre-refresh)
+  (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
+  (global-diff-hl-mode))
 
 (use-package evil-nerd-commenter
   :after evil
@@ -710,7 +744,7 @@
   (setq org-html-inline-images t)
   (setq org-hide-emphasis-markers t)
 
-
+  (setq org-id-track-globally t)
 
   (setq org-agenda-files
         '("~/.org-files/tasks.org"
