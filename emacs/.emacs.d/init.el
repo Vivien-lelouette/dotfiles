@@ -173,6 +173,13 @@
 
 (use-package dianyou)
 
+(use-package undo-fu)
+
+(use-package undo-fu-session
+  :config
+  (setq undo-fu-session-incompatible-files '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'"))
+  (global-undo-fu-session-mode))
+
 (use-package general
   :config
   (general-create-definer keys/leader-keys
@@ -183,13 +190,6 @@
   (keys/leader-keys
     "t"  '(:ignore t :which-key "toggles")
     "tt" '(counsel-load-theme :which-key "choose theme")))
-
-(use-package undo-fu)
-
-(use-package undo-fu-session
-  :config
-  (setq undo-fu-session-incompatible-files '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'"))
-  (global-undo-fu-session-mode))
 
 (use-package evil
     :init
@@ -292,55 +292,6 @@
 
 (add-hook 'evil-visual-state-entry-hook 'theme/visual-lines)
 (add-hook 'evil-visual-state-entry-hook 'theme/visual-current-line)
-
-(defun theme/doom-dark+ ()
-  (interactive)
-  (load-theme 'doom-dark+ t)
-  (set-face-attribute 'fringe nil :background "#1e1e1e")
-  (set-face-attribute 'mode-line-inactive nil :background "#252526")
-
-  ;; Line number styling for mode change
-  (setq theme/normal-lines-fg "#707070")
-  (setq theme/normal-lines-bg "#1e1e1e")
-  (setq theme/normal-current-line-fg "#ffffff")
-  (setq theme/normal-current-line-bg "#121212")
-
-  (setq theme/insert-lines-fg "#707070")
-  (setq theme/insert-lines-bg "#1c3319")
-  (setq theme/insert-current-line-fg "#ffffff")
-  (setq theme/insert-current-line-bg "#579c4c")
-
-  (setq theme/visual-lines-fg "#707070")
-  (setq theme/visual-lines-bg "#00332a")
-  (setq theme/visual-current-line-fg "#ffffff")
-  (setq theme/visual-current-line-bg "#009b80"))
-
-(defun theme/doom-nord ()
-  (interactive)
-  (load-theme 'doom-nord t)
-  (set-face-attribute 'fringe nil :background "#2e3440")
-  (set-face-attribute 'mode-line-inactive nil :background nil)
-  ;; (set-face-attribute 'scroll-bar nil :background "#2b323d")
-
-  ;; Line number styling for mode change
-  (setq theme/normal-lines-fg "#6c7686")
-  (setq theme/normal-lines-bg "#2e3440")
-  (setq theme/normal-current-line-fg "#ffffff")
-  (setq theme/normal-current-line-bg "#242832")
-
-  (setq theme/insert-lines-fg "#2e3440")
-  (setq theme/insert-lines-bg "#515e46")
-  (setq theme/insert-current-line-fg "#ffffff")
-  (setq theme/insert-current-line-bg "#a3be8c")
-
-  (setq theme/visual-lines-fg "#2e3440")
-  (setq theme/visual-lines-bg "#594656")
-  (setq theme/visual-current-line-fg "#ffffff")
-  (setq theme/visual-current-line-bg "#b48ead"))
-
-(use-package doom-themes
-  :config
-  (setq doom-themes-treemacs-theme "doom-colors"))
 
 (defun theme/nord ()
   (interactive)
@@ -454,16 +405,6 @@
 
 (efs/treemacs-set-fringe)
 
-(use-package volatile-highlights)
-
-(use-package highlight-parentheses
-  :config
-  (global-highlight-parentheses-mode 1))
-
-(use-package smartparens
-  :config
-  (add-hook 'lsp-mode-hook #'smartparens-mode))
-
 (use-package flycheck)
 
 (use-package writeroom-mode
@@ -510,10 +451,6 @@
   :init
   (ivy-rich-mode 1))
 
-(use-package wgrep
-  :config
-  (setq wgrep-auto-save-buffer t))
-
 (use-package company
   :bind (:map company-active-map
               ("<tab>" . company-select-next)
@@ -541,6 +478,10 @@
   :after company
   :config
   (company-prescient-mode 1))
+
+(use-package wgrep
+  :config
+  (setq wgrep-auto-save-buffer t))
 
 (use-package avy)
 
@@ -575,7 +516,29 @@
   (bind-key "<tab>" #'dired-subtree-toggle dired-mode-map)
   (bind-key "<backtab>" #'dired-subtree-cycle dired-mode-map))
 
-(use-package ranger)
+(use-package evil-nerd-commenter
+  :after evil
+  :bind ("M-/" . evilnc-comment-or-uncomment-lines))
+
+(use-package format-all
+  :bind ("C-c C-f" . format-all-buffer))
+
+(use-package highlight-indent-guides
+  :custom
+  (highlight-indent-guides-method 'character)
+  (highlight-indent-guides-responsive 'top))
+
+(add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
+
+(use-package rainbow-mode)
+
+(use-package highlight-parentheses
+  :config
+  (global-highlight-parentheses-mode 1))
+
+(use-package smartparens
+  :config
+  (add-hook 'lsp-mode-hook #'smartparens-mode))
 
 (use-package projectile
   :diminish projectile-mode
@@ -612,25 +575,10 @@
   (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
   (global-diff-hl-mode))
 
-(use-package evil-nerd-commenter
-  :after evil
-  :bind ("M-/" . evilnc-comment-or-uncomment-lines))
-
-(use-package format-all
-  :bind ("C-c C-f" . format-all-buffer))
-
-(use-package dap-mode)
-
-(use-package highlight-indent-guides
-  :custom
-  (highlight-indent-guides-method 'character)
-  (highlight-indent-guides-responsive 'top))
-
-(add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
-
-(use-package rainbow-mode)
-
-(use-package yasnippet)
+(use-package yasnippet
+  :config
+  (setq yas-snippet-dirs '("~/.emacs.d/etc/yasnippet/snippets"))
+  (yas-global-mode 1))
 
 (defun my-setup-indent (n)
   ;; java/c/c++
@@ -696,6 +644,8 @@
 (add-hook 'js-mode-hook 'efs/js-mode-setup)
 
 (add-hook 'sh-mode-hook 'lsp-deferred)
+
+(use-package dap-mode)
 
 (use-package yaml-mode
   :straight (yaml-mode :type git :host github :repo "yoshiki/yaml-mode")
@@ -942,6 +892,12 @@
    'org-babel-load-languages
    '((restclient . t))))
 
+(use-package org-jira
+  :straight (org-jira :type git :host github :repo "ahungry/org-jira"
+                      :fork (:host github
+                                   :repo "Vivien-lelouette/org-jira"))
+  :after org)
+
 (use-package dockerfile-mode)
 
 (use-package docker-compose-mode)
@@ -989,25 +945,24 @@
   :straight (:type built-in)
   :diminish
   :if (executable-find "aspell")
-  :hook (((text-mode outline-mode latex-mode) . flyspell-mode))
+  :custom
+  (flyspell-issue-message-flag nil)
+  (ispell-program-name "aspell")
+  (ispell-extra-args '("--sug-mode=ultra" "--lang=en_US" "--run-together" "--run-together-limit=16")))
+
+(use-package wucuo
+  :if (executable-find "aspell")
+  :hook (((text-mode outline-mode prog-mode) . wucuo-start))
   :custom
   (flyspell-issue-message-flag nil)
   (ispell-program-name "aspell")
   (ispell-extra-args
-   '("--sug-mode=ultra" "--lang=en_US"))
-  :config
-  (use-package flyspell-correct-ivy
-    :after ivy
-    :bind
-    (:map flyspell-mode-map
-          ([remap flyspell-correct-word-before-point] . flyspell-correct-wrapper)
-          ("C-." . flyspell-correct-wrapper))
-    :custom (flyspell-correct-interface #'flyspell-correct-ivy)))
+   '("--sug-mode=ultra" "--lang=en_US")))
 
 (use-package guess-language
   :config
   (setq guess-language-languages '(en fr))
-  (add-hook 'flyspell-mode-hook (lambda () (guess-language-mode 1))))
+  (add-hook 'wucuo-mode-hook (lambda () (guess-language-mode 1))))
 
 (use-package langtool
   :straight (langtool :type git :host github :repo "mhayashi1120/Emacs-langtool")

@@ -5,7 +5,7 @@
 ** Prerequisites
 *** Ubuntu
 #+begin_src shell :tangle .scripts/emacs/init-ubuntu.sh :shebang #!/bin/sh :mkdirp yes
-
+  
   sudo apt-get update \
         && apt-get install -y \
         apt-transport-https \
@@ -13,15 +13,15 @@
         curl \
         gnupg-agent \
         software-properties-common
-        
+  
   sudo add-apt-repository ppa:ubuntu-toolchain-r/ppa \
         && apt-get update -y \
         && apt-get install -y gcc-10 libgccjit0 libgccjit-10-dev
   
   sudo apt-get install -y libjansson4 libjansson-dev git
-
+  
   sudo apt-get install autoconf make gcc texinfo libgtk-3-dev libxpm-dev libjpeg-dev libgif-dev libtiff5-dev libgnutls28-dev libncurses5-dev
-
+  
 #+end_src
 
 ** Emacs installation from sources
@@ -229,7 +229,6 @@ Functions to split and move to the new split.
 #+end_src
 
 * Package manager configuration
-
 ** Initialize straight
 #+begin_src emacs-lisp
 
@@ -304,6 +303,18 @@ Functions to split and move to the new split.
 
 #+end_src 
 
+** Undo fu
+#+begin_src emacs-lisp
+
+  (use-package undo-fu)
+
+  (use-package undo-fu-session
+    :config
+    (setq undo-fu-session-incompatible-files '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'"))
+    (global-undo-fu-session-mode))
+
+#+end_src
+
 * Keymap packages
 ** General
 #+begin_src emacs-lisp
@@ -318,18 +329,6 @@ Functions to split and move to the new split.
     (keys/leader-keys
       "t"  '(:ignore t :which-key "toggles")
       "tt" '(counsel-load-theme :which-key "choose theme")))
-
-#+end_src
-
-** Undo fu
-#+begin_src emacs-lisp
-
-  (use-package undo-fu)
-
-  (use-package undo-fu-session
-    :config
-    (setq undo-fu-session-incompatible-files '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'"))
-    (global-undo-fu-session-mode))
 
 #+end_src
 
@@ -464,60 +463,6 @@ Functions to split and move to the new split.
   (add-hook 'evil-visual-state-entry-hook 'theme/visual-lines)
   (add-hook 'evil-visual-state-entry-hook 'theme/visual-current-line)
 
-#+end_src
-
-** Doom themes
-#+begin_src emacs-lisp
-
-  (defun theme/doom-dark+ ()
-    (interactive)
-    (load-theme 'doom-dark+ t)
-    (set-face-attribute 'fringe nil :background "#1e1e1e")
-    (set-face-attribute 'mode-line-inactive nil :background "#252526")
-  
-    ;; Line number styling for mode change
-    (setq theme/normal-lines-fg "#707070")
-    (setq theme/normal-lines-bg "#1e1e1e")
-    (setq theme/normal-current-line-fg "#ffffff")
-    (setq theme/normal-current-line-bg "#121212")
-  
-    (setq theme/insert-lines-fg "#707070")
-    (setq theme/insert-lines-bg "#1c3319")
-    (setq theme/insert-current-line-fg "#ffffff")
-    (setq theme/insert-current-line-bg "#579c4c")
-  
-    (setq theme/visual-lines-fg "#707070")
-    (setq theme/visual-lines-bg "#00332a")
-    (setq theme/visual-current-line-fg "#ffffff")
-    (setq theme/visual-current-line-bg "#009b80"))
-  
-  (defun theme/doom-nord ()
-    (interactive)
-    (load-theme 'doom-nord t)
-    (set-face-attribute 'fringe nil :background "#2e3440")
-    (set-face-attribute 'mode-line-inactive nil :background nil)
-    ;; (set-face-attribute 'scroll-bar nil :background "#2b323d")
-  
-    ;; Line number styling for mode change
-    (setq theme/normal-lines-fg "#6c7686")
-    (setq theme/normal-lines-bg "#2e3440")
-    (setq theme/normal-current-line-fg "#ffffff")
-    (setq theme/normal-current-line-bg "#242832")
-  
-    (setq theme/insert-lines-fg "#2e3440")
-    (setq theme/insert-lines-bg "#515e46")
-    (setq theme/insert-current-line-fg "#ffffff")
-    (setq theme/insert-current-line-bg "#a3be8c")
-  
-    (setq theme/visual-lines-fg "#2e3440")
-    (setq theme/visual-lines-bg "#594656")
-    (setq theme/visual-current-line-fg "#ffffff")
-    (setq theme/visual-current-line-bg "#b48ead"))
-  
-  (use-package doom-themes
-    :config
-    (setq doom-themes-treemacs-theme "doom-colors"))
-  
 #+end_src
 
 ** Nord theme
@@ -691,31 +636,6 @@ The first time you load your configuration on a new machine, you'll need to run 
  
 #+end_src
 
-** Volatile highlights
-#+begin_src emacs-lisp
-
-  (use-package volatile-highlights)
-
-#+end_src
-
-** Highlight parentheses
-#+begin_src emacs-lisp
-
-  (use-package highlight-parentheses
-    :config
-    (global-highlight-parentheses-mode 1))
-
-#+end_src
-
-** smartparens
-#+begin_src emacs-lisp
-
-  (use-package smartparens
-    :config
-    (add-hook 'lsp-mode-hook #'smartparens-mode))
-
-#+end_src
-
 ** Flycheck
 #+begin_src emacs-lisp
 
@@ -783,15 +703,6 @@ The first time you load your configuration on a new machine, you'll need to run 
 
 #+end_src
 
-** Wgrep
-#+begin_src emacs-lisp
-
-  (use-package wgrep
-    :config
-    (setq wgrep-auto-save-buffer t))
-
-#+end_src
-
 ** Company
 #+begin_src emacs-lisp
   
@@ -828,6 +739,15 @@ The first time you load your configuration on a new machine, you'll need to run 
     :config
     (company-prescient-mode 1))
   
+#+end_src
+
+** Wgrep
+#+begin_src emacs-lisp
+
+  (use-package wgrep
+    :config
+    (setq wgrep-auto-save-buffer t))
+
 #+end_src
 
 ** Avy
@@ -876,16 +796,65 @@ Provide a better way of moving arround than plain dired. Files are previewed in 
 
 #+end_src
 
-** Ranger
-Provide a better way of moving arround than plain dired. Files are previewed in emacs, and folder are previewed in a dired buffer.
-
+* Development
+** Commenting
 #+begin_src emacs-lisp
 
-  (use-package ranger)
+  (use-package evil-nerd-commenter
+    :after evil
+    :bind ("M-/" . evilnc-comment-or-uncomment-lines))
 
 #+end_src
 
-* Development
+** Format all
+Format all, a feature that lets you auto-format source code.
+
+Prerequisite: Read Supported Languages to see which additional tool you need to install for the specific language.
+
+#+begin_src emacs-lisp
+
+  (use-package format-all
+    :bind ("C-c C-f" . format-all-buffer))
+
+#+end_src 
+
+** Highlight ident
+#+begin_src emacs-lisp
+
+  (use-package highlight-indent-guides
+    :custom
+    (highlight-indent-guides-method 'character)
+    (highlight-indent-guides-responsive 'top))
+
+  (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
+
+#+end_src
+
+** Rainbow colors
+#+begin_src emacs-lisp
+
+  (use-package rainbow-mode)
+
+#+end_src
+
+** Highlight parentheses
+#+begin_src emacs-lisp
+
+  (use-package highlight-parentheses
+    :config
+    (global-highlight-parentheses-mode 1))
+
+#+end_src
+
+** smartparens
+#+begin_src emacs-lisp
+
+  (use-package smartparens
+    :config
+    (add-hook 'lsp-mode-hook #'smartparens-mode))
+
+#+end_src
+
 ** Projectile
 #+begin_src emacs-lisp
 
@@ -946,59 +915,15 @@ NOTE: Make sure to configure a GitHub token before using this package!
     
 #+end_src
 
-** Commenting
-#+begin_src emacs-lisp
-
-  (use-package evil-nerd-commenter
-    :after evil
-    :bind ("M-/" . evilnc-comment-or-uncomment-lines))
-
-#+end_src
-
-** Format all
-Format all, a feature that lets you auto-format source code.
-
-Prerequisite: Read Supported Languages to see which additional tool you need to install for the specific language.
-
-#+begin_src emacs-lisp
-
-  (use-package format-all
-    :bind ("C-c C-f" . format-all-buffer))
-
-#+end_src 
-
-** Dap
-#+begin_src emacs-lisp
-
-  (use-package dap-mode)
-
-#+end_src
-
-** Highlight ident
-#+begin_src emacs-lisp
-
-  (use-package highlight-indent-guides
-    :custom
-    (highlight-indent-guides-method 'character)
-    (highlight-indent-guides-responsive 'top))
-
-  (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
-
-#+end_src
-
-** Rainbow colors
-#+begin_src emacs-lisp
-
-  (use-package rainbow-mode)
-
-#+end_src
-
 ** Yasnippet
 
 #+begin_src emacs-lisp
-
-  (use-package yasnippet)
-
+  
+  (use-package yasnippet
+    :config
+    (setq yas-snippet-dirs '("~/.emacs.d/etc/yasnippet/snippets"))
+    (yas-global-mode 1))
+  
 #+end_src
 
 ** Lsp
@@ -1088,7 +1013,7 @@ For =lsp-mode= to work with TypeScript (and JavaScript) you will need to install
 
 This will install the [[https://github.com/theia-ide/typescript-language-server][typescript-language-server]] and the TypeScript compiler package.
 
-**** Tyepscript
+**** Typescript
 This is a basic configuration for the TypeScript language so that =.ts= files activate =typescript-mode= when opened.  We're also adding a hook to =typescript-mode-hook= to call =lsp-deferred= so that we activate =lsp-mode= to get LSP features every time we edit TypeScript code.
 
 #+begin_src emacs-lisp
@@ -1120,6 +1045,13 @@ Requires you to run: M-x lsp-install-server RET bash RET.
 #+begin_src emacs-lisp
 
   (add-hook 'sh-mode-hook 'lsp-deferred)
+
+#+end_src
+
+** Dap
+#+begin_src emacs-lisp
+
+  (use-package dap-mode)
 
 #+end_src
 
@@ -1441,6 +1373,16 @@ Pandoc must be downloaded.
 
 #+end_src 
 
+** Org-jira
+#+begin_src emacs-lisp
+  
+  (use-package org-jira
+    :straight (org-jira :type git :host github :repo "ahungry/org-jira"
+                        :fork (:host github
+                                     :repo "Vivien-lelouette/org-jira"))
+    :after org)
+  
+#+end_src 
 * Devops
 ** Docker
 *** Dockerfile
@@ -1512,27 +1454,32 @@ Flyspell enables on-the-fly spell checking in Emacs and uses Flyspell Correct fo
 For french, you will need the package aspell-fr.
 TODO: add this a prerequisite.
 #+begin_src emacs-lisp
-
+  
   (use-package flyspell
     :straight (:type built-in)
     :diminish
     :if (executable-find "aspell")
-    :hook (((text-mode outline-mode latex-mode) . flyspell-mode))
+    :custom
+    (flyspell-issue-message-flag nil)
+    (ispell-program-name "aspell")
+    (ispell-extra-args '("--sug-mode=ultra" "--lang=en_US" "--run-together" "--run-together-limit=16")))
+  
+#+end_src
+
+** Wucuo
+Fast spell check based on flyspell.
+#+begin_src emacs-lisp
+  
+  (use-package wucuo
+    :if (executable-find "aspell")
+    :hook (((text-mode outline-mode prog-mode) . wucuo-start))
     :custom
     (flyspell-issue-message-flag nil)
     (ispell-program-name "aspell")
     (ispell-extra-args
-     '("--sug-mode=ultra" "--lang=en_US"))
-    :config
-    (use-package flyspell-correct-ivy
-      :after ivy
-      :bind
-      (:map flyspell-mode-map
-            ([remap flyspell-correct-word-before-point] . flyspell-correct-wrapper)
-            ("C-." . flyspell-correct-wrapper))
-      :custom (flyspell-correct-interface #'flyspell-correct-ivy)))
+     '("--sug-mode=ultra" "--lang=en_US")))
 
-#+end_src
+    #+end_src
 
 ** Guess language
 This package allows to guess which language you are typing on so that flyspell can check your spelling correctly.
@@ -1541,7 +1488,7 @@ This package allows to guess which language you are typing on so that flyspell c
   (use-package guess-language
     :config
     (setq guess-language-languages '(en fr))
-    (add-hook 'flyspell-mode-hook (lambda () (guess-language-mode 1))))
+    (add-hook 'wucuo-mode-hook (lambda () (guess-language-mode 1))))
 
 #+end_src
 
