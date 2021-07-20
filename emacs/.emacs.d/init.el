@@ -5,9 +5,6 @@
   (require 'package)
   (setq package-enable-at-startup nil)
 
-;; Avoid blinding white at startup
-(load-theme 'wombat)
-
 (setq inhibit-startup-message t)
 
 ;; (scroll-bar-mode -1)        ; Disable visible scrollbar
@@ -189,7 +186,7 @@
 
   (keys/leader-keys
     "t"  '(:ignore t :which-key "toggles")
-    "tt" '(counsel-load-theme :which-key "choose theme")))
+    "tt" '(consult-theme :which-key "choose theme")))
 
 (use-package evil
     :init
@@ -295,7 +292,6 @@
 
 (defun theme/nord ()
   (interactive)
-  (load-theme 'nord t)
   (set-face-attribute 'fringe nil :background "#2e3440")
   (set-face-attribute 'mode-line-inactive nil :background nil)
   ;; (set-face-attribute 'scroll-bar nil :background "#2b323d")
@@ -314,34 +310,10 @@
   (setq theme/visual-lines-fg "#2e3440")
   (setq theme/visual-lines-bg "#594656")
   (setq theme/visual-current-line-fg "#ffffff")
-  (setq theme/visual-current-line-bg "#b48ead"))
+  (setq theme/visual-current-line-bg "#b48ead")
+  (load-theme 'nord t))
 
-(use-package nord-theme
-  :config
-  (theme/nord))
-
-(defun theme/modus-vivendi ()
-    (interactive)
-    (load-theme 'modus-vivendi t)
-    (set-face-attribute 'fringe nil :background "#2e3440")
-    (set-face-attribute 'mode-line-inactive nil :background nil)
-    ;; (set-face-attribute 'scroll-bar nil :background "#2d323e")
-
-    ;; Line number styling for mode change
-    (setq theme/normal-lines-fg "#a3a3a3")
-    (setq theme/normal-lines-bg "#100f10")
-    (setq theme/normal-current-line-fg "#ffffff")
-    (setq theme/normal-current-line-bg "#303030")
-
-    (setq theme/insert-lines-fg "#000000")
-    (setq theme/insert-lines-bg "#515e46")
-    (setq theme/insert-current-line-fg "#ffffff")
-    (setq theme/insert-current-line-bg "#a3be8c")
-
-    (setq theme/visual-lines-fg "#000000")
-    (setq theme/visual-lines-bg "#594656")
-    (setq theme/visual-current-line-fg "#ffffff")
-    (setq theme/visual-current-line-bg "#b48ead"))
+(use-package nord-theme)
 
 (use-package all-the-icons)
 
@@ -375,15 +347,7 @@
   :config
   (setq which-key-idle-delay 1))
 
-(use-package helpful
-  :custom
-  (counsel-describe-function-function #'helpful-callable)
-  (counsel-describe-variable-function #'helpful-variable)
-  :bind
-  ([remap describe-function] . counsel-describe-function)
-  ([remap describe-command] . helpful-command)
-  ([remap describe-variable] . counsel-describe-variable)
-  ([remap describe-key] . helpful-key))
+(use-package helpful)
 
 (use-package ace-jump-mode
   :config
@@ -411,73 +375,83 @@
   :config
   (setq writeroom-global-effects '(writeroom-set-alpha writeroom-set-menu-bar-lines writeroom-set-tool-bar-lines writeroom-set-vertical-scroll-bars writeroom-set-bottom-divider-width)))
 
-(use-package counsel
-  :bind (("M-x" . counsel-M-x)
-         ("C-x b" . counsel-ibuffer)
-         ("C-x C-f" . counsel-find-file)
+(use-package orderless
+  :init
+  (setq completion-styles '(orderless)
+        completion-category-defaults nil
+        completion-category-overrides '((file (styles partial-completion)))))
+
+;; Persist history over Emacs restarts. Vertico sorts by history position.
+(use-package savehist
+  :init
+  (savehist-mode))
+
+(use-package dabbrev
+  ;; Swap M-/ and C-M-/
+  :bind (("C-/" . dabbrev-completion)
+         ("C-M-/" . dabbrev-expand)))
+
+(use-package vertico
+  :bind (:map vertico-map
+              ("C-j" . vertico-next)
+              ("<tab>" . vertico-next)
+              ("C-k" . vertico-previous)
+              ("<backtab>" . vertico-previous))
+  :init
+  (vertico-mode)
+
+  ;; Grow and shrink the Vertico minibuffer
+  (setq vertico-resize t)
+
+  ;; Optionally enable cycling for `vertico-next' and `vertico-previous'.
+  (setq vertico-cycle t))
+
+;; A few more useful configurations...
+(use-package emacs
+  :init
+  ;; Do not allow the cursor in the minibuffer prompt
+  (setq minibuffer-prompt-properties
+        '(read-only t cursor-intangible t face minibuffer-prompt))
+  (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
+
+  ;; Enable recursive minibuffers
+  (setq enable-recursive-minibuffers t)
+  (setq tab-always-indent 'complete))
+
+(use-package marginalia
+  ;; Either bind `marginalia-cycle` globally or only in the minibuffer
+  :bind (("M-A" . marginalia-cycle)
          :map minibuffer-local-map
-         ("C-r" . 'counsel-minibuffer-history))
+         ("M-A" . marginalia-cycle))
+  :init
+  (marginalia-mode))
+
+(use-package embark
+  :straight t
+  :bind (("C-S-a" . embark-act)
+         :map minibuffer-local-map
+         ("C-d" . embark-act)))
+
+(use-package consult
   :config
   (keys/leader-keys
-    "y" #'counsel-yank-pop))
+    "y" #'consult-yank-from-kill-ring))
 
-(use-package all-the-icons-ivy
-  :init (add-hook 'after-init-hook 'all-the-icons-ivy-setup))
+(use-package embark-consult)
 
-(use-package all-the-icons-ivy-rich
-  :init (all-the-icons-ivy-rich-mode 1))
-
-(use-package ivy
-  :diminish
-  :bind (("C-s" . swiper)
-         :map ivy-minibuffer-map
-         ("TAB" . ivy-alt-done)
-         ("C-l" . ivy-alt-done)
-         ("C-j" . ivy-next-line)
-         ("C-k" . ivy-previous-line)
-         :map ivy-switch-buffer-map
-         ("C-k" . ivy-previous-line)
-         ("C-l" . ivy-done)
-         ("C-d" . ivy-switch-buffer-kill)
-         :map ivy-reverse-i-search-map
-         ("C-k" . ivy-previous-line)
-         ("C-d" . ivy-reverse-i-search-kill))
-  :config
-  (ivy-mode 1)
-  (setq ivy-initial-inputs-alist nil))
-
-(use-package ivy-rich
-  :after ivy
-  :init
-  (ivy-rich-mode 1))
-
-(use-package company
-  :bind (:map company-active-map
-              ("<tab>" . company-select-next)
-              ("<backtab>" . company-select-previous))
+(use-package corfu
+  :bind (:map corfu-map
+              ("C-j" . corfu-next)
+              ("<tab>" . corfu-next)
+              ("C-k" . corfu-previous)
+              ("<backtab>" . corfu-previous))
   :custom
-  (company-minimum-prefix-length 1)
-  (company-idle-delay 0.2)
+  (corfu-auto t)
+  (corfu-quit-at-boundary t)
+  (corfu-quit-no-match t)
+  (corfu-cycle t)
   :config
-  (global-company-mode 1))
-
-(use-package company-box
-  :after company
-  :hook (company-mode . company-box-mode))
-
-(use-package prescient
-  :config
-  (prescient-persist-mode 1))
-
-(use-package ivy-prescient
-  :after counsel
-  :config
-  (ivy-prescient-mode 1))
-
-(use-package company-prescient
-  :after company
-  :config
-  (company-prescient-mode 1))
+  (corfu-global-mode))
 
 (use-package wgrep
   :config
@@ -543,7 +517,6 @@
 (use-package projectile
   :diminish projectile-mode
   :config (projectile-mode)
-  :custom ((projectile-completion-system 'ivy))
   :bind-keymap
   ("C-c p" . projectile-command-map)
   :init
@@ -551,10 +524,6 @@
   (when (file-directory-p "~/Projects/Code")
     (setq projectile-project-search-path '("~/Projects/Code")))
   (setq projectile-switch-project-action #'projectile-dired))
-
-(use-package counsel-projectile
-  :after counsel
-  :config (counsel-projectile-mode))
 
 (use-package ibuffer-projectile)
 
@@ -607,10 +576,9 @@
   (setq lsp-keymap-prefix "C-SPC")  ;; Or 'C-l', 's-l'
   :commands (lsp lsp-deferred)
   :hook (lsp-mode . efs/lsp-mode-setup)
+  :bind (:map lsp-mode-map
+              ("C-<tab>" . completion-at-point))
   :config
-  (setq lsp-idle-delay 0.500)
-  (setq lsp-completion-provider :capf)
-  (define-key lsp-mode-map (kbd "C-SPC") lsp-command-map)
   (define-key lsp-mode-map (kbd "s-l") nil)
   (setenv "TSSERVER_LOG_FILE" "/tmp/tsserver.log"))
 
@@ -623,9 +591,6 @@
   (setq lsp-ui-doc-position 'at-point))
 
 (use-package lsp-treemacs
-  :after lsp)
-
-(use-package lsp-ivy
   :after lsp)
 
 (use-package typescript-mode
@@ -661,11 +626,6 @@
 (use-package restclient
   :config
   (add-to-list 'auto-mode-alist '("\\.http\\'" . restclient-mode)))
-
-(use-package company-restclient
-  :after restclient
-  :config
-  (add-to-list 'company-backends 'company-restclient))
 
 (use-package adoc-mode
   :config
@@ -1236,9 +1196,6 @@ The optional argument NEW-WINDOW is not used."
  (when (file-exists-p local-settings)
    (load-file local-settings)))
 
-(fonts/small-size)
-(frames-only-mode)
-
 ;; easy window resize
 (global-set-key (kbd "C-s-h") #'windsize-left)
 (global-set-key (kbd "C-s-l") #'windsize-right)
@@ -1250,7 +1207,7 @@ The optional argument NEW-WINDOW is not used."
 (global-set-key (kbd "C-s-<up>") #'windsize-up)
 (global-set-key (kbd "C-s-<right>") #'windsize-right)
 
-(global-set-key (kbd "s-b") #'counsel-switch-buffer)
+(global-set-key (kbd "s-b") #'consult-buffer)
 (global-set-key (kbd "s-B") #'ibuffer)
 
 (global-set-key (kbd "s-p") #'treemacs)
@@ -1258,10 +1215,12 @@ The optional argument NEW-WINDOW is not used."
 (global-set-key (kbd "s-X") #'kill-current-buffer)
 (global-set-key (kbd "s-Q") #'(lambda () (interactive) (kill-current-buffer) (delete-window)))
 
-(global-set-key (kbd "s-x") #'counsel-M-x)
-(global-set-key (kbd "s-.") #'counsel-find-file)
-(global-set-key (kbd "C-s-s") #'counsel-projectile-ag)
-(global-set-key (kbd "C-H-s-s") #'counsel-projectile-ag)
+(global-set-key (kbd "s-x") #'execute-extended-command)
+(global-set-key (kbd "s-.") #'find-file)
+
+(global-set-key (kbd "C-s-s") #'consult-ripgrep)
+(global-set-key (kbd "C-s") #'consult-line)
+
 
 (global-set-key (kbd "C-H-s-h") #'windsize-left)
 (global-set-key (kbd "C-H-s-l") #'windsize-right)
@@ -1273,20 +1232,24 @@ The optional argument NEW-WINDOW is not used."
 (global-set-key (kbd "C-H-s-<up>") #'windsize-up)
 (global-set-key (kbd "C-H-s-<right>") #'windsize-right)
 
-(global-set-key (kbd "H-s-b") #'counsel-switch-buffer)
+(global-set-key (kbd "H-s-b") #'consult-buffer)
 (global-set-key (kbd "H-s-B") #'ibuffer)
 
 (global-set-key (kbd "H-s-p") #'treemacs)
 
-(global-set-key (kbd "H-s-e") #'ranger)
-(global-set-key (kbd "H-s-E") #'deer)
-
 (global-set-key (kbd "H-s-X") #'kill-current-buffer)
 (global-set-key (kbd "H-s-Q") #'(lambda () (interactive) (kill-current-buffer) (delete-window)))
 
-(global-set-key (kbd "H-s-x") #'counsel-M-x)
-(global-set-key (kbd "H-s-.") #'counsel-find-file)
+(global-set-key (kbd "H-s-x") #'execute-extended-command)
+(global-set-key (kbd "H-s-.") #'find-file)
+
+(global-set-key (kbd "C-H-s-s") #'consult-ripgrep)
+(global-set-key (kbd "C-H-s") #'consult-line)
 
 )
 (setq gc-cons-threshold (* 2 1000 1000))
 (provide 'init)
+
+(theme/nord)
+(fonts/small-size)
+(frames-only-mode)
