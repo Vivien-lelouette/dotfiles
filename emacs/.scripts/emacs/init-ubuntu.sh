@@ -1,15 +1,15 @@
 #!/bin/sh
 sudo apt-get update \
-      && apt-get install -y \
-      apt-transport-https \
-      ca-certificates \
-      curl \
-      gnupg-agent \
-      software-properties-common
+    && apt-get install -y \
+               apt-transport-https \
+               ca-certificates \
+               curl \
+               gnupg-agent \
+               software-properties-common
 
 sudo add-apt-repository ppa:ubuntu-toolchain-r/ppa \
-      && apt-get update -y \
-      && apt-get install -y gcc-10 libgccjit0 libgccjit-10-dev
+    && apt-get update -y \
+    && apt-get install -y gcc-10 libgccjit0 libgccjit-10-dev
 
 sudo apt-get install -y libjansson4 libjansson-dev git
 

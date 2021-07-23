@@ -72,8 +72,8 @@
   (fonts/set-size 90))
 
 (defun fonts/normal-size ()
-    (interactive)
-    (fonts/set-size 100))
+  (interactive)
+  (fonts/set-size 100))
 
 (defun fonts/big-size ()
   (interactive)
@@ -158,7 +158,7 @@
       auto-save-file-name-transforms `((".*" ,(expand-file-name "tmp/auto-saves/" user-emacs-directory) t)))
 (setq create-lockfiles nil)
 (setq projectile-known-projects-file (expand-file-name "tmp/projectile-bookmarks.eld" user-emacs-directory)
-    lsp-session-file (expand-file-name "tmp/.lsp-session-v1" user-emacs-directory))
+      lsp-session-file (expand-file-name "tmp/.lsp-session-v1" user-emacs-directory))
 
 (use-package no-littering)
 
@@ -189,23 +189,23 @@
     "tt" '(consult-theme :which-key "choose theme")))
 
 (use-package evil
-    :init
-    (setq evil-want-integration t)
-    (setq evil-want-keybinding nil)
-    (setq evil-want-C-u-scroll t)
-    (setq evil-want-C-i-jump nil)
-    :config
-    (evil-mode 1)
-    (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
-    (define-key evil-insert-state-map (kbd "C-h") 'evil-delete-backward-char-and-join)
+  :init
+  (setq evil-want-integration t)
+  (setq evil-want-keybinding nil)
+  (setq evil-want-C-u-scroll t)
+  (setq evil-want-C-i-jump nil)
+  :config
+  (evil-mode 1)
+  (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
+  (define-key evil-insert-state-map (kbd "C-h") 'evil-delete-backward-char-and-join)
 
-    ;; Use visual line motions even outside of visual-line-mode buffers
-    (evil-global-set-key 'motion "j" 'evil-next-visual-line)
-    (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
+  ;; Use visual line motions even outside of visual-line-mode buffers
+  (evil-global-set-key 'motion "j" 'evil-next-visual-line)
+  (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
 
-    (evil-set-initial-state 'messages-buffer-mode 'normal)
-    (evil-set-initial-state 'dashboard-mode 'normal)
-    (evil-set-undo-system 'undo-fu))
+  (evil-set-initial-state 'messages-buffer-mode 'normal)
+  (evil-set-initial-state 'dashboard-mode 'normal)
+  (evil-set-undo-system 'undo-fu))
 
 (use-package evil-collection
   :after evil
@@ -334,9 +334,9 @@
   (concat " " (format-mode-line minions-mode-line-modes)))
 
 (use-package simple-modeline
- :hook (after-init . simple-modeline-mode)
- :config
- (setq simple-modeline-segments '((simple-modeline-segment-modified simple-modeline-segment-buffer-name simple-modeline-segment-position) (simple-modeline-segment-input-method simple-modeline-segment-eol simple-modeline-segment-encoding simple-modeline-segment-vc simple-modeline-segment-misc-info simple-modeline-segment-process simple-modeline-segment-minions))))
+  :hook (after-init . simple-modeline-mode)
+  :config
+  (setq simple-modeline-segments '((simple-modeline-segment-modified simple-modeline-segment-buffer-name simple-modeline-segment-position) (simple-modeline-segment-input-method simple-modeline-segment-eol simple-modeline-segment-encoding simple-modeline-segment-vc simple-modeline-segment-misc-info simple-modeline-segment-process simple-modeline-segment-minions))))
 
 (use-package rainbow-delimiters
   :hook (prog-mode . rainbow-delimiters-mode))
@@ -435,23 +435,60 @@
 (use-package consult
   :config
   (keys/leader-keys
+    "ii" '(consult-imenu :which-key "imenu")
     "y" #'consult-yank-from-kill-ring))
 
 (use-package embark-consult)
 
-(use-package corfu
-  :bind (:map corfu-map
-              ("C-j" . corfu-next)
-              ("<tab>" . corfu-next)
-              ("C-k" . corfu-previous)
-              ("<backtab>" . corfu-previous))
-  :custom
-  (corfu-auto t)
-  (corfu-quit-at-boundary t)
-  (corfu-quit-no-match t)
-  (corfu-cycle t)
+(use-package consult-lsp)
+
+;; (use-package corfu
+;;   :bind (:map corfu-map
+;;               ("C-j" . corfu-next)
+;;               ("<tab>" . corfu-next)
+;;               ("C-k" . corfu-previous)
+;;               ("<backtab>" . corfu-previous))
+;;   :custom
+;;   (corfu-auto t)
+;;   (corfu-quit-at-boundary t)
+;;   (corfu-quit-no-match t)
+;;   (corfu-cycle t)
+;;   :config
+;;   (corfu-global-mode))
+
+(use-package company
+  :init (global-company-mode)
   :config
-  (corfu-global-mode))
+  (progn
+    ;; Use Company for completion
+    (bind-key [remap completion-at-point] #'company-complete company-mode-map)
+
+    (setq company-tooltip-align-annotations t
+          company-idle-delay 0
+          company-minimum-prefix-length 1
+          company-selection-wrap-around t)
+    (setq company-backends '(company-capf
+                             company-keywords
+                             company-semantic
+                             company-files
+                             company-etags
+                             company-elisp
+                             company-cmake
+                             company-ispell
+                             company-dabbrev
+                             company-yasnippet))
+    (company-tng-configure-default))
+  :diminish company-mode)
+
+(use-package company-quickhelp          
+  :ensure t
+  :defer t
+  :init (add-hook 'global-company-mode-hook #'company-quickhelp-mode))
+
+(use-package company-quickhelp          
+  :ensure t
+  :defer t
+  :init (add-hook 'global-company-mode-hook #'company-quickhelp-mode))
 
 (use-package wgrep
   :config
@@ -531,7 +568,7 @@
   :config
   (keys/leader-keys
     "gg" '(magit :which-key "magit status"))
-   (keys/leader-keys
+  (keys/leader-keys
     "gf" '(magit-file-dispatch :which-key "magit file history")))
 
 (use-package forge
@@ -579,6 +616,7 @@
   :bind (:map lsp-mode-map
               ("C-<tab>" . completion-at-point))
   :config
+  (setq lsp-completion-provider :none)
   (define-key lsp-mode-map (kbd "s-l") nil)
   (setenv "TSSERVER_LOG_FILE" "/tmp/tsserver.log"))
 
@@ -818,13 +856,13 @@
   (when (or (string-equal (buffer-file-name)
                           (expand-file-name "~/dotfiles/README.org"))
             (string-equal (buffer-file-name)
-                        (expand-file-name "~/dotfiles/qutebrowser/README.org"))
+                          (expand-file-name "~/dotfiles/qutebrowser/README.org"))
             (string-equal (buffer-file-name)
                           (expand-file-name "~/dotfiles/emacs/README.org"))
             (string-equal (buffer-file-name)
                           (expand-file-name "~/dotfiles/emacs/desktop.org"))
             (string-equal (buffer-file-name)
-                        (expand-file-name "~/dotfiles/emacs/local.org")))
+                          (expand-file-name "~/dotfiles/emacs/local.org")))
     ;; Dynamic scoping to the rescue
     (let ((org-confirm-babel-evaluate nil))
       (org-babel-tangle))))
@@ -838,6 +876,7 @@
 (push '("conf-unix" . conf-unix) org-src-lang-modes)
 
 (setq org-confirm-babel-evaluate nil)
+(setq org-src-tab-acts-natively t)
 
 (use-package org-mime
   :after org)
@@ -877,7 +916,7 @@
     (interactive "sDocker services to start: ")
     (setq docker-services (split-string string-services))
     (cl-loop for service in docker-services
-    collect (docker-compose-run-docker-compose-async "up" service)))
+             collect (docker-compose-run-docker-compose-async "up" service)))
 
   (setq docker-container-shell-file-name "/bin/sh")
 
@@ -1193,8 +1232,8 @@ The optional argument NEW-WINDOW is not used."
 (autoload 'exwm-enable "~/.emacs.d/desktop.el")
 
 (let ((local-settings "~/.emacs.d/local.el"))
- (when (file-exists-p local-settings)
-   (load-file local-settings)))
+  (when (file-exists-p local-settings)
+    (load-file local-settings)))
 
 ;; easy window resize
 (global-set-key (kbd "C-s-h") #'windsize-left)
