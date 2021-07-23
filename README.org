@@ -13,41 +13,31 @@ Each subfolders of this repo Will be symlinked at your home folder as long as th
 
 To created à module symlinks, just start the following command in the dotfile folder: 
 
-#+begin_src shell
-
+#+BEGIN_SRC shell
   stow $NAME_OF_FOLDER.
-
-#+end_src
+#+END_SRC
 
 Stow also supports regex, so to create every symlinks: 
 
-#+begin_src shell
-
+#+BEGIN_SRC shell
   stow *
-
-#+end_src
+#+END_SRC
 
 To install stow on Ubuntu, use the following command:
 
-#+begin_src shell :tangle global/.scripts/init-ubuntu.sh :shebang #!/bin/sh :mkdirp yes
-
+#+BEGIN_SRC shell :tangle global/.scripts/init-ubuntu.sh :shebang #!/bin/sh :mkdirp yes
   sudo apt install stow
-
-#+end_src
+#+END_SRC
 
 * Install all prerequisite
 ** Ubuntu
-#+begin_src shell :tangle global/.scripts/init-ubuntu.sh :mkdirp yes
-
+#+BEGIN_SRC shell :tangle global/.scripts/init-ubuntu.sh :mkdirp yes
   for script in $(find ~/.scripts/*/ -name init-ubuntu.sh) ; do sh $script ; done
-
-#+end_src
+#+END_SRC
 
 * Install all programs 
 
-#+begin_src shell :tangle global/.scripts/install-all-tools.sh :shebang #!/bin/sh :mkdirp yes
-
+#+BEGIN_SRC shell :tangle global/.scripts/install-all-tools.sh :shebang #!/bin/sh :mkdirp yes
   for script in $(find ~/.scripts/*/ -name install.sh) ; do sh $script ; done
-
-#+end_src
+#+END_SRC
 

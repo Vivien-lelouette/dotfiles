@@ -388,7 +388,7 @@
 
 (use-package dabbrev
   ;; Swap M-/ and C-M-/
-  :bind (("C-/" . dabbrev-completion)
+  :bind (("M-/" . dabbrev-completion)
          ("C-M-/" . dabbrev-expand)))
 
 (use-package vertico
@@ -529,7 +529,7 @@
 
 (use-package evil-nerd-commenter
   :after evil
-  :bind ("M-/" . evilnc-comment-or-uncomment-lines))
+  :bind ("C-/" . evilnc-comment-or-uncomment-lines))
 
 (use-package format-all
   :bind ("C-c C-f" . format-all-buffer))

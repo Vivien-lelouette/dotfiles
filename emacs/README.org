@@ -4,8 +4,7 @@
 * installation
 ** Prerequisites
 *** Ubuntu
-#+begin_src shell :tangle .scripts/emacs/init-ubuntu.sh :shebang #!/bin/sh :mkdirp yes
-  
+#+BEGIN_SRC shell :tangle .scripts/emacs/init-ubuntu.sh :shebang #!/bin/sh :mkdirp yes
   sudo apt-get update \
       && apt-get install -y \
                  apt-transport-https \
@@ -21,14 +20,12 @@
   sudo apt-get install -y libjansson4 libjansson-dev git
   
   sudo apt-get install autoconf make gcc texinfo libgtk-3-dev libxpm-dev libjpeg-dev libgif-dev libtiff5-dev libgnutls28-dev libncurses5-dev
-  
-#+end_src
+#+END_SRC
 
 ** Emacs installation from sources
 The snippets below will install emacs from their git master:
 
-#+begin_src shell :tangle .scripts/emacs/install.sh :shebang #!/bin/sh :mkdirp yes
-  
+#+BEGIN_SRC shell :tangle .scripts/emacs/install.sh :shebang #!/bin/sh :mkdirp yes
   mkdir -p ~/Tools/emacs-pgtk-nativ-comp
   
   cd ~/Tools
@@ -42,32 +39,25 @@ The snippets below will install emacs from their git master:
    --with-modules --with-native-compilation --with-cairo --with-pgtk
   make -j 8 NATIVE_FULL_AOT=1
   sudo make install
-  
-#+end_src
+#+END_SRC
 
 * Wrap to improve startup time
 ** Correctly set the garbage collector for modern systems
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (setq gc-cons-threshold 100000000)
   (setq read-process-output-max (* 1024 1024)) ;; 1mb
-  
-#+end_src
+#+END_SRC
 
 ** Wrap init
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (let ((file-name-handler-alist nil))
     (require 'package)
     (setq package-enable-at-startup nil)
-  
-#+end_src
+#+END_SRC
 
 * UI configuration
 ** Basic configuration
-
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (setq inhibit-startup-message t)
   
   ;; (scroll-bar-mode -1)        ; Disable visible scrollbar
@@ -109,14 +99,12 @@ The snippets below will install emacs from their git master:
   (setq native-comp-async-report-warnings-errors nil)
   (setq package-native-compile t)
   (setq native-comp-deferred-compilation nil)
-  
-#+end_src
+#+END_SRC
 
 ** Window split
 Functions to split and move to the new split.
 
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (defun my-window-vsplit ()
     (interactive)
     (evil-window-vsplit)
@@ -129,21 +117,17 @@ Functions to split and move to the new split.
     (evil-window-split)
     (run-at-time "0.1 seconds" nil (lambda ()
                                      (windmove-down))))
-  
-#+end_src
+#+END_SRC
 
 ** Font configuration
 *** Prerequisite
 **** Ubuntu
-#+begin_src shell :tangle .scripts/emacs/init-ubuntu.sh :mkdirp yes
-  
+#+BEGIN_SRC shell :tangle .scripts/emacs/init-ubuntu.sh :mkdirp yes
   sudo apt install fonts-firacode fonts-cantarell
-  
-#+end_src
+#+END_SRC
 
 *** Configuration
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (defun fonts/set-size (font-size)
     (set-face-attribute 'default nil :font "Fira Code" :height font-size)
     ;; Set the fixed pitch face
@@ -168,12 +152,10 @@ Functions to split and move to the new split.
     (fonts/set-size 140))
   
   (fonts/small-size)
-  
-#+end_src
+#+END_SRC
 
 ** Ibuffer
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (setq ibuffer-formats
         '((mark modified read-only locked " "
                 (icon 2 2 :left :elide)
@@ -222,13 +204,11 @@ Functions to split and move to the new split.
               (unless (eq ibuffer-sorting-mode 'alphabetic)
                 (ibuffer-do-sort-by-alphabetic))
               (ibuffer-auto-mode 1)))
-  
-#+end_src
+#+END_SRC
 
 * Package manager configuration
 ** Initialize straight
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (defvar bootstrap-version)
   (let ((bootstrap-file
          (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
@@ -241,22 +221,16 @@ Functions to split and move to the new split.
         (goto-char (point-max))
         (eval-print-last-sexp)))
     (load bootstrap-file nil 'nomessage))
-  
-#+end_src
+#+END_SRC
 
 ** Initialize use-package
-
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (straight-use-package 'use-package)
   (setq straight-use-package-by-default t)
-  
-#+end_src
+#+END_SRC
 
 * Keep folders clean
-
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (setq backup-directory-alist `(("." . ,(expand-file-name "tmp/backups/" user-emacs-directory))))
   ;; auto-save-mode doesn't create the path automatically!
   (make-directory (expand-file-name "tmp/auto-saves/" user-emacs-directory) t)
@@ -268,54 +242,42 @@ Functions to split and move to the new split.
         lsp-session-file (expand-file-name "tmp/.lsp-session-v1" user-emacs-directory))
   
   (use-package no-littering)
-  
-#+end_src
+#+END_SRC
 
 * Utilities
 ** Emacs-async
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package async)
-  
-#+end_src
+#+END_SRC
 
 ** Trashed
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package trashed)
-  
-#+end_src
+#+END_SRC
 
 ** BBDB
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package bbdb)
-  
-#+end_src 
+#+END_SRC 
 
 ** Dianyou (import contact from received mails)
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package dianyou)
-  
-#+end_src 
+#+END_SRC 
 
 ** Undo fu
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package undo-fu)
   
   (use-package undo-fu-session
     :config
     (setq undo-fu-session-incompatible-files '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'"))
     (global-undo-fu-session-mode))
-  
-#+end_src
+#+END_SRC
 
 * Keymap packages
 ** General
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package general
     :config
     (general-create-definer keys/leader-keys
@@ -326,12 +288,10 @@ Functions to split and move to the new split.
     (keys/leader-keys
       "t"  '(:ignore t :which-key "toggles")
       "tt" '(consult-theme :which-key "choose theme")))
-  
-#+end_src
+#+END_SRC
 
 ** Evil
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package evil
     :init
     (setq evil-want-integration t)
@@ -358,32 +318,26 @@ Functions to split and move to the new split.
   
   (use-package treemacs-evil
     :after evil)
-  
-#+end_src
+#+END_SRC
 
 ** Evil multiedit
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package evil-multiedit
     :after evil
     :config
     (evil-multiedit-default-keybinds))
-  
-#+end_src
+#+END_SRC
 
 ** Evil surround
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package evil-surround
     :after evil
     :config
     (global-evil-surround-mode 1))
-  
-#+end_src
+#+END_SRC
 
 ** Evil goggles
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package evil-goggles
     :after evil
     :config
@@ -393,12 +347,10 @@ Functions to split and move to the new split.
     ;; some red color (as defined by the color theme)
     ;; other faces such as `diff-added` will be used for other actions
     (evil-goggles-use-diff-faces))
-  
-#+end_src 
+#+END_SRC 
 
 ** Hydra
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package hydra
     :after general)
   
@@ -410,13 +362,11 @@ Functions to split and move to the new split.
   
   (keys/leader-keys
     "ts" '(hydra-text-scale/body :which-key "scale text"))
-  
-#+end_src
+#+END_SRC
 
 * Themes
 ** Fringe theme
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   ;; Line number styling for mode change
   (setq theme/normal-lines-fg nil)
   (setq theme/normal-lines-bg nil)
@@ -459,12 +409,10 @@ Functions to split and move to the new split.
   
   (add-hook 'evil-visual-state-entry-hook 'theme/visual-lines)
   (add-hook 'evil-visual-state-entry-hook 'theme/visual-current-line)
-  
-#+end_src
+#+END_SRC
 
 ** Nord theme
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (defun theme/nord ()
     (interactive)
     (set-face-attribute 'fringe nil :background "#2e3440")
@@ -489,16 +437,14 @@ Functions to split and move to the new split.
     (load-theme 'nord t))
   
   (use-package nord-theme)
-  
-#+end_src
+#+END_SRC
 
 * UI packages
 ** All the icons
 The first time you load your configuration on a new machine, you'll need to run the following command interactively so that mode line icons display correctly:
 - M-x all-the-icons-install-fonts
 
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package all-the-icons)
   
   (use-package all-the-icons-dired
@@ -508,26 +454,20 @@ The first time you load your configuration on a new machine, you'll need to run 
   
   (use-package all-the-icons-ibuffer
     :after all-the-icons)
-  
-#+end_src
+#+END_SRC
 
 ** Ibuffer packages
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package ibuffer-vc)
-  
-#+end_src
+#+END_SRC
 
 ** Minions
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package minions)
-  
-#+end_src 
+#+END_SRC 
 
 ** Simple modeline
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (defun simple-modeline-segment-minions ()
     "Displays the current major and minor modes with minions-mode in the mode-line."
     (concat " " (format-mode-line minions-mode-line-modes)))
@@ -536,48 +476,38 @@ The first time you load your configuration on a new machine, you'll need to run 
     :hook (after-init . simple-modeline-mode)
     :config
     (setq simple-modeline-segments '((simple-modeline-segment-modified simple-modeline-segment-buffer-name simple-modeline-segment-position) (simple-modeline-segment-input-method simple-modeline-segment-eol simple-modeline-segment-encoding simple-modeline-segment-vc simple-modeline-segment-misc-info simple-modeline-segment-process simple-modeline-segment-minions))))
-  
-#+end_src 
+#+END_SRC 
 
 ** Better delimiters
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package rainbow-delimiters
     :hook (prog-mode . rainbow-delimiters-mode))
-  
-#+end_src
+#+END_SRC
 
 ** Which-key
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package which-key
     :init (which-key-mode)
     :diminish which-key-mode
     :config
     (setq which-key-idle-delay 1))
-  
-#+end_src
+#+END_SRC
 
 ** Helpful
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package helpful)
-  
-#+end_src
+#+END_SRC
 
 ** Ace-jump
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package ace-jump-mode
     :config
     (keys/leader-keys
       "f" '(evil-ace-jump-word-mode :which-key "Go to word")))
-  
-#+end_src
+#+END_SRC
 
 ** Treemacs
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (defun efs/treemacs-set-fringe ()
     (setq left-fringe-width 0)
     (setq right-fringe-width 0))
@@ -592,63 +522,51 @@ The first time you load your configuration on a new machine, you'll need to run 
     (treemacs-load-theme "all-the-icons"))
   
   (efs/treemacs-set-fringe)
-  
-#+end_src
+#+END_SRC
 
 ** Flycheck
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package flycheck)
-  
-#+end_src
+#+END_SRC
 
 ** Writeroom
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package writeroom-mode
     :config
     (setq writeroom-global-effects '(writeroom-set-alpha writeroom-set-menu-bar-lines writeroom-set-tool-bar-lines writeroom-set-vertical-scroll-bars writeroom-set-bottom-divider-width)))
-  
-#+end_src
+#+END_SRC
 
 * Search packages  
 ** Orderless
 Use the `orderless' completion style.
 Enable `partial-completion' for files to allow path expansion.
 You may prefer to use `initials' instead of `partial-completion'.
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package orderless
     :init
     (setq completion-styles '(orderless)
           completion-category-defaults nil
           completion-category-overrides '((file (styles partial-completion)))))
-  
-#+end_src
+#+END_SRC
   
 ** Savehist
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   ;; Persist history over Emacs restarts. Vertico sorts by history position.
   (use-package savehist
     :init
     (savehist-mode))
-  
-#+end_src
+#+END_SRC
 
 ** Dabbrev
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package dabbrev
     ;; Swap M-/ and C-M-/
-    :bind (("C-/" . dabbrev-completion)
+    :bind (("M-/" . dabbrev-completion)
            ("C-M-/" . dabbrev-expand)))
-  
-#+end_src
+#+END_SRC
 
 ** Vertico
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package vertico
     :bind (:map vertico-map
                 ("C-j" . vertico-next)
@@ -675,12 +593,10 @@ You may prefer to use `initials' instead of `partial-completion'.
     ;; Enable recursive minibuffers
     (setq enable-recursive-minibuffers t)
     (setq tab-always-indent 'complete))
-  
-#+end_src
+#+END_SRC
   
 ** Marginalia
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package marginalia
     ;; Either bind `marginalia-cycle` globally or only in the minibuffer
     :bind (("M-A" . marginalia-cycle)
@@ -688,23 +604,19 @@ You may prefer to use `initials' instead of `partial-completion'.
            ("M-A" . marginalia-cycle))
     :init
     (marginalia-mode))
-  
-#+end_src
+#+END_SRC
 
 ** Embark
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package embark
     :straight t
     :bind (("C-S-a" . embark-act)
            :map minibuffer-local-map
            ("C-d" . embark-act)))
-  
-#+end_src
+#+END_SRC
 
 ** Consult
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package consult
     :config
     (keys/leader-keys
@@ -714,13 +626,11 @@ You may prefer to use `initials' instead of `partial-completion'.
   (use-package embark-consult)
   
   (use-package consult-lsp)
-  
-#+end_src
+#+END_SRC
 
 ** Corfu
 Will try Corfu back if it has multi-backend support at some point.
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   ;; (use-package corfu
   ;;   :bind (:map corfu-map
   ;;               ("C-j" . corfu-next)
@@ -734,12 +644,11 @@ Will try Corfu back if it has multi-backend support at some point.
   ;;   (corfu-cycle t)
   ;;   :config
   ;;   (corfu-global-mode))
-  
-#+end_src
+#+END_SRC
+
 ** Company
 *** Base setup
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package company
     :init (global-company-mode)
     :config
@@ -763,51 +672,41 @@ Will try Corfu back if it has multi-backend support at some point.
                                company-yasnippet))
       (company-tng-configure-default))
     :diminish company-mode)
-  
-#+end_src
+#+END_SRC
 
 *** Documentation popups for Company
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package company-quickhelp          
     :ensure t
     :defer t
     :init (add-hook 'global-company-mode-hook #'company-quickhelp-mode))
-  
-#+end_src
+#+END_SRC
 
 *** Company restclient
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package company-quickhelp          
     :ensure t
     :defer t
     :init (add-hook 'global-company-mode-hook #'company-quickhelp-mode))
-  
-#+end_src
+#+END_SRC
 
 ** Wgrep
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package wgrep
     :config
     (setq wgrep-auto-save-buffer t))
-  
-#+end_src
+#+END_SRC
 
 ** Avy
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package avy)
-  
-#+end_src
+#+END_SRC
 
 * File explorer
 ** Dired
 Provide a better way of moving arround than plain dired. Files are previewed in emacs, and folder are previewed in a dired buffer.
 
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package image-dired)
   
   (use-package dired
@@ -838,71 +737,57 @@ Provide a better way of moving arround than plain dired. Files are previewed in 
     :config
     (bind-key "<tab>" #'dired-subtree-toggle dired-mode-map)
     (bind-key "<backtab>" #'dired-subtree-cycle dired-mode-map))
-  
-#+end_src
+#+END_SRC
 
 * Development
 ** Commenting
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package evil-nerd-commenter
     :after evil
-    :bind ("M-/" . evilnc-comment-or-uncomment-lines))
-  
-#+end_src
+    :bind ("C-/" . evilnc-comment-or-uncomment-lines))
+#+END_SRC
 
 ** Format all
 Format all, a feature that lets you auto-format source code.
 
 Prerequisite: Read Supported Languages to see which additional tool you need to install for the specific language.
 
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package format-all
     :bind ("C-c C-f" . format-all-buffer))
-  
-#+end_src 
+#+END_SRC 
 
 ** Highlight ident
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package highlight-indent-guides
     :custom
     (highlight-indent-guides-method 'character)
     (highlight-indent-guides-responsive 'top))
   
   (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
-  
-#+end_src
+#+END_SRC
 
 ** Rainbow colors
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package rainbow-mode)
-  
-#+end_src
+#+END_SRC
 
 ** Highlight parentheses
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package highlight-parentheses
     :config
     (global-highlight-parentheses-mode 1))
-  
-#+end_src
+#+END_SRC
 
 ** smartparens
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package smartparens
     :config
     (add-hook 'lsp-mode-hook #'smartparens-mode))
-  
-#+end_src
+#+END_SRC
 
 ** Projectile
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package projectile
     :diminish projectile-mode
     :config (projectile-mode)
@@ -915,67 +800,56 @@ Prerequisite: Read Supported Languages to see which additional tool you need to 
     (setq projectile-switch-project-action #'projectile-dired))
   
   (use-package ibuffer-projectile)
-  
-#+end_src
+#+END_SRC
 
 ** Git & Forge
 *** Magit
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package magit
     :config
     (keys/leader-keys
       "gg" '(magit :which-key "magit status"))
     (keys/leader-keys
       "gf" '(magit-file-dispatch :which-key "magit file history")))
-  
-#+end_src
+#+END_SRC
 
 *** Forge
 NOTE: Make sure to configure a GitHub token before using this package!
 - https://magit.vc/manual/forge/Token-Creation.html#Token-Creation
 - https://magit.vc/manual/ghub/Getting-Started.html#Getting-Started
 
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package forge
     :after magit)
-  
-#+end_src
+#+END_SRC
 
 *** diff-hl
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package diff-hl
     :after magit
     :config
     (add-hook 'magit-pre-refresh-hook 'diff-hl-magit-pre-refresh)
     (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
     (global-diff-hl-mode))
-  
-#+end_src
+#+END_SRC
 
 ** Yasnippet
-
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package yasnippet
     :config
     (setq yas-snippet-dirs '("~/.emacs.d/etc/yasnippet/snippets"))
     (yas-global-mode 1))
-  
-#+end_src
+#+END_SRC
 
 ** Lsp
 *** lsp-mode
-
 We use the excellent [[https://emacs-lsp.github.io/lsp-mode/][lsp-mode]] to enable IDE-like functionality for many different programming languages via "language servers" that speak the [[https://microsoft.github.io/language-server-protocol/][Language Server Protocol]].  Before trying to set up =lsp-mode= for a particular language, check out the [[https://emacs-lsp.github.io/lsp-mode/page/languages/][documentation for your language]] so that you can learn which language servers are available and how to install them.
 
 The =lsp-keymap-prefix= setting enables you to define a prefix for where =lsp-mode='s default keybindings will be added.  I *highly recommend* using the prefix to find out what you can do with =lsp-mode= in a buffer.
 
 The =which-key= integration adds helpful descriptions of the various keys so you should be able to learn a lot just by pressing =C-c l= in a =lsp-mode= buffer and trying different things that you find there.
-#+begin_src emacs-lisp
-  
+
+#+BEGIN_SRC emacs-lisp
   (defun my-setup-indent (n)
     ;; java/c/c++
     (setq-local c-basic-offset n)
@@ -1011,45 +885,37 @@ The =which-key= integration adds helpful descriptions of the various keys so you
     (setenv "TSSERVER_LOG_FILE" "/tmp/tsserver.log"))
   
   (add-hook 'lsp-mode-hook 'highlight-indent-guides-mode)
-  
-#+end_src
+#+END_SRC
 
 *** lsp-ui
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package lsp-ui
     :after lsp
     :hook (lsp-mode . lsp-ui-mode)
     :config
     (setq lsp-ui-doc-position 'at-point))
-  
-#+end_src
+#+END_SRC
 
 *** lsp-treemacs
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package lsp-treemacs
     :after lsp)
-  
-#+end_src
+#+END_SRC
 
 *** Javascript/Typescript
 **** Prerequisite
 For =lsp-mode= to work with TypeScript (and JavaScript) you will need to install a language server on your machine.  If you have Node.js installed, the easiest way to do that is by running the following command:
 
-#+begin_src shell :tangle no
-  
+#+BEGIN_SRC shell :tangle no
   npm install -g typescript-language-server typescript
-  
-#+end_src
+#+END_SRC
 
 This will install the [[https://github.com/theia-ide/typescript-language-server][typescript-language-server]] and the TypeScript compiler package.
 
 **** Typescript
 This is a basic configuration for the TypeScript language so that =.ts= files activate =typescript-mode= when opened.  We're also adding a hook to =typescript-mode-hook= to call =lsp-deferred= so that we activate =lsp-mode= to get LSP features every time we edit TypeScript code.
 
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package typescript-mode
     :mode ("\\.ts\\'")
     :hook (typescript-mode . lsp-deferred)
@@ -1057,85 +923,67 @@ This is a basic configuration for the TypeScript language so that =.ts= files ac
     (setq typescript-indent-level 2)
     (require 'dap-node)
     (dap-node-setup))
-  
-#+end_src
+#+END_SRC
 
 **** Javascript
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (defun efs/js-mode-setup ()
     (lsp-deferred)
     (require 'dap-node)
     (dap-node-setup))
   
   (add-hook 'js-mode-hook 'efs/js-mode-setup)
-  
-#+end_src
+#+END_SRC
 
 *** Bash
 Requires you to run: M-x lsp-install-server RET bash RET.
-#+begin_src emacs-lisp
-  
+
+#+BEGIN_SRC emacs-lisp
   (add-hook 'sh-mode-hook 'lsp-deferred)
-  
-#+end_src
+#+END_SRC
 
 ** Dap
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package dap-mode)
-  
-#+end_src
+#+END_SRC
 
 ** Yaml
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package yaml-mode
     :straight (yaml-mode :type git :host github :repo "yoshiki/yaml-mode")
     :config
     (add-hook 'yaml-mode-hook 'highlight-indent-guides-mode))
-  
-#+end_src
+#+END_SRC
 
 ** Json
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package json-mode
     :config
     (add-hook 'json-mode-hook 'highlight-indent-guides-mode))
-  
-#+end_src
+#+END_SRC
 
 ** Jq
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package jq-mode)
-  
-#+end_src
+#+END_SRC
 
 ** Rest client
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package restclient
     :config
     (add-to-list 'auto-mode-alist '("\\.http\\'" . restclient-mode)))
-  
-#+end_src
+#+END_SRC
 
 ** Asciidoc
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package adoc-mode
     :config
     (add-to-list 'auto-mode-alist '("\\.adoc\\'" . adoc-mode)))
-  
-#+end_src
+#+END_SRC
 
 * Org mode
 ** Org mode configuration
-
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (defun efs/org-mode-setup ()
     (org-indent-mode)
     (visual-line-mode 1))
@@ -1273,12 +1121,10 @@ Requires you to run: M-x lsp-install-server RET bash RET.
       (lambda () (interactive) (org-capture nil "jj")))
   
     (efs/org-font-setup))
-  
-#+end_src
+#+END_SRC
 
 ** Org slides
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package hide-mode-line)
   
   (defun org/presentation-setup ()
@@ -1317,26 +1163,21 @@ Requires you to run: M-x lsp-install-server RET bash RET.
     (org-tree-slide-header t)
     (org-tree-slide-fold-subtrees-skipped nil)
     (org-image-actual-width nil))
-  
-#+end_src
+#+END_SRC
 
 ** Configure org-bullets
-
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package org-bullets
     :after org
     :hook (org-mode . org-bullets-mode)
     :custom
     (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
-  
-#+end_src
+#+END_SRC
 
 ** Auto-tangle configuration files
 This snippet adds a hook to org-mode buffers so that org/org-babel-tangle-config gets executed each time such a buffer gets saved. This function checks to see if a configuration file being saved, and if so, automatically exports the configuration here to the associated output files.
 
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (defun org/org-babel-tangle-config ()
     (when (or (string-equal (buffer-file-name)
                             (expand-file-name "~/dotfiles/README.org"))
@@ -1353,12 +1194,10 @@ This snippet adds a hook to org-mode buffers so that org/org-babel-tangle-config
         (org-babel-tangle))))
   
   (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'org/org-babel-tangle-config)))
-  
-#+end_src
+#+END_SRC
 
 ** Babel
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (org-babel-do-load-languages
    'org-babel-load-languages
    '((emacs-lisp . t)))
@@ -1367,69 +1206,55 @@ This snippet adds a hook to org-mode buffers so that org/org-babel-tangle-config
   
   (setq org-confirm-babel-evaluate nil)
   (setq org-src-tab-acts-natively t)
-  
-#+end_src
+#+END_SRC
 
 ** Org-mime
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package org-mime
     :after org)
-  
-#+end_src 
+#+END_SRC 
 
 ** Org-web-tools
 *** Prerequisites
 Pandoc must be downloaded.
 *** Package
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package org-web-tools
     :after org)
-  
-#+end_src
+#+END_SRC
 
 ** Org-mime
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package ob-restclient
     :after org
     :config
     (org-babel-do-load-languages
      'org-babel-load-languages
      '((restclient . t))))
-  
-#+end_src 
+#+END_SRC 
 
 ** Org-jira
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package org-jira
     :straight (org-jira :type git :host github :repo "ahungry/org-jira"
                         :fork (:host github
                                      :repo "Vivien-lelouette/org-jira"))
     :after org)
-  
-#+end_src 
+#+END_SRC 
 * Devops
 ** Docker
 *** Dockerfile
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package dockerfile-mode)
-  
-#+end_src
+#+END_SRC
 
 *** Docker-compose file
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package docker-compose-mode)
-  
-#+end_src
+#+END_SRC
 
 *** Docker
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package docker
     :config
     (define-derived-mode docker-container-mode tabulated-list-mode "Containers Menu"
@@ -1454,12 +1279,10 @@ Pandoc must be downloaded.
     (keys/leader-keys
       "d"  'docker
       "D"  'docker-compose))
-  
-#+end_src
+#+END_SRC
 
 ** Kubernetes
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package kubernetes
     :config
     (setq kubernetes-redraw-frequency 3600)
@@ -1473,16 +1296,15 @@ Pandoc must be downloaded.
     (kubernetes-deployments-refresh-now)
     (kubernetes-jobs-refresh-now)
     (kubernetes-pods-refresh-now))
-  
-#+end_src
+#+END_SRC
 
 * Spell checking
 ** Flyspell
 Flyspell enables on-the-fly spell checking in Emacs and uses Flyspell Correct for distraction-free words correction.
 For french, you will need the package aspell-fr.
 TODO: add this a prerequisite.
-#+begin_src emacs-lisp
-  
+
+#+BEGIN_SRC emacs-lisp
   (use-package flyspell
     :straight (:type built-in)
     :diminish
@@ -1491,13 +1313,12 @@ TODO: add this a prerequisite.
     (flyspell-issue-message-flag nil)
     (ispell-program-name "aspell")
     (ispell-extra-args '("--sug-mode=ultra" "--lang=en_US" "--run-together" "--run-together-limit=16")))
-  
-#+end_src
+#+END_SRC
 
 ** Wucuo
 Fast spell check based on flyspell.
-#+begin_src emacs-lisp
-  
+
+#+BEGIN_SRC emacs-lisp
   (use-package wucuo
     :if (executable-find "aspell")
     :hook (((text-mode outline-mode prog-mode) . wucuo-start))
@@ -1506,56 +1327,48 @@ Fast spell check based on flyspell.
     (ispell-program-name "aspell")
     (ispell-extra-args
      '("--sug-mode=ultra" "--lang=en_US")))
-  
-#+end_src
+#+END_SRC
 
 ** Guess language
 This package allows to guess which language you are typing on so that flyspell can check your spelling correctly.
-#+begin_src emacs-lisp
-  
+
+#+BEGIN_SRC emacs-lisp
   (use-package guess-language
     :config
     (setq guess-language-languages '(en fr))
     (add-hook 'wucuo-mode-hook (lambda () (guess-language-mode 1))))
-  
-#+end_src
+#+END_SRC
 
 ** Langtool
 This package allows to guess which language you are typing on so that flyspell can check your spelling correctly.
 This needs languagetool and JAVA 8 or newer. Languagetool can be find here: https://languagetool.org/download/LanguageTool-stable.zip.
 TODO: add this a prerequisite.
-#+begin_src emacs-lisp
-  
+
+#+BEGIN_SRC emacs-lisp
   (use-package langtool
     :straight (langtool :type git :host github :repo "mhayashi1120/Emacs-langtool")
     :config
     (setq langtool-language-tool-server-jar "~/Tools/LanguageTool/languagetool-server.jar"))
-  
-#+end_src
+#+END_SRC
 
 * Shell & Terminals
 ** Vterm
 *** Prerequisites
 **** Ubuntu
-#+begin_src shell :tangle .scripts/emacs/init-ubuntu.sh :mkdirp yes
-  
+#+BEGIN_SRC shell :tangle .scripts/emacs/init-ubuntu.sh :mkdirp yes
   sudo apt install cmake libtool libtool-bin zsh
-  
-#+end_src
+#+END_SRC
 
 *** Config
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package vterm
     :config
     (setq vterm-shell "/bin/zsh")
     (setq vterm-buffer-name-string "vterm: %s"))
-  
-#+end_src
+#+END_SRC
 
 ** Term
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package term
     :config
     (setq explicit-shell-file-name "sh")
@@ -1570,44 +1383,34 @@ TODO: add this a prerequisite.
   
   (use-package eterm-256color
     :hook (term-mode . eterm-256color-mode))
-  
-#+end_src
+#+END_SRC
 
 * Window Management
 ** Windmove
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package windmove)
-  
-#+end_src
+#+END_SRC
 
 ** Windsize
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package windsize)
-  
-#+end_src
+#+END_SRC
 
 ** Zoom
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package zoom
     :config
     (setq zoom-size '(0.618 . 0.618)))
-  
-#+end_src
+#+END_SRC
 
 ** Frames only
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package frames-only-mode)
-  
-#+end_src
+#+END_SRC
 
 * Web browsing
 ** Shr (html renderer)
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package shr
     :config
     (setq gnus-inhibit-images nil)
@@ -1616,12 +1419,10 @@ TODO: add this a prerequisite.
     (setq shr-max-image-proportion 1)
     (setq shr-width nil)
     (setq shr-folding-mode t))
-  
-#+end_src 
+#+END_SRC 
 
 ** Shrface
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   ;; Used to highlight code
   (use-package shr-tag-pre-highlight
     :after shr
@@ -1677,11 +1478,10 @@ TODO: add this a prerequisite.
         (insert (propertize "#+END_SRC" 'face 'org-block-end-line ) )
         (shr-ensure-newline)
         (insert "\n"))))
-#+end_src 
+#+END_SRC 
 
 ** Eww
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package eww
     :init
     (add-hook 'eww-after-render-hook #'shrface-mode)
@@ -1696,13 +1496,11 @@ TODO: add this a prerequisite.
     (define-key eww-mode-map (kbd "<normal-state> <backtab>") nil)
   
     (require 'shrface))
-  
-#+end_src 
+#+END_SRC 
 
 * Mails
 ** gnus
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (use-package gnus
     :init
     (add-hook 'gnus-article-mode-hook #'shrface-mode)
@@ -1837,24 +1635,20 @@ TODO: add this a prerequisite.
     ;;   - It can render html color
     ;; So below line is optional.
     (setq mm-text-html-renderer 'shr))
-  
-#+end_src 
+#+END_SRC 
 
 * Shell command runner
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (defun shell/run-in-background (command)
     (let ((command-parts (split-string command "[ ]+")))
       (apply #'call-process `(,(car command-parts) nil 0 nil ,@(cdr command-parts)))))
   
   (defun shell/async-command-no-output (command)
     (call-process-shell-command (concat command " &") nil 0))
-  
-#+end_src
+#+END_SRC
 
 * Default browsers
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (defun browse-url-qutebrowser (url &optional _new-window)
     "Ask the Qutebrowser WWW browser to load URL.
   Default to the URL around or before point.
@@ -1863,31 +1657,26 @@ TODO: add this a prerequisite.
     (setq url (browse-url-encode-url url))
     (shell/async-command-no-output (concat "qutebrowser " url)))
   ;; (setq browse-url-browser-function 'browse-url-qutebrowser)
-  
-#+end_src 
+#+END_SRC 
 
 * Start exwm if wanted
 If emacs is started with emacs --eval "(exwm-enable)", then load exwm.
-#+begin_src emacs-lisp
-  
+
+#+BEGIN_SRC emacs-lisp
   (autoload 'exwm-enable "~/.emacs.d/desktop.el")
-  
-#+end_src
+#+END_SRC
 
 * Local custom setup
 If a setup is specific to a machine, add it on this file.
-#+begin_src emacs-lisp
-  
+
+#+BEGIN_SRC emacs-lisp
   (let ((local-settings "~/.emacs.d/local.el"))
     (when (file-exists-p local-settings)
       (load-file local-settings)))
-  
-#+end_src
+#+END_SRC
 
 * Shortcuts
-
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   ;; easy window resize
   (global-set-key (kbd "C-s-h") #'windsize-left)
   (global-set-key (kbd "C-s-l") #'windsize-right)
@@ -1937,24 +1726,18 @@ If a setup is specific to a machine, add it on this file.
   
   (global-set-key (kbd "C-H-s-s") #'consult-ripgrep)
   (global-set-key (kbd "C-H-s") #'consult-line)
-  
-#+end_src
+#+END_SRC
 
 * End of the wrap
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   )
   (setq gc-cons-threshold (* 2 1000 1000))
   (provide 'init)
-  
-#+end_src
+#+END_SRC
 
 * Startup scripts
-#+begin_src emacs-lisp
-  
+#+BEGIN_SRC emacs-lisp
   (theme/nord)
   (fonts/small-size)
   (frames-only-mode)
-  
-#+end_src
-
+#+END_SRC

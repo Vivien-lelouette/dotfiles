@@ -1,8 +1,7 @@
 #+title Qutebrowser configuration
 
 * Keybindings
-#+begin_src python :tangle .config/qutebrowser/config.py :mkdirp yes
-
+#+BEGIN_SRC python :tangle .config/qutebrowser/config.py :mkdirp yes
   # Automatically turn on insert mode when a loaded page focuses a text field
   c.input.insert_mode.auto_load = True
   
@@ -21,12 +20,10 @@
   # Vim-style movement keys in command mode
   config.bind('<Ctrl-j>', 'completion-item-focus --history next', mode='command')
   config.bind('<Ctrl-k>', 'completion-item-focus --history prev', mode='command')
-
-#+end_src
+#+END_SRC
 
 * Tabs
-#+begin_src python :tangle .config/qutebrowser/config.py :mkdirp yes
-
+#+BEGIN_SRC python :tangle .config/qutebrowser/config.py :mkdirp yes
   # Open every tab as a new window, Vimb style
   c.tabs.tabs_are_windows = True
   c.tabs.show = "multiple"
@@ -36,12 +33,10 @@
   c.scrolling.smooth = True
   c.session.lazy_restore = True
   c.content.autoplay = False
-  
-#+end_src
+#+END_SRC
 
 * Style
-#+begin_src python :tangle .config/qutebrowser/config.py :mkdirp yes
-
+#+BEGIN_SRC python :tangle .config/qutebrowser/config.py :mkdirp yes
   # Scale pages and UI better for hidpi
   c.zoom.default = "100%"
 
@@ -384,13 +379,10 @@
   c.colors.tabs.selected.odd.fg = nord['nord5']
 
   # c.colors.webpage.bg = nord['nord0']
-
-#+end_src
+#+END_SRC
 
 * Ensures that manual configs are loaded
-#+begin_src python :tangle .config/qutebrowser/config.py :mkdirp yes
-
+#+BEGIN_SRC python :tangle .config/qutebrowser/config.py :mkdirp yes
  config.load_autoconfig()
-
-#+end_src
+#+END_SRC
 

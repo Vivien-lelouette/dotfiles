@@ -43,14 +43,14 @@
 
 (defun xrandr/pixels-to-number-list (pixels)
   (if (cl-search ":" pixels)
-    (mapcar 'string-to-number (split-string pixels ":"))
+      (mapcar 'string-to-number (split-string pixels ":"))
     pixels))
 
 (defun xrandr/entries-format (xrandr-entry)
   (mapcar 'xrandr/pixels-to-number-list xrandr-entry))
 
 (defun xrandr/entry-position (xrandr-entry)
- (car (cdr xrandr-entry)))
+  (car (cdr xrandr-entry)))
 
 (defun xrandr/entry-position-x (xrandr-entry)
   (car (xrandr/entry-position xrandr-entry)))
@@ -59,7 +59,7 @@
   (car (cdr (xrandr/entry-position xrandr-entry))))
 
 (defun xrandr/entry-resolution (xrandr-entry)
- (car (cdr (cdr xrandr-entry))))
+  (car (cdr (cdr xrandr-entry))))
 
 (defun xrandr/entry-resolution-x (xrandr-entry)
   (car (xrandr/entry-resolution xrandr-entry)))
@@ -71,14 +71,14 @@
 ;; Format is as following:
 ;; (("monitor-1" ("position-x" "position-y") ("resolution-x" "resolution-y")))
 (defun xrandr/build-active-monitors ()
-      (setq xrandr/active-monitors
+  (setq xrandr/active-monitors
         (mapcar 'xrandr/entries-format
-          (mapcar 'reverse
-            (remove nil
-                    (mapcar 'split-string
-                            (split-string
-                             (shell-command-to-string "xrandr --listactivemonitors | cut -d ' ' -f4-6 | sed -e 's|/[0-9]*x|x|g' -e 's|/[0-9]*+| |g' -e 's/[x|+]/:/g'")
-                             "\n")))))))
+                (mapcar 'reverse
+                        (remove nil
+                                (mapcar 'split-string
+                                        (split-string
+                                         (shell-command-to-string "xrandr --listactivemonitors | cut -d ' ' -f4-6 | sed -e 's|/[0-9]*x|x|g' -e 's|/[0-9]*+| |g' -e 's/[x|+]/:/g'")
+                                         "\n")))))))
 
 (defun exwm/build-workspace-monitor (monitor current_workspace max_workspace)
   (if (> current_workspace max_workspace)
@@ -107,51 +107,51 @@
   (setq exwm-randr-workspace-monitor-plist (exwm/build-monitors)))
 
 ;; Display time every minute. will be used to display time and battery to a buffer displayed in child fames
-  (require 'battery)
+(require 'battery)
 
-  (defun panel/battery ()
-    (setq battery-string (replace-regexp-in-string "\\[" ""
-      (replace-regexp-in-string "\\+" ""
-        (replace-regexp-in-string "%]" ""
-          (battery-format battery-mode-line-format (funcall battery-status-function))))))
-    (setq battery-value (string-to-number battery-string))
-    (setq battery-icon
-      (if (and (> battery-value 95))
-         ""
-         (if (and (< battery-value 96) (> battery-value 60))
-           ""
-           (if (and (< battery-value 61) (> battery-value 25))
-             ""
-             (if (and (< battery-value 26) (> battery-value 2))
-               "" 
-               "")))))
-    (concat battery-icon "  " battery-string "%"))
+(defun panel/battery ()
+  (setq battery-string (replace-regexp-in-string "\\[" ""
+                                                 (replace-regexp-in-string "\\+" ""
+                                                                           (replace-regexp-in-string "%]" ""
+                                                                                                     (battery-format battery-mode-line-format (funcall battery-status-function))))))
+  (setq battery-value (string-to-number battery-string))
+  (setq battery-icon
+        (if (and (> battery-value 95))
+            ""
+          (if (and (< battery-value 96) (> battery-value 60))
+              ""
+            (if (and (< battery-value 61) (> battery-value 25))
+                ""
+              (if (and (< battery-value 26) (> battery-value 2))
+                  "" 
+                "")))))
+  (concat battery-icon "  " battery-string "%"))
 
-    (panel/battery)
+(panel/battery)
 
-  (defun panel/time ()
-    (setq current-date-time-format "%a %d %b %Y %H:%M")
-    (format-time-string current-date-time-format (current-time)))
+(defun panel/time ()
+  (setq current-date-time-format "%a %d %b %Y %H:%M")
+  (format-time-string current-date-time-format (current-time)))
 
-  (defun panel/print ()
-    (concat (panel/time) "   " (panel/battery)))
+(defun panel/print ()
+  (concat (panel/time) "   " (panel/battery)))
 
-  (defun panel/write-buffer ()
-    (setq my-panel-buffer (get-buffer-create "*panel*"))
-    (with-current-buffer "*panel*" ; replace with the name of the buffer you want to append
-      (erase-buffer)
-      (insert (panel/print))))
+(defun panel/write-buffer ()
+  (setq my-panel-buffer (get-buffer-create "*panel*"))
+  (with-current-buffer "*panel*" ; replace with the name of the buffer you want to append
+    (erase-buffer)
+    (insert (panel/print))))
 
-  (defun utils/get-next-minute ()
-    (setq hour-minute-format "%H:%M")
-    (format-time-string hour-minute-format (time-add (current-time) (seconds-to-time 60))))
+(defun utils/get-next-minute ()
+  (setq hour-minute-format "%H:%M")
+  (format-time-string hour-minute-format (time-add (current-time) (seconds-to-time 60))))
 
-  (panel/write-buffer)
-  (setq panel/timer (run-at-time (utils/get-next-minute) 60 'panel/write-buffer))
+(panel/write-buffer)
+(setq panel/timer (run-at-time (utils/get-next-minute) 60 'panel/write-buffer))
 
-  (setq panel/length 0)
+(setq panel/length 0)
 
-  (add-hook 'after-make-frame-functions
+(add-hook 'after-make-frame-functions
           (lambda (frame)
             (select-frame frame)
             (cond
@@ -163,7 +163,7 @@
               (setq panel/length (point-max))))
             (other-window -1)))
 
-  (setq panel/list '())
+(setq panel/list '())
 
 (defun default-font-width () 
   "Return the width in pixels of a character in the current
@@ -179,61 +179,61 @@ will also be the width of all other printable characters."
       (insert "m")
       (aref (aref (font-get-glyphs (font-at 1) 1 2) 0) 4))))
 
-  ;; Width is the frame width
-  (defun panel/get-width ()
-    238)
-     ;; (+ (* panel/length (default-font-width)) 4))
+;; Width is the frame width
+(defun panel/get-width ()
+  238)
+;; (+ (* panel/length (default-font-width)) 4))
 
-  ;; Height is character height + 4 pixels (2 pixels arround the text)
-  (defun panel/get-height ()
-    (+ (aref (font-info (face-font 'default)) 2) 4))
+;; Height is character height + 4 pixels (2 pixels arround the text)
+(defun panel/get-height ()
+  (+ (aref (font-info (face-font 'default)) 2) 4))
 
 (defun panel/resize-and-position (frame xrandr-entry)
- ;; (set-frame-size frame panel/length 1)
- (set-frame-size frame 34 1)
- (set-frame-position frame
-                     (- (+ (xrandr/entry-position-x xrandr-entry) (xrandr/entry-resolution-x xrandr-entry)) (+ (panel/get-width) 90))
-                     (- (+ (xrandr/entry-position-y xrandr-entry) (xrandr/entry-resolution-y xrandr-entry)) (panel/get-height))))
+  ;; (set-frame-size frame panel/length 1)
+  (set-frame-size frame 34 1)
+  (set-frame-position frame
+                      (- (+ (xrandr/entry-position-x xrandr-entry) (xrandr/entry-resolution-x xrandr-entry)) (+ (panel/get-width) 90))
+                      (- (+ (xrandr/entry-position-y xrandr-entry) (xrandr/entry-resolution-y xrandr-entry)) (panel/get-height))))
 
-  (defun panel/make-frame (xrandr-entry)
-    (setq current-panel (make-frame
-     `((name . "panel-frame")
-       (parent-frame . nil)
-       (no-accept-focus . nil)
-       (window-min-width . 1)
-       (window-min-height . 1)
-       (min-width  . t)
-       (min-height . t)
-       (border-width . 0)
-       (internal-border-width . 0)
-       (vertical-scroll-bars . nil)
-       (horizontal-scroll-bars . nil)
-       (left-fringe . 10)
-       (right-fringe . 0)
-       (menu-bar-lines . 0)
-       (tool-bar-lines . 0)
-       (line-spacing . 0)
-       (unsplittable . t)
-       (no-other-frame . t)
-       (undecorated . t)
-       (unsplittable . t)
-       (cursor-type . nil)
-       (minibuffer . nil)
-       (no-special-glyphs . t))))
-    (push current-panel panel/list)
-    (panel/resize-and-position current-panel xrandr-entry))
+(defun panel/make-frame (xrandr-entry)
+  (setq current-panel (make-frame
+                       `((name . "panel-frame")
+                         (parent-frame . nil)
+                         (no-accept-focus . nil)
+                         (window-min-width . 1)
+                         (window-min-height . 1)
+                         (min-width  . t)
+                         (min-height . t)
+                         (border-width . 0)
+                         (internal-border-width . 0)
+                         (vertical-scroll-bars . nil)
+                         (horizontal-scroll-bars . nil)
+                         (left-fringe . 10)
+                         (right-fringe . 0)
+                         (menu-bar-lines . 0)
+                         (tool-bar-lines . 0)
+                         (line-spacing . 0)
+                         (unsplittable . t)
+                         (no-other-frame . t)
+                         (undecorated . t)
+                         (unsplittable . t)
+                         (cursor-type . nil)
+                         (minibuffer . nil)
+                         (no-special-glyphs . t))))
+  (push current-panel panel/list)
+  (panel/resize-and-position current-panel xrandr-entry))
 
-  (defun panel/hide ()
-    (interactive)
-    (cl-loop for frame in panel/list
-      collect (delete-frame frame))
-    (setq panel/list '()))
+(defun panel/hide ()
+  (interactive)
+  (cl-loop for frame in panel/list
+           collect (delete-frame frame))
+  (setq panel/list '()))
 
-  (defun panel/display ()
-    (interactive)
-    (panel/hide)
-    (cl-loop for xrandr-entry in xrandr/active-monitors
-      do (panel/make-frame xrandr-entry)))
+(defun panel/display ()
+  (interactive)
+  (panel/hide)
+  (cl-loop for xrandr-entry in xrandr/active-monitors
+           do (panel/make-frame xrandr-entry)))
 
 (defun app/qutebrowser ()
   (interactive)
@@ -322,9 +322,9 @@ will also be the width of all other printable characters."
 
 (defun exwm/exwm-update-title ()
   (exwm-workspace-rename-buffer
-  (concat exwm-class-name ": "
-         (if (<= (length exwm-title) 100) exwm-title
-           (concat (substring exwm-title 0 99) "...")))))
+   (concat exwm-class-name ": "
+           (if (<= (length exwm-title) 100) exwm-title
+             (concat (substring exwm-title 0 99) "...")))))
 
 (use-package exwm
   :config
