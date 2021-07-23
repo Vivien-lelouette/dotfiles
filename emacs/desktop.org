@@ -1,4 +1,4 @@
-#+title Destkop with exwm configuration
+#+TITLE: Destkop with exwm configuration
 #+PROPERTY: header-args:emacs-lisp :tangle .emacs.d/desktop.el :mkdirp yes
 * System files
 ** Desktop File

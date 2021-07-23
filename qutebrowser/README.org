@@ -1,4 +1,4 @@
-#+title Qutebrowser configuration
+#+TITLE: Qutebrowser configuration
 
 * Keybindings
 #+BEGIN_SRC python :tangle .config/qutebrowser/config.py :mkdirp yes

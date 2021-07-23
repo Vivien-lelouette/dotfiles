@@ -1,4 +1,4 @@
-#+title Emacs configuration
+#+TITLE: Emacs configuration
 #+PROPERTY: header-args:emacs-lisp :tangle .emacs.d/init.el :mkdirp yes
 
 * installation
