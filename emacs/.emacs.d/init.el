@@ -862,6 +862,8 @@
             (string-equal (buffer-file-name)
                           (expand-file-name "~/dotfiles/emacs/desktop.org"))
             (string-equal (buffer-file-name)
+                          (expand-file-name "~/dotfiles/stumpwm/README.org"))
+            (string-equal (buffer-file-name)
                           (expand-file-name "~/dotfiles/emacs/local.org")))
     ;; Dynamic scoping to the rescue
     (let ((org-confirm-babel-evaluate nil))
@@ -1220,6 +1222,14 @@
 (defun shell/async-command-no-output (command)
   (call-process-shell-command (concat command " &") nil 0))
 
+(use-package app-launcher
+  :straight '(app-launcher :host github :repo "SebastienWae/app-launcher"))
+
+(use-package nswbuff
+  :init
+  (setq nswbuff-display-intermediate-buffers t)
+  (setq nswbuff-exclude-buffer-regexps '("^ .*" "^\\*.*\\*" "^magit:.*")))
+
 (defun browse-url-qutebrowser (url &optional _new-window)
   "Ask the Qutebrowser WWW browser to load URL.
 Default to the URL around or before point.
@@ -1236,15 +1246,15 @@ The optional argument NEW-WINDOW is not used."
     (load-file local-settings)))
 
 ;; easy window resize
-(global-set-key (kbd "C-s-h") #'windsize-left)
-(global-set-key (kbd "C-s-l") #'windsize-right)
-(global-set-key (kbd "C-s-j") #'windsize-down)
-(global-set-key (kbd "C-s-k") #'windsize-up)
+;; (global-set-key (kbd "C-s-h") #'windsize-left)
+;; (global-set-key (kbd "C-s-l") #'windsize-right)
+;; (global-set-key (kbd "C-s-j") #'windsize-down)
+;; (global-set-key (kbd "C-s-k") #'windsize-up)
 
-(global-set-key (kbd "C-s-<left>") #'windsize-left)
-(global-set-key (kbd "C-s-<down>") #'windsize-down)
-(global-set-key (kbd "C-s-<up>") #'windsize-up)
-(global-set-key (kbd "C-s-<right>") #'windsize-right)
+;; (global-set-key (kbd "C-s-<left>") #'windsize-left)
+;; (global-set-key (kbd "C-s-<down>") #'windsize-down)
+;; (global-set-key (kbd "C-s-<up>") #'windsize-up)
+;; (global-set-key (kbd "C-s-<right>") #'windsize-right)
 
 (global-set-key (kbd "s-b") #'consult-buffer)
 (global-set-key (kbd "s-B") #'ibuffer)
@@ -1252,24 +1262,24 @@ The optional argument NEW-WINDOW is not used."
 (global-set-key (kbd "s-p") #'treemacs)
 
 (global-set-key (kbd "s-X") #'kill-current-buffer)
-(global-set-key (kbd "s-Q") #'(lambda () (interactive) (kill-current-buffer) (delete-window)))
+;; (global-set-key (kbd "s-Q") #'(lambda () (interactive) (kill-current-buffer) (delete-window)))
 
 (global-set-key (kbd "s-x") #'execute-extended-command)
-(global-set-key (kbd "s-.") #'find-file)
+;; (global-set-key (kbd "s-.") #'find-file)
 
 (global-set-key (kbd "C-s-s") #'consult-ripgrep)
 (global-set-key (kbd "C-s") #'consult-line)
 
 
-(global-set-key (kbd "C-H-s-h") #'windsize-left)
-(global-set-key (kbd "C-H-s-l") #'windsize-right)
-(global-set-key (kbd "C-H-s-j") #'windsize-down)
-(global-set-key (kbd "C-H-s-k") #'windsize-up)
+;; (global-set-key (kbd "C-H-s-h") #'windsize-left)
+;; (global-set-key (kbd "C-H-s-l") #'windsize-right)
+;; (global-set-key (kbd "C-H-s-j") #'windsize-down)
+;; (global-set-key (kbd "C-H-s-k") #'windsize-up)
 
-(global-set-key (kbd "C-H-s-<left>") #'windsize-left)
-(global-set-key (kbd "C-H-s-<down>") #'windsize-down)
-(global-set-key (kbd "C-H-s-<up>") #'windsize-up)
-(global-set-key (kbd "C-H-s-<right>") #'windsize-right)
+;; (global-set-key (kbd "C-H-s-<left>") #'windsize-left)
+;; (global-set-key (kbd "C-H-s-<down>") #'windsize-down)
+;; (global-set-key (kbd "C-H-s-<up>") #'windsize-up)
+;; (global-set-key (kbd "C-H-s-<right>") #'windsize-right)
 
 (global-set-key (kbd "H-s-b") #'consult-buffer)
 (global-set-key (kbd "H-s-B") #'ibuffer)
@@ -1277,10 +1287,10 @@ The optional argument NEW-WINDOW is not used."
 (global-set-key (kbd "H-s-p") #'treemacs)
 
 (global-set-key (kbd "H-s-X") #'kill-current-buffer)
-(global-set-key (kbd "H-s-Q") #'(lambda () (interactive) (kill-current-buffer) (delete-window)))
+;; (global-set-key (kbd "H-s-Q") #'(lambda () (interactive) (kill-current-buffer) (delete-window)))
 
 (global-set-key (kbd "H-s-x") #'execute-extended-command)
-(global-set-key (kbd "H-s-.") #'find-file)
+;; (global-set-key (kbd "H-s-.") #'find-file)
 
 (global-set-key (kbd "C-H-s-s") #'consult-ripgrep)
 (global-set-key (kbd "C-H-s") #'consult-line)
