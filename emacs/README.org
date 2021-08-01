@@ -439,6 +439,34 @@ Functions to split and move to the new split.
   (use-package nord-theme)
 #+END_SRC
 
+** Doom themes
+#+BEGIN_SRC emacs-lisp
+  (defun theme/doom-nord ()
+    (interactive)
+    (set-face-attribute 'fringe nil :background "#2e3440")
+    (set-face-attribute 'mode-line-inactive nil :background nil)
+    ;; (set-face-attribute 'scroll-bar nil :background "#2b323d")
+  
+    ;; Line number styling for mode change
+    (setq theme/normal-lines-fg "#6c7686")
+    (setq theme/normal-lines-bg "#2e3440")
+    (setq theme/normal-current-line-fg "#ffffff")
+    (setq theme/normal-current-line-bg "#242832")
+  
+    (setq theme/insert-lines-fg "#2e3440")
+    (setq theme/insert-lines-bg "#515e46")
+    (setq theme/insert-current-line-fg "#ffffff")
+    (setq theme/insert-current-line-bg "#a3be8c")
+  
+    (setq theme/visual-lines-fg "#2e3440")
+    (setq theme/visual-lines-bg "#594656")
+    (setq theme/visual-current-line-fg "#ffffff")
+    (setq theme/visual-current-line-bg "#b48ead")
+    (load-theme 'doom-nord t))
+  
+  (use-package doom-themes)
+#+END_SRC
+
 * UI packages
 ** All the icons
 The first time you load your configuration on a new machine, you'll need to run the following command interactively so that mode line icons display correctly:
@@ -679,7 +707,15 @@ Will try Corfu back if it has multi-backend support at some point.
   (use-package company-quickhelp          
     :ensure t
     :defer t
-    :init (add-hook 'global-company-mode-hook #'company-quickhelp-mode))
+    :init (add-hook 'global-company-mode-hook #'company-quickhelp-mode)
+    :config
+    (setq company-quickhelp-mode t))
+#+END_SRC
+
+*** Company-box
+#+BEGIN_SRC emacs-lisp
+  (use-package company-box
+    :hook (company-mode . company-box-mode))
 #+END_SRC
 
 *** Company restclient
@@ -1243,6 +1279,7 @@ Pandoc must be downloaded.
                                      :repo "Vivien-lelouette/org-jira"))
     :after org)
 #+END_SRC 
+
 * Devops
 ** Docker
 *** Dockerfile
@@ -1663,6 +1700,7 @@ TODO: add this a prerequisite.
     (setq nswbuff-display-intermediate-buffers t)
     (setq nswbuff-exclude-buffer-regexps '("^ .*" "^\\*.*\\*" "^magit:.*")))
  #+END_SRC
+
 * Default browsers
 #+BEGIN_SRC emacs-lisp
   (defun browse-url-qutebrowser (url &optional _new-window)
@@ -1753,7 +1791,7 @@ If a setup is specific to a machine, add it on this file.
 
 * Startup scripts
 #+BEGIN_SRC emacs-lisp
-  (theme/nord)
-  (fonts/small-size)
+  (theme/doom-nord)
+  (fonts/normal-size)
   (frames-only-mode)
 #+END_SRC

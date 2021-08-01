@@ -315,6 +315,31 @@
 
 (use-package nord-theme)
 
+(defun theme/doom-nord ()
+  (interactive)
+  (set-face-attribute 'fringe nil :background "#2e3440")
+  (set-face-attribute 'mode-line-inactive nil :background nil)
+  ;; (set-face-attribute 'scroll-bar nil :background "#2b323d")
+
+  ;; Line number styling for mode change
+  (setq theme/normal-lines-fg "#6c7686")
+  (setq theme/normal-lines-bg "#2e3440")
+  (setq theme/normal-current-line-fg "#ffffff")
+  (setq theme/normal-current-line-bg "#242832")
+
+  (setq theme/insert-lines-fg "#2e3440")
+  (setq theme/insert-lines-bg "#515e46")
+  (setq theme/insert-current-line-fg "#ffffff")
+  (setq theme/insert-current-line-bg "#a3be8c")
+
+  (setq theme/visual-lines-fg "#2e3440")
+  (setq theme/visual-lines-bg "#594656")
+  (setq theme/visual-current-line-fg "#ffffff")
+  (setq theme/visual-current-line-bg "#b48ead")
+  (load-theme 'doom-nord t))
+
+(use-package doom-themes)
+
 (use-package all-the-icons)
 
 (use-package all-the-icons-dired
@@ -483,7 +508,12 @@
 (use-package company-quickhelp          
   :ensure t
   :defer t
-  :init (add-hook 'global-company-mode-hook #'company-quickhelp-mode))
+  :init (add-hook 'global-company-mode-hook #'company-quickhelp-mode)
+  :config
+  (setq company-quickhelp-mode t))
+
+(use-package company-box
+  :hook (company-mode . company-box-mode))
 
 (use-package company-quickhelp          
   :ensure t
@@ -1299,6 +1329,6 @@ The optional argument NEW-WINDOW is not used."
 (setq gc-cons-threshold (* 2 1000 1000))
 (provide 'init)
 
-(theme/nord)
-(fonts/small-size)
+(theme/doom-nord)
+(fonts/normal-size)
 (frames-only-mode)
