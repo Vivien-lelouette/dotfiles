@@ -1275,55 +1275,12 @@ The optional argument NEW-WINDOW is not used."
   (when (file-exists-p local-settings)
     (load-file local-settings)))
 
-;; easy window resize
-;; (global-set-key (kbd "C-s-h") #'windsize-left)
-;; (global-set-key (kbd "C-s-l") #'windsize-right)
-;; (global-set-key (kbd "C-s-j") #'windsize-down)
-;; (global-set-key (kbd "C-s-k") #'windsize-up)
-
-;; (global-set-key (kbd "C-s-<left>") #'windsize-left)
-;; (global-set-key (kbd "C-s-<down>") #'windsize-down)
-;; (global-set-key (kbd "C-s-<up>") #'windsize-up)
-;; (global-set-key (kbd "C-s-<right>") #'windsize-right)
-
-(global-set-key (kbd "s-b") #'consult-buffer)
-(global-set-key (kbd "s-B") #'ibuffer)
-
-(global-set-key (kbd "s-p") #'treemacs)
-
-(global-set-key (kbd "s-X") #'kill-current-buffer)
-;; (global-set-key (kbd "s-Q") #'(lambda () (interactive) (kill-current-buffer) (delete-window)))
+(global-set-key (kbd "C-s-q") #'kill-current-buffer)
 
 (global-set-key (kbd "s-x") #'execute-extended-command)
-;; (global-set-key (kbd "s-.") #'find-file)
 
 (global-set-key (kbd "C-s-s") #'consult-ripgrep)
 (global-set-key (kbd "C-s") #'consult-line)
-
-
-;; (global-set-key (kbd "C-H-s-h") #'windsize-left)
-;; (global-set-key (kbd "C-H-s-l") #'windsize-right)
-;; (global-set-key (kbd "C-H-s-j") #'windsize-down)
-;; (global-set-key (kbd "C-H-s-k") #'windsize-up)
-
-;; (global-set-key (kbd "C-H-s-<left>") #'windsize-left)
-;; (global-set-key (kbd "C-H-s-<down>") #'windsize-down)
-;; (global-set-key (kbd "C-H-s-<up>") #'windsize-up)
-;; (global-set-key (kbd "C-H-s-<right>") #'windsize-right)
-
-(global-set-key (kbd "H-s-b") #'consult-buffer)
-(global-set-key (kbd "H-s-B") #'ibuffer)
-
-(global-set-key (kbd "H-s-p") #'treemacs)
-
-(global-set-key (kbd "H-s-X") #'kill-current-buffer)
-;; (global-set-key (kbd "H-s-Q") #'(lambda () (interactive) (kill-current-buffer) (delete-window)))
-
-(global-set-key (kbd "H-s-x") #'execute-extended-command)
-;; (global-set-key (kbd "H-s-.") #'find-file)
-
-(global-set-key (kbd "C-H-s-s") #'consult-ripgrep)
-(global-set-key (kbd "C-H-s") #'consult-line)
 
 )
 (setq gc-cons-threshold (* 2 1000 1000))

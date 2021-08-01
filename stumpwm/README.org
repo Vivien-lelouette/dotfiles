@@ -5,6 +5,7 @@
 #+BEGIN_SRC shell :tangle .scripts/stumpwm/init-ubuntu.sh :shebang #!/bin/sh :mkdirp yes
   sudo apt install stumpwm
 #+END_SRC
+
 * StumpWM configuration
 #+BEGIN_SRC lisp
   (in-package :stumpwm)
@@ -61,8 +62,6 @@ Allow to switch to any window regardless of their groups.
 #+END_SRC
 
 **** Keybind
-This
-
 #+BEGIN_SRC lisp
   (define-key *top-map* (kbd "s-w") "global-pull-windowlist")
   (define-key *top-map* (kbd "s-W") "global-windowlist")
@@ -277,12 +276,36 @@ In this case, I move inside of Emacs frames instead of StumpWM frames if Emacs h
 #+END_SRC
 
 ** Create and deleting frames and windows
+*** Utils
+#+BEGIN_SRC lisp
+  (defcommand emacs-run-or-pull-hidden (command) (:string)
+              (run-or-pull-hidden "emacsclient -c" '(:class "Emacs"))
+              (run-shell-command (concatenate 'string "emacsclient -e \"" command "\"")))
+  
+  (defcommand emacs-interactive-aux (command) (:string)
+              (run-or-pull-hidden "emacsclient -c" '(:class "Emacs"))
+              (run-shell-command (concatenate 'string "emacsclient -e \"(call-interactively #'" command ")\"")))
+  
+  (defcommand emacs-interactive (command) (:string)
+              (let ((w (current-window)))
+                (if (string= (window-class-safe w) "Emacs")
+                    (run-shell-command (concatenate 'string "emacsclient -e \"(call-interactively #'" command ")\""))
+                    (emacs-interactive-aux command))))
+
+  (defcommand utils/delete-window () ()
+              (let ((w (current-window)))
+                (if (string= (window-class-safe w) "Emacs")
+                    (emacs-interactive "kill-buffer")
+                    (delete-window))))
+#+END_SRC
+
 *** Keybind
 #+BEGIN_SRC lisp
   (define-key *top-map* (kbd "s-s") "hsplit")
   (define-key *top-map* (kbd "s-S") "vsplit")
   (define-key *top-map* (kbd "s-Q") "remove-split")
   (define-key *top-map* (kbd "s-q") "delete")
+  ;; (define-key *top-map* (kbd "C-s-q") "utils/delete-window")
 #+END_SRC
 
 ** Select frames
@@ -332,20 +355,6 @@ In this case, I move inside of Emacs frames instead of StumpWM frames if Emacs h
 ** Switch between Emacs window/buffer
 *** Utils
 #+BEGIN_SRC lisp
-  (defcommand emacs-run-or-pull-hidden (command) (:string)
-              (run-or-pull-hidden "emacsclient -c" '(:class "Emacs"))
-              (run-shell-command (concatenate 'string "emacsclient -e \"" command "\"")))
-  
-  (defcommand emacs-find-file-aux () ()
-              (run-or-pull-hidden "emacsclient -c" '(:class "Emacs"))
-              (run-shell-command "emacsclient -e \"(call-interactively #'find-file)\""))
-  
-  (defcommand emacs-find-file () ()
-              (let ((w (current-window)))
-                (if (string= (window-class-safe w) "Emacs")
-                    (run-shell-command "emacsclient -e \"(call-interactively #'find-file)\"")
-                    (emacs-find-file-aux))))
-  
   (defcommand emacs-change-buffer (direction) (:string)
               (let ((w (current-window)))
                 (if (string= (window-class-safe w) "Emacs")
@@ -355,14 +364,19 @@ In this case, I move inside of Emacs frames instead of StumpWM frames if Emacs h
 
 *** Keybind
 #+BEGIN_SRC lisp
-  (define-key *top-map* (kbd "s-RET") "emacs-run-or-pull-hidden (vterm)")
+  (define-key *top-map* (kbd "s-RET") "emacs-interactive vterm")
   
   (define-key *top-map* (kbd "s-e") "emacs-change-buffer next")
   (define-key *top-map* (kbd "s-E") "emacs-change-buffer previous")
   
-  (define-key *top-map* (kbd "s-a") "emacs-run-or-pull-hidden (app-launcher-run-app)")
+  (define-key *top-map* (kbd "s-a") "emacs-interactive app-launcher-run-app")
   
-  (define-key *top-map* (kbd "s-.") "emacs-find-file")
+  (define-key *top-map* (kbd "s-.") "emacs-interactive find-file")
+  
+  (define-key *top-map* (kbd "s-b") "emacs-interactive consult-buffer")
+  (define-key *top-map* (kbd "s-B") "emacs-interactive ibuffer")
+  
+  (define-key *top-map* (kbd "s-p") "emacs-interactive treemacs")
 #+END_SRC
 
 ** Switch between other windows
