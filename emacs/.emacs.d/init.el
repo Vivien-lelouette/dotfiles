@@ -47,6 +47,8 @@
 (setq package-native-compile t)
 (setq native-comp-deferred-compilation nil)
 
+(setq redisplay-dont-pause t)
+
 (defun my-window-vsplit ()
   (interactive)
   (evil-window-vsplit)
@@ -634,21 +636,21 @@
 (defun efs/lsp-mode-setup ()
   (my-setup-indent 2)
   (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
-  (lsp-headerline-breadcrumb-mode)
-  (let ((lsp-keymap-prefix "C-SPC"))
-    (lsp-enable-which-key-integration)))
+  (lsp-headerline-breadcrumb-mode))
 
 (use-package lsp-mode
-  :init
-  (setq lsp-keymap-prefix "C-SPC")  ;; Or 'C-l', 's-l'
-  :commands (lsp lsp-deferred)
-  :hook (lsp-mode . efs/lsp-mode-setup)
-  :bind (:map lsp-mode-map
-              ("C-<tab>" . completion-at-point))
-  :config
-  (setq lsp-completion-provider :none)
-  (define-key lsp-mode-map (kbd "s-l") nil)
-  (setenv "TSSERVER_LOG_FILE" "/tmp/tsserver.log"))
+   :init
+   (setq lsp-keymap-prefix "C-c l")
+   :config
+   (define-key lsp-mode-map (kbd "C-c l") lsp-command-map)
+   :commands (lsp lsp-deferred)
+   :hook (lsp-mode . efs/lsp-mode-setup)
+   :bind (:map lsp-mode-map
+               ("C-<tab>" . completion-at-point))
+   :config
+   (setq lsp-completion-provider :none)
+   (define-key lsp-mode-map (kbd "s-l") nil)
+   (setenv "TSSERVER_LOG_FILE" "/tmp/tsserver.log"))
 
 (add-hook 'lsp-mode-hook 'highlight-indent-guides-mode)
 
@@ -983,7 +985,6 @@
 
 (use-package wucuo
   :if (executable-find "aspell")
-  :hook (((text-mode outline-mode prog-mode) . wucuo-start))
   :custom
   (flyspell-issue-message-flag nil)
   (ispell-program-name "aspell")

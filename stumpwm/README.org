@@ -178,15 +178,12 @@ It has a special behaviour if the focused window is an Emacs frame.
 In this case, I move inside of Emacs frames instead of StumpWM frames if Emacs has frames open in that direction.
 #+BEGIN_SRC lisp
   (defcommand go-direction(direction) ((:direction "Direction: "))
-              (handler-case 
                   (let ((w (current-window)))
-                    (if (string= (window-class w) "Emacs")
+                    (if (string= (window-class-safe w) "Emacs")
                         (if (string= "
   " (run-shell-command (concatenate 'string "emacsclient -e '(windmove-" (direction-to-string direction) ")'") t))
                             (move-focus direction))
-                        (move-focus direction)))
-                (error (c)
-                  (move-focus direction))))
+                        (move-focus direction))))
 #+END_SRC
 
 * Behaviours
@@ -341,7 +338,7 @@ In this case, I move inside of Emacs frames instead of StumpWM frames if Emacs h
     (defcommand pull-hidden-browser (direction) (:string)
                 (let ((current-win (current-window)))
                   (pull-hidden-include-classes direction '("qutebrowser"))
-                  (if (and (not (string= (window-class current-win) "qutebrowser")) (equal current-win (current-window)))
+                  (if (and (not (string= (window-class-safe current-win) "qutebrowser")) (equal current-win (current-window)))
                       (run-shell-command "qutebrowser"))))
 #+END_SRC
     

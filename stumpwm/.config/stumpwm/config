@@ -96,15 +96,12 @@ current frame instead of switching to the window."
         (run-shell-command cmd))))
 
 (defcommand go-direction(direction) ((:direction "Direction: "))
-            (handler-case 
                 (let ((w (current-window)))
-                  (if (string= (window-class w) "Emacs")
+                  (if (string= (window-class-safe w) "Emacs")
                       (if (string= "
 " (run-shell-command (concatenate 'string "emacsclient -e '(windmove-" (direction-to-string direction) ")'") t))
                           (move-focus direction))
-                      (move-focus direction)))
-              (error (c)
-                (move-focus direction))))
+                      (move-focus direction))))
 
 (setf *mouse-focus-policy* :click)
 
@@ -204,7 +201,7 @@ current frame instead of switching to the window."
 (defcommand pull-hidden-browser (direction) (:string)
             (let ((current-win (current-window)))
               (pull-hidden-include-classes direction '("qutebrowser"))
-              (if (and (not (string= (window-class current-win) "qutebrowser")) (equal current-win (current-window)))
+              (if (and (not (string= (window-class-safe current-win) "qutebrowser")) (equal current-win (current-window)))
                   (run-shell-command "qutebrowser"))))
 
 (define-key *top-map* (kbd "s-i") "pull-hidden-browser next")

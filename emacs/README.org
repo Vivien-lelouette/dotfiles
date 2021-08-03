@@ -12,13 +12,13 @@
                  curl \
                  gnupg-agent \
                  software-properties-common
-  
+
   sudo add-apt-repository ppa:ubuntu-toolchain-r/ppa \
       && apt-get update -y \
       && apt-get install -y gcc-10 libgccjit0 libgccjit-10-dev
-  
+
   sudo apt-get install -y libjansson4 libjansson-dev git
-  
+
   sudo apt-get install autoconf make gcc texinfo libgtk-3-dev libxpm-dev libjpeg-dev libgif-dev libtiff5-dev libgnutls28-dev libncurses5-dev
 #+END_SRC
 
@@ -59,46 +59,48 @@ The snippets below will install emacs from their git master:
 ** Basic configuration
 #+BEGIN_SRC emacs-lisp
   (setq inhibit-startup-message t)
-  
+
   ;; (scroll-bar-mode -1)        ; Disable visible scrollbar
   (tool-bar-mode -1)          ; Disable the toolbar
   (tooltip-mode -1)           ; Disable tooltips
   ;; (set-fringe-mode 10)        ; Give some breathing room
-  
+
   ;; (setq-default window-divider-default-right-width 10)
   ;; (setq-default window-divider-default-bottom-width 10)
   ;; (setq-default window-divider-default-places t)
   ;; (add-hook 'after-init-hook #'window-divider-mode)
-  
+
   (menu-bar-mode -1)            ; Disable the menu bar
-  
+
   ;; This determines the style of line numbers in effect. If set to `nil', line
   ;; numbers are disabled. For relative line numbers, set this to `relative'.
   (setq display-line-numbers-type 'relative)
-  
+
   (global-display-line-numbers-mode 1)
-  
+
   ;; Make ESC quit prompts
   (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
-  
+
   ;; Replace yes no answers by y or n
   (defalias 'yes-or-no-p 'y-or-n-p)
-  
+
   ;; Let emacs use system clipboard as a default behaviour
   (setq x-select-enable-clipboard t)
   (setq interprogram-paste-function 'x-selection-value)
-  
+
   ;; Winner-mode
   ;; (winner-mode 1)
-  
+
   (setq-default indent-tabs-mode nil)
   (setq-default tab-width 2)
-  
+
   ;; Nativ comp flags
   (setq native-comp-speed 3)
   (setq native-comp-async-report-warnings-errors nil)
   (setq package-native-compile t)
   (setq native-comp-deferred-compilation nil)
+
+  (setq redisplay-dont-pause t)
 #+END_SRC
 
 ** Window split
@@ -900,26 +902,26 @@ The =which-key= integration adds helpful descriptions of the various keys so you
     (setq-local web-mode-code-indent-offset n) ; web-mode, js code in html file
     (setq-local css-indent-offset n) ; css-mode
     )
-  
+
   (defun efs/lsp-mode-setup ()
     (my-setup-indent 2)
     (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
-    (lsp-headerline-breadcrumb-mode)
-    (let ((lsp-keymap-prefix "C-SPC"))
-      (lsp-enable-which-key-integration)))
-  
+    (lsp-headerline-breadcrumb-mode))
+
   (use-package lsp-mode
-    :init
-    (setq lsp-keymap-prefix "C-SPC")  ;; Or 'C-l', 's-l'
-    :commands (lsp lsp-deferred)
-    :hook (lsp-mode . efs/lsp-mode-setup)
-    :bind (:map lsp-mode-map
-                ("C-<tab>" . completion-at-point))
-    :config
-    (setq lsp-completion-provider :none)
-    (define-key lsp-mode-map (kbd "s-l") nil)
-    (setenv "TSSERVER_LOG_FILE" "/tmp/tsserver.log"))
-  
+     :init
+     (setq lsp-keymap-prefix "C-c l")
+     :config
+     (define-key lsp-mode-map (kbd "C-c l") lsp-command-map)
+     :commands (lsp lsp-deferred)
+     :hook (lsp-mode . efs/lsp-mode-setup)
+     :bind (:map lsp-mode-map
+                 ("C-<tab>" . completion-at-point))
+     :config
+     (setq lsp-completion-provider :none)
+     (define-key lsp-mode-map (kbd "s-l") nil)
+     (setenv "TSSERVER_LOG_FILE" "/tmp/tsserver.log"))
+
   (add-hook 'lsp-mode-hook 'highlight-indent-guides-mode)
 #+END_SRC
 
@@ -1360,7 +1362,6 @@ Fast spell check based on flyspell.
 #+BEGIN_SRC emacs-lisp
   (use-package wucuo
     :if (executable-find "aspell")
-    :hook (((text-mode outline-mode prog-mode) . wucuo-start))
     :custom
     (flyspell-issue-message-flag nil)
     (ispell-program-name "aspell")
