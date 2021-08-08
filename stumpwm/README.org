@@ -355,7 +355,7 @@ In this case, I move inside of Emacs frames instead of StumpWM frames if Emacs h
   (defcommand emacs-change-buffer (direction) (:string)
               (let ((w (current-window)))
                 (if (string= (window-class-safe w) "Emacs")
-                    (run-shell-command (concatenate 'string "emacsclient -e '(nswbuff-switch-to-" direction "-buffer)'"))
+                    (run-shell-command (concatenate 'string "emacsclient -e '(utils/" direction "-buffer)'"))
                     (emacs-run-or-pull-hidden "()"))))
 #+END_SRC
 
@@ -390,6 +390,11 @@ In this case, I move inside of Emacs frames instead of StumpWM frames if Emacs h
 #+END_SRC
 
 * Group management
+** Default groups
+#+BEGIN_SRC lisp
+  (gnewbg "Other")
+#+END_SRC
+
 ** Select groups
 *** Keybind
 #+BEGIN_SRC lisp

@@ -1256,10 +1256,38 @@
 (use-package app-launcher
   :straight '(app-launcher :host github :repo "SebastienWae/app-launcher"))
 
-(use-package nswbuff
-  :init
-  (setq nswbuff-display-intermediate-buffers t)
-  (setq nswbuff-exclude-buffer-regexps '("^ .*" "^\\*.*\\*" "^magit:.*")))
+(defcustom utils/skippable-buffer-regexp 
+  (rx bos (and (seq "magit:" (zero-or-more anything)))
+      eos)
+  "Matching buffer names are ignored by `utils/next-buffer'
+and `utils/previous-buffer'."
+  :type 'regexp)
+
+
+;; (defun utils/change-buffer (change-buffer)
+;; )
+
+(defun utils/change-buffer (change-buffer)
+  "Call CHANGE-BUFFER until `utils/skippable-buffer-regexp' doesn't match."
+  (let ((initial (current-buffer)))
+    (funcall change-buffer)
+    (let ((first-change (current-buffer)))
+      (catch 'loop
+        (while (string-match-p utils/skippable-buffer-regexp (buffer-name))
+          (funcall change-buffer)
+          (when (eq (current-buffer) first-change)
+            (switch-to-buffer initial)
+            (throw 'loop t)))))))
+
+(defun utils/next-buffer ()
+  "Variant of `next-buffer' that skips `utils/skippable-buffer-regexp'."
+  (interactive)
+  (utils/change-buffer 'next-buffer))
+
+(defun utils/previous-buffer ()
+  "Variant of `previous-buffer' that skips `utils/skippable-buffer-regexp'."
+  (interactive)
+  (utils/change-buffer 'previous-buffer))
 
 (defun browse-url-qutebrowser (url &optional _new-window)
   "Ask the Qutebrowser WWW browser to load URL.

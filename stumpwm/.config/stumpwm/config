@@ -211,7 +211,7 @@ current frame instead of switching to the window."
 (defcommand emacs-change-buffer (direction) (:string)
             (let ((w (current-window)))
               (if (string= (window-class-safe w) "Emacs")
-                  (run-shell-command (concatenate 'string "emacsclient -e '(nswbuff-switch-to-" direction "-buffer)'"))
+                  (run-shell-command (concatenate 'string "emacsclient -e '(utils/" direction "-buffer)'"))
                   (emacs-run-or-pull-hidden "()"))))
 
 (define-key *top-map* (kbd "s-RET") "emacs-interactive vterm")
@@ -233,6 +233,8 @@ current frame instead of switching to the window."
 
 (define-key *top-map* (kbd "s-TAB") "pull-hidden-relevant-window next")
 (define-key *top-map* (kbd "s-ISO_Left_Tab") "pull-hidden-relevant-window previous")
+
+(gnewbg "Other")
 
 (define-key *top-map* (kbd "s-]") "gnext")
 (define-key *top-map* (kbd "s-[") "gprev")
