@@ -184,18 +184,7 @@ Functions to split and move to the new split.
      (ibuffer-projectile-generate-filter-groups)
      )
     )
-  
-  ;; Useful when using exwm
-  ;; (add-hook 'ibuffer-mode-hook
-  ;;           (lambda ()
-  ;;             (setq ibuffer-saved-filter-groups
-  ;;              (list
-  ;;               (append
-  ;;                '("custom")
-  ;;                (ibuffer-custom-filter-groups))))
-  ;;                (ibuffer-switch-to-saved-filter-groups "custom")
-  ;;             (ibuffer-auto-mode 1)))
-  
+ 
   (add-hook 'ibuffer-hook
             (lambda ()
               (ibuffer-projectile-set-filter-groups)
@@ -664,24 +653,6 @@ You may prefer to use `initials' instead of `partial-completion'.
   (use-package embark-consult)
   
   (use-package consult-lsp)
-#+END_SRC
-
-** Corfu
-Will try Corfu back if it has multi-backend support at some point.
-#+BEGIN_SRC emacs-lisp
-  ;; (use-package corfu
-  ;;   :bind (:map corfu-map
-  ;;               ("C-j" . corfu-next)
-  ;;               ("<tab>" . corfu-next)
-  ;;               ("C-k" . corfu-previous)
-  ;;               ("<backtab>" . corfu-previous))
-  ;;   :custom
-  ;;   (corfu-auto t)
-  ;;   (corfu-quit-at-boundary t)
-  ;;   (corfu-quit-no-match t)
-  ;;   (corfu-cycle t)
-  ;;   :config
-  ;;   (corfu-global-mode))
 #+END_SRC
 
 ** Company
@@ -1697,38 +1668,38 @@ TODO: add this a prerequisite.
 * Utils
 ** Moving between buffers
 #+BEGIN_SRC emacs-lisp
-  (defcustom utils/skippable-buffer-regexp 
-    (rx bos (and (seq "magit:" (zero-or-more anything)))
-        eos)
-    "Matching buffer names are ignored by `utils/next-buffer'
-  and `utils/previous-buffer'."
-    :type 'regexp)
+      (defcustom utils/skippable-buffer-regexp 
+        (rx bos (or
+                 (seq (zero-or-more anything) "magit:" (zero-or-more anything))
+                 (seq (zero-or-more anything) "magit-diff:" (zero-or-more anything))
+                 (seq (zero-or-more anything) "magit-process:" (zero-or-more anything))
+                 (seq (zero-or-more anything) "*" (zero-or-more anything) "*"))
+            eos)
+        "Matching buffer names are ignored by `utils/next-buffer'
+      and `utils/previous-buffer'."
+        :type 'regexp)
 
+      (defun utils/change-buffer (change-buffer)
+        "Call CHANGE-BUFFER until `utils/skippable-buffer-regexp' doesn't match."
+        (let ((initial (current-buffer)))
+          (funcall change-buffer)
+          (let ((first-change (current-buffer)))
+            (catch 'loop
+              (while (string-match-p utils/skippable-buffer-regexp (buffer-name))
+                (funcall change-buffer)
+                (when (eq (current-buffer) first-change)
+                  (switch-to-buffer initial)
+                  (throw 'loop t)))))))
 
-  ;; (defun utils/change-buffer (change-buffer)
-  ;; )
+      (defun utils/next-buffer ()
+        "Variant of `next-buffer' that skips `utils/skippable-buffer-regexp'."
+        (interactive)
+        (utils/change-buffer 'switch-to-next-buffer))
 
-  (defun utils/change-buffer (change-buffer)
-    "Call CHANGE-BUFFER until `utils/skippable-buffer-regexp' doesn't match."
-    (let ((initial (current-buffer)))
-      (funcall change-buffer)
-      (let ((first-change (current-buffer)))
-        (catch 'loop
-          (while (string-match-p utils/skippable-buffer-regexp (buffer-name))
-            (funcall change-buffer)
-            (when (eq (current-buffer) first-change)
-              (switch-to-buffer initial)
-              (throw 'loop t)))))))
-
-  (defun utils/next-buffer ()
-    "Variant of `next-buffer' that skips `utils/skippable-buffer-regexp'."
-    (interactive)
-    (utils/change-buffer 'next-buffer))
-
-  (defun utils/previous-buffer ()
-    "Variant of `previous-buffer' that skips `utils/skippable-buffer-regexp'."
-    (interactive)
-    (utils/change-buffer 'previous-buffer))
+      (defun utils/previous-buffer ()
+        "Variant of `previous-buffer' that skips `utils/skippable-buffer-regexp'."
+        (interactive)
+        (utils/change-buffer 'switch-to-prev-buffer))
  #+END_SRC
 
 * Default browsers

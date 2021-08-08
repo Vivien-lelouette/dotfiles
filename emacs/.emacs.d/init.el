@@ -118,17 +118,6 @@
    )
   )
 
-;; Useful when using exwm
-;; (add-hook 'ibuffer-mode-hook
-;;           (lambda ()
-;;             (setq ibuffer-saved-filter-groups
-;;              (list
-;;               (append
-;;                '("custom")
-;;                (ibuffer-custom-filter-groups))))
-;;                (ibuffer-switch-to-saved-filter-groups "custom")
-;;             (ibuffer-auto-mode 1)))
-
 (add-hook 'ibuffer-hook
           (lambda ()
             (ibuffer-projectile-set-filter-groups)
@@ -477,20 +466,6 @@
 (use-package embark-consult)
 
 (use-package consult-lsp)
-
-;; (use-package corfu
-;;   :bind (:map corfu-map
-;;               ("C-j" . corfu-next)
-;;               ("<tab>" . corfu-next)
-;;               ("C-k" . corfu-previous)
-;;               ("<backtab>" . corfu-previous))
-;;   :custom
-;;   (corfu-auto t)
-;;   (corfu-quit-at-boundary t)
-;;   (corfu-quit-no-match t)
-;;   (corfu-cycle t)
-;;   :config
-;;   (corfu-global-mode))
 
 (use-package company
   :init (global-company-mode)
@@ -1262,15 +1237,15 @@
   :straight '(app-launcher :host github :repo "SebastienWae/app-launcher"))
 
 (defcustom utils/skippable-buffer-regexp 
-  (rx bos (and (seq "magit:" (zero-or-more anything)))
+  (rx bos (or
+           (seq (zero-or-more anything) "magit:" (zero-or-more anything))
+           (seq (zero-or-more anything) "magit-diff:" (zero-or-more anything))
+           (seq (zero-or-more anything) "magit-process:" (zero-or-more anything))
+           (seq (zero-or-more anything) "*" (zero-or-more anything) "*"))
       eos)
   "Matching buffer names are ignored by `utils/next-buffer'
 and `utils/previous-buffer'."
   :type 'regexp)
-
-
-;; (defun utils/change-buffer (change-buffer)
-;; )
 
 (defun utils/change-buffer (change-buffer)
   "Call CHANGE-BUFFER until `utils/skippable-buffer-regexp' doesn't match."
@@ -1287,12 +1262,12 @@ and `utils/previous-buffer'."
 (defun utils/next-buffer ()
   "Variant of `next-buffer' that skips `utils/skippable-buffer-regexp'."
   (interactive)
-  (utils/change-buffer 'next-buffer))
+  (utils/change-buffer 'switch-to-next-buffer))
 
 (defun utils/previous-buffer ()
   "Variant of `previous-buffer' that skips `utils/skippable-buffer-regexp'."
   (interactive)
-  (utils/change-buffer 'previous-buffer))
+  (utils/change-buffer 'switch-to-prev-buffer))
 
 (defun browse-url-qutebrowser (url &optional _new-window)
   "Ask the Qutebrowser WWW browser to load URL.
