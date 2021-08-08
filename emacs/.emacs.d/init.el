@@ -1034,10 +1034,6 @@
 
 (use-package windsize)
 
-(use-package zoom
-  :config
-  (setq zoom-size '(0.618 . 0.618)))
-
 (use-package frames-only-mode)
 
 (use-package shr
