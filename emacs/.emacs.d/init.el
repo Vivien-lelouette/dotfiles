@@ -179,6 +179,15 @@
   (setq undo-fu-session-incompatible-files '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'"))
   (global-undo-fu-session-mode))
 
+(use-package origami
+  :bind (("M-TAB" . origami-recursively-toggle-node))
+  :config
+  (global-origami-mode))
+
+(use-package lsp-origami
+  :config
+  (add-hook 'lsp-after-open-hook #'lsp-origami-try-enable))
+
 (use-package general
   :config
   (general-create-definer keys/leader-keys

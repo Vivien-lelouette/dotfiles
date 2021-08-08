@@ -273,6 +273,18 @@ Functions to split and move to the new split.
     (global-undo-fu-session-mode))
 #+END_SRC
 
+** Origami
+#+BEGIN_SRC emacs-lisp
+  (use-package origami
+    :bind (("M-TAB" . origami-recursively-toggle-node))
+    :config
+    (global-origami-mode))
+
+  (use-package lsp-origami
+    :config
+    (add-hook 'lsp-after-open-hook #'lsp-origami-try-enable))
+#+END_SRC
+
 * Keymap packages
 ** General
 #+BEGIN_SRC emacs-lisp
