@@ -87,44 +87,6 @@
 
 (fonts/small-size)
 
-(setq ibuffer-formats
-      '((mark modified read-only locked " "
-              (icon 2 2 :left :elide)
-              #(" " 0 1
-                (display
-                 (space :align-to 8)))
-              (name 50 50 :left :elide)
-              " "
-              (size 9 -1 :right)
-              " "
-              (mode 16 16 :left :elide)
-              " "
-              (vc-status 12 :left)
-              " " filename-and-process)
-        (mark " "
-              (name 16 -1)
-              " " filename)))
-
-(defun ibuffer-custom-filter-groups ()
-  (append
-   '(
-     ("Applications" (and
-                      (mode . exwm-mode)
-                      (not (name . "qutebrowser:.*"))
-                      (not (name . "Firefox:.*"))))
-     ("Qutebrowser" (name . "qutebrowser:.*"))
-     ("Firefox" (name . "Firefox:.*")))
-   (ibuffer-projectile-generate-filter-groups)
-   )
-  )
-
-(add-hook 'ibuffer-hook
-          (lambda ()
-            (ibuffer-projectile-set-filter-groups)
-            (unless (eq ibuffer-sorting-mode 'alphabetic)
-              (ibuffer-do-sort-by-alphabetic))
-            (ibuffer-auto-mode 1)))
-
 (defvar bootstrap-version)
 (let ((bootstrap-file
        (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
@@ -153,13 +115,42 @@
 
 (use-package no-littering)
 
+(defcustom utils/skippable-buffer-regexp 
+  (rx bos (or
+           (seq (zero-or-more anything) "magit:" (zero-or-more anything))
+           (seq (zero-or-more anything) "magit-diff:" (zero-or-more anything))
+           (seq (zero-or-more anything) "magit-process:" (zero-or-more anything))
+           (seq (zero-or-more anything) "*" (zero-or-more anything) "*"))
+      eos)
+  "Matching buffer names are ignored by `utils/next-buffer'
+and `utils/previous-buffer'."
+  :type 'regexp)
+
+(defun utils/change-buffer (change-buffer)
+  "Call CHANGE-BUFFER until `utils/skippable-buffer-regexp' doesn't match."
+  (let ((initial (current-buffer)))
+    (funcall change-buffer)
+    (let ((first-change (current-buffer)))
+      (catch 'loop
+        (while (string-match-p utils/skippable-buffer-regexp (buffer-name))
+          (funcall change-buffer)
+          (when (eq (current-buffer) first-change)
+            (switch-to-buffer initial)
+            (throw 'loop t)))))))
+
+(defun utils/next-buffer ()
+  "Variant of `next-buffer' that skips `utils/skippable-buffer-regexp'."
+  (interactive)
+  (utils/change-buffer 'switch-to-next-buffer))
+
+(defun utils/previous-buffer ()
+  "Variant of `previous-buffer' that skips `utils/skippable-buffer-regexp'."
+  (interactive)
+  (utils/change-buffer 'switch-to-prev-buffer))
+
 (use-package async)
 
 (use-package trashed)
-
-(use-package bbdb)
-
-(use-package dianyou)
 
 (use-package undo-fu)
 
@@ -176,6 +167,9 @@
 (use-package lsp-origami
   :config
   (add-hook 'lsp-after-open-hook #'lsp-origami-try-enable))
+
+(use-package tramp
+  :straight (:type built-in))
 
 (use-package general
   :config
@@ -350,8 +344,6 @@
 (use-package all-the-icons-ibuffer
   :after all-the-icons)
 
-(use-package ibuffer-vc)
-
 (use-package minions)
 
 (defun simple-modeline-segment-minions ()
@@ -440,8 +432,7 @@
   (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
 
   ;; Enable recursive minibuffers
-  (setq enable-recursive-minibuffers t)
-  (setq tab-always-indent 'complete))
+  (setq enable-recursive-minibuffers t))
 
 (use-package marginalia
   ;; Either bind `marginalia-cycle` globally or only in the minibuffer
@@ -510,8 +501,6 @@
   :config
   (setq wgrep-auto-save-buffer t))
 
-(use-package avy)
-
 (use-package image-dired)
 
 (use-package dired
@@ -547,16 +536,6 @@
   :after evil
   :bind ("C-/" . evilnc-comment-or-uncomment-lines))
 
-(use-package format-all
-  :bind ("C-c C-f" . format-all-buffer))
-
-(use-package highlight-indent-guides
-  :custom
-  (highlight-indent-guides-method 'character)
-  (highlight-indent-guides-responsive 'top))
-
-(add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
-
 (use-package rainbow-mode)
 
 (use-package highlight-parentheses
@@ -573,12 +552,16 @@
   :bind-keymap
   ("C-c p" . projectile-command-map)
   :init
-  ;; NOTE: Set this to the folder where you keep your Git repos!
-  (when (file-directory-p "~/Projects/Code")
-    (setq projectile-project-search-path '("~/Projects/Code")))
   (setq projectile-switch-project-action #'projectile-dired))
 
-(use-package ibuffer-projectile)
+(use-package ibuffer-projectile
+  :config
+  (add-hook 'ibuffer-hook
+            (lambda ()
+              (ibuffer-auto-mode 1)
+              (ibuffer-projectile-set-filter-groups)
+              (unless (eq ibuffer-sorting-mode 'alphabetic)
+                (ibuffer-do-sort-by-alphabetic)))))
 
 (use-package magit
   :config
@@ -636,8 +619,6 @@
    (define-key lsp-mode-map (kbd "s-l") nil)
    (setenv "TSSERVER_LOG_FILE" "/tmp/tsserver.log"))
 
-(add-hook 'lsp-mode-hook 'highlight-indent-guides-mode)
-
 (use-package lsp-ui
   :after lsp
   :hook (lsp-mode . lsp-ui-mode)
@@ -665,15 +646,6 @@
 (add-hook 'sh-mode-hook 'lsp-deferred)
 
 (use-package dap-mode)
-
-(use-package yaml-mode
-  :straight (yaml-mode :type git :host github :repo "yoshiki/yaml-mode")
-  :config
-  (add-hook 'yaml-mode-hook 'highlight-indent-guides-mode))
-
-(use-package json-mode
-  :config
-  (add-hook 'json-mode-hook 'highlight-indent-guides-mode))
 
 (use-package jq-mode)
 
@@ -899,9 +871,6 @@
 (use-package org-mime
   :after org)
 
-(use-package org-web-tools
-  :after org)
-
 (use-package ob-restclient
   :after org
   :config
@@ -944,19 +913,8 @@
     "d"  'docker
     "D"  'docker-compose))
 
-(use-package kubernetes
-  :config
-  (setq kubernetes-redraw-frequency 3600)
-  (setq kubernetes-poll-frequency 3600))
-
-(use-package kubernetes-evil)
-
-(defun kubernetes/refresh ()
-  (interactive)
-  (kubernetes-statefulsets-refresh)
-  (kubernetes-deployments-refresh-now)
-  (kubernetes-jobs-refresh-now)
-  (kubernetes-pods-refresh-now))
+(use-package kubel)
+(use-package kubel-evil)
 
 (use-package flyspell
   :straight (:type built-in)
@@ -967,18 +925,10 @@
   (ispell-program-name "aspell")
   (ispell-extra-args '("--sug-mode=ultra" "--lang=en_US" "--run-together" "--run-together-limit=16")))
 
-(use-package wucuo
-  :if (executable-find "aspell")
-  :custom
-  (flyspell-issue-message-flag nil)
-  (ispell-program-name "aspell")
-  (ispell-extra-args
-   '("--sug-mode=ultra" "--lang=en_US")))
-
 (use-package guess-language
   :config
   (setq guess-language-languages '(en fr))
-  (add-hook 'wucuo-mode-hook (lambda () (guess-language-mode 1))))
+  (add-hook 'flyspell-mode-hook (lambda () (guess-language-mode 1))))
 
 (use-package langtool
   :straight (langtool :type git :host github :repo "mhayashi1120/Emacs-langtool")
@@ -992,7 +942,7 @@
 
 (use-package term
   :config
-  (setq explicit-shell-file-name "sh")
+  (setq explicit-shell-file-name "zsh")
 
   ;; Use 'explicit-<shell>-args for shell-specific args
   ;;(setq explicit-zsh-args '())         
@@ -1008,8 +958,6 @@
 (use-package windmove)
 
 (use-package windsize)
-
-(use-package frames-only-mode)
 
 (use-package shr
   :config
@@ -1091,141 +1039,6 @@
 
   (require 'shrface))
 
-(use-package gnus
-  :init
-  (add-hook 'gnus-article-mode-hook #'shrface-mode)
-  :config
-  (require 'nnir)
-
-  ;; Please note mail folders in `gnus-select-method' have NO prefix like "nnimap+hotmail:" or "nnimap+gmail:"
-  (setq gnus-select-method '(nnnil)) ;; Read feeds/atom through gwene
-
-  ;; ask encryption password once
-  (setq epa-file-cache-passphrase-for-symmetric-encryption t)
-
-  ;; @see http://gnus.org/manual/gnus_397.html
-  (defun gnus/add-gmail-select-method (account-name)
-    (add-to-list 'gnus-secondary-select-methods
-                 (list 'nnimap account-name
-                       (list 'Nnimap-address "imap.gmail.com")
-                       (list 'Nnimap-server-port 993)
-                       (list 'Nnimap-stream 'ssl)
-                       (list 'Nnir-search-engine 'imap)
-                       ;; @see http://www.gnu.org/software/emacs/manual/html_node/gnus/Expiring-Mail.html
-                       ;; press 'E' to expire email
-                       (list 'nnmail-expiry-target (concat "nnimap+" account-name ":[Gmail]/Corbeille"))
-                       (list 'nnmail-expiry-wait 90))))
-
-  (defun gnus/add-gmail-topic (account-name)
-    (list account-name ; the key of topic
-          (concat "nnimap+" account-name ":INBOX")
-          (concat "nnimap+" account-name ":[Gmail]/Brouillons")
-          (concat "nnimap+" account-name ":[Gmail]/Messages envoyés")
-          (concat "nnimap+" account-name ":[Gmail]/Important")
-          (concat "nnimap+" account-name ":[Gmail]/Tous les messages")
-          (concat "nnimap+" account-name ":[Gmail]/Corbeille")
-          (concat "nnimap+" account-name ":[Gmail]/Suivis")
-          (concat "nnimap+" account-name ":[Gmail]/Spam")
-          (concat "nnimap+" account-name ":Planifié")
-          (concat "nnimap+" account-name ":Archive")
-          (concat "nnimap+" account-name ":Trash")
-          (concat "nnimap+" account-name ":Sent")
-          (concat "nnimap+" account-name ":Conversation History")
-          (concat "nnimap+" account-name ":Accusés de réception")
-          (concat "nnimap+" account-name ":Professionnel")
-          (concat "nnimap+" account-name ":Professionnel/OPTRAJ")))
-
-  (add-to-list 'gnus-secondary-select-methods
-               '(nnimap "vivperso"
-                        (nnimap-address "imap.gmail.com")
-                        (nnimap-server-port 993)
-                        (nnimap-stream ssl)
-                        (nnir-search-engine imap)
-                        ;; @see http://www.gnu.org/software/emacs/manual/html_node/gnus/Expiring-Mail.html
-                        ;; press 'E' to expire email
-                        (nnmail-expiry-target "nnimap+vivperso:[Gmail]/Corbeille")
-                        (nnmail-expiry-wait 90)))
-
-  (add-to-list 'gnus-secondary-select-methods
-               '(nnimap "lelouette.vivien"
-                        (nnimap-address "imap.gmail.com")
-                        (nnimap-server-port 993)
-                        (nnimap-stream ssl)
-                        (nnir-search-engine imap)
-                        ;; @see http://www.gnu.org/software/emacs/manual/html_node/gnus/Expiring-Mail.html
-                        ;; press 'E' to expire email
-                        (nnmail-expiry-target "nnimap+lelouette.vivien:[Gmail]/Corbeille")
-                        (nnmail-expiry-wait 90)))
-
-  (setq gnus-thread-sort-functions
-        '(gnus-thread-sort-by-most-recent-date
-          (not gnus-thread-sort-by-number)))
-
-
-  ;; press "o" to view all groups
-  (defun gnus/group-list-subscribed-groups ()
-    "List all subscribed groups with or without un-read messages"
-    (interactive)
-    (gnus-group-list-all-groups 5))
-
-  ;; BBDB: Address list
-  (add-to-list 'load-path "~/.emacs.d/contacts-bbdb/")
-  (require 'bbdb)
-  (bbdb-initialize 'message 'gnus 'sendmail)
-  (add-hook 'gnus-startup-hook 'bbdb-insinuate-gnus)
-  (setq bbdb/mail-auto-create-p t
-        bbdb/news-auto-create-p t)
-
-  ;; Fetch only part of the article if we can.
-  ;; I saw this in someone's .gnus
-  (setq gnus-read-active-file 'some)
-
-  ;; open attachment
-  (eval-after-load 'mailcap
-    '(progn
-       (cond
-        ;; on macOS, maybe change mailcap-mime-data?
-        ((eq system-type 'darwin))
-        ;; on Windows, maybe change mailcap-mime-data?
-        ((eq system-type 'windows-nt))
-        (t
-         ;; Linux, read ~/.mailcap
-         (mailcap-parse-mailcaps)))))
-
-  ;; Tree view for groups.
-  (add-hook 'gnus-group-mode-hook 'gnus-topic-mode)
-
-  (setq gnus-use-cache t)
-  (setq gnus-use-full-window nil)
-
-  (setq gnus-asynchronous t)
-  (setq gnus-use-article-prefetch 15)
-
-  ;; http://www.gnu.org/software/emacs/manual/html_node/gnus/_005b9_002e2_005d.html
-  (setq gnus-use-correct-string-widths nil)
-
-  ;; Threads!  I hate reading un-threaded email -- especially mailing
-  ;; lists.  This helps a ton!
-  (setq gnus-summary-thread-gathering-function 'gnus-gather-threads-by-subject)
-
-  ;; Also, I prefer to see only the top level message.  If a message has
-  ;; several replies or is part of a thread, only show the first message.
-  ;; `gnus-thread-ignore-subject' will ignore the subject and
-  ;; look at 'In-Reply-To:' and 'References:' headers.
-  (setq gnus-thread-hide-subtree t)
-  (setq gnus-thread-ignore-subject t)
-
-  ;; Read HTML mail:
-  ;; You need install the command line web browser 'w3m' and Emacs plugin 'w3m'
-  ;; manually. It specify the html render as w3m so my setup works on all versions
-  ;; of Emacs.
-  ;;
-  ;; Since Emacs 24+, a default html rendering engine `shr' is provided:
-  ;;   - It works out of box without any cli program dependency or setup
-  ;;   - It can render html color
-  ;; So below line is optional.
-  (setq mm-text-html-renderer 'shr))
-
 (defun shell/run-in-background (command)
   (let ((command-parts (split-string command "[ ]+")))
     (apply #'call-process `(,(car command-parts) nil 0 nil ,@(cdr command-parts)))))
@@ -1236,39 +1049,6 @@
 (use-package app-launcher
   :straight '(app-launcher :host github :repo "SebastienWae/app-launcher"))
 
-(defcustom utils/skippable-buffer-regexp 
-  (rx bos (or
-           (seq (zero-or-more anything) "magit:" (zero-or-more anything))
-           (seq (zero-or-more anything) "magit-diff:" (zero-or-more anything))
-           (seq (zero-or-more anything) "magit-process:" (zero-or-more anything))
-           (seq (zero-or-more anything) "*" (zero-or-more anything) "*"))
-      eos)
-  "Matching buffer names are ignored by `utils/next-buffer'
-and `utils/previous-buffer'."
-  :type 'regexp)
-
-(defun utils/change-buffer (change-buffer)
-  "Call CHANGE-BUFFER until `utils/skippable-buffer-regexp' doesn't match."
-  (let ((initial (current-buffer)))
-    (funcall change-buffer)
-    (let ((first-change (current-buffer)))
-      (catch 'loop
-        (while (string-match-p utils/skippable-buffer-regexp (buffer-name))
-          (funcall change-buffer)
-          (when (eq (current-buffer) first-change)
-            (switch-to-buffer initial)
-            (throw 'loop t)))))))
-
-(defun utils/next-buffer ()
-  "Variant of `next-buffer' that skips `utils/skippable-buffer-regexp'."
-  (interactive)
-  (utils/change-buffer 'switch-to-next-buffer))
-
-(defun utils/previous-buffer ()
-  "Variant of `previous-buffer' that skips `utils/skippable-buffer-regexp'."
-  (interactive)
-  (utils/change-buffer 'switch-to-prev-buffer))
-
 (defun browse-url-qutebrowser (url &optional _new-window)
   "Ask the Qutebrowser WWW browser to load URL.
 Default to the URL around or before point.
@@ -1277,8 +1057,6 @@ The optional argument NEW-WINDOW is not used."
   (setq url (browse-url-encode-url url))
   (shell/async-command-no-output (concat "qutebrowser " url)))
 ;; (setq browse-url-browser-function 'browse-url-qutebrowser)
-
-(autoload 'exwm-enable "~/.emacs.d/desktop.el")
 
 (let ((local-settings "~/.emacs.d/local.el"))
   (when (file-exists-p local-settings)
@@ -1297,4 +1075,3 @@ The optional argument NEW-WINDOW is not used."
 
 (theme/doom-nord)
 (fonts/normal-size)
-(frames-only-mode)
