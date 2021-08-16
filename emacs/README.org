@@ -1304,7 +1304,7 @@ TODO: add this a prerequisite.
 #+BEGIN_SRC emacs-lisp
   (use-package term
     :config
-    (setq explicit-shell-file-name "zsh")
+    (setq explicit-shell-file-name "sh")
   
     ;; Use 'explicit-<shell>-args for shell-specific args
     ;;(setq explicit-zsh-args '())         

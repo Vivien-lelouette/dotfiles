@@ -942,7 +942,7 @@ and `utils/previous-buffer'."
 
 (use-package term
   :config
-  (setq explicit-shell-file-name "zsh")
+  (setq explicit-shell-file-name "sh")
 
   ;; Use 'explicit-<shell>-args for shell-specific args
   ;;(setq explicit-zsh-args '())         
