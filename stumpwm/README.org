@@ -2,8 +2,21 @@
 #+PROPERTY: header-args:lisp :tangle .config/stumpwm/config :mkdirp yes
 
 * Installation
+** Ubuntu prerequisites
 #+BEGIN_SRC shell :tangle .scripts/stumpwm/init-ubuntu.sh :shebang #!/bin/sh :mkdirp yes
   sudo apt install stumpwm
+#+END_SRC
+
+** desktop file
+To be placed under /usr/share/xsessions/stumpwm-gnome-flashback-session.desktop
+#+BEGIN_SRC shell
+  [Desktop Entry]
+  Name=GNOME Flashback (StumpWM)
+  Comment=This session logs you into GNOME Flashback with StumpWM
+  Exec=stumpwm-gnome-flashback-session
+  TryExec=stumpwm
+  Type=Application
+  DesktopNames=GNOME-Flashback;GNOME;
 #+END_SRC
 
 * StumpWM configuration
