@@ -1062,10 +1062,6 @@ The optional argument NEW-WINDOW is not used."
   (when (file-exists-p local-settings)
     (load-file local-settings)))
 
-(global-set-key (kbd "C-s-q") #'kill-current-buffer)
-
-(global-set-key (kbd "s-x") #'execute-extended-command)
-
 (global-set-key (kbd "C-s-s") #'consult-ripgrep)
 (global-set-key (kbd "C-s") #'consult-line)
 
