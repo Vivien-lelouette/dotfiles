@@ -850,7 +850,7 @@ and `utils/previous-buffer'."
             (string-equal (buffer-file-name)
                           (expand-file-name "~/dotfiles/emacs/desktop.org"))
             (string-equal (buffer-file-name)
-                          (expand-file-name "~/dotfiles/stumpwm/README.org"))
+                          (expand-file-name "~/dotfiles/herbstluftwm/README.org"))
             (string-equal (buffer-file-name)
                           (expand-file-name "~/dotfiles/emacs/local.org")))
     ;; Dynamic scoping to the rescue
