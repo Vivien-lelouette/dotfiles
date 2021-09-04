@@ -63,11 +63,11 @@
                                    (windmove-down))))
 
 (defun fonts/set-size (font-size)
-  (set-face-attribute 'default nil :font "Fira Code" :height font-size)
+  (set-face-attribute 'default nil :font "DejaVu Sans Mono" :height font-size)
   ;; Set the fixed pitch face
-  (set-face-attribute 'fixed-pitch nil :font "Fira Code" :height font-size)
+  (set-face-attribute 'fixed-pitch nil :font "DejaVu Sans Mono" :height font-size)
   ;; Set the variable pitch face
-  (set-face-attribute 'variable-pitch nil :font "Cantarell" :height font-size :weight 'regular))
+  (set-face-attribute 'variable-pitch nil :font "DejaVu Sans" :height font-size :weight 'regular))
 
 (defun fonts/small-size ()
   (interactive)
