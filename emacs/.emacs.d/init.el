@@ -955,6 +955,13 @@ and `utils/previous-buffer'."
 (use-package eterm-256color
   :hook (term-mode . eterm-256color-mode))
 
+(defun my-shell-mode-setup-function () 
+  (when (and (fboundp 'company-mode)
+             (file-remote-p default-directory))
+    (company-mode -1)))
+
+(add-hook 'shell-mode-hook 'my-shell-mode-setup-function)
+
 (use-package windmove)
 
 (use-package windsize)

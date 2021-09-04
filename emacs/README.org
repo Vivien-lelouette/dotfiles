@@ -1299,17 +1299,24 @@ TODO: add this a prerequisite.
   (use-package term
     :config
     (setq explicit-shell-file-name "sh")
-  
+
     ;; Use 'explicit-<shell>-args for shell-specific args
     ;;(setq explicit-zsh-args '())         
-  
+
     (setq evil-move-cursor-back t)
-  
+
     ;; Match the default Bash shell prompt.  Update this if you have a custom prompt
     (setq term-prompt-regexp "^[^#$%>\n]*[#$%>] *"))
-  
+
   (use-package eterm-256color
     :hook (term-mode . eterm-256color-mode))
+
+  (defun my-shell-mode-setup-function () 
+    (when (and (fboundp 'company-mode)
+               (file-remote-p default-directory))
+      (company-mode -1)))
+
+  (add-hook 'shell-mode-hook 'my-shell-mode-setup-function)
 #+END_SRC
 
 * Window Management
