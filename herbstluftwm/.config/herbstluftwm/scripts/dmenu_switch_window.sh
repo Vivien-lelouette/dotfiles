@@ -18,7 +18,7 @@ display_client_list=$(echo "${client_list}" \
                           ;done \
                           | sed -e 's/^ //g' -e 's/^[ \t]*//;s/[ \t]*$//')
 
-client=$(echo "$display_client_list" | cut -d' ' -f2- | dmenu -i -p 'Windows' -fn 'Dejavu Sans:pixelsize=11' -nb "$BG_ALT_COLOR" -nf "$FG_COLOR" -sb "$FOCUS_COLOR" -sf "$BG_ALT_COLOR")
+client=$(echo "$display_client_list" | cut -d' ' -f2- | dmenu -i -p 'Windows' -fn 'Dejavu Sans:pixelsize=13' -nb "$BG_ALT_COLOR" -nf "$FG_COLOR" -sb "$FOCUS_COLOR" -sf "$BG_ALT_COLOR")
 
 if [ $? -eq 0 ]
 then

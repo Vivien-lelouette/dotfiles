@@ -45,7 +45,7 @@ herbstclient set frame_transparent_width 5
 herbstclient set frame_gap 0
 
 herbstclient attr theme.title_height 0
-herbstclient attr theme.title_font 'Dejavu Sans:pixelsize=12'  # example using Xft
+herbstclient attr theme.title_font 'Dejavu Sans:pixelsize=13'  # example using Xft
 herbstclient attr theme.padding_top 0  # space below the title's baseline (i.e. text depth)
 herbstclient attr theme.active.color "$FOCUS_COLOR"
 herbstclient attr theme.normal.color "$BG_COLOR"
@@ -153,11 +153,11 @@ herbstclient keybind $Mod+c cycle_all +1
 herbstclient keybind $Mod+Tab spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh 1 "" 'qutebrowser\|Vivaldi-stable\|Emacs'
 herbstclient keybind $Mod+Shift+Tab spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh -1 "" 'qutebrowser\|Vivaldi-stable\|Emacs'
 
-herbstclient keybind $Mod+Control+i spawn vivaldi
-herbstclient keybind $Mod+i spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh 1 'qutebrowser\|Vivaldi-stable' '' 'vivaldi'
-herbstclient keybind $Mod+Shift+i spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh -1 'qutebrowser\|Vivaldi-stable' '' 'vivaldi'
+herbstclient keybind $Mod+Control+i spawn vivaldi-stable
+herbstclient keybind $Mod+i spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh 1 'qutebrowser\|Vivaldi-stable' '' 'vivaldi-stable'
+herbstclient keybind $Mod+Shift+i spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh -1 'qutebrowser\|Vivaldi-stable' '' 'vivaldi-stable'
 
-herbstclient keybind $Mod+a spawn dmenu_run -p 'Applications' -fn 'Dejavu Sans:pixelsize=11' -nb "$BG_ALT_COLOR" -nf "$FG_COLOR" -sb "$FOCUS_COLOR" -sf "$BG_ALT_COLOR" 
+herbstclient keybind $Mod+a spawn dmenu_run -p 'Applications' -fn 'Dejavu Sans:pixelsize=13' -nb "$BG_ALT_COLOR" -nf "$FG_COLOR" -sb "$FOCUS_COLOR" -sf "$BG_ALT_COLOR" 
 
 herbstclient keybind $Mod+Control+e spawn emacsclient -c
 herbstclient keybind $Mod+e spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh 1 'Emacs' '' 'emacsclient -c'
@@ -181,7 +181,7 @@ setxkbmap -layout us -option 'compose:rctrl' -option 'caps:ctrl_modifier' && xca
 gsettings set org.gnome.gnome-flashback.desktop.icons show-home false
 gsettings set org.gnome.gnome-flashback.desktop.icons show-trash false
 
-panel=$herbstluftwm_scripts_folder/panel.sh
+panel=$herbstluftwm_folder/panel.sh
 [ -x "$panel" ] || panel=/etc/xdg/herbstluftwm/panel.sh
 for monitor in $(herbstclient list_monitors | cut -d: -f1) ; do
     # start it on each monitor
