@@ -1,0 +1,15 @@
+* Vivaldi customization
+This folder contains a custom css to hide the menu bar of Vivaldi. To use a browser in a tiling window manager, this is way better to disable this menu.
+
+Unfortunatly, to apply it you need the following manual steps:
+
+- In vivaldi's address bar, type: vivaldi://experiments/
+- Check the `Allow for using CSS modifications` option
+- Type `CTRL+F12` to go in the settings
+- In the `Apearance` tab, select the css file in `CUSTOM UI MODIFICATIONS` section
+
+* Extensions
+I use the following extensions:
+- Dark reader mode
+- Surfing keys
+- Tab-less (a must in a tiling wm)
