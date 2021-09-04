@@ -1,8 +1,36 @@
 #+TITLE: HerbstluftWM configuration
 #+PROPERTY: header-args:shell :tangle .config/herbstluftwm/autostart :shebang #!/usr/bin/env bash :mkdirp yes
 
-* Installation
+This configuration is using HerbstluftWM, its default panel and dmenu as an app launcher.
 
+* Installation
+** dmenu installation and setup
+#+BEGIN_SRC shell :tangle .scripts/dmenu/install.sh :shebang #!/usr/bin/env bash :mkdirp yes
+  mkdir -p ~/Tools
+  cd ~/Tools
+  git clone https://git.suckless.org/dmenu
+
+  cd dmenu
+  wget https://tools.suckless.org/dmenu/patches/mouse-support/dmenu-mousesupport-5.0.diff
+  wget https://tools.suckless.org/dmenu/patches/numbers/dmenu-numbers-4.9.diff
+
+  git apply dmenu-mousesupport-5.0.diff
+  git apply dmenu-numbers-4.9.diff
+
+  sudo make clean install
+#+END_SRC
+
+** Herbstluftwm gnome flashback
+Install gnome flashback before running this script
+
+#+BEGIN_SRC shell :tangle .scripts/herbsluftwm/gnome-flashback-setup.sh :shebang #!/usr/bin/env bash :mkdirp yes
+  mkdir -p ~/Tools
+  cd ~/Tools
+  git clone git@github.com:Vivien-lelouette/herbstluftwm-gnome-flashback.git
+
+  cd herbstluftwm-gnome-flashback
+  sudo make install
+#+END_SRC
 * HerbstluftWM configuration
 #+BEGIN_SRC shell
   herbstluftwm_folder=~/.config/herbstluftwm
