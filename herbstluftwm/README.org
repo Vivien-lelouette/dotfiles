@@ -1,0 +1,444 @@
+#+TITLE: HerbstluftWM configuration
+#+PROPERTY: header-args:shell :tangle .config/herbstluftwm/autostart :shebang #!/usr/bin/env bash :mkdirp yes
+
+* Installation
+
+* HerbstluftWM configuration
+#+BEGIN_SRC shell
+  herbstluftwm_folder=~/.config/herbstluftwm
+  herbstluftwm_scripts_folder=$herbstluftwm_folder/scripts
+#+END_SRC
+
+** Utils
+*** focus timestamp attribute
+Keep tracks of the last focused timestamp for every window.
+#+BEGIN_SRC shell
+  watch_focus_time()
+  {
+      herbstclient --idle 'focus_changed' | while read hook winid wintitle
+      do
+          herbstclient silent new_attr string clients.$winid.my_last_focused
+          herbstclient set_attr clients.$winid.my_last_focused $(echo '('`date +"%s.%N"` ' * 1000000)/1' | bc)
+      done
+  }
+#+END_SRC
+
+** herbstluftwm general setup
+#+BEGIN_SRC shell
+  herbstclient emit_hook reload
+
+  herbstclient rule focus=on
+
+  herbstclient set frame_gap 0
+
+  herbstclient set auto_detect_monitors 1
+
+  # default layout to max
+  herbstclient set_layout max
+  herbstclient set default_frame_layout 2
+
+#+END_SRC
+
+** Theme
+*** colors
+#+BEGIN_SRC shell
+  export FG_COLOR='#d8dee9'
+  export FG_ALT_COLOR='#93979f'
+  export BG_COLOR='#2e3440'
+  export BG_ALT_COLOR='#242832'
+  export FOCUS_COLOR='#a3be8c'
+  export ALERT_COLOR='#b48ead'
+#+END_SRC
+
+*** Theme
+#+BEGIN_SRC shell
+  xsetroot -solid "$BG_COLOR"
+
+  herbstclient attr theme.tiling.reset 1
+  herbstclient attr theme.floating.reset 1
+  herbstclient set frame_border_active_color "$FOCUS_COLOR"
+  herbstclient set frame_border_normal_color "$BG_ALT_COLOR"
+  herbstclient set frame_bg_normal_color "$BG_COLOR"
+  herbstclient set frame_bg_active_color "$BG_ALT_COLOR"
+  herbstclient set frame_border_width 1
+  herbstclient set always_show_frame on
+  herbstclient set frame_bg_transparent on
+  herbstclient set frame_transparent_width 5
+  herbstclient set frame_gap 0
+
+  herbstclient attr theme.title_height 0
+  herbstclient attr theme.title_font 'Dejavu Sans:pixelsize=12'  # example using Xft
+  herbstclient attr theme.padding_top 0  # space below the title's baseline (i.e. text depth)
+  herbstclient attr theme.active.color "$FOCUS_COLOR"
+  herbstclient attr theme.normal.color "$BG_COLOR"
+  herbstclient attr theme.urgent.color "$ALERT_COLOR"
+  herbstclient attr theme.inner_width 1
+  herbstclient attr theme.inner_color "$BG_COLOR"
+  herbstclient attr theme.border_width 1
+  herbstclient attr theme.floating.border_width 4
+  herbstclient attr theme.floating.outer_width 1
+  herbstclient attr theme.floating.outer_color "$BG_COLOR"
+  herbstclient attr theme.active.inner_color "$FOCUS_COLOR"
+  herbstclient attr theme.active.outer_color "$FOCUS_COLOR"
+  herbstclient attr theme.background_color "$BG_COLOR"
+
+  herbstclient set window_gap 0
+  herbstclient set frame_padding 0
+  herbstclient set smart_window_surroundings off
+  herbstclient set smart_frame_surroundings off
+  herbstclient set mouse_recenter_gap 0
+#+END_SRC
+
+** Keybinds
+*** Remove all existing keybindings
+#+BEGIN_SRC shell
+  herbstclient keyunbind --all 
+#+END_SRC
+
+*** Super as mod key
+#+BEGIN_SRC shell
+  Mod=Mod4
+#+END_SRC
+
+*** Refresh configuration
+#+BEGIN_SRC shell
+  herbstclient keybind $Mod+Shift+r reload
+#+END_SRC
+
+*** Tags
+#+BEGIN_SRC shell
+  tag_names=( {1..9} 0 )
+  tag_keys=( {1..9} 0 )
+
+  herbstclient rename default "${tag_names[0]}" || true
+  for i in "${!tag_names[@]}" ; do
+      herbstclient add "${tag_names[$i]}"
+      key="${tag_keys[$i]}"
+      if ! [ -z "$key" ] ; then
+          herbstclient keybind "$Mod-$key" use_index "$i"
+          herbstclient keybind "$Mod-Shift-$key" move_index "$i"
+      fi
+  done
+#+END_SRC
+
+*** Frame management
+#+BEGIN_SRC shell
+  herbstclient keybind $Mod+q spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(kill-this-buffer)' 'herbstclient close'
+  herbstclient keybind $Mod+Control+q close
+  herbstclient keybind $Mod+Shift+q spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(evil-quit)' 'herbstclient remove'
+
+  herbstclient keybind $Mod+s split right 0.5
+  herbstclient keybind $Mod+Shift+s split bottom 0.5
+
+  herbstclient keybind $Mod+w spawn bash $herbstluftwm_scripts_folder/dmenu_switch_window.sh 
+
+  herbstclient keybind $Mod+Left spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-left)' 'herbstclient focus left'
+  herbstclient keybind $Mod+Down spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-down)' 'herbstclient focus down'
+  herbstclient keybind $Mod+Up spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-up)' 'herbstclient focus up'
+  herbstclient keybind $Mod+Right spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-right)' 'herbstclient focus right'
+  herbstclient keybind $Mod+h spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-left)' 'herbstclient focus left'
+  herbstclient keybind $Mod+j spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-down)' 'herbstclient focus down'
+  herbstclient keybind $Mod+k spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-up)' 'herbstclient focus up'
+  herbstclient keybind $Mod+l spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-right)' 'herbstclient focus right'
+
+  herbstclient keybind $Mod+Shift+Left shift left
+  herbstclient keybind $Mod+Shift+Down shift down
+  herbstclient keybind $Mod+Shift+Up shift up
+  herbstclient keybind $Mod+Shift+Right shift right
+  herbstclient keybind $Mod+Shift+h shift left
+  herbstclient keybind $Mod+Shift+j shift down
+  herbstclient keybind $Mod+Shift+k shift up
+  herbstclient keybind $Mod+Shift+l shift right
+
+  herbstclient keybind $Mod+Control+space split explode
+  herbstclient keybind $Mod+Control+h resize left +0.05
+  herbstclient keybind $Mod+Control+j resize down +0.05
+  herbstclient keybind $Mod+Control+k resize up +0.05
+  herbstclient keybind $Mod+Control+l resize right +0.05
+  herbstclient keybind $Mod+Control+Left resize left +0.05
+  herbstclient keybind $Mod+Control+Down resize down +0.05
+  herbstclient keybind $Mod+Control+Up resize up +0.05
+  herbstclient keybind $Mod+Control+Right resize right +0.05
+
+  herbstclient keybind $Mod+1 use_index 0
+  herbstclient keybind $Mod+Shift+1 move_index 0
+  herbstclient keybind $Mod+2 use_index 1
+  herbstclient keybind $Mod+Shift+2 move_index 1
+  herbstclient keybind $Mod+3 use_index 2
+  herbstclient keybind $Mod+Shift+3 move_index 2
+  herbstclient keybind $Mod+4 use_index 3
+  herbstclient keybind $Mod+Shift+4 move_index 3
+  herbstclient keybind $Mod+5 use_index 4
+  herbstclient keybind $Mod+Shift+5 move_index 4
+  herbstclient keybind $Mod+6 use_index 5
+  herbstclient keybind $Mod+Shift+6 move_index 5
+  herbstclient keybind $Mod+7 use_index 6
+  herbstclient keybind $Mod+Shift+7 move_index 6
+  herbstclient keybind $Mod+8 use_index 7
+  herbstclient keybind $Mod+Shift+8 move_index 7
+  herbstclient keybind $Mod+9 use_index 8
+  herbstclient keybind $Mod+Shift+9 move_index 8
+
+  herbstclient keybind $Mod+f fullscreen toggle
+  herbstclient keybind $Mod+Shift+f floating toggle
+  herbstclient keybind $Mod+Control+f pseudotile toggle
+  herbstclient keybind $Mod+BackSpace cycle_monitor
+#+END_SRC
+
+*** Programs
+#+BEGIN_SRC shell
+  
+  herbstclient keybind $Mod+Shift+Return spawn gnome-terminal
+
+  herbstclient keybind $Mod+c cycle_all +1
+
+  herbstclient keybind $Mod+Tab spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh 1 "" 'qutebrowser\|Vivaldi-stable\|Emacs'
+  herbstclient keybind $Mod+Shift+Tab spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh -1 "" 'qutebrowser\|Vivaldi-stable\|Emacs'
+
+  herbstclient keybind $Mod+Control+i spawn vivaldi
+  herbstclient keybind $Mod+i spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh 1 'qutebrowser\|Vivaldi-stable' '' 'vivaldi'
+  herbstclient keybind $Mod+Shift+i spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh -1 'qutebrowser\|Vivaldi-stable' '' 'vivaldi'
+
+  herbstclient keybind $Mod+a spawn dmenu_run -p 'Applications' -fn 'Dejavu Sans:pixelsize=11' -nb "$BG_ALT_COLOR" -nf "$FG_COLOR" -sb "$FOCUS_COLOR" -sf "$BG_ALT_COLOR" 
+
+  herbstclient keybind $Mod+Control+e spawn emacsclient -c
+  herbstclient keybind $Mod+e spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh 1 'Emacs' '' 'emacsclient -c'
+  herbstclient keybind $Mod+Shift+e spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh -1 'Emacs' '' 'emacsclient -c'
+  herbstclient keybind $Mod+Return spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'vterm)"
+  herbstclient keybind $Mod+b spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'consult-buffer)"
+  herbstclient keybind $Mod+Shift+b spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'ibuffer)"
+  herbstclient keybind $Mod+p spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'treemacs)"
+  herbstclient keybind $Mod+period spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'find-file)"
+  herbstclient keybind $Mod+x spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'execute-extended-command)"
+#+END_SRC
+
+** Mouse binding
+#+BEGIN_SRC shell
+  herbstclient mouseunbind --all
+  herbstclient mousebind $Mod-Button1 move
+  herbstclient mousebind $Mod-Button2 zoom
+  herbstclient mousebind $Mod-Button3 resize
+#+END_SRC
+
+** Setups
+*** Multi-monitor
+#+BEGIN_SRC shell
+  herbstclient detect_monitors
+#+END_SRC
+
+*** Keyboard layout
+#+BEGIN_SRC shell
+  setxkbmap -layout us -option 'compose:rctrl' -option 'caps:ctrl_modifier' && xcape -e 'Caps_Lock=Escape'
+#+END_SRC
+
+*** Gnome flashback
+#+BEGIN_SRC shell
+  gsettings set org.gnome.gnome-flashback.desktop.icons show-home false
+  gsettings set org.gnome.gnome-flashback.desktop.icons show-trash false
+#+END_SRC
+
+*** Panel
+#+BEGIN_SRC shell
+  panel=$herbstluftwm_scripts_folder/panel.sh
+  [ -x "$panel" ] || panel=/etc/xdg/herbstluftwm/panel.sh
+  for monitor in $(herbstclient list_monitors | cut -d: -f1) ; do
+      # start it on each monitor
+      "$panel" "$monitor" &
+  done
+#+END_SRC
+
+** Startup applications
+#+BEGIN_SRC shell
+  nohup emacs --daemon >> /dev/null &
+#+END_SRC
+
+** Start watching focused times
+#+BEGIN_SRC shell
+  watch_focus_time &
+#+END_SRC
+
+
+* Scripts
+** Window manipulation
+*** Go direction
+#+BEGIN_SRC shell :tangle .config/herbstluftwm/scripts/go_direction.sh :shebang #!/usr/bin/env bash :mkdirp yes
+  if [ "$(herbstclient get_attr clients.focus.class)" == "Emacs" ]
+  then
+      timeout 0.2 emacsclient -e "(windmove-$1)"
+      if [ $? -ne 0 ]
+      then
+          herbstclient focus $1
+      fi
+  else
+      herbstclient focus $1
+  fi
+#+END_SRC
+
+*** List switchable clients
+#+BEGIN_SRC shell :tangle .config/herbstluftwm/scripts/list_switchable_clients.sh :shebang #!/usr/bin/env bash :mkdirp yes
+  list_all_clients=${1:-0}
+
+  client_list=$(herbstclient object_tree clients \
+                    | grep -E "0x" \
+                    | sed -e "s/.* 0x/0x/g" \
+                    | while read -r winid;do \
+                    echo \
+                        $(herbstclient silent new_attr string clients.$winid.my_last_focused && herbstclient set_attr clients.$winid.my_last_focused "0") \
+                        visible=$(herbstclient get_attr clients.$winid.visible) \
+                        $(herbstclient get_attr clients.$winid.tag) \
+                        $(herbstclient get_attr clients.$winid.my_last_focused) \
+                        $winid \
+                        $(herbstclient get_attr clients.$winid.class) \
+                        "\"herbstclient bring $winid\"" \
+                    ;done \
+                    | sed -e 's/^ //g' -e 's/^[ \t]*//;s/[ \t]*$//')
+
+  if [ $list_all_clients -ne 1 ]
+  then
+      client_list=$(echo "${client_list}" \
+                        | sed -e 's/^ //g' -e 's/^[ \t]*//;s/[ \t]*$//' \
+                        | grep -v "^visible=false ")
+  fi
+
+  client_list=$(echo "${client_list}" \
+                    | sed -e 's/^ //g' -e 's/^[ \t]*//;s/[ \t]*$//' \
+                    | cut -d' ' -f2- \
+                    | sort)
+
+  client_visible_list=$(echo "${client_list}" \
+                            | sed -e 's/^ //g' -e 's/^[ \t]*//;s/[ \t]*$//' \
+                            | cut -d' ' -f1 \
+                            | uniq \
+                            | while read -r tagid;do \
+                            herbstclient dump $tagid \
+                                | sed -e 's/(//g' -e 's/)//g' -e "s/clients /\n/g" \
+                                | grep "^max:" \
+                                | sed "s/max://g" \
+                                | while read -r index line;do \
+                                echo $line \
+                                    | cut -d' ' -f$(( $index + 1)) \
+                                ;done \
+                            ;done)
+
+  if [ $list_all_clients -ne 1 ]
+  then
+      client_list=$(echo "${client_list}" \
+                        | grep -v "$(echo "${client_visible_list}" \
+      | uniq \
+      | xargs echo \
+      | sed -e 's/ /\\|/g' -e 's/\\|$//g')")
+  fi
+
+  echo "${client_list}" \
+      | sed -e 's/^ //g' -e 's/^[ \t]*//;s/[ \t]*$//' \
+      | cut -d' ' -f3- \
+      | sed '/^$/d'
+#+END_SRC
+
+*** Switch by classes
+#+BEGIN_SRC shell :tangle .config/herbstluftwm/scripts/switch_by_classes.sh :shebang #!/usr/bin/env bash :mkdirp yes
+  direction=$1
+  include_classes=$2
+  exclude_classes=$3
+  fallback_command=$4
+
+  init_state="$(herbstclient dump)"
+
+  cur_dir=$(dirname "$0")
+
+  switchable_clients=$(bash $cur_dir/list_switchable_clients.sh | sed '/^$/d')
+
+  if [ -n "$include_classes" ]
+  then
+      switchable_clients=$(echo "$switchable_clients" | grep "$include_classes")
+  fi
+
+  if [ -n "$exclude_classes" ]
+  then
+      switchable_clients=$(echo "$switchable_clients" | grep -v "$exclude_classes")
+  fi
+
+  if [ $direction -lt 0 ]
+  then
+      switchable_clients=$(echo "$switchable_clients" | tail -2 | head -1)
+  else
+      switchable_clients=$(echo "$switchable_clients" | head -1)
+  fi
+
+  `$(echo $switchable_clients | sed "s/.*\ \"/\"/g" | xargs echo)`
+
+  if [ "$(herbstclient dump)" = "$init_state" ]
+  then
+      if echo "$include_classes" | grep -qE "$(herbstclient get_attr clients.focus.class)"
+      then
+          if [ "$(herbstclient get_attr clients.focus.class)" == "" ]
+          then
+              nohup `$($fallback_command)` &
+              sleep 0.1
+          fi
+      else
+          nohup `$($fallback_command)` &
+          sleep 0.1
+      fi
+  fi
+#+END_SRC
+
+** Emacs integration
+*** Emacs or herbstluftwm command
+#+BEGIN_SRC shell :tangle .config/herbstluftwm/scripts/emacs_or_herbstluftwm_command.sh :shebang #!/usr/bin/env bash :mkdirp yes
+  if [ "$(herbstclient get_attr clients.focus.class)" == "Emacs" ]
+  then
+      timeout 0.2 bash -c "emacsclient -e \"(with-current-buffer (window-buffer (selected-window)) $1)\""
+      if [ $? -ne 0 ]
+      then
+          bash -c "$2"
+      fi
+  else
+      bash -c "$2"
+  fi
+#+END_SRC
+
+*** Emacs command
+#+BEGIN_SRC shell :tangle .config/herbstluftwm/scripts/emacs_command.sh :shebang #!/usr/bin/env bash :mkdirp yes
+  cur_dir=$(dirname "$0")
+  if [ \"$(herbstclient get_attr clients.focus.class)\" != \"Emacs\" ]
+  then
+      bash $cur_dir/switch_by_classes.sh 1 'Emacs' '' 'emacsclient -c'
+      sleep 0.2
+  fi
+  bash $cur_dir/emacs_or_herbstluftwm_command.sh "$1"
+#+END_SRC
+
+** dmenu
+*** dmenu switch window
+#+BEGIN_SRC shell :tangle .config/herbstluftwm/scripts/dmenu_switch_window.sh :shebang #!/usr/bin/env bash :mkdirp yes
+  export FG_COLOR='#d8dee9'
+  export FG_ALT_COLOR='#93979f'
+  export BG_COLOR='#2e3440'
+  export BG_ALT_COLOR='#242832'
+  export FOCUS_COLOR='#a3be8c'
+  export ALERT_COLOR='#b48ead'
+
+  cur_dir=$(dirname "$0")
+  client_list=$(bash $cur_dir/list_switchable_clients.sh 1)
+
+  display_client_list=$(echo "${client_list}" \
+                            | while read -r winid other;do \
+                            echo \
+                                $winid \
+                                $(herbstclient get_attr clients.$winid.class): \
+                                $(herbstclient get_attr clients.$winid.title) \
+                            ;done \
+                            | sed -e 's/^ //g' -e 's/^[ \t]*//;s/[ \t]*$//')
+
+  client=$(echo "$display_client_list" | cut -d' ' -f2- | dmenu -i -p 'Windows' -fn 'Dejavu Sans:pixelsize=11' -nb "$BG_ALT_COLOR" -nf "$FG_COLOR" -sb "$FOCUS_COLOR" -sf "$BG_ALT_COLOR")
+
+  if [ $? -eq 0 ]
+  then
+      clientid=$(echo "${display_client_list}" | grep " $client" | head -1 | cut -d' ' -f1)
+      echo $clientid
+      `$(echo "${client_list}" | grep "^$clientid" | sed "s/.*\ \"/\"/g" | xargs echo)`
+  fi
+#+END_SRC
+
+
