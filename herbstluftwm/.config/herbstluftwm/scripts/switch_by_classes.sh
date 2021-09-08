@@ -8,7 +8,7 @@ init_state="$(herbstclient dump)"
 
 script_folder="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
-switchable_clients=$(bash $script_folder/list_switchable_clients.sh 0 0 | sed '/^$/d')
+switchable_clients=$(bash $script_folder/list_switchable_clients.sh 0 | sed '/^$/d')
 
 if [ -n "$include_classes" ]
 then
