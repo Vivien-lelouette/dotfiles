@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 list_all_clients=${1:-0}
+merge_emacs_buffers=${2:-1}
+show_hidden_windows=${3:-0}
+
+script_path="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
 client_list=$(herbstclient object_tree clients \
                   | grep -E "0x" \
@@ -10,7 +14,7 @@ client_list=$(herbstclient object_tree clients \
                       visible=$(herbstclient get_attr clients.$winid.visible) \
                       $(herbstclient get_attr clients.$winid.tag) \
                       $(herbstclient get_attr clients.$winid.my_last_focused) \
-                      $winid \
+                      $winid¤\
                       $(herbstclient get_attr clients.$winid.class) \
                       "\"herbstclient bring $winid\"" \
                   ;done \
@@ -27,6 +31,7 @@ client_list=$(echo "${client_list}" \
                   | sed -e 's/^ //g' -e 's/^[ \t]*//;s/[ \t]*$//' \
                   | cut -d' ' -f2- \
                   | sort)
+
 
 client_visible_list=$(echo "${client_list}" \
                           | sed -e 's/^ //g' -e 's/^[ \t]*//;s/[ \t]*$//' \
@@ -52,7 +57,40 @@ then
     | sed -e 's/ /\\|/g' -e 's/\\|$//g')")
 fi
 
+client_list=$(echo "${client_list}" \
+                  | sed -e 's/^ //g' -e 's/^[ \t]*//;s/[ \t]*$//' \
+                  | cut -d' ' -f3-)
+
+if [ $merge_emacs_buffers -eq 1 ]
+then
+    emacs_buffer_list=$(timeout 0.2 emacsclient -e "(buffer-list)" \
+                            | sed -e 's/(//g' -e 's/)//g' -e 's/.$//' -e "s/>\ #/\n #/g" -e "s/\ *#<buffer\ *//g" \
+                            | tac \
+                            | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' \
+                            | while read -r name;do \
+                            echo \
+                                $name¤\
+                                'Emacs' \
+                                "\"bash ${script_path}/emacs_switch_to_buffer.sh '$name'\"" \
+                            ;done)
+
+    client_list=$(echo "${client_list}" \
+                      | sed -e 's/^ //g' -e 's/^[ \t]*//;s/[ \t]*$//' \
+                      | grep -v " Emacs \"")
+
+    client_list=$(echo "$client_list \
+
+                       $emacs_buffer_list")
+fi
+
+if [ $show_hidden_windows -ne 1 ]
+then
+    client_list=$(echo "${client_list}" \
+                      | sed -e 's/^ //g' -e 's/^[ \t]*//;s/[ \t]*$//' \
+                      | grep -v "^\magit" \
+                      | grep -v "^\*")
+fi
+
 echo "${client_list}" \
     | sed -e 's/^ //g' -e 's/^[ \t]*//;s/[ \t]*$//' \
-    | cut -d' ' -f3- \
     | sed '/^$/d'

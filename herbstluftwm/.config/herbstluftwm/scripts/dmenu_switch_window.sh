@@ -6,23 +6,42 @@ export BG_ALT_COLOR='#242832'
 export FOCUS_COLOR='#a3be8c'
 export ALERT_COLOR='#b48ead'
 
-cur_dir=$(dirname "$0")
-client_list=$(bash $cur_dir/list_switchable_clients.sh 1)
+script_folder="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+client_list=$(bash $script_folder/list_switchable_clients.sh 1)
 
 display_client_list=$(echo "${client_list}" \
+                          | grep -v " Emacs \"" \
+                          | sed 's/¤//g' \
                           | while read -r winid other;do \
                           echo \
-                              $winid \
+                              $winid¤\
                               $(herbstclient get_attr clients.$winid.class): \
                               $(herbstclient get_attr clients.$winid.title) \
                           ;done \
                           | sed -e 's/^ //g' -e 's/^[ \t]*//;s/[ \t]*$//')
 
-client=$(echo "$display_client_list" | cut -d' ' -f2- | dmenu -i -p 'Windows' -fn 'Dejavu Sans:pixelsize=13' -nb "$BG_ALT_COLOR" -nf "$FG_COLOR" -sb "$FOCUS_COLOR" -sf "$BG_ALT_COLOR")
+emacs_buffer_list=$(echo "${client_list}" \
+                        | grep -e " Emacs \"" \
+                        | sed 's/¤.*//g' \
+                        | while read -r name;do \
+                        echo \
+                            $name¤\
+                            "Emacs: " \
+                            $name \
+                        ;done)
+
+
+display_client_list=$(echo "$display_client_list \
+
+$emacs_buffer_list")
+
+client=$(echo "$display_client_list" | sed 's/.*¤ //g' | dmenu -i -p 'Windows' -fn 'Dejavu Sans:pixelsize=13' -nb "$BG_ALT_COLOR" -nf "$FG_COLOR" -sb "$FOCUS_COLOR" -sf "$BG_ALT_COLOR")
 
 if [ $? -eq 0 ]
 then
-    clientid=$(echo "${display_client_list}" | grep " $client" | head -1 | cut -d' ' -f1)
-    echo $clientid
-    `$(echo "${client_list}" | grep "^$clientid" | sed "s/.*\ \"/\"/g" | xargs echo)`
+    clientid=$(echo "${display_client_list}" | grep " $client" | head -1 | sed 's/¤.*//g')
+    cmd=$(echo "${client_list}" | grep "^${clientid}¤" | sed 's/.* \"/\"/g')
+
+    echo $cmd
+    $(echo ${cmd:1:-1})
 fi

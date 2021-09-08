@@ -41,7 +41,7 @@ The snippets below will install emacs from their git master:
 ** Correctly set the garbage collector for modern systems
 #+BEGIN_SRC emacs-lisp
   (setq gc-cons-threshold 100000000)
-  (setq read-process-output-max (* 1024 1024)) ;; 1mb
+  (setq read-process-output-max (* 3024 1024)) ;; 1mb
 #+END_SRC
 
 ** Wrap init
@@ -1466,7 +1466,6 @@ If a setup is specific to a machine, add it on this file.
 * End of the wrap
 #+BEGIN_SRC emacs-lisp
   )
-  (setq gc-cons-threshold (* 2 1000 1000))
   (provide 'init)
 #+END_SRC
 

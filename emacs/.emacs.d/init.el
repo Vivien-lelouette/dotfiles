@@ -1,5 +1,5 @@
 (setq gc-cons-threshold 100000000)
-(setq read-process-output-max (* 1024 1024)) ;; 1mb
+(setq read-process-output-max (* 3024 1024)) ;; 1mb
 
 (let ((file-name-handler-alist nil))
   (require 'package)
@@ -1073,7 +1073,6 @@ The optional argument NEW-WINDOW is not used."
 (global-set-key (kbd "C-s") #'consult-line)
 
 )
-(setq gc-cons-threshold (* 2 1000 1000))
 (provide 'init)
 
 (theme/doom-nord)
