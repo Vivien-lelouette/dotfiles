@@ -42,6 +42,5 @@ then
     clientid=$(echo "${display_client_list}" | grep " $client" | head -1 | sed 's/¤.*//g')
     cmd=$(echo "${client_list}" | grep "^${clientid}¤" | sed 's/.* \"/\"/g')
 
-    echo $cmd
     $(echo ${cmd:1:-1})
 fi

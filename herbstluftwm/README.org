@@ -1,6 +1,5 @@
 #+TITLE: HerbstluftWM configuration
 #+PROPERTY: header-args:shell :tangle .config/herbstluftwm/autostart :shebang #!/usr/bin/env bash :mkdirp yes
-
 This configuration is using HerbstluftWM, its default panel and dmenu as an app launcher.
 
 * Installation
@@ -216,7 +215,6 @@ Keep tracks of the last focused timestamp for every window.
 
 *** Programs
 #+BEGIN_SRC shell
-  
   herbstclient keybind $Mod+Shift+Return spawn gnome-terminal
 
   herbstclient keybind $Mod+c cycle_all +1
@@ -306,7 +304,8 @@ Keep tracks of the last focused timestamp for every window.
   y=${geometry[1]}
   panel_width=${geometry[2]}
   panel_height=19
-  font="-*-dejavu sans-medium-*-*-*-13-*-*-*-*-*-*-*"
+  # font="-*-dejavu sans-medium-*-*-*-13-*-*-*-*-*-*-*"
+  font="-*-fixed-medium-*-*-*-12-*-*-*-*-*-*-*"
   # extract colors from hlwm and omit alpha-value
   bgcolor=$(hc get frame_border_normal_color|sed 's,^\(\#[0-9a-f]\{6\}\)[0-9a-f]\{2\}$,\1,')
   selbg=$(hc get window_border_active_color|sed 's,^\(\#[0-9a-f]\{6\}\)[0-9a-f]\{2\}$,\1,')
@@ -496,101 +495,101 @@ Keep tracks of the last focused timestamp for every window.
 
 *** List switchable clients
 #+BEGIN_SRC shell :tangle .config/herbstluftwm/scripts/list_switchable_clients.sh :shebang #!/usr/bin/env bash :mkdirp yes
-  list_all_clients=${1:-0}
-  merge_emacs_buffers=${2:-1}
-  show_hidden_windows=${3:-0}
+      list_all_clients=${1:-0}
+      merge_emacs_buffers=${2:-1}
+      show_hidden_windows=${3:-0}
 
-  script_path="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+      script_path="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
-  client_list=$(herbstclient object_tree clients \
-                    | grep -E "0x" \
-                    | sed -e "s/.* 0x/0x/g" \
-                    | while read -r winid;do \
-                    echo \
-                        $(herbstclient silent new_attr string clients.$winid.my_last_focused && herbstclient set_attr clients.$winid.my_last_focused "0") \
-                        visible=$(herbstclient get_attr clients.$winid.visible) \
-                        $(herbstclient get_attr clients.$winid.tag) \
-                        $(herbstclient get_attr clients.$winid.my_last_focused) \
-                        $winid¤\
-                        $(herbstclient get_attr clients.$winid.class) \
-                        "\"herbstclient bring $winid\"" \
-                    ;done \
-                    | sed -e 's/^ //g' -e 's/^[ \t]*//;s/[ \t]*$//')
+      client_list=$(herbstclient object_tree clients \
+                        | grep -E "0x" \
+                        | sed -e "s/.* 0x/0x/g" \
+                        | while read -r winid;do \
+                        echo \
+                            $(herbstclient silent new_attr string clients.$winid.my_last_focused && herbstclient set_attr clients.$winid.my_last_focused "0") \
+                            visible=$(herbstclient get_attr clients.$winid.visible) \
+                            $(herbstclient get_attr clients.$winid.tag) \
+                            $(herbstclient get_attr clients.$winid.my_last_focused) \
+                            $winid¤\
+                            $(herbstclient get_attr clients.$winid.class) \
+                            "\"herbstclient bring $winid\"" \
+                        ;done \
+                        | sed -e 's/^ //g' -e 's/^[ \t]*//;s/[ \t]*$//')
 
-  if [ $list_all_clients -ne 1 ]
-  then
-      client_list=$(echo "${client_list}" \
-                        | sed -e 's/^ //g' -e 's/^[ \t]*//;s/[ \t]*$//' \
-                        | grep -v "^visible=false ")
-  fi
-
-  client_list=$(echo "${client_list}" \
-                    | sed -e 's/^ //g' -e 's/^[ \t]*//;s/[ \t]*$//' \
-                    | cut -d' ' -f2- \
-                    | sort)
-
-
-  client_visible_list=$(echo "${client_list}" \
+      if [ $list_all_clients -ne 1 ]
+      then
+          client_list=$(echo "${client_list}" \
                             | sed -e 's/^ //g' -e 's/^[ \t]*//;s/[ \t]*$//' \
-                            | cut -d' ' -f1 \
-                            | uniq \
-                            | while read -r tagid;do \
-                            herbstclient dump $tagid \
-                                | sed -e 's/(//g' -e 's/)//g' -e "s/clients /\n/g" \
-                                | grep "^max:" \
-                                | sed "s/max://g" \
-                                | while read -r index line;do \
-                                echo $line \
-                                    | cut -d' ' -f$(( $index + 1)) \
-                                ;done \
-                            ;done)
-
-  if [ $list_all_clients -ne 1 ]
-  then
-      client_list=$(echo "${client_list}" \
-                        | grep -v "$(echo "${client_visible_list}" \
-      | uniq \
-      | xargs echo \
-      | sed -e 's/ /\\|/g' -e 's/\\|$//g')")
-  fi
-
-  client_list=$(echo "${client_list}" \
-                    | sed -e 's/^ //g' -e 's/^[ \t]*//;s/[ \t]*$//' \
-                    | cut -d' ' -f3-)
-
-  if [ $merge_emacs_buffers -eq 1 ]
-  then
-      emacs_buffer_list=$(timeout 0.2 emacsclient -e "(buffer-list)" \
-                              | sed -e 's/(//g' -e 's/)//g' -e 's/.$//' -e "s/>\ #/\n #/g" -e "s/\ *#<buffer\ *//g" \
-                              | tac \
-                              | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' \
-                              | while read -r name;do \
-                              echo \
-                                  $name¤\
-                                  'Emacs' \
-                                  "\"bash ${script_path}/emacs_switch_to_buffer.sh '$name'\"" \
-                              ;done)
+                            | grep -v "^visible=false ")
+      fi
 
       client_list=$(echo "${client_list}" \
                         | sed -e 's/^ //g' -e 's/^[ \t]*//;s/[ \t]*$//' \
-                        | grep -v " Emacs \"")
+                        | cut -d' ' -f2- \
+                        | sort)
 
-      client_list=$(echo "$client_list \
 
-                         $emacs_buffer_list")
-  fi
+      client_visible_list=$(echo "${client_list}" \
+                                | sed -e 's/^ //g' -e 's/^[ \t]*//;s/[ \t]*$//' \
+                                | cut -d' ' -f1 \
+                                | uniq \
+                                | while read -r tagid;do \
+                                herbstclient dump $tagid \
+                                    | sed -e 's/(//g' -e 's/)//g' -e "s/clients /\n/g" \
+                                    | grep "^max:" \
+                                    | sed "s/max://g" \
+                                    | while read -r index line;do \
+                                    echo $line \
+                                        | cut -d' ' -f$(( $index + 1)) \
+                                    ;done \
+                                ;done)
 
-  if [ $show_hidden_windows -ne 1 ]
-  then
+      if [ $list_all_clients -ne 1 ]
+      then
+          client_list=$(echo "${client_list}" \
+                            | grep -v "$(echo "${client_visible_list}" \
+          | uniq \
+          | xargs echo \
+          | sed -e 's/ /\\|/g' -e 's/\\|$//g')")
+      fi
+
       client_list=$(echo "${client_list}" \
                         | sed -e 's/^ //g' -e 's/^[ \t]*//;s/[ \t]*$//' \
-                        | grep -v "^\magit" \
-                        | grep -v "^\*")
-  fi
+                        | cut -d' ' -f3-)
 
-  echo "${client_list}" \
-      | sed -e 's/^ //g' -e 's/^[ \t]*//;s/[ \t]*$//' \
-      | sed '/^$/d'
+      if [ $merge_emacs_buffers -eq 1 ]
+      then
+          emacs_buffer_list=$(timeout 0.5 emacsclient -e "(buffer-list)" \
+                                  | sed -e 's/(//g' -e 's/)//g' -e 's/.$//' -e "s/>\ #/\n #/g" -e "s/\ *#<buffer\ *//g" \
+                                  | tac \
+                                  | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' \
+                                  | while read -r name;do \
+                                  echo \
+                                      $name¤\
+                                      'Emacs' \
+                                      "\"bash ${script_path}/emacs_switch_to_buffer.sh '$name'\"" \
+                                  ;done)
+
+          client_list=$(echo "${client_list}" \
+                            | sed -e 's/^ //g' -e 's/^[ \t]*//;s/[ \t]*$//' \
+                            | grep -v " Emacs \"")
+
+          client_list=$(echo "$client_list \
+
+                             $emacs_buffer_list")
+      fi
+
+      if [ $show_hidden_windows -ne 1 ]
+      then
+          client_list=$(echo "${client_list}" \
+                            | sed -e 's/^ //g' -e 's/^[ \t]*//;s/[ \t]*$//' \
+                            | grep -v "^\magit" \
+                            | grep -v "^\*")
+      fi
+
+      echo "${client_list}" \
+          | sed -e 's/^ //g' -e 's/^[ \t]*//;s/[ \t]*$//' \
+          | sed '/^$/d'
 #+END_SRC
 
 *** Switch by classes
@@ -604,7 +603,7 @@ Keep tracks of the last focused timestamp for every window.
 
   script_folder="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
-  switchable_clients=$(bash $script_folder/list_switchable_clients.sh 0 | sed '/^$/d')
+  switchable_clients=$(bash $script_folder/list_switchable_clients.sh 0 1 | sed '/^$/d')
 
   if [ -n "$include_classes" ]
   then
@@ -623,7 +622,9 @@ Keep tracks of the last focused timestamp for every window.
       switchable_clients=$(echo "$switchable_clients" | head -1)
   fi
 
-  `$(echo $switchable_clients | sed "s/.*\ \"/\"/g" | xargs echo)`
+  cmd=$(echo $switchable_clients | sed "s/.*\ \"/\"/g")
+
+  $(echo ${cmd:1:-1})
 
   if [ "$(herbstclient dump)" = "$init_state" ]
   then
@@ -631,11 +632,11 @@ Keep tracks of the last focused timestamp for every window.
       then
           if [ "$(herbstclient get_attr clients.focus.class)" == "" ]
           then
-              nohup `$($fallback_command)` &
+              $(echo ${fallback_command})
               sleep 0.1
           fi
       else
-          nohup `$($fallback_command)` &
+          $(echo ${fallback_command})
           sleep 0.1
       fi
   fi
@@ -661,8 +662,20 @@ Keep tracks of the last focused timestamp for every window.
   script_folder="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
   if [ \"$(herbstclient get_attr clients.focus.class)\" != \"Emacs\" ]
   then
-      bash $script_folder/switch_by_classes.sh 1 'Emacs' '' 'emacsclient -c'
-      sleep 0.2
+      client_list=$(bash $script_folder/list_switchable_clients.sh 0 0)
+      emacs_client_id=$(echo "${client_list}" \
+                            | sed -e 's/^ //g' -e 's/^[ \t]*//;s/[ \t]*$//' \
+                            | grep " Emacs \"" \
+                            | tail -1 \
+                            | sed 's/¤.*//g')
+      echo $emacs_client_id
+      if [ -z "$emacs_client_id" ]
+      then
+        emacsclient -c &
+      else
+        herbstclient bring $emacs_client_id &
+      fi
+      sleep 0.1
   fi
   bash $script_folder/emacs_or_herbstluftwm_command.sh "$1"
 #+END_SRC
@@ -719,7 +732,6 @@ Keep tracks of the last focused timestamp for every window.
       clientid=$(echo "${display_client_list}" | grep " $client" | head -1 | sed 's/¤.*//g')
       cmd=$(echo "${client_list}" | grep "^${clientid}¤" | sed 's/.* \"/\"/g')
 
-      echo $cmd
       $(echo ${cmd:1:-1})
   fi
 #+END_SRC

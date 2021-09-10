@@ -8,7 +8,7 @@ init_state="$(herbstclient dump)"
 
 script_folder="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
-switchable_clients=$(bash $script_folder/list_switchable_clients.sh 0 | sed '/^$/d')
+switchable_clients=$(bash $script_folder/list_switchable_clients.sh 0 1 | sed '/^$/d')
 
 if [ -n "$include_classes" ]
 then
@@ -27,7 +27,9 @@ else
     switchable_clients=$(echo "$switchable_clients" | head -1)
 fi
 
-`$(echo $switchable_clients | sed "s/.*\ \"/\"/g" | xargs echo)`
+cmd=$(echo $switchable_clients | sed "s/.*\ \"/\"/g")
+
+$(echo ${cmd:1:-1})
 
 if [ "$(herbstclient dump)" = "$init_state" ]
 then
@@ -35,11 +37,11 @@ then
     then
         if [ "$(herbstclient get_attr clients.focus.class)" == "" ]
         then
-            nohup `$($fallback_command)` &
+            $(echo ${fallback_command})
             sleep 0.1
         fi
     else
-        nohup `$($fallback_command)` &
+        $(echo ${fallback_command})
         sleep 0.1
     fi
 fi

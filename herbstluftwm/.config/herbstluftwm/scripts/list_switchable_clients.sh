@@ -63,7 +63,7 @@ client_list=$(echo "${client_list}" \
 
 if [ $merge_emacs_buffers -eq 1 ]
 then
-    emacs_buffer_list=$(timeout 0.2 emacsclient -e "(buffer-list)" \
+    emacs_buffer_list=$(timeout 0.5 emacsclient -e "(buffer-list)" \
                             | sed -e 's/(//g' -e 's/)//g' -e 's/.$//' -e "s/>\ #/\n #/g" -e "s/\ *#<buffer\ *//g" \
                             | tac \
                             | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' \
