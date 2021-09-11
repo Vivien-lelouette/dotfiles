@@ -852,6 +852,8 @@ and `utils/previous-buffer'."
             (string-equal (buffer-file-name)
                           (expand-file-name "~/dotfiles/herbstluftwm/README.org"))
             (string-equal (buffer-file-name)
+                          (expand-file-name "~/dotfiles/rofi/README.org"))
+            (string-equal (buffer-file-name)
                           (expand-file-name "~/dotfiles/emacs/local.org")))
     ;; Dynamic scoping to the rescue
     (let ((org-confirm-babel-evaluate nil))
