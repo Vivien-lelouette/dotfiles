@@ -92,7 +92,7 @@ herbstclient keybind $Mod+Shift+q spawn bash $herbstluftwm_scripts_folder/emacs_
 herbstclient keybind $Mod+s split right 0.5
 herbstclient keybind $Mod+Shift+s split bottom 0.5
 
-herbstclient keybind $Mod+w spawn bash $herbstluftwm_scripts_folder/dmenu_switch_window.sh 
+herbstclient keybind $Mod+w spawn bash $herbstluftwm_scripts_folder/switch_window.sh 
 
 herbstclient keybind $Mod+Left spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-left)' 'herbstclient focus left'
 herbstclient keybind $Mod+Down spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-down)' 'herbstclient focus down'
@@ -157,7 +157,8 @@ herbstclient keybind $Mod+Control+i spawn vivaldi-stable
 herbstclient keybind $Mod+i spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh 1 'qutebrowser\|Vivaldi-stable' '' 'vivaldi-stable'
 herbstclient keybind $Mod+Shift+i spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh -1 'qutebrowser\|Vivaldi-stable' '' 'vivaldi-stable'
 
-herbstclient keybind $Mod+a spawn dmenu_run -p 'Applications' -fn 'Dejavu Sans:pixelsize=13' -nb "$BG_ALT_COLOR" -nf "$FG_COLOR" -sb "$FOCUS_COLOR" -sf "$BG_ALT_COLOR" 
+herbstclient keybind $Mod+a spawn rofi -show drun 
+herbstclient keybind $Mod+Shift+a spawn rofi -show run 
 
 herbstclient keybind $Mod+Control+e spawn emacsclient -c
 herbstclient keybind $Mod+e spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh 1 'Emacs' '' 'emacsclient -c'

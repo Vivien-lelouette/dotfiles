@@ -1,24 +1,8 @@
 #+TITLE: HerbstluftWM configuration
 #+PROPERTY: header-args:shell :tangle .config/herbstluftwm/autostart :shebang #!/usr/bin/env bash :mkdirp yes
-This configuration is using HerbstluftWM, its default panel and dmenu as an app launcher.
+This configuration is using HerbstluftWM, its default panel and consider you are using rofi as an app launcher.
 
 * Installation
-** dmenu installation and setup
-#+BEGIN_SRC shell :tangle .scripts/dmenu/install.sh :shebang #!/usr/bin/env bash :mkdirp yes
-  mkdir -p ~/Tools
-  cd ~/Tools
-  git clone https://git.suckless.org/dmenu
-
-  cd dmenu
-  wget https://tools.suckless.org/dmenu/patches/mouse-support/dmenu-mousesupport-5.0.diff
-  wget https://tools.suckless.org/dmenu/patches/numbers/dmenu-numbers-4.9.diff
-
-  git apply dmenu-mousesupport-5.0.diff
-  git apply dmenu-numbers-4.9.diff
-
-  sudo make clean install
-#+END_SRC
-
 ** Herbstluftwm gnome flashback
 Install gnome flashback before running this script
 
@@ -158,7 +142,7 @@ Keep tracks of the last focused timestamp for every window.
   herbstclient keybind $Mod+s split right 0.5
   herbstclient keybind $Mod+Shift+s split bottom 0.5
 
-  herbstclient keybind $Mod+w spawn bash $herbstluftwm_scripts_folder/dmenu_switch_window.sh 
+  herbstclient keybind $Mod+w spawn bash $herbstluftwm_scripts_folder/switch_window.sh 
 
   herbstclient keybind $Mod+Left spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-left)' 'herbstclient focus left'
   herbstclient keybind $Mod+Down spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-down)' 'herbstclient focus down'
@@ -226,7 +210,8 @@ Keep tracks of the last focused timestamp for every window.
   herbstclient keybind $Mod+i spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh 1 'qutebrowser\|Vivaldi-stable' '' 'vivaldi-stable'
   herbstclient keybind $Mod+Shift+i spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh -1 'qutebrowser\|Vivaldi-stable' '' 'vivaldi-stable'
 
-  herbstclient keybind $Mod+a spawn dmenu_run -p 'Applications' -fn 'Dejavu Sans:pixelsize=13' -nb "$BG_ALT_COLOR" -nf "$FG_COLOR" -sb "$FOCUS_COLOR" -sf "$BG_ALT_COLOR" 
+  herbstclient keybind $Mod+a spawn rofi -show drun 
+  herbstclient keybind $Mod+Shift+a spawn rofi -show run 
 
   herbstclient keybind $Mod+Control+e spawn emacsclient -c
   herbstclient keybind $Mod+e spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh 1 'Emacs' '' 'emacsclient -c'
@@ -686,9 +671,9 @@ Keep tracks of the last focused timestamp for every window.
   bash $script_folder/emacs_command.sh "(switch-to-buffer \\\"$(echo $@ | sed -e "s/'//g")\\\")"
 #+END_SRC
 
-** dmenu
-*** dmenu switch window
-#+BEGIN_SRC shell :tangle .config/herbstluftwm/scripts/dmenu_switch_window.sh :shebang #!/usr/bin/env bash :mkdirp yes
+** Interactive
+*** switch window
+#+BEGIN_SRC shell :tangle .config/herbstluftwm/scripts/switch_window.sh :shebang #!/usr/bin/env bash :mkdirp yes
   export FG_COLOR='#d8dee9'
   export FG_ALT_COLOR='#93979f'
   export BG_COLOR='#2e3440'
@@ -725,7 +710,7 @@ Keep tracks of the last focused timestamp for every window.
 
   $emacs_buffer_list")
 
-  client=$(echo "$display_client_list" | sed 's/.*¤ //g' | dmenu -i -p 'Windows' -fn 'Dejavu Sans:pixelsize=13' -nb "$BG_ALT_COLOR" -nf "$FG_COLOR" -sb "$FOCUS_COLOR" -sf "$BG_ALT_COLOR")
+  client=$(echo "$display_client_list" | sed 's/.*¤ //g' | rofi -dmenu -i -p "window")
 
   if [ $? -eq 0 ]
   then

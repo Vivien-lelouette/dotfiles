@@ -9,7 +9,7 @@
     prompt-foreground:          #2e3440;
     prompt-padding:             2px;
     selected-normal-background: #a3be8c;
-    selected-normal-foreground: #a3be8c;
+    selected-normal-foreground: #2e3440;
 }
 
 #window {

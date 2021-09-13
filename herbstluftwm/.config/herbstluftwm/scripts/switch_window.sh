@@ -35,7 +35,7 @@ display_client_list=$(echo "$display_client_list \
 
 $emacs_buffer_list")
 
-client=$(echo "$display_client_list" | sed 's/.*¤ //g' | dmenu -i -p 'Windows' -fn 'Dejavu Sans:pixelsize=13' -nb "$BG_ALT_COLOR" -nf "$FG_COLOR" -sb "$FOCUS_COLOR" -sf "$BG_ALT_COLOR")
+client=$(echo "$display_client_list" | sed 's/.*¤ //g' | rofi -dmenu -i -p "window")
 
 if [ $? -eq 0 ]
 then
