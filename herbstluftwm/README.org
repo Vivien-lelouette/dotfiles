@@ -295,6 +295,7 @@ Keep tracks of the last focused timestamp for every window.
   bgcolor=$(hc get frame_border_normal_color|sed 's,^\(\#[0-9a-f]\{6\}\)[0-9a-f]\{2\}$,\1,')
   selbg=$(hc get window_border_active_color|sed 's,^\(\#[0-9a-f]\{6\}\)[0-9a-f]\{2\}$,\1,')
   selfg='#101010'
+  upower="$(upower -i $(upower -e | grep BAT) | grep --color=never -E 'percentage' | sed -e 's/percentage://g' -e 's/^ //g' -e 's/^[ \t]*//;s/[ \t]*$//')"
 
   ####
   # Try to find textwidth binary.
@@ -395,7 +396,7 @@ Keep tracks of the last focused timestamp for every window.
           echo -n "$separator"
           echo -n "^bg()^fg() ${windowtitle//^/^^}"
           # small adjustments
-          right="$separator^bg() $date $separator"
+          right="$separator^bg() $date $separator  ^fg() $upower"
           right_text_only=$(echo -n "$right" | sed 's.\^[^(]*([^)]*)..g')
           # get width of right aligned text.. and add some space..
           width=$($textwidth "$font" "$right_text_only    ")
@@ -421,6 +422,7 @@ Keep tracks of the last focused timestamp for every window.
               date)
                   #echo "resetting date" >&2
                   date="${cmd[@]:1}"
+                  upower="$(upower -i $(upower -e | grep BAT) | grep --color=never -E 'percentage' | sed -e 's/percentage://g' -e 's/^ //g' -e 's/^[ \t]*//;s/[ \t]*$//')"
                   ;;
               quit_panel)
                   exit
