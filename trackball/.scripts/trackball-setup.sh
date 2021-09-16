@@ -23,7 +23,7 @@ if [[ ! -z "$check" ]]; then
 	xinput set-button-map $mouse_id 1 8 2 4 5 6 7 3 9
 
 	# disable acceleration for the ball
-	xinput set-prop $mouse_id "libinput Accel Profile Enabled" 0, 1
+	xinput set-prop $mouse_id "libinput Accel Profile Enabled" 1, 0
 
 	# allow scrolling by holding middle mouse button and using the ball to scroll ( really smooth and fast ). 
 	xinput set-prop $mouse_id "libinput Scroll Method Enabled" 0, 0, 1
