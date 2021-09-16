@@ -175,6 +175,8 @@ herbstclient mousebind $Mod-Button1 move
 herbstclient mousebind $Mod-Button2 zoom
 herbstclient mousebind $Mod-Button3 resize
 
+bash ~/.scripts/trackball-setup.sh &
+
 herbstclient detect_monitors
 
 setxkbmap -layout us -option 'compose:rctrl' -option 'caps:ctrl_modifier' && xcape -e 'Caps_Lock=Escape'

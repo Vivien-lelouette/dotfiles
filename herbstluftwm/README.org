@@ -230,6 +230,8 @@ Keep tracks of the last focused timestamp for every window.
   herbstclient mousebind $Mod-Button1 move
   herbstclient mousebind $Mod-Button2 zoom
   herbstclient mousebind $Mod-Button3 resize
+
+  bash ~/.scripts/trackball-setup.sh &
 #+END_SRC
 
 ** Setups
