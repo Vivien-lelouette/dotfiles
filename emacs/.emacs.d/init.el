@@ -1,5 +1,5 @@
 (setq gc-cons-threshold 100000000)
-(setq read-process-output-max (* 3024 1024)) ;; 1mb
+(setq read-process-output-max (* 8024 1024))
 
 (let ((file-name-handler-alist nil))
   (require 'package)
@@ -7,15 +7,8 @@
 
 (setq inhibit-startup-message t)
 
-;; (scroll-bar-mode -1)        ; Disable visible scrollbar
 (tool-bar-mode -1)          ; Disable the toolbar
 (tooltip-mode -1)           ; Disable tooltips
-;; (set-fringe-mode 10)        ; Give some breathing room
-
-;; (setq-default window-divider-default-right-width 10)
-;; (setq-default window-divider-default-bottom-width 10)
-;; (setq-default window-divider-default-places t)
-;; (add-hook 'after-init-hook #'window-divider-mode)
 
 (menu-bar-mode -1)            ; Disable the menu bar
 
@@ -34,9 +27,6 @@
 ;; Let emacs use system clipboard as a default behaviour
 (setq x-select-enable-clipboard t)
 (setq interprogram-paste-function 'x-selection-value)
-
-;; Winner-mode
-;; (winner-mode 1)
 
 (setq-default indent-tabs-mode nil)
 (setq-default tab-width 2)
@@ -63,9 +53,9 @@
                                    (windmove-down))))
 
 (defun fonts/set-size (font-size)
-  (set-face-attribute 'default nil :font "DejaVu Sans Mono" :height font-size)
+  (set-face-attribute 'default nil :font "Fira Code" :height font-size)
   ;; Set the fixed pitch face
-  (set-face-attribute 'fixed-pitch nil :font "DejaVu Sans Mono" :height font-size)
+  (set-face-attribute 'fixed-pitch nil :font "Fira Code" :height font-size)
   ;; Set the variable pitch face
   (set-face-attribute 'variable-pitch nil :font "DejaVu Sans" :height font-size :weight 'regular))
 
