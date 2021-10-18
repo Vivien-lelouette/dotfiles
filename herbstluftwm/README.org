@@ -231,6 +231,8 @@ Keep tracks of the last focused timestamp for every window.
   herbstclient mousebind $Mod-Button2 zoom
   herbstclient mousebind $Mod-Button3 resize
 
+  herbstclient set focus_follows_mouse 0
+
   bash ~/.scripts/trackball-setup.sh &
 #+END_SRC
 
@@ -238,6 +240,7 @@ Keep tracks of the last focused timestamp for every window.
 *** Multi-monitor
 #+BEGIN_SRC shell
   herbstclient detect_monitors
+  herbstclient set focus_crosses_monitor_boundaries 1
 #+END_SRC
 
 *** Keyboard layout
