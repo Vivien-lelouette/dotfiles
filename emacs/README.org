@@ -55,38 +55,39 @@ The snippets below will install emacs from their git master:
 ** Basic configuration
 #+BEGIN_SRC emacs-lisp
   (setq inhibit-startup-message t)
-
+  
   (tool-bar-mode -1)          ; Disable the toolbar
   (tooltip-mode -1)           ; Disable tooltips
-
+  
   (menu-bar-mode -1)            ; Disable the menu bar
-
+  
   ;; This determines the style of line numbers in effect. If set to `nil', line
   ;; numbers are disabled. For relative line numbers, set this to `relative'.
   (setq display-line-numbers-type 'absolute)
-
+  
   (global-display-line-numbers-mode 1)
-
+  
   ;; Make ESC quit prompts
   (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
-
+  
   ;; Replace yes no answers by y or n
   (defalias 'yes-or-no-p 'y-or-n-p)
-
+  
   ;; Let emacs use system clipboard as a default behaviour
   (setq x-select-enable-clipboard t)
   (setq interprogram-paste-function 'x-selection-value)
-
+  
   (setq-default indent-tabs-mode nil)
   (setq-default tab-width 2)
-
+  
   ;; Nativ comp flags
   (setq native-comp-speed 3)
   (setq native-comp-async-report-warnings-errors nil)
   (setq package-native-compile t)
   (setq native-comp-deferred-compilation nil)
-
+  
   (setq redisplay-dont-pause t)
+  (set-default 'truncate-lines t)
 #+END_SRC
 
 ** Window split
@@ -796,6 +797,37 @@ NOTE: Make sure to configure a GitHub token before using this package!
     (add-hook 'magit-pre-refresh-hook 'diff-hl-magit-pre-refresh)
     (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
     (global-diff-hl-mode))
+#+END_SRC
+
+*** blamer.el
+#+BEGIN_SRC emacs-lisp
+  (defun blamer-callback-show-commit-diff (commit-info)
+    (interactive)
+    (let ((commit-hash (plist-get commit-info :commit-hash)))
+      (when commit-hash
+        (magit-show-commit commit-hash))))
+
+  (defun blamer-callback-open-remote (commit-info)
+    (interactive)
+    (let ((commit-hash (plist-get commit-info :commit-hash)))
+      (when commit-hash
+        (message commit-hash)
+        (forge-browse-commit commit-hash))))
+  
+  (use-package blamer
+    :defer 20
+    :custom
+    (blamer-idle-time 0.2)
+    (blamer-min-offset 30)
+    :custom-face
+    (blamer-face ((t :foreground "#7a88cf"
+                      :background nil
+                      :italic t)))
+    :straight (blamer :type git :host github :repo "artawower/blamer.el")
+    :config
+    (setq blamer-bindings '(("<mouse-3>" . blamer-callback-open-remote)
+                            ("<mouse-1>" . blamer-callback-show-commit-diff)))
+    (global-blamer-mode 1))
 #+END_SRC
 
 ** Yasnippet

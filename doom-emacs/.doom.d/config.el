@@ -1,0 +1,123 @@
+;;(doom-adjust-font-size 14 t)
+(scroll-bar-mode 1)
+
+;; Line number styling for mode change
+(setq theme/normal-lines-fg nil)
+(setq theme/normal-lines-bg nil)
+(setq theme/normal-current-line-fg nil)
+(setq theme/normal-current-line-bg nil)
+
+(setq theme/insert-lines-fg nil)
+(setq theme/insert-lines-bg nil)
+(setq theme/insert-current-line-fg nil)
+(setq theme/insert-current-line-bg nil)
+
+(setq theme/visual-lines-fg nil)
+(setq theme/visual-lines-bg nil)
+(setq theme/visual-current-line-fg nil)
+(setq theme/visual-current-line-bg nil)
+
+(defun theme/normal-lines ()
+  (face-remap-add-relative 'line-number nil :foreground theme/normal-lines-fg :background theme/normal-lines-bg))
+
+(defun theme/normal-current-line ()
+  (face-remap-add-relative 'line-number-current-line nil :foreground theme/normal-current-line-fg :background theme/normal-current-line-bg))
+
+(defun theme/insert-lines ()
+  (face-remap-add-relative 'line-number nil :foreground theme/insert-lines-fg :background theme/insert-lines-bg))
+
+(defun theme/insert-current-line ()
+  (face-remap-add-relative 'line-number-current-line nil :foreground theme/insert-current-line-fg :background theme/insert-current-line-bg))
+
+(defun theme/visual-lines ()
+  (face-remap-add-relative 'line-number nil :foreground theme/visual-lines-fg :background theme/visual-lines-bg))
+
+(defun theme/visual-current-line ()
+  (face-remap-add-relative 'line-number-current-line nil :foreground theme/visual-current-line-fg :background theme/visual-current-line-bg))
+
+(add-hook 'evil-normal-state-entry-hook 'theme/normal-lines)
+(add-hook 'evil-normal-state-entry-hook 'theme/normal-current-line)
+
+(add-hook 'evil-insert-state-entry-hook 'theme/insert-lines)
+(add-hook 'evil-insert-state-entry-hook 'theme/insert-current-line)
+
+(add-hook 'evil-visual-state-entry-hook 'theme/visual-lines)
+(add-hook 'evil-visual-state-entry-hook 'theme/visual-current-line)
+
+(defun theme/doom-nord ()
+  (interactive)
+  (set-face-attribute 'fringe nil :background "#2e3440")
+  (set-face-attribute 'mode-line-inactive nil :background nil)
+  ;; (set-face-attribute 'scroll-bar nil :background "#2b323d")
+
+  ;; Line number styling for mode change
+  (setq theme/normal-lines-fg "#6c7686")
+  (setq theme/normal-lines-bg "#2e3440")
+  (setq theme/normal-current-line-fg "#ffffff")
+  (setq theme/normal-current-line-bg "#242832")
+
+  (setq theme/insert-lines-fg "#2e3440")
+  (setq theme/insert-lines-bg "#515e46")
+  (setq theme/insert-current-line-fg "#ffffff")
+  (setq theme/insert-current-line-bg "#a3be8c")
+
+  (setq theme/visual-lines-fg "#2e3440")
+  (setq theme/visual-lines-bg "#594656")
+  (setq theme/visual-current-line-fg "#ffffff")
+  (setq theme/visual-current-line-bg "#b48ead")
+  (load-theme 'doom-nord t))
+
+(setq org-directory "~/org/")
+
+(defun org/org-babel-tangle-config ()
+  (when (or (string-equal (buffer-file-name)
+                          (expand-file-name "~/dotfiles/README.org"))
+            (string-equal (buffer-file-name)
+                          (expand-file-name "~/dotfiles/doom-emacs/README.org"))
+            (string-equal (buffer-file-name)
+                          (expand-file-name "~/dotfiles/qutebrowser/README.org"))
+            (string-equal (buffer-file-name)
+                          (expand-file-name "~/dotfiles/emacs/README.org"))
+            (string-equal (buffer-file-name)
+                          (expand-file-name "~/dotfiles/emacs/desktop.org"))
+            (string-equal (buffer-file-name)
+                          (expand-file-name "~/dotfiles/herbstluftwm/README.org"))
+            (string-equal (buffer-file-name)
+                          (expand-file-name "~/dotfiles/rofi/README.org"))
+            (string-equal (buffer-file-name)
+                          (expand-file-name "~/dotfiles/emacs/local.org")))
+    ;; Dynamic scoping to the rescue
+    (let ((org-confirm-babel-evaluate nil))
+      (org-babel-tangle))))
+
+(add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'org/org-babel-tangle-config)))
+
+(defun blamer-callback-show-commit-diff (commit-info)
+  (interactive)
+  (let ((commit-hash (plist-get commit-info :commit-hash)))
+    (when commit-hash
+      (magit-show-commit commit-hash))))
+
+(defun blamer-callback-open-remote (commit-info)
+  (interactive)
+  (let ((commit-hash (plist-get commit-info :commit-hash)))
+    (when commit-hash
+      (message commit-hash)
+      (forge-browse-commit commit-hash))))
+
+(setq blamer-idle-time 0.2)
+(setq blamer-min-offset 30)
+(setq blamer-bindings '(("<mouse-3>" . blamer-callback-open-remote)
+                          ("<mouse-1>" . blamer-callback-show-commit-diff)))
+(global-blamer-mode 1)
+
+(add-to-list 'auto-mode-alist '("\\.adoc\\'" . adoc-mode))
+
+(setq vterm-shell "/bin/zsh")
+(setq vterm-buffer-name-string "vterm: %s")
+
+(let ((local-settings "~/.doom.d/local.el"))
+  (when (file-exists-p local-settings)
+    (load-file local-settings)))
+
+(theme/doom-nord)

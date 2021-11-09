@@ -38,6 +38,7 @@
 (setq native-comp-deferred-compilation nil)
 
 (setq redisplay-dont-pause t)
+(set-default 'truncate-lines t)
 
 (defun my-window-vsplit ()
   (interactive)
@@ -569,6 +570,34 @@ and `utils/previous-buffer'."
   (add-hook 'magit-pre-refresh-hook 'diff-hl-magit-pre-refresh)
   (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
   (global-diff-hl-mode))
+
+(defun blamer-callback-show-commit-diff (commit-info)
+  (interactive)
+  (let ((commit-hash (plist-get commit-info :commit-hash)))
+    (when commit-hash
+      (magit-show-commit commit-hash))))
+
+(defun blamer-callback-open-remote (commit-info)
+  (interactive)
+  (let ((commit-hash (plist-get commit-info :commit-hash)))
+    (when commit-hash
+      (message commit-hash)
+      (forge-browse-commit commit-hash))))
+
+(use-package blamer
+  :defer 20
+  :custom
+  (blamer-idle-time 0.2)
+  (blamer-min-offset 30)
+  :custom-face
+  (blamer-face ((t :foreground "#7a88cf"
+                    :background nil
+                    :italic t)))
+  :straight (blamer :type git :host github :repo "artawower/blamer.el")
+  :config
+  (setq blamer-bindings '(("<mouse-3>" . blamer-callback-open-remote)
+                          ("<mouse-1>" . blamer-callback-show-commit-diff)))
+  (global-blamer-mode 1))
 
 (use-package yasnippet
   :config
