@@ -142,7 +142,7 @@ Keep tracks of the last focused timestamp for every window.
   herbstclient keybind $Mod+s split right 0.5
   herbstclient keybind $Mod+Shift+s split bottom 0.5
 
-  herbstclient keybind $Mod+w spawn bash $herbstluftwm_scripts_folder/switch_window.sh 
+  herbstclient keybind $Mod+w spawn bash $herbstluftwm_scripts_folder/switch_window.sh
 
   herbstclient keybind $Mod+Left spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-left)' 'herbstclient focus left'
   herbstclient keybind $Mod+Down spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-down)' 'herbstclient focus down'
@@ -193,7 +193,7 @@ Keep tracks of the last focused timestamp for every window.
 
   herbstclient keybind $Mod+f fullscreen toggle
   herbstclient keybind $Mod+Shift+f floating toggle
-  herbstclient keybind $Mod+Control+f pseudotile toggle
+  herbstclient keybind $Mod+Control+f attr clients.focus.floating toggle
   herbstclient keybind $Mod+BackSpace cycle_monitor
 #+END_SRC
 
