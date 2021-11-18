@@ -639,7 +639,7 @@ Keep tracks of the last focused timestamp for every window.
 #+BEGIN_SRC shell :tangle .config/herbstluftwm/scripts/emacs_or_herbstluftwm_command.sh :shebang #!/usr/bin/env bash :mkdirp yes
   if [ "$(herbstclient get_attr clients.focus.class)" == "Emacs" ]
   then
-      timeout 0.2 bash -c "emacsclient -e \"(with-current-buffer (window-buffer (selected-window)) $1)\""
+      timeout 0.5 bash -c "emacsclient -e \"(with-current-buffer (window-buffer (selected-window)) $1)\""
       if [ $? -ne 0 ]
       then
           bash -c "$2"
