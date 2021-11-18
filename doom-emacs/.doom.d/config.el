@@ -1,5 +1,7 @@
 ;;(doom-adjust-font-size 14 t)
 (scroll-bar-mode 1)
+(evil-snipe-mode 0)
+(evil-snipe-override-mode +1)
 
 ;; Line number styling for mode change
 (setq theme/normal-lines-fg nil)
