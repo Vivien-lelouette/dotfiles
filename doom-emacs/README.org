@@ -190,6 +190,13 @@ This snippet adds a hook to org-mode buffers so that org/org-babel-tangle-config
       (load-file local-settings)))
 #+END_SRC
 
+** lsp-mode
+#+BEGIN_SRC emacs-lisp
+(use-package! lsp-mode
+  :custom
+  (lsp-clients-typescript-server-args '("--stdio" "--tsserver-log-file" "/dev/stderr")))
+#+END_SRC
+
 * Vterm
 #+BEGIN_SRC emacs-lisp
 (setq vterm-shell "/bin/zsh")

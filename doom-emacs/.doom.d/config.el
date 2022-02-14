@@ -135,6 +135,10 @@
   (when (file-exists-p local-settings)
       (load-file local-settings)))
 
+(use-package! lsp-mode
+  :custom
+  (lsp-clients-typescript-server-args '("--stdio" "--tsserver-log-file" "/dev/stderr")))
+
 (setq vterm-shell "/bin/zsh")
 (setq vterm-buffer-name-string "vterm: %s")
 
