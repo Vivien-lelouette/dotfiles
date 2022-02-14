@@ -15,6 +15,6 @@
       else
         herbstclient bring $emacs_client_id &
       fi
-      sleep 0.1
+      sleep 0.5
   fi
   bash $script_folder/emacs_or_herbstluftwm_command.sh "$1"

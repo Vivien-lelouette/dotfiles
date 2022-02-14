@@ -667,7 +667,7 @@ Keep tracks of the last focused timestamp for every window.
       else
         herbstclient bring $emacs_client_id &
       fi
-      sleep 0.1
+      sleep 0.5
   fi
   bash $script_folder/emacs_or_herbstluftwm_command.sh "$1"
 #+END_SRC
@@ -723,7 +723,6 @@ Keep tracks of the last focused timestamp for every window.
   then
       clientid=$(echo "${display_client_list}" | grep " $client" | head -1 | sed 's/¤.*//g')
       cmd=$(echo "${client_list}" | grep "^${clientid}¤" | sed 's/.* \"/\"/g')
-
       $(echo ${cmd:1:-1})
   fi
 #+END_SRC
