@@ -1,7 +1,20 @@
-;;(doom-adjust-font-size 14 t)
+(defun custom/load-local-settings ()
+  (interactive)
+  (let ((local-settings "~/.doom.d/local.el"))
+    (when (file-exists-p local-settings)
+        (load-file local-settings))))
+
+(defun hooks/first-frame ()
+  (interactive)
+        (unless (boundp 'first-frame-created)
+          (evil-snipe-mode 0)
+          (custom/load-local-settings)
+          (doom-adjust-font-size 14 t))
+        (setq first-frame-created t))
+
+(add-hook! 'server-after-make-frame-hook #'hooks/first-frame)
+
 (scroll-bar-mode 1)
-(evil-snipe-mode 0)
-(evil-snipe-override-mode +1)
 
 ;; Line number styling for mode change
 (setq theme/normal-lines-fg nil)
@@ -107,19 +120,22 @@
       (message commit-hash)
       (forge-browse-commit commit-hash))))
 
-(setq blamer-idle-time 0.2)
-(setq blamer-min-offset 30)
+(setq blamer-idle-time 0.5)
+(setq blamer-min-offset 60)
 (setq blamer-bindings '(("<mouse-3>" . blamer-callback-open-remote)
                           ("<mouse-1>" . blamer-callback-show-commit-diff)))
 (global-blamer-mode 1)
 
 (add-to-list 'auto-mode-alist '("\\.adoc\\'" . adoc-mode))
 
+(map! :leader
+    :desc "Kubel"
+    "o k" #'kubel)
+(let ((local-settings "~/.emacs.d/.local/straight/repos/kubel/kubel-evil.el"))
+  (when (file-exists-p local-settings)
+      (load-file local-settings)))
+
 (setq vterm-shell "/bin/zsh")
 (setq vterm-buffer-name-string "vterm: %s")
-
-(let ((local-settings "~/.doom.d/local.el"))
-  (when (file-exists-p local-settings)
-    (load-file local-settings)))
 
 (theme/doom-nord)
