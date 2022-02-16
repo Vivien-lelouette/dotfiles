@@ -9,13 +9,13 @@
 * Themes
 ** Dmenu
 #+BEGIN_SRC shell :tangle .config/rofi/themes/dmenu.rasi :mkdirp yes
-  * {
+  ,* {
       background-color:           #2e3440;
       border-color:               #2e3440;
       text-color:                 #d8dee9;
-      height:                     19px;
-      font:                       "Dejavu Sans 9";
-      prompt-font:                "Dejavu Sans 9";
+      height:                     18px;
+      font:                       "Fira Code Retina 8";
+      prompt-font:                "Fira Code Retina 8";
       prompt-background:          #a3be8c;
       prompt-foreground:          #2e3440;
       prompt-padding:             2px;
@@ -70,8 +70,8 @@
       background-color:           #2e3440;
       border-color:               #2e3440;
       text-color:                 #d8dee9;
-      font:                       "Dejavu Sans 9";
-      prompt-font:                "Dejavu Sans 9";
+      font:                       "Fira Code Retina 8";
+      prompt-font:                "Fira Code Retina 8";
       prompt-background:          #a3be8c;
       prompt-foreground:          #2e3440;
       selected-normal-background: #a3be8c;
