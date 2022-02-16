@@ -3,9 +3,7 @@
 * Configuration file
 ** Go direction
 #+BEGIN_SRC shell :tangle .config/rofi/config.rasi :mkdirp yes
-  configuration {
-      theme: "~/.config/rofi/themes/dmenu";
-  }
+@theme "~/.config/rofi/themes/dmenu"
 #+END_SRC
 
 * Themes

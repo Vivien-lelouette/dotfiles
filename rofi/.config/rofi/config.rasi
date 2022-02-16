@@ -1,3 +1,1 @@
-configuration {
-    theme: "~/.config/rofi/themes/dmenu";
-}
+@theme "~/.config/rofi/themes/dmenu"
