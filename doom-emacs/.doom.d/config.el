@@ -9,12 +9,26 @@
         (unless (boundp 'first-frame-created)
           (evil-snipe-mode 0)
           (custom/load-local-settings)
-          (doom-adjust-font-size 14 t))
+          (setq doom-font (font-spec :family "Fira Code Retina" :size 14)
+                doom-big-font (font-spec :family "Fira Code Retina" :size 24)
+                doom-variable-pitch-font (font-spec :family "Ubuntu" :size 14)
+                doom-variable-pitch-big-font (font-spec :family "Ubuntu" :size 24)))
         (setq first-frame-created t))
 
 (add-hook! 'server-after-make-frame-hook #'hooks/first-frame)
 
 (scroll-bar-mode 1)
+
+(custom-set-faces!
+  '(font-lock-comment-face :slant italic)
+  '(font-lock-keyword-face :slant italic))
+(after! doom-themes
+  (setq doom-themes-enable-bold t
+        doom-themes-enable-italic t))
+
+(use-package! mixed-pitch
+  :hook
+  (text-mode . mixed-pitch-mode))
 
 ;; Line number styling for mode change
 (setq theme/normal-lines-fg nil)
@@ -82,7 +96,11 @@
   (setq theme/visual-current-line-bg "#b48ead")
   (load-theme 'doom-nord t))
 
-(setq org-directory "~/org/")
+(add-hook! 'org-mode-hook
+           #'+org-pretty-mode #'mixed-pitch-mode)
+(after! org
+  (setq org-directory "~/org/"
+        org-hide-emphasis-markers t))
 
 (defun org/org-babel-tangle-config ()
   (when (or (string-equal (buffer-file-name)

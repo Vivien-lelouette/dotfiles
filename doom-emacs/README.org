@@ -19,7 +19,10 @@ If a setup is specific to a machine, add it on this file.
         (unless (boundp 'first-frame-created)
           (evil-snipe-mode 0)
           (custom/load-local-settings)
-          (doom-adjust-font-size 14 t))
+          (setq doom-font (font-spec :family "Fira Code Retina" :size 14)
+                doom-big-font (font-spec :family "Fira Code Retina" :size 24)
+                doom-variable-pitch-font (font-spec :family "Ubuntu" :size 14)
+                doom-variable-pitch-big-font (font-spec :family "Ubuntu" :size 24)))
         (setq first-frame-created t))
 
 (add-hook! 'server-after-make-frame-hook #'hooks/first-frame)
@@ -30,6 +33,27 @@ If a setup is specific to a machine, add it on this file.
 #+RESULTS:
 
 * Themes
+** Font settings for org
+#+BEGIN_SRC emacs-lisp
+(custom-set-faces!
+  '(font-lock-comment-face :slant italic)
+  '(font-lock-keyword-face :slant italic))
+(after! doom-themes
+  (setq doom-themes-enable-bold t
+        doom-themes-enable-italic t))
+#+END_SRC
+
+** Mixed pitch
+#+BEGIN_SRC emacs-lisp :tangle .doom.d/packages.el :mkdirp yes
+(package! mixed-pitch)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package! mixed-pitch
+  :hook
+  (text-mode . mixed-pitch-mode))
+#+END_SRC
+
 ** Fringe theme
 #+BEGIN_SRC emacs-lisp
 ;; Line number styling for mode change
@@ -104,7 +128,11 @@ If a setup is specific to a machine, add it on this file.
 
 * Org
 #+BEGIN_SRC emacs-lisp
-(setq org-directory "~/org/")
+(add-hook! 'org-mode-hook
+           #'+org-pretty-mode #'mixed-pitch-mode)
+(after! org
+  (setq org-directory "~/org/"
+        org-hide-emphasis-markers t))
 #+END_SRC
 
 ** Auto-tangle configuration files

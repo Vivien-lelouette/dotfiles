@@ -1,3 +1,5 @@
+(package! mixed-pitch)
+
 (package! org-jira :recipe (:host github :repo "Vivien-lelouette/org-jira"))
 
 (package! blamer :recipe (:host github :repo "artawower/blamer.el"))
