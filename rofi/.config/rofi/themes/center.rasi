@@ -2,9 +2,9 @@
     background-color:           #2e3440;
     border-color:               #2e3440;
     text-color:                 #d8dee9;
-    height:                     20px;
-    font:                       "SauceCodePro Nerd Font Mono 9";
-    prompt-font:                "Ubuntu Bold 9";
+    height:                     22px;
+    font:                       "Source Code Pro Medium 10";
+    prompt-font:                "Source Code Pro Bold 10";
     prompt-background:          #a3be8c;
     prompt-foreground:          #2e3440;
     prompt-padding:             2px;
