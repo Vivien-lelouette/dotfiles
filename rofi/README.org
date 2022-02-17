@@ -10,17 +10,17 @@
 ** Dmenu
 #+BEGIN_SRC shell :tangle .config/rofi/themes/dmenu.rasi :mkdirp yes
 ,* {
-    background-color:           #2e3440;
-    border-color:               #2e3440;
+    background-color:           #242832;
+    border-color:               #242832;
     text-color:                 #d8dee9;
     height:                     22px;
     font:                       "Source Code Pro Medium 10";
     prompt-font:                "Source Code Pro Bold 10";
     prompt-background:          #a3be8c;
-    prompt-foreground:          #2e3440;
+    prompt-foreground:          #242832;
     prompt-padding:             2px;
     selected-normal-background: #a3be8c;
-    selected-normal-foreground: #2e3440;
+    selected-normal-foreground: #242832;
 }
 #window {
     anchor: north;
@@ -66,14 +66,14 @@ element-text {
 ** Center
 #+BEGIN_SRC shell :tangle .config/rofi/themes/center.rasi :mkdirp yes
 ,* {
-    background-color:           #2e3440;
-    border-color:               #2e3440;
+    background-color:           #242832;
+    border-color:               #242832;
     text-color:                 #d8dee9;
     height:                     22px;
     font:                       "Source Code Pro Medium 10";
     prompt-font:                "Source Code Pro Bold 10";
     prompt-background:          #a3be8c;
-    prompt-foreground:          #2e3440;
+    prompt-foreground:          #242832;
     prompt-padding:             2px;
     selected-normal-background: #a3be8c;
     selected-normal-foreground: #a3be8c;

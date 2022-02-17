@@ -18,7 +18,7 @@
 
 (add-hook! 'server-after-make-frame-hook #'hooks/first-frame)
 
-(scroll-bar-mode 1)
+(scroll-bar-mode 0)
 
 (custom-set-faces!
   '(font-lock-comment-face :slant italic)
