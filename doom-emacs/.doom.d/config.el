@@ -28,7 +28,7 @@
 
 (use-package! mixed-pitch
   :hook
-  (text-mode . mixed-pitch-mode))
+  (org-mode . mixed-pitch-mode))
 
 ;; Line number styling for mode change
 (setq theme/normal-lines-fg nil)
@@ -96,8 +96,6 @@
   (setq theme/visual-current-line-bg "#b48ead")
   (load-theme 'doom-nord t))
 
-(add-hook! 'org-mode-hook
-           #'+org-pretty-mode #'mixed-pitch-mode)
 (after! org
   (setq org-directory "~/org/"
         org-hide-emphasis-markers t))

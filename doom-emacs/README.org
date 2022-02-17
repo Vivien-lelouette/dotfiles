@@ -51,7 +51,7 @@ If a setup is specific to a machine, add it on this file.
 #+BEGIN_SRC emacs-lisp
 (use-package! mixed-pitch
   :hook
-  (text-mode . mixed-pitch-mode))
+  (org-mode . mixed-pitch-mode))
 #+END_SRC
 
 ** Fringe theme
@@ -128,8 +128,6 @@ If a setup is specific to a machine, add it on this file.
 
 * Org
 #+BEGIN_SRC emacs-lisp
-(add-hook! 'org-mode-hook
-           #'+org-pretty-mode #'mixed-pitch-mode)
 (after! org
   (setq org-directory "~/org/"
         org-hide-emphasis-markers t))
