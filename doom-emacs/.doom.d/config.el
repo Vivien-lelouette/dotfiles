@@ -4,15 +4,16 @@
     (when (file-exists-p local-settings)
         (load-file local-settings))))
 
+(setq doom-font (font-spec :family "Source Code Pro" :size 13)
+                doom-big-font (font-spec :family "Source Code Pro" :size 24)
+                doom-variable-pitch-font (font-spec :family "Ubuntu" :size 13)
+                doom-variable-pitch-big-font (font-spec :family "Ubuntu" :size 24))
+
 (defun hooks/first-frame ()
   (interactive)
         (unless (boundp 'first-frame-created)
           (evil-snipe-mode 0)
-          (custom/load-local-settings)
-          (setq doom-font (font-spec :family "Fira Code Retina" :size 13)
-                doom-big-font (font-spec :family "Fira Code Retina" :size 24)
-                doom-variable-pitch-font (font-spec :family "Ubuntu" :size 13)
-                doom-variable-pitch-big-font (font-spec :family "Ubuntu" :size 24)))
+          (custom/load-local-settings))
         (setq first-frame-created t))
 
 (add-hook! 'server-after-make-frame-hook #'hooks/first-frame)
@@ -115,6 +116,8 @@
                           (expand-file-name "~/dotfiles/herbstluftwm/README.org"))
             (string-equal (buffer-file-name)
                           (expand-file-name "~/dotfiles/rofi/README.org"))
+            (string-equal (buffer-file-name)
+                          (expand-file-name "~/dotfiles/fonts/README.org"))
             (string-equal (buffer-file-name)
                           (expand-file-name "~/dotfiles/emacs/local.org")))
     ;; Dynamic scoping to the rescue
