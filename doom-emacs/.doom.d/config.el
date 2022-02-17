@@ -9,9 +9,9 @@
         (unless (boundp 'first-frame-created)
           (evil-snipe-mode 0)
           (custom/load-local-settings)
-          (setq doom-font (font-spec :family "Fira Code Retina" :size 14)
+          (setq doom-font (font-spec :family "Fira Code Retina" :size 13)
                 doom-big-font (font-spec :family "Fira Code Retina" :size 24)
-                doom-variable-pitch-font (font-spec :family "Ubuntu" :size 14)
+                doom-variable-pitch-font (font-spec :family "Ubuntu" :size 13)
                 doom-variable-pitch-big-font (font-spec :family "Ubuntu" :size 24)))
         (setq first-frame-created t))
 
