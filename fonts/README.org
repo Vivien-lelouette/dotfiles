@@ -4,7 +4,6 @@ This configuration is using HerbstluftWM, its default panel and consider you are
 
 * Installation
 ** Herbstluftwm gnome flashback
-Install gnome flashback before running this script
 
 #+BEGIN_SRC shell :tangle .scripts/fonts/source-code-pro.sh :shebang #!/usr/bin/env bash :mkdirp yes
 uname -a| grep Ubuntu
