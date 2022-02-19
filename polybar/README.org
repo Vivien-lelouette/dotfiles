@@ -2,6 +2,9 @@
 #+PROPERTY: header-args:shell :shebang #!/usr/bin/env bash :mkdirp yes
 
 * Polybar
+This is the wonderful polybar with a script to support Herbsluftwm workspaces !
+FontAwesome is necessary to get the icons.
+
 ** Herbstluftwm workspaces
 #+BEGIN_SRC shell :tangle .config/polybar/info-hlwm-workspaces.sh :shebang #!/usr/bin/env bash :mkdirp yes
 # Multi monitor support. Needs MONITOR environment variable to be set for each instance of polybar
