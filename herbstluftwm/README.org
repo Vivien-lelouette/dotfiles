@@ -225,6 +225,12 @@ Keep tracks of the last focused timestamp for every window.
   herbstclient keybind $Mod+x spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'execute-extended-command)"
 #+END_SRC
 
+*** Power menu
+#+BEGIN_SRC shell
+  herbstclient keybind $Mod+Control+p spawn bash $herbstluftwm_scripts_folder/power_menu.sh
+#+END_SRC
+
+
 ** Mouse binding
 #+BEGIN_SRC shell
   herbstclient mouseunbind --all
@@ -488,13 +494,6 @@ Keep tracks of the last focused timestamp for every window.
 ** Interactive
 *** switch window
 #+BEGIN_SRC shell :tangle .config/herbstluftwm/scripts/switch_window.sh :shebang #!/usr/bin/env bash :mkdirp yes
-  export FG_COLOR='#d8dee9'
-  export FG_ALT_COLOR='#93979f'
-  export BG_COLOR='#2e3440'
-  export BG_ALT_COLOR='#242832'
-  export FOCUS_COLOR='#a3be8c'
-  export ALERT_COLOR='#b48ead'
-
   script_folder="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
   client_list=$(bash $script_folder/list_switchable_clients.sh 1)
 
@@ -533,3 +532,25 @@ Keep tracks of the last focused timestamp for every window.
       $(echo ${cmd:1:-1})
   fi
 #+END_SRC
+
+*** power menu
+#+BEGIN_SRC shell :tangle .config/herbstluftwm/scripts/power_menu.sh :shebang #!/usr/bin/env bash :mkdirp yes
+selected_option=$(echo -e "shutdown\nreboot\nlogout" | rofi -dmenu -i -p "power")
+
+if [ $? -eq 0 ]
+then
+    case $selected_option in
+        'shutdown')
+            shutdown -h 0
+        ;;
+        'reboot')
+            reboot
+        ;;
+        'logout')
+            gnome-session-quit --force
+        ;;
+    esac
+fi
+#+END_SRC
+
+#+RESULTS:

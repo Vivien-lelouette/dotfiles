@@ -171,6 +171,8 @@
   herbstclient keybind $Mod+Shift+period spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(funcall-interactively #'dired-open-current-dir)"
   herbstclient keybind $Mod+x spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'execute-extended-command)"
 
+  herbstclient keybind $Mod+Control+p spawn bash $herbstluftwm_scripts_folder/power_menu.sh
+
   herbstclient mouseunbind --all
   herbstclient mousebind $Mod-Button1 move
   herbstclient mousebind $Mod-Button2 zoom

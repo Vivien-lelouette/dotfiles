@@ -118,19 +118,19 @@ border-size = 0
 ;border-color = #00000000
 
 padding-left = 0
-padding-right = 0
+padding-right = 2
 
 module-margin-left = 1
 module-margin-right = 2
 
 font-0 = source code pro:pixelsize=12;1
-font-1 = FontAwesome:style=Solid:size=14;2
-font-2 = FontAwesome:style=Regular:size=14;3
-font-3 = FontAwesome:size=14;4
+font-1 = FontAwesome:style=Solid:size=13;1
+font-2 = FontAwesome:style=Regular:size=13;1
+font-3 = FontAwesome:size=13;1
 
 modules-left = info-hlwm-workspaces
 modules-center = xwindow
-modules-right = pulseaudio xkeyboard wlan eth date battery powermenu
+modules-right = pulseaudio xkeyboard wlan eth date battery power-button
 
 tray-position = none
 tray-padding = 2
@@ -145,6 +145,11 @@ override-redirect = true
 
 cursor-click = pointer
 cursor-scroll = ns-resize
+
+[module/power-button]
+type = custom/text
+content = 
+click-left = ~/.config/herbstluftwm/scripts/power_menu.sh
 
 [module/info-hlwm-workspaces]
 type = custom/script

@@ -1,11 +1,4 @@
 #!/usr/bin/env bash
-  export FG_COLOR='#d8dee9'
-  export FG_ALT_COLOR='#93979f'
-  export BG_COLOR='#2e3440'
-  export BG_ALT_COLOR='#242832'
-  export FOCUS_COLOR='#a3be8c'
-  export ALERT_COLOR='#b48ead'
-
   script_folder="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
   client_list=$(bash $script_folder/list_switchable_clients.sh 1)
 
