@@ -81,6 +81,7 @@ done
 
 ** Start panel with multi screen support
 #+BEGIN_SRC shell :tangle .config/polybar/start_polybar.sh :shebang #!/usr/bin/env bash :mkdirp yes
+pkill polybar
 for m in $(polybar --list-monitors | cut -d":" -f1); do
     echo "$m"
     MONITOR=$m polybar --quiet --reload hlwm &
