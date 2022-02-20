@@ -128,6 +128,32 @@
 
 (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'org/org-babel-tangle-config)))
 
+(defun dired-open-file ()
+  "In dired, open the file named on this line."
+  (interactive)
+  (let* ((file (dired-get-filename nil t)))
+    (message "Opening %s..." file)
+    (call-process "xdg-open" nil 0 nil file)
+    (message "Opening %s done" file)))
+
+ (use-package! all-the-icons-dired
+   :hook
+   (dired-mode . all-the-icons-dired-mode))
+
+(use-package! dired-single
+  :config
+  (evil-collection-define-key 'normal 'dired-mode-map
+   "h" 'dired-single-up-directory
+   "l" 'dired-single-buffer
+   (kbd "<C-return>") #'dired-open-file))
+
+(use-package! dired-hide-dotfiles
+  :hook
+  (dired-mode . dired-hide-dotfiles-mode)
+  :config
+  (evil-collection-define-key 'normal 'dired-mode-map
+    "." 'dired-hide-dotfiles-mode))
+
 (defun blamer-callback-show-commit-diff (commit-info)
   (interactive)
   (let ((commit-hash (plist-get commit-info :commit-hash)))
@@ -145,6 +171,9 @@
 (setq blamer-min-offset 60)
 (setq blamer-bindings '(("<mouse-3>" . blamer-callback-open-remote)
                           ("<mouse-1>" . blamer-callback-show-commit-diff)))
+(setq blamer-view 'overlay)
+;; (setq blamer-type 'overlay-popup)
+;; (setq blamer--overlay-popup-position 'smart)
 (global-blamer-mode 1)
 
 (add-to-list 'auto-mode-alist '("\\.adoc\\'" . adoc-mode))

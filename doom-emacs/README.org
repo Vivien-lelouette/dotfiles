@@ -169,6 +169,57 @@ This snippet adds a hook to org-mode buffers so that org/org-babel-tangle-config
 (package! org-jira :recipe (:host github :repo "Vivien-lelouette/org-jira"))
 #+END_SRC
 
+* Dired
+** open with system default application
+#+BEGIN_SRC emacs-lisp
+(defun dired-open-file ()
+  "In dired, open the file named on this line."
+  (interactive)
+  (let* ((file (dired-get-filename nil t)))
+    (message "Opening %s..." file)
+    (call-process "xdg-open" nil 0 nil file)
+    (message "Opening %s done" file)))
+#+END_SRC
+
+** all the icons
+#+BEGIN_SRC emacs-lisp :tangle .doom.d/packages.el :mkdirp yes
+(package! all-the-icons-dired)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+ (use-package! all-the-icons-dired
+   :hook
+   (dired-mode . all-the-icons-dired-mode))
+#+END_SRC
+
+** Single frame
+#+BEGIN_SRC emacs-lisp :tangle .doom.d/packages.el :mkdirp yes
+(package! dired-single :recipe (:host github :repo "crocket/dired-single"))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package! dired-single
+  :config
+  (evil-collection-define-key 'normal 'dired-mode-map
+   "h" 'dired-single-up-directory
+   "l" 'dired-single-buffer
+   (kbd "<C-return>") #'dired-open-file))
+#+END_SRC
+
+** Hide dotfiles
+#+BEGIN_SRC emacs-lisp :tangle .doom.d/packages.el :mkdirp yes
+(package! dired-hide-dotfiles)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package! dired-hide-dotfiles
+  :hook
+  (dired-mode . dired-hide-dotfiles-mode)
+  :config
+  (evil-collection-define-key 'normal 'dired-mode-map
+    "." 'dired-hide-dotfiles-mode))
+#+END_SRC
+
 * Dev
 ** blamer.el
 #+BEGIN_SRC emacs-lisp :tangle .doom.d/packages.el :mkdirp yes
@@ -193,6 +244,9 @@ This snippet adds a hook to org-mode buffers so that org/org-babel-tangle-config
 (setq blamer-min-offset 60)
 (setq blamer-bindings '(("<mouse-3>" . blamer-callback-open-remote)
                           ("<mouse-1>" . blamer-callback-show-commit-diff)))
+(setq blamer-view 'overlay)
+;; (setq blamer-type 'overlay-popup)
+;; (setq blamer--overlay-popup-position 'smart)
 (global-blamer-mode 1)
 #+END_SRC
 
