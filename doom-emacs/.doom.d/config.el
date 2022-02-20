@@ -136,6 +136,16 @@
     (call-process "xdg-open" nil 0 nil file)
     (message "Opening %s done" file)))
 
+(defun dired-open-home-dir ()
+  "Open the home directory in dired"
+  (interactive)
+  (dired "~"))
+
+(defun dired-open-current-dir ()
+  "Open the current directory in dired"
+  (interactive)
+  (dired "."))
+
  (use-package! all-the-icons-dired
    :hook
    (dired-mode . all-the-icons-dired-mode))

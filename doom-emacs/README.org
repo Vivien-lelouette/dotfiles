@@ -181,6 +181,22 @@ This snippet adds a hook to org-mode buffers so that org/org-babel-tangle-config
     (message "Opening %s done" file)))
 #+END_SRC
 
+** open home directory
+#+BEGIN_SRC emacs-lisp
+(defun dired-open-home-dir ()
+  "Open the home directory in dired"
+  (interactive)
+  (dired "~"))
+#+END_SRC
+
+** open home directory
+#+BEGIN_SRC emacs-lisp
+(defun dired-open-current-dir ()
+  "Open the current directory in dired"
+  (interactive)
+  (dired "."))
+#+END_SRC
+
 ** all the icons
 #+BEGIN_SRC emacs-lisp :tangle .doom.d/packages.el :mkdirp yes
 (package! all-the-icons-dired)
