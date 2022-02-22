@@ -190,7 +190,11 @@
 ;; (setq blamer--overlay-popup-position 'smart)
 (global-blamer-mode 1)
 
-(add-to-list 'auto-mode-alist '("\\.adoc\\'" . adoc-mode))
+(use-package! adoc-mode
+  :config
+  (add-to-list 'auto-mode-alist '("\\.adoc\\'" . adoc-mode))
+  (add-hook 'adoc-mode-hook (lambda()
+                              (buffer-face-mode t))))
 
 (map! :leader
     :desc "Kubel"
