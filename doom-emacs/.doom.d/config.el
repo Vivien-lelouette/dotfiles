@@ -128,6 +128,10 @@
 
 (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'org/org-babel-tangle-config)))
 
+ (use-package! dired
+   :hook
+   (dired-mode . dired-hide-details-mode))
+
 (defun dired-open-file ()
   "In dired, open the file named on this line."
   (interactive)

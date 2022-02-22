@@ -170,6 +170,13 @@ This snippet adds a hook to org-mode buffers so that org/org-babel-tangle-config
 #+END_SRC
 
 * Dired
+** better defaults
+#+BEGIN_SRC emacs-lisp
+ (use-package! dired
+   :hook
+   (dired-mode . dired-hide-details-mode))
+#+END_SRC
+
 ** open with system default application
 #+BEGIN_SRC emacs-lisp
 (defun dired-open-file ()
