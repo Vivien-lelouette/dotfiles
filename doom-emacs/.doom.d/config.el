@@ -17,8 +17,10 @@
         (setq first-frame-created t))
 
 (add-hook! 'server-after-make-frame-hook #'hooks/first-frame)
-
 (scroll-bar-mode 0)
+
+(setq global-auto-revert-non-file-buffers 1)
+(global-auto-revert-mode 1)
 
 (custom-set-faces!
   '(font-lock-comment-face :slant italic)
