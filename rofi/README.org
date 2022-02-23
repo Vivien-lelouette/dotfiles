@@ -14,8 +14,8 @@
     border-color:               #242832;
     text-color:                 #d8dee9;
     height:                     22px;
-    font:                       "Source Code Pro Medium 10";
-    prompt-font:                "Source Code Pro Bold 10";
+    font:                       "Cantarell Medium 10";
+    prompt-font:                "Cantarell Bold 10";
     prompt-background:          #a3be8c;
     prompt-foreground:          #242832;
     prompt-padding:             2px;

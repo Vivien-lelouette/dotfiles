@@ -4,10 +4,10 @@
     (when (file-exists-p local-settings)
         (load-file local-settings))))
 
-(setq doom-font (font-spec :family "Source Code Pro" :size 13)
-                doom-big-font (font-spec :family "Source Code Pro" :size 24)
-                doom-variable-pitch-font (font-spec :family "Ubuntu" :size 13)
-                doom-variable-pitch-big-font (font-spec :family "Ubuntu" :size 24))
+(setq doom-font (font-spec :family "SauceCodePro NF" :size 14)
+                doom-big-font (font-spec :family "SauceCodePro NF" :size 24)
+                doom-variable-pitch-font (font-spec :family "Cantarell" :size 14)
+                doom-variable-pitch-big-font (font-spec :family "Cantarell" :size 24))
 
 (defun hooks/first-frame ()
   (interactive)
@@ -17,10 +17,8 @@
         (setq first-frame-created t))
 
 (add-hook! 'server-after-make-frame-hook #'hooks/first-frame)
-(scroll-bar-mode 0)
 
-(setq global-auto-revert-non-file-buffers 1)
-(global-auto-revert-mode 1)
+(scroll-bar-mode 0)
 
 (custom-set-faces!
   '(font-lock-comment-face :slant italic)

@@ -79,7 +79,7 @@ Keep tracks of the last focused timestamp for every window.
   herbstclient set frame_gap 0
 
   herbstclient attr theme.title_height 0
-  herbstclient attr theme.title_font 'Dejavu Sans:pixelsize=13'  # example using Xft
+  herbstclient attr theme.title_font 'SauceCodePro:pixelsize=12'  # example using Xft
   herbstclient attr theme.padding_top 0  # space below the title's baseline (i.e. text depth)
   herbstclient attr theme.active.color "$FOCUS_COLOR"
   herbstclient attr theme.normal.color "$BG_COLOR"
