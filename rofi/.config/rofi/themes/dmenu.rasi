@@ -12,7 +12,7 @@
 #window {
     anchor: north west;
     location: north west;
-    width: 75%;
+    width: calc(100% - 800px);
     padding: 0px;
     x-offset: 235px;
     children: [ horibox ];

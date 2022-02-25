@@ -198,7 +198,7 @@ label = %percentage_used%%
 
 [module/wlan]
 type = internal/network
-interface = ${networks.wifi_adapter}
+interface = ${env:WIFI_ADAPTER}
 interval = 3.0
 
 format-connected = <ramp-signal> <label-connected>
@@ -216,7 +216,7 @@ ramp-signal-foreground = ${colors.foreground_alt}
 
 [module/eth]
 type = internal/network
-interface = ${networks.ethernet_adapter}
+interface = ${env:ETHERNET_ADAPTER}
 interval = 3.0
 
 format-connected-underline = #55aa55
