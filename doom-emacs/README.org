@@ -29,7 +29,10 @@ If a setup is specific to a machine, add it on this file.
 (add-hook! 'server-after-make-frame-hook #'hooks/first-frame)
 
 (scroll-bar-mode 0)
+#+END_SRC
 
+** Dashboard banner
+#+begin_src emacs-lisp
 (defun doom-dashboard-draw-ascii-banner-fn ()
   (let* ((banner
           '("Emacs"))
@@ -44,7 +47,14 @@ If a setup is specific to a machine, add it on this file.
                                    32)))
                "\n"))
      'face 'doom-dashboard-banner)))
-#+END_SRC
+#+end_src
+
+** Access kill ring
+#+begin_src emacs-lisp
+(map! :leader
+    :desc "Kill ring"
+    "y" #'consult-yank-pop)
+#+end_src
 
 * Themes
 ** Font settings for org

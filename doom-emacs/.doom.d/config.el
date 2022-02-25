@@ -35,6 +35,10 @@
                "\n"))
      'face 'doom-dashboard-banner)))
 
+(map! :leader
+    :desc "Kill ring"
+    "y" #'consult-yank-pop)
+
 (custom-set-faces!
   '(font-lock-comment-face :slant italic)
   '(font-lock-keyword-face :slant italic))
