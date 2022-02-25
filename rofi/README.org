@@ -36,9 +36,9 @@ configuration {
 #window {
     anchor: north west;
     location: north west;
-    width: calc(100% - 800px);
+    width: calc(100% - 764px);
     padding: 0px;
-    x-offset: 235px;
+    x-offset: 230px;
     children: [ horibox ];
 }
 #horibox {
