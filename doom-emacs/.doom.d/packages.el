@@ -13,3 +13,8 @@
 (package! adoc-mode :recipe (:host github :repo "sensorflo/adoc-mode"))
 
 (package! kubel :recipe (:host github :repo "abrochard/kubel"))
+
+(package! shr)
+
+(package! shr-tag-pre-highlight)
+(package! shrface)

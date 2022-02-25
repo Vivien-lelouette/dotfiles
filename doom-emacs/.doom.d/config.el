@@ -226,6 +226,87 @@
   :custom
   (lsp-clients-typescript-server-args '("--stdio" "--tsserver-log-file" "/dev/stderr")))
 
+(use-package! shr
+  :config
+  (setq gnus-inhibit-images nil)
+  (setq shr-use-fonts nil)
+  (setq shr-use-colors nil)
+  (setq shr-max-image-proportion 1)
+  (setq shr-width nil)
+  (setq shr-folding-mode t))
+
+;; Used to highlight code
+(use-package! shr-tag-pre-highlight
+  :after shr
+  :config
+  (add-to-list 'shr-external-rendering-functions
+               '(pre . shr-tag-pre-highlight))
+  (when (version< emacs-version "26")
+    (with-eval-after-load 'eww
+      (advice-add 'eww-display-html :around
+                  'eww-display-html--override-shr-external-rendering-functions))))
+
+(use-package! shrface
+  :config
+  (shrface-basic)
+  (shrface-trial)
+  (shrface-default-keybindings)
+  (setq shrface-href-versatile t)
+
+  ;; Code highlighting
+  (require 'shr-tag-pre-highlight)
+  (add-to-list 'shr-external-rendering-functions '(pre . shrface-shr-tag-pre-highlight))
+  (defun shrface-shr-tag-pre-highlight (pre)
+    "Highlighting code in PRE."
+    (let* ((shr-folding-mode 'none)
+           (shr-current-font 'default)
+           (code (with-temp-buffer
+                   (shr-generic pre)
+                   (setq-local fill-column 120)
+                   (indent-rigidly (point-min) (point-max) 2)
+                   (if (eq "" (dom-texts pre))
+                       nil
+                     (progn
+                       (setq-local fill-column shrface-paragraph-fill-column)
+                       (indent-rigidly (point-min) (point-max) shrface-paragraph-indentation)))
+                   (buffer-string)))
+           (lang (or (shr-tag-pre-highlight-guess-language-attr pre)
+                     (let ((sym (language-detection-string code)))
+                       (and sym (symbol-name sym)))))
+           (mode (and lang
+                      (shr-tag-pre-highlight--get-lang-mode lang))))
+      (shr-ensure-newline)
+      (insert (propertize (concat "#+BEGIN_SRC " lang) 'face 'org-block-begin-line))
+      (shr-ensure-newline)
+      (setq start (point))
+      (insert
+       (or (and (fboundp mode)
+                (with-demoted-errors "Error while fontifying: %S"
+                  (shrface-tag-pre-highlight-fontify code mode)
+                  ))
+           code))
+      (shr-ensure-newline)
+      (setq end (point))
+      (insert (propertize "#+END_SRC" 'face 'org-block-end-line ) )
+      (shr-ensure-newline)
+      (insert "\n"))))
+
+(use-package! eww
+  :config
+  (define-key eww-image-link-keymap (kbd "TAB") nil)
+  (define-key eww-link-keymap (kbd "TAB") nil)
+  (define-key eww-mode-map (kbd "TAB") nil)
+  (define-key eww-text-map (kbd "TAB") nil)
+  (define-key eww-textarea-map (kbd "TAB") nil)
+  (define-key eww-mode-map (kbd "<normal-state> ^") nil)
+  (define-key eww-mode-map (kbd "<normal-state> <tab>") 'shrface-outline-cycle)
+  (define-key eww-mode-map (kbd "<normal-state> <backtab>") nil)
+
+  (require 'shrface))
+
+(add-hook! 'eww-after-render-hook #'shrface-mode)
+(add-hook! 'eww-after-render-hook #'mixed-pitch-mode)
+
 (setq vterm-shell "/bin/zsh")
 (setq vterm-buffer-name-string "vterm: %s")
 
