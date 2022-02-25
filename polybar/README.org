@@ -123,8 +123,8 @@ padding-right = 8
 module-margin-left = 2
 module-margin-right = 8
 
-font-0 = Cantarell:style=Bold:pixelsize=11;2
-font-1 = SauceCodePro NF:style=Bold:size=18;4
+font-0 = Cantarell:style=Bold:pixelsize=11;3
+font-1 = SauceCodePro NF:style=Bold:size=18;5
 
 modules-left = info-hlwm-workspaces xwindow
 modules-center =
