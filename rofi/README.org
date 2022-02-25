@@ -24,6 +24,7 @@ configuration {
 #+BEGIN_SRC shell :tangle .config/rofi/themes/dmenu.rasi :mkdirp yes
 ,* {
     background-color:           #242832;
+    background-alt:             #2e3440;
     border-color:               #242832;
     text-color:                 #d8dee9;
     height:                     22px;
@@ -56,9 +57,11 @@ configuration {
     lines: 100;
 }
 #entry {
-    padding: 0px;
+    background-color: @background-alt;
+    padding: 2px 8px;
+    margin: 0px 4px;
     expand: false;
-    width: 10em;
+    width: 12em;
 }
 #element {
     padding: 2px 8px;

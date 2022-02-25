@@ -210,8 +210,8 @@ Keep tracks of the last focused timestamp for every window.
   herbstclient keybind $Mod+i spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh 1 'qutebrowser\|Vivaldi-stable' '' 'vivaldi-stable'
   herbstclient keybind $Mod+Shift+i spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh -1 'qutebrowser\|Vivaldi-stable' '' 'vivaldi-stable'
 
-  herbstclient keybind $Mod+a spawn rofi -show drun -display-drun 'Application -  '
-  herbstclient keybind $Mod+Shift+a spawn rofi -show run -display-run 'Run -  '
+  herbstclient keybind $Mod+a spawn rofi -show drun -display-drun 'Application -'
+  herbstclient keybind $Mod+Shift+a spawn rofi -show run -display-run 'Run -'
 
   herbstclient keybind $Mod+Control+e spawn emacsclient -c
   herbstclient keybind $Mod+e spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh 1 'Emacs' '' 'emacsclient -c'
@@ -523,7 +523,7 @@ Keep tracks of the last focused timestamp for every window.
 
   $emacs_buffer_list")
 
-  client=$(echo "$display_client_list" | sed 's/.*¤ //g' | rofi -dmenu -i -p "Window -  ")
+  client=$(echo "$display_client_list" | sed 's/.*¤ //g' | rofi -dmenu -i -p "Window -")
 
   if [ $? -eq 0 ]
   then
@@ -535,7 +535,7 @@ Keep tracks of the last focused timestamp for every window.
 
 *** power menu
 #+BEGIN_SRC shell :tangle .config/herbstluftwm/scripts/power_menu.sh :shebang #!/usr/bin/env bash :mkdirp yes
-selected_option=$(echo -e "shutdown\nreboot\nlogout" | rofi -dmenu -i -p "Power -  ")
+selected_option=$(echo -e "shutdown\nreboot\nlogout" | rofi -dmenu -i -p "Power -")
 
 if [ $? -eq 0 ]
 then
