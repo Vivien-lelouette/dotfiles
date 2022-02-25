@@ -157,8 +157,8 @@
   herbstclient keybind $Mod+i spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh 1 'qutebrowser\|Vivaldi-stable' '' 'vivaldi-stable'
   herbstclient keybind $Mod+Shift+i spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh -1 'qutebrowser\|Vivaldi-stable' '' 'vivaldi-stable'
 
-  herbstclient keybind $Mod+a spawn rofi -show drun 
-  herbstclient keybind $Mod+Shift+a spawn rofi -show run 
+  herbstclient keybind $Mod+a spawn rofi -show drun -display-drun 'Application -  '
+  herbstclient keybind $Mod+Shift+a spawn rofi -show run -display-run 'Run -  '
 
   herbstclient keybind $Mod+Control+e spawn emacsclient -c
   herbstclient keybind $Mod+e spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh 1 'Emacs' '' 'emacsclient -c'

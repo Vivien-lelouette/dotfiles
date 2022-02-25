@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-selected_option=$(echo -e "shutdown\nreboot\nlogout" | rofi -dmenu -i -p "power")
+selected_option=$(echo -e "shutdown\nreboot\nlogout" | rofi -dmenu -i -p "Power -  ")
 
 if [ $? -eq 0 ]
 then

@@ -28,7 +28,7 @@
 
   $emacs_buffer_list")
 
-  client=$(echo "$display_client_list" | sed 's/.*¤ //g' | rofi -dmenu -i -p "window")
+  client=$(echo "$display_client_list" | sed 's/.*¤ //g' | rofi -dmenu -i -p "Window -  ")
 
   if [ $? -eq 0 ]
   then

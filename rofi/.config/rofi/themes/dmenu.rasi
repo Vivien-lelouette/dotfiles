@@ -4,18 +4,17 @@
     text-color:                 #d8dee9;
     height:                     22px;
     font:                       "Cantarell Medium 10";
-    prompt-font:                "Cantarell Bold 10";
-    prompt-background:          #a3be8c;
-    prompt-foreground:          #242832;
-    prompt-padding:             2px;
+    prompt-font:                "Cantarell Bold 11";
+    prompt-padding:             0px;
     selected-normal-background: #a3be8c;
     selected-normal-foreground: #242832;
 }
 #window {
-    anchor: north;
-    location: north;
-    width: 100%;
+    anchor: north west;
+    location: north west;
+    width: 75%;
     padding: 0px;
+    x-offset: 235px;
     children: [ horibox ];
 }
 #horibox {
@@ -33,7 +32,7 @@
     lines: 100;
 }
 #entry {
-    padding: 2px;
+    padding: 0px;
     expand: false;
     width: 10em;
 }
