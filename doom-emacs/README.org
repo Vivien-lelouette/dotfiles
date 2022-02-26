@@ -432,6 +432,69 @@ This snippet adds a hook to org-mode buffers so that org/org-babel-tangle-config
 (add-hook! 'eww-after-render-hook #'mixed-pitch-mode)
 #+END_SRC
 
+#+BEGIN_SRC emacs-lisp
+(use-package! eww
+  :config
+  (define-key eww-image-link-keymap (kbd "TAB") nil)
+  (define-key eww-link-keymap (kbd "TAB") nil)
+  (define-key eww-mode-map (kbd "TAB") nil)
+  (define-key eww-text-map (kbd "TAB") nil)
+  (define-key eww-textarea-map (kbd "TAB") nil)
+  (define-key eww-mode-map (kbd "<normal-state> ^") nil)
+  (define-key eww-mode-map (kbd "<normal-state> <tab>") 'shrface-outline-cycle)
+  (define-key eww-mode-map (kbd "<normal-state> <backtab>") nil)
+
+  (require 'shrface))
+
+(add-hook! 'eww-after-render-hook #'shrface-mode)
+(add-hook! 'eww-after-render-hook #'mixed-pitch-mode)
+#+END_SRC
+
+** Emacs Application Framework
+#+BEGIN_SRC emacs-lisp :tangle .doom.d/packages.el :mkdirp yes
+(package! eaf :recipe (:host github
+                             :repo "manateelazycat/emacs-application-framework"
+                             :files ("*.el" "*.py" "app" "core")
+                             :build (:not compile)))
+
+(package! ctable :recipe (:host github :repo "kiwanami/emacs-ctable"))
+(package! deferred :recipe (:host github :repo "kiwanami/emacs-deferred"))
+(package! epc :recipe (:host github :repo "kiwanami/emacs-epc"))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package! eaf
+  :load-path "~/.emacs.d/.local/straight/repos/emacs-application-framework"
+  :custom
+  ; See https://github.com/emacs-eaf/emacs-application-framework/wiki/Customization
+  (eaf-browser-continue-where-left-off t)
+  (eaf-browser-enable-adblocker t)
+  (browse-url-browser-function 'eaf-open-browser)
+  (eaf-wm-focus-fix-wms `("i3" "LG3D" "Xpra" "EXWM" "Xfwm4" "herbstluftwm"))
+  :config
+  (use-package! ctable)
+  (use-package! deferred)
+  (use-package! epc)
+  (use-package! eaf-browser)
+  (use-package! eaf-pdf-viewer)
+  (use-package! eaf-image-viewer)
+  (use-package! eaf-evil)
+  (define-key key-translation-map (kbd "SPC")
+    (lambda (prompt)
+      (if (derived-mode-p 'eaf-mode)
+          (pcase eaf--buffer-app-name
+            ("browser" (if  (string= (eaf-call-sync "call_function" eaf--buffer-id "is_focus") "True")
+                           (kbd "SPC")
+                         (kbd eaf-evil-leader-key)))
+            ("pdf-viewer" (kbd eaf-evil-leader-key))
+            ("image-viewer" (kbd eaf-evil-leader-key))
+            (_  (kbd "SPC")))
+        (kbd "SPC"))))
+  (defalias 'browse-web #'eaf-open-browser))
+
+
+#+END_SRC
+
 * Vterm
 #+BEGIN_SRC emacs-lisp
 (setq vterm-shell "/bin/zsh")
