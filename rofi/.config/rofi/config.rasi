@@ -4,8 +4,8 @@ configuration {
         kb-accept-entry: "Control+m,Return,KP_Enter";
         kb-mode-next: "Shift+Right,Control+Tab";
         kb-mode-previous: "Shift+Left,Control+Shift+Tab";
-        kb-row-up: "Up,Control+k,Shift+Tab,Shift+ISO_Left_Tab,Control+h";
-        kb-row-down: "Down,Control+j,Control+l";
+        kb-row-up: "Up,Shift+Tab,Control+k";
+        kb-row-down: "Down,Shift+ISO_Left_Tab,Control+j";
 }
 
 @theme "~/.config/rofi/themes/dmenu"
