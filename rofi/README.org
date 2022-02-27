@@ -30,16 +30,16 @@ configuration {
     height:                     22px;
     font:                       "Cantarell Medium 10";
     prompt-font:                "Cantarell Bold 11";
-    prompt-padding:             0px;
+    prompt-padding:             0px 4px;
     selected-normal-background: #a3be8c;
     selected-normal-foreground: #242832;
 }
 #window {
     anchor: north west;
     location: north west;
+    x-offset: 226px;
     width: calc(100% - 764px);
     padding: 0px;
-    x-offset: 230px;
     children: [ horibox ];
 }
 #horibox {
