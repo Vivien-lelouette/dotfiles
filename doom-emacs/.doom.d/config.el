@@ -376,7 +376,7 @@
     (lambda (prompt)
       (if (derived-mode-p 'eaf-mode)
           (pcase eaf--buffer-app-name
-            ("browser" (if  (string= (eaf-call-sync "call_function" eaf--buffer-id "is_focus") "True")
+            ("browser" (if (eaf-call-sync "execute_function" eaf--buffer-id "is_focus")
                            (kbd "SPC")
                          (kbd eaf-evil-leader-key)))
             ("pdf-viewer" (kbd eaf-evil-leader-key))
