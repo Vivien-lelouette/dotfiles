@@ -194,14 +194,14 @@ This snippet adds a hook to org-mode buffers so that org/org-babel-tangle-config
 #+END_SRC
 
 * Dired
-** better defaults
+** Better defaults
 #+BEGIN_SRC emacs-lisp
  (use-package! dired
    :hook
    (dired-mode . dired-hide-details-mode))
 #+END_SRC
 
-** open with system default application
+** Open with system default application
 #+BEGIN_SRC emacs-lisp
 (defun dired-open-file ()
   "In dired, open the file named on this line."
@@ -212,7 +212,7 @@ This snippet adds a hook to org-mode buffers so that org/org-babel-tangle-config
     (message "Opening %s done" file)))
 #+END_SRC
 
-** open home directory
+** Open home directory
 #+BEGIN_SRC emacs-lisp
 (defun dired-open-home-dir ()
   "Open the home directory in dired"
@@ -220,7 +220,7 @@ This snippet adds a hook to org-mode buffers so that org/org-babel-tangle-config
   (dired "~"))
 #+END_SRC
 
-** open home directory
+** Open home directory
 #+BEGIN_SRC emacs-lisp
 (defun dired-open-current-dir ()
   "Open the current directory in dired"
@@ -228,7 +228,7 @@ This snippet adds a hook to org-mode buffers so that org/org-babel-tangle-config
   (dired "."))
 #+END_SRC
 
-** all the icons
+** All the icons
 #+BEGIN_SRC emacs-lisp :tangle .doom.d/packages.el :mkdirp yes
 (package! all-the-icons-dired)
 #+END_SRC
