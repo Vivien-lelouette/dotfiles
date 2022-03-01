@@ -33,7 +33,8 @@ module-margin-left = 2
 module-margin-right = 8
 
 font-0 = Cantarell:style=Bold:pixelsize=11;3
-font-1 = SauceCodePro NF:style=Bold:size=18;5
+font-1 = Cantarell:pixelsize=11;3
+font-2 = SauceCodePro NF:style=Bold:size=18;5
 
 modules-left = info-hlwm-workspaces xwindow
 modules-center =
@@ -69,7 +70,7 @@ scroll-down = herbstclient use_index +1 --skip-visible &
 type = internal/xwindow
 exec = xdotool getwindowfocus getwindowname
 ;label = %output:0:200:...%
-label = %title:0:200:...%
+label = %{T2}%title:0:200:...%
 
 [module/xkeyboard]
 type = internal/xkeyboard

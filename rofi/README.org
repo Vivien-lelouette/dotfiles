@@ -28,7 +28,7 @@ configuration {
     border-color:               #242832;
     text-color:                 #d8dee9;
     height:                     22px;
-    font:                       "Cantarell Medium 11";
+    font:                       "Cantarell 10";
     prompt-font:                "SauceCodePro Bold 16";
     prompt-padding:             -2px 4px;
     selected-normal-background: #a3be8c;
@@ -64,7 +64,7 @@ configuration {
     width: 224px;
 }
 #element {
-    padding: 1px 10px 2px;
+    padding: 2px 10px 3px;
 }
 #element selected {
     background-color: @selected-normal-background;
