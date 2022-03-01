@@ -159,6 +159,7 @@ label = %date% %time%
 [module/pulseaudio]
 type = internal/pulseaudio
 
+use-ui-max = false
 format-volume = <label-volume>
 label-volume = %{A3:gnome-control-center sound &:}%{A}  %percentage%%
 label-volume-foreground = ${root.foreground}
