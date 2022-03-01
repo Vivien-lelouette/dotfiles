@@ -5,8 +5,8 @@
     text-color:                 #d8dee9;
     height:                     22px;
     font:                       "Cantarell Medium 10";
-    prompt-font:                "Cantarell Bold 11";
-    prompt-padding:             0px 4px;
+    prompt-font:                "SauceCodePro Bold 16";
+    prompt-padding:             -2px 4px;
     selected-normal-background: #a3be8c;
     selected-normal-foreground: #242832;
 }
@@ -35,9 +35,10 @@
 #entry {
     background-color: @background-alt;
     padding: 2px 8px;
-    margin: 0px 4px;
+    margin: 1px 4px;
+    border: 1px;
     expand: false;
-    width: 12em;
+    width: 10em;
 }
 #element {
     padding: 2px 8px;
