@@ -4,7 +4,7 @@
     border-color:               #242832;
     text-color:                 #d8dee9;
     height:                     22px;
-    font:                       "Cantarell Medium 10";
+    font:                       "Cantarell Medium 11";
     prompt-font:                "SauceCodePro Bold 16";
     prompt-padding:             -2px 4px;
     selected-normal-background: #a3be8c;
@@ -13,15 +13,15 @@
 #window {
     anchor: north west;
     location: north west;
-    x-offset: 226px;
-    width: calc(100% - 764px);
-    padding: 0px;
+    width: calc(100% - 550px);
+    padding: 0px 8px;
     children: [ horibox ];
 }
 #horibox {
     orientation: horizontal;
     children: [ prompt, entry, listview ];
 }
+
 #prompt {
     padding:          @prompt-padding;
     background-color: @prompt-background;
@@ -35,13 +35,12 @@
 #entry {
     background-color: @background-alt;
     padding: 2px 8px;
-    margin: 1px 4px;
-    border: 1px;
+    margin: 0px 24px 0px 8px;
     expand: false;
-    width: 10em;
+    width: 224px;
 }
 #element {
-    padding: 2px 8px;
+    padding: 1px 10px 2px;
 }
 #element selected {
     background-color: @selected-normal-background;

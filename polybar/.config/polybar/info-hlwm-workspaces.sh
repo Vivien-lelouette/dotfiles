@@ -22,6 +22,7 @@ herbstclient --idle "tag_*" 2>/dev/null | {
         # Read tags into $tags as array
         IFS=$'\t' read -ra tags <<< "$(herbstclient tag_status "${MON_IDX}")"
         {
+            echo "    "
             for i in "${tags[@]}" ; do
                 # Read the prefix from each tag and render them according to that prefix
                 case ${i:0:1} in
