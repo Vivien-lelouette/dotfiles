@@ -22,7 +22,7 @@ Install gnome flashback before running this script
 #+END_SRC
 
 ** Utils
-*** focus timestamp attribute
+*** Focus timestamp attribute
 Keep tracks of the last focused timestamp for every window.
 #+BEGIN_SRC shell
   watch_focus_time()
@@ -35,7 +35,7 @@ Keep tracks of the last focused timestamp for every window.
   }
 #+END_SRC
 
-** herbstluftwm general setup
+** Herbstluftwm general setup
 #+BEGIN_SRC shell
   herbstclient emit_hook reload
 
@@ -48,11 +48,10 @@ Keep tracks of the last focused timestamp for every window.
   # default layout to max
   herbstclient set_layout max
   herbstclient set default_frame_layout 2
-
 #+END_SRC
 
 ** Theme
-*** colors
+*** Colors
 #+BEGIN_SRC shell
   export FG_COLOR='#d8dee9'
   export FG_ALT_COLOR='#93979f'
@@ -225,13 +224,15 @@ Keep tracks of the last focused timestamp for every window.
   herbstclient keybind $Mod+x spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'execute-extended-command)"
 #+END_SRC
 
-#+RESULTS:
-
 *** Power menu
 #+BEGIN_SRC shell
   herbstclient keybind $Mod+Control+p spawn bash $herbstluftwm_scripts_folder/power_menu.sh
 #+END_SRC
 
+*** Settings menu
+#+BEGIN_SRC shell
+  herbstclient keybind $Mod+Control+o spawn bash $herbstluftwm_scripts_folder/settings_menu.sh
+#+END_SRC
 
 ** Mouse binding
 #+BEGIN_SRC shell
@@ -255,7 +256,6 @@ Keep tracks of the last focused timestamp for every window.
       # start it on each monitor
       herbstclient pad $monitor 22 &
   done
-
 #+END_SRC
 
 *** Keyboard layout
@@ -450,7 +450,7 @@ Keep tracks of the last focused timestamp for every window.
 #+END_SRC
 
 ** Emacs integration
-*** Emacs or herbstluftwm command
+*** Emacs or Herbstluftwm command
 #+BEGIN_SRC shell :tangle .config/herbstluftwm/scripts/emacs_or_herbstluftwm_command.sh :shebang #!/usr/bin/env bash :mkdirp yes
   if [ "$(herbstclient get_attr clients.focus.class)" == "Emacs" ]
   then
@@ -494,7 +494,7 @@ Keep tracks of the last focused timestamp for every window.
 #+END_SRC
 
 ** Interactive
-*** switch window
+*** Switch window
 #+BEGIN_SRC shell :tangle .config/herbstluftwm/scripts/switch_window.sh :shebang #!/usr/bin/env bash :mkdirp yes
   script_folder="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
   client_list=$(bash $script_folder/list_switchable_clients.sh 1)
@@ -535,7 +535,7 @@ Keep tracks of the last focused timestamp for every window.
   fi
 #+END_SRC
 
-*** power menu
+*** Power menu
 #+BEGIN_SRC shell :tangle .config/herbstluftwm/scripts/power_menu.sh :shebang #!/usr/bin/env bash :mkdirp yes
 selected_option=$(echo -e "shutdown\nreboot\nlogout" | rofi -dmenu -i -p "")
 
@@ -556,3 +556,13 @@ fi
 #+END_SRC
 
 #+RESULTS:
+
+*** Settings menu
+#+BEGIN_SRC shell :tangle .config/herbstluftwm/scripts/settings_menu.sh :shebang #!/usr/bin/env bash :mkdirp yes
+selected_option=$(gnome-control-center -l | sed -e '1d' -e 's/^[[:space:]]*//' | rofi -dmenu -i -p "")
+
+if [ $? -eq 0 ]
+then
+    gnome-control-center $selected_option
+fi
+#+END_SRC

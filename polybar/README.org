@@ -5,6 +5,8 @@
 This is the wonderful polybar with a script to support Herbsluftwm workspaces !
 FontAwesome is necessary to get the icons.
 
+Actions can be added to any string. See the following: https://github.com/polybar/polybar/wiki/Formatting#action-a.
+
 ** Herbstluftwm workspaces
 #+BEGIN_SRC shell :tangle .config/polybar/info-hlwm-workspaces.sh :shebang #!/usr/bin/env bash :mkdirp yes
 # Multi monitor support. Needs MONITOR environment variable to be set for each instance of polybar
@@ -30,7 +32,7 @@ herbstclient --idle "tag_*" 2>/dev/null | {
         # Read tags into $tags as array
         IFS=$'\t' read -ra tags <<< "$(herbstclient tag_status "${MON_IDX}")"
         {
-            echo "    "
+            echo "%{A3:gnome-control-center display:}%{A}    "
             for i in "${tags[@]}" ; do
                 # Read the prefix from each tag and render them according to that prefix
                 case ${i:0:1} in
@@ -65,7 +67,7 @@ herbstclient --idle "tag_*" 2>/dev/null | {
                 esac
 
                 # focus the monitor of the current bar before switching tags
-                echo "%{A1:herbstclient focus_monitor ${MON_IDX}; herbstclient use ${i:1}:}  ${i:1}  %{A -u -o F- B-}"
+                echo "%{A1:herbstclient focus_monitor ${MON_IDX}; herbstclient use ${i:1} &:}  ${i:1}  %{A -u -o F- B-}"
             done
 
             # reset foreground and background color to default
@@ -168,7 +170,7 @@ label = %{T2}%title:0:200:...%
 type = internal/xkeyboard
 blacklist-0 = num lock
 
-format-prefix = "  "
+format-prefix = "%{A1:gnome-control-center keyboard &:}%{A3:gnome-control-center region &:}%{A}%{A}  "
 format-prefix-foreground = ${colors.foreground}
 format-prefix-underline = ${colors.secondary}
 
@@ -213,7 +215,7 @@ format-disconnected =
 ;label-disconnected = %ifname% disconnected
 ;label-disconnected-foreground = ${colors.foreground_alt}
 
-ramp-signal-0 = "  "
+ramp-signal-0 = "%{A3:gnome-control-center wifi &:}%{A}  "
 ramp-signal-foreground = ${colors.foreground_alt}
 
 [module/eth]
@@ -222,7 +224,7 @@ interface = ${env:ETHERNET_ADAPTER}
 interval = 3.0
 
 format-connected-underline = #55aa55
-format-connected-prefix = "  "
+format-connected-prefix = "%{A3:gnome-control-center network &:}%{A}  "
 format-connected-prefix-foreground = ${colors.foreground_alt}
 label-connected = %local_ip%
 
@@ -242,7 +244,7 @@ date-alt = " %Y-%m-%d"
 time = %H:%M
 time-alt = %H:%M:%S
 
-format-prefix = "  "
+format-prefix = "%{A3:gnome-control-center datetime &:}%{A}  "
 format-prefix-foreground = ${colors.foreground}
 format-underline = #0a6cf5
 
@@ -252,11 +254,11 @@ label = %date% %time%
 type = internal/pulseaudio
 
 format-volume = <label-volume>
-label-volume =   %percentage%%
+label-volume = %{A3:gnome-control-center sound &:}%{A}  %percentage%%
 label-volume-foreground = ${root.foreground}
 
 format-muted = <label-muted>
-label-muted =    %percentage%%
+label-muted = %{A3:gnome-control-center sound &:}%{A}   %percentage%%
 label-muted-foreground = #666
 
 bar-volume-width = 8
@@ -276,34 +278,6 @@ bar-volume-empty = ─
 bar-volume-empty-font = 2
 bar-volume-empty-foreground = ${colors.foreground_alt}
 
-[module/alsa]
-type = internal/alsa
-
-format-volume = <label-volume> <bar-volume>
-label-volume = VOL
-label-volume-foreground = ${root.foreground}
-
-format-muted-prefix = " "
-format-muted-foreground = ${colors.foreground_alt}
-label-muted = sound muted
-
-bar-volume-width = 10
-bar-volume-foreground-0 = #55aa55
-bar-volume-foreground-1 = #55aa55
-bar-volume-foreground-2 = #55aa55
-bar-volume-foreground-3 = #55aa55
-bar-volume-foreground-4 = #55aa55
-bar-volume-foreground-5 = #f5a70a
-bar-volume-foreground-6 = #ff5555
-bar-volume-gradient = false
-bar-volume-indicator = |
-bar-volume-indicator-font = 2
-bar-volume-fill = ─
-bar-volume-fill-font = 2
-bar-volume-empty = ─
-bar-volume-empty-font = 2
-bar-volume-empty-foreground = ${colors.foreground_alt}
-
 [module/battery]
 type = internal/battery
 battery = BAT0
@@ -316,33 +290,33 @@ format-charging-underline = #ffb52a
 format-discharging = <animation-discharging> <label-discharging>
 format-discharging-underline = ${self.format-charging-underline}
 
-label-full = "  "
+label-full = "%{A3:gnome-control-center power &:}%{A}  "
 format-full = <label-full>
 format-full-prefix-foreground = ${colors.foreground}
 format-full-underline = ${self.format-charging-underline}
 
-ramp-capacity-0 = "  "
+ramp-capacity-0 = "%{A3:gnome-control-center power &:}%{A}  "
 ramp-capacity-0-foreground = ${colors.alert}
-ramp-capacity-1 = "  "
+ramp-capacity-1 = "%{A3:gnome-control-center power &:}%{A}  "
 ramp-capacity-1-foreground = ${colors.secondary}
-ramp-capacity-2 = "  "
-ramp-capacity-3 = "  "
+ramp-capacity-2 = "%{A3:gnome-control-center power &:}%{A}  "
+ramp-capacity-3 = "%{A3:gnome-control-center power &:}%{A}  "
 ramp-capacity-foreground = ${colors.foreground}
-ramp-capacity-4 = "  "
+ramp-capacity-4 = "%{A3:gnome-control-center power &:}%{A}  "
 
-animation-charging-0 = "  "
-animation-charging-1 = "  "
-animation-charging-2 = "  "
-animation-charging-3 = "  "
-animation-charging-4 = "  "
+animation-charging-0 = "%{A3:gnome-control-center power &:}%{A}  "
+animation-charging-1 = "%{A3:gnome-control-center power &:}%{A}  "
+animation-charging-2 = "%{A3:gnome-control-center power &:}%{A}  "
+animation-charging-3 = "%{A3:gnome-control-center power &:}%{A}  "
+animation-charging-4 = "%{A3:gnome-control-center power &:}%{A}  "
 animation-charging-foreground = ${colors.foreground}
 animation-charging-framerate = 750
 
-animation-discharging-0 = "  "
-animation-discharging-1 = "  "
-animation-discharging-2 = "  "
-animation-discharging-3 = "  "
-animation-discharging-4 = "  "
+animation-discharging-0 = "%{A3:gnome-control-center power &:}%{A}  "
+animation-discharging-1 = "%{A3:gnome-control-center power &:}%{A}  "
+animation-discharging-2 = "%{A3:gnome-control-center power &:}%{A}  "
+animation-discharging-3 = "%{A3:gnome-control-center power &:}%{A}  "
+animation-discharging-4 = "%{A3:gnome-control-center power &:}%{A}  "
 animation-discharging-foreground = ${colors.foreground}
 animation-discharging-framerate = 750
 
