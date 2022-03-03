@@ -29,9 +29,10 @@ If a setup is specific to a machine, add it on this file.
 (add-hook! 'server-after-make-frame-hook #'hooks/first-frame)
 
 (scroll-bar-mode 0)
+
+(setq display-line-numbers 'relative)
 (setq display-line-numbers-width-start t)
 (setq display-line-numbers-grow-only t)
-(setq display-line-numbers-type 'relative)
 #+END_SRC
 
 ** Dashboard banner
@@ -199,9 +200,12 @@ This snippet adds a hook to org-mode buffers so that org/org-babel-tangle-config
 * Dired
 ** Better defaults
 #+BEGIN_SRC emacs-lisp
- (use-package! dired
-   :hook
-   (dired-mode . dired-hide-details-mode))
+(use-package! dired
+  :hook
+  (dired-mode . dired-hide-details-mode)
+  :config
+  (add-hook 'dired-mode-hook (lambda()
+                               (setq display-line-numbers 'relative))))
 #+END_SRC
 
 ** Open with system default application
@@ -270,6 +274,13 @@ This snippet adds a hook to org-mode buffers so that org/org-babel-tangle-config
     "." 'dired-hide-dotfiles-mode))
 #+END_SRC
 
+* Treemacs
+#+begin_src emacs-lisp
+(use-package! treemacs
+  :config
+  (add-hook 'treemacs-mode-hook (lambda()
+                               (setq display-line-numbers 'relative))))
+#+end_src
 * Dev
 ** blamer.el
 #+BEGIN_SRC emacs-lisp :tangle .doom.d/packages.el :mkdirp yes

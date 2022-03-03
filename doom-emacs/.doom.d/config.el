@@ -19,9 +19,10 @@
 (add-hook! 'server-after-make-frame-hook #'hooks/first-frame)
 
 (scroll-bar-mode 0)
+
+(setq display-line-numbers 'relative)
 (setq display-line-numbers-width-start t)
 (setq display-line-numbers-grow-only t)
-(setq display-line-numbers-type 'relative)
 
 (defun doom-dashboard-draw-ascii-banner-fn ()
   (let* ((banner
@@ -150,9 +151,12 @@
 
 (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'org/org-babel-tangle-config)))
 
- (use-package! dired
-   :hook
-   (dired-mode . dired-hide-details-mode))
+(use-package! dired
+  :hook
+  (dired-mode . dired-hide-details-mode)
+  :config
+  (add-hook 'dired-mode-hook (lambda()
+                               (setq display-line-numbers 'relative))))
 
 (defun dired-open-file ()
   "In dired, open the file named on this line."
@@ -189,6 +193,11 @@
   :config
   (evil-collection-define-key 'normal 'dired-mode-map
     "." 'dired-hide-dotfiles-mode))
+
+(use-package! treemacs
+  :config
+  (add-hook 'treemacs-mode-hook (lambda()
+                               (setq display-line-numbers 'relative))))
 
 (defun blamer-callback-show-commit-diff (commit-info)
   (interactive)
