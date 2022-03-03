@@ -19,6 +19,9 @@
 (add-hook! 'server-after-make-frame-hook #'hooks/first-frame)
 
 (scroll-bar-mode 0)
+(setq display-line-numbers-width-start t)
+(setq display-line-numbers-grow-only t)
+(setq display-line-numbers-type 'relative)
 
 (defun doom-dashboard-draw-ascii-banner-fn ()
   (let* ((banner
