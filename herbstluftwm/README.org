@@ -50,6 +50,8 @@ Keep tracks of the last focused timestamp for every window.
   herbstclient set default_frame_layout 2
 #+END_SRC
 
+#+RESULTS:
+
 ** Theme
 *** Colors
 #+BEGIN_SRC shell
@@ -222,6 +224,7 @@ Keep tracks of the last focused timestamp for every window.
   herbstclient keybind $Mod+period spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(funcall-interactively #'dired-open-home-dir)"
   herbstclient keybind $Mod+Shift+period spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(funcall-interactively #'dired-open-current-dir)"
   herbstclient keybind $Mod+x spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'execute-extended-command)"
+  herbstclient keybind $Mod+Control+Return spawn bash -c 'RULES="pseudotile=on focus=on" '$herbstluftwm_scripts_folder'/spawn_with_rules.sh emacsclient --eval "(emacs-everywhere)"'
 #+END_SRC
 
 *** Power menu
@@ -285,6 +288,15 @@ Keep tracks of the last focused timestamp for every window.
 #+END_SRC
 
 * Scripts
+** Spawn with rules
+#+BEGIN_SRC shell :tangle .config/herbstluftwm/scripts/spawn_with_rules.sh :shebang #!/usr/bin/env bash :mkdirp yes
+#herbstclient rule once maxage=10 pseudotile=on focus=on
+echo "RULES: ${RULES}" > ~/temp-rules
+echo "herbstclient rule once maxage=10 ${RULES[@]}" >> ~/temp-rules
+herbstclient rule once maxage=10 ${RULES[@]}
+exec "$@"
+#+END_SRC
+
 ** Window manipulation
 *** Go direction
 #+BEGIN_SRC shell :tangle .config/herbstluftwm/scripts/go_direction.sh :shebang #!/usr/bin/env bash :mkdirp yes

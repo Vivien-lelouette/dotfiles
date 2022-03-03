@@ -170,6 +170,7 @@
   herbstclient keybind $Mod+period spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(funcall-interactively #'dired-open-home-dir)"
   herbstclient keybind $Mod+Shift+period spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(funcall-interactively #'dired-open-current-dir)"
   herbstclient keybind $Mod+x spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'execute-extended-command)"
+  herbstclient keybind $Mod+Control+Return spawn bash -c 'RULES="pseudotile=on focus=on" '$herbstluftwm_scripts_folder'/spawn_with_rules.sh emacsclient --eval "(emacs-everywhere)"'
 
   herbstclient keybind $Mod+Control+p spawn bash $herbstluftwm_scripts_folder/power_menu.sh
 
