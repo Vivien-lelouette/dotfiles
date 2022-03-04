@@ -401,7 +401,11 @@
         (kbd "SPC"))))
   (defalias 'browse-web #'eaf-open-browser))
 
-(setq vterm-shell "/bin/zsh")
-(setq vterm-buffer-name-string "vterm: %s")
+(use-package! vterm
+  :config
+  (setq vterm-shell "/bin/zsh")
+  (setq vterm-buffer-name-string "vterm: %s")
+  (add-hook 'vterm-mode-hook (lambda()
+                                  (setq display-line-numbers 'relative))))
 
 (theme/doom-nord)

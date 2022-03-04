@@ -281,6 +281,7 @@ This snippet adds a hook to org-mode buffers so that org/org-babel-tangle-config
   (add-hook 'treemacs-mode-hook (lambda()
                                (setq display-line-numbers 'relative))))
 #+end_src
+
 * Dev
 ** blamer.el
 #+BEGIN_SRC emacs-lisp :tangle .doom.d/packages.el :mkdirp yes
@@ -548,8 +549,12 @@ This snippet adds a hook to org-mode buffers so that org/org-babel-tangle-config
 
 * Vterm
 #+BEGIN_SRC emacs-lisp
-(setq vterm-shell "/bin/zsh")
-(setq vterm-buffer-name-string "vterm: %s")
+(use-package! vterm
+  :config
+  (setq vterm-shell "/bin/zsh")
+  (setq vterm-buffer-name-string "vterm: %s")
+  (add-hook 'vterm-mode-hook (lambda()
+                                  (setq display-line-numbers 'relative))))
 #+END_SRC
 
 * Startup scripts
