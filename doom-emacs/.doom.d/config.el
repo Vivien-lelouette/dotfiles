@@ -219,7 +219,7 @@
 (setq blamer-view 'overlay)
 ;; (setq blamer-type 'overlay-popup)
 ;; (setq blamer--overlay-popup-position 'smart)
-(global-blamer-mode 1)
+;; (global-blamer-mode 1)
 
 (use-package! adoc-mode
   :config
@@ -368,38 +368,38 @@
 (add-hook! 'eww-after-render-hook #'shrface-mode)
 (add-hook! 'eww-after-render-hook #'mixed-pitch-mode)
 
-(use-package! eaf
-  :load-path "~/.emacs.d/.local/straight/repos/emacs-application-framework"
-  :custom
-  ; See https://github.com/emacs-eaf/emacs-application-framework/wiki/Customization
-  (eaf-browser-continue-where-left-off t)
-  (eaf-browser-enable-adblocker t)
-  (eaf-browser-default-search-engine "duckduckgo")
-  (browse-url-browser-function 'eaf-open-browser)
-  (eaf-wm-focus-fix-wms `("i3" "LG3D" "Xpra" "EXWM" "Xfwm4" "herbstluftwm"))
-
-  :config
-  (use-package! ctable)
-  (use-package! deferred)
-  (use-package! epc)
-  (use-package! eaf-browser)
-  (use-package! eaf-pdf-viewer)
-  (use-package! eaf-image-viewer)
-  (use-package! eaf-evil)
-  (defun browser-focus-an-input ()
-    (eaf-call-sync "execute_function" eaf--buffer-id "is_focus"))
-  (define-key key-translation-map (kbd "SPC")
-    (lambda (prompt)
-      (if (derived-mode-p 'eaf-mode)
-          (pcase eaf--buffer-app-name
-            ("browser" (if (browser-focus-an-input)
-                           (kbd "SPC")
-                         (kbd eaf-evil-leader-key)))
-            ("pdf-viewer" (kbd eaf-evil-leader-key))
-            ("image-viewer" (kbd eaf-evil-leader-key))
-            (_  (kbd "SPC")))
-        (kbd "SPC"))))
-  (defalias 'browse-web #'eaf-open-browser))
+;(use-package! eaf
+;  :load-path "~/.emacs.d/.local/straight/repos/emacs-application-framework"
+;  :custom
+;  ; See https://github.com/emacs-eaf/emacs-application-framework/wiki/Customization
+;  (eaf-browser-continue-where-left-off t)
+;  (eaf-browser-enable-adblocker t)
+;  (eaf-browser-default-search-engine "duckduckgo")
+;  (browse-url-browser-function 'eaf-open-browser)
+;  (eaf-wm-focus-fix-wms `("i3" "LG3D" "Xpra" "EXWM" "Xfwm4" "herbstluftwm"))
+;
+;  :config
+;  (use-package! ctable)
+;  (use-package! deferred)
+;  (use-package! epc)
+;  (use-package! eaf-browser)
+;  (use-package! eaf-pdf-viewer)
+;  (use-package! eaf-image-viewer)
+;  (use-package! eaf-evil)
+;  (defun browser-focus-an-input ()
+;    (eaf-call-sync "execute_function" eaf--buffer-id "is_focus"))
+;  (define-key key-translation-map (kbd "SPC")
+;    (lambda (prompt)
+;      (if (derived-mode-p 'eaf-mode)
+;          (pcase eaf--buffer-app-name
+;            ("browser" (if (browser-focus-an-input)
+;                           (kbd "SPC")
+;                         (kbd eaf-evil-leader-key)))
+;            ("pdf-viewer" (kbd eaf-evil-leader-key))
+;            ("image-viewer" (kbd eaf-evil-leader-key))
+;            (_  (kbd "SPC")))
+;        (kbd "SPC"))))
+;  (defalias 'browse-web #'eaf-open-browser))
 
 (use-package! vterm
   :config
