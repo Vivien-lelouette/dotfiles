@@ -68,9 +68,8 @@ scroll-down = herbstclient use_index +1 --skip-visible &
 
 [module/xwindow]
 type = internal/xwindow
-exec = xdotool getwindowfocus getwindowname
-;label = %output:0:200:...%
-label = %{T2}%title:0:200:...%
+label = %{T2}%title:0:0:...%
+label-maxlen = ${env:MAX_TITLE_WIDTH}
 
 [module/xkeyboard]
 type = internal/xkeyboard

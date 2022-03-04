@@ -85,9 +85,10 @@ done
 ** Start panel with multi screen support
 #+BEGIN_SRC shell :tangle .config/polybar/start_polybar.sh :shebang #!/usr/bin/env bash :mkdirp yes
 pkill polybar
-for m in $(polybar --list-monitors | cut -d":" -f1); do
-    echo "$m"
-    MONITOR=$m polybar --quiet --reload hlwm &
+for m in $(polybar --list-monitors | sed 's/ //g'); do
+    curr_monitor=$(echo "$m" | cut -d":" -f1)
+    max_title_width=$(($[$(echo "$m" | cut -d":" -f2 | cut -d"x" -f1)-665] / 9))
+    MONITOR=$curr_monitor MAX_TITLE_WIDTH=$max_title_width polybar --quiet --reload hlwm &
 done
 #+END_SRC
 
@@ -162,9 +163,8 @@ scroll-down = herbstclient use_index +1 --skip-visible &
 
 [module/xwindow]
 type = internal/xwindow
-exec = xdotool getwindowfocus getwindowname
-;label = %output:0:200:...%
-label = %{T2}%title:0:200:...%
+label = %{T2}%title:0:0:...%
+label-maxlen = ${env:MAX_TITLE_WIDTH}
 
 [module/xkeyboard]
 type = internal/xkeyboard
@@ -383,3 +383,5 @@ margin-bottom = 5
 
 ; vim:ft=dosini
 #+END_SRC
+
+#+RESULTS:
