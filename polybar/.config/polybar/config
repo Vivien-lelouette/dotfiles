@@ -38,7 +38,7 @@ font-2 = SauceCodePro NF:style=Bold:size=18;5
 
 modules-left = info-hlwm-workspaces xwindow
 modules-center =
-modules-right =  wlan eth pulseaudio xkeyboard date battery power-button
+modules-right =  wlan eth pulseaudio xkeyboard date battery
 
 tray-position = none
 tray-padding = 4
@@ -53,11 +53,6 @@ override-redirect = true
 
 cursor-click = pointer
 cursor-scroll = ns-resize
-
-[module/power-button]
-type = custom/text
-content = 
-click-left = ~/.config/herbstluftwm/scripts/power_menu.sh
 
 [module/info-hlwm-workspaces]
 type = custom/script
@@ -196,33 +191,33 @@ format-charging-underline = #ffb52a
 format-discharging = <animation-discharging> <label-discharging>
 format-discharging-underline = ${self.format-charging-underline}
 
-label-full = "%{A3:gnome-control-center power &:}%{A}  "
+label-full = "%{A1:bash ~/.config/herbstluftwm/scripts/power_menu.sh &:}%{A1:bash ~/.config/herbstluftwm/scripts/power_menu.sh &:}%{A3:gnome-control-center power &:}%{A}%{A}  "
 format-full = <label-full>
 format-full-prefix-foreground = ${colors.foreground}
 format-full-underline = ${self.format-charging-underline}
 
-ramp-capacity-0 = "%{A3:gnome-control-center power &:}%{A}  "
+ramp-capacity-0 = "%{A1:bash ~/.config/herbstluftwm/scripts/power_menu.sh &:}%{A3:gnome-control-center power &:}%{A}%{A} "
 ramp-capacity-0-foreground = ${colors.alert}
-ramp-capacity-1 = "%{A3:gnome-control-center power &:}%{A}  "
+ramp-capacity-1 = "%{A1:bash ~/.config/herbstluftwm/scripts/power_menu.sh &:}%{A3:gnome-control-center power &:}%{A}%{A}  "
 ramp-capacity-1-foreground = ${colors.secondary}
-ramp-capacity-2 = "%{A3:gnome-control-center power &:}%{A}  "
-ramp-capacity-3 = "%{A3:gnome-control-center power &:}%{A}  "
+ramp-capacity-2 = "%{A1:bash ~/.config/herbstluftwm/scripts/power_menu.sh &:}%{A3:gnome-control-center power &:}%{A}%{A}  "
+ramp-capacity-3 = "%{A1:bash ~/.config/herbstluftwm/scripts/power_menu.sh &:}%{A3:gnome-control-center power &:}%{A}%{A}  "
 ramp-capacity-foreground = ${colors.foreground}
-ramp-capacity-4 = "%{A3:gnome-control-center power &:}%{A}  "
+ramp-capacity-4 = "%{A1:bash ~/.config/herbstluftwm/scripts/power_menu.sh &:}%{A3:gnome-control-center power &:}%{A}%{A}  "
 
-animation-charging-0 = "%{A3:gnome-control-center power &:}%{A}  "
-animation-charging-1 = "%{A3:gnome-control-center power &:}%{A}  "
-animation-charging-2 = "%{A3:gnome-control-center power &:}%{A}  "
-animation-charging-3 = "%{A3:gnome-control-center power &:}%{A}  "
-animation-charging-4 = "%{A3:gnome-control-center power &:}%{A}  "
+animation-charging-0 = "%{A1:bash ~/.config/herbstluftwm/scripts/power_menu.sh &:}%{A3:gnome-control-center power &:}%{A}%{A}  "
+animation-charging-1 = "%{A1:bash ~/.config/herbstluftwm/scripts/power_menu.sh &:}%{A3:gnome-control-center power &:}%{A}%{A}  "
+animation-charging-2 = "%{A1:bash ~/.config/herbstluftwm/scripts/power_menu.sh &:}%{A3:gnome-control-center power &:}%{A}%{A}  "
+animation-charging-3 = "%{A1:bash ~/.config/herbstluftwm/scripts/power_menu.sh &:}%{A3:gnome-control-center power &:}%{A}%{A}  "
+animation-charging-4 = "%{A1:bash ~/.config/herbstluftwm/scripts/power_menu.sh &:}%{A3:gnome-control-center power &:}%{A}%{A}  "
 animation-charging-foreground = ${colors.foreground}
 animation-charging-framerate = 750
 
-animation-discharging-0 = "%{A3:gnome-control-center power &:}%{A}  "
-animation-discharging-1 = "%{A3:gnome-control-center power &:}%{A}  "
-animation-discharging-2 = "%{A3:gnome-control-center power &:}%{A}  "
-animation-discharging-3 = "%{A3:gnome-control-center power &:}%{A}  "
-animation-discharging-4 = "%{A3:gnome-control-center power &:}%{A}  "
+animation-discharging-0 = "%{A1:bash ~/.config/herbstluftwm/scripts/power_menu.sh &:}%{A3:gnome-control-center power &:}%{A}%{A}  "
+animation-discharging-1 = "%{A1:bash ~/.config/herbstluftwm/scripts/power_menu.sh &:}%{A3:gnome-control-center power &:}%{A}%{A}  "
+animation-discharging-2 = "%{A1:bash ~/.config/herbstluftwm/scripts/power_menu.sh &:}%{A3:gnome-control-center power &:}%{A}%{A}  "
+animation-discharging-3 = "%{A1:bash ~/.config/herbstluftwm/scripts/power_menu.sh &:}%{A3:gnome-control-center power &:}%{A}%{A}  "
+animation-discharging-4 = "%{A1:bash ~/.config/herbstluftwm/scripts/power_menu.sh &:}%{A3:gnome-control-center power &:}%{A}%{A}  "
 animation-discharging-foreground = ${colors.foreground}
 animation-discharging-framerate = 750
 

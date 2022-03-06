@@ -12,6 +12,8 @@
 
 (package! kubel :recipe (:host github :repo "abrochard/kubel"))
 
+(package! aggressive-indent)
+
 (package! shr)
 
 (package! shr-tag-pre-highlight)

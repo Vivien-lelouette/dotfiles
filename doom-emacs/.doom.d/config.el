@@ -271,6 +271,12 @@
       :desc "dap breakpoint hit count"   "h" #'dap-breakpoint-hit-condition
       :desc "dap breakpoint log message" "l" #'dap-breakpoint-log-message))
 
+(use-package! aggressive-indent
+  :config
+  (add-to-list 'aggressive-indent-dont-indent-if
+             '(and (eq (char-before) ?\s) (looking-at-p "$")))
+  (global-aggressive-indent-mode 1))
+
 (use-package! shr
   :config
   (setq gnus-inhibit-images nil)

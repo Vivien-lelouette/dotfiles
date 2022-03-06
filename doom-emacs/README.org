@@ -378,6 +378,19 @@ This snippet adds a hook to org-mode buffers so that org/org-babel-tangle-config
       :desc "dap breakpoint log message" "l" #'dap-breakpoint-log-message))
 #+END_SRC
 
+** Aggressive indent
+#+BEGIN_SRC emacs-lisp :tangle .doom.d/packages.el :mkdirp yes
+(package! aggressive-indent)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package! aggressive-indent
+  :config
+  (add-to-list 'aggressive-indent-dont-indent-if
+             '(and (eq (char-before) ?\s) (looking-at-p "$")))
+  (global-aggressive-indent-mode 1))
+#+END_SRC
+
 * Web browsing
 ** Shr (html renderer)
 #+BEGIN_SRC emacs-lisp :tangle .doom.d/packages.el :mkdirp yes
