@@ -1,7 +1,5 @@
 (package! org-jira :recipe (:host github :repo "Vivien-lelouette/org-jira"))
 
-(package! all-the-icons-dired)
-
 (package! dired-single :recipe (:host github :repo "crocket/dired-single"))
 
 (package! dired-hide-dotfiles)

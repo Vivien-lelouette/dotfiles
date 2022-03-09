@@ -176,10 +176,6 @@
   (interactive)
   (dired "."))
 
- (use-package! all-the-icons-dired
-   :hook
-   (dired-mode . all-the-icons-dired-mode))
-
 (use-package! dired-single
   :config
   (evil-collection-define-key 'normal 'dired-mode-map
@@ -234,7 +230,9 @@
 
 (use-package! lsp-mode
   :custom
-  (lsp-clients-typescript-server-args '("--stdio" "--tsserver-log-file" "/dev/stderr")))
+  (lsp-clients-typescript-server-args '("--stdio" "--tsserver-log-file" "/dev/stderr"))
+  :config
+  (setq lsp-eldoc-render-all t))
 
 (use-package! dap-mode
   :config

@@ -59,6 +59,7 @@ If a setup is specific to a machine, add it on this file.
     :desc "Kill ring"
     "y" #'consult-yank-pop)
 #+end_src
+
 * Themes
 ** Font settings for org
 #+BEGIN_SRC emacs-lisp
@@ -231,17 +232,6 @@ This snippet adds a hook to org-mode buffers so that org/org-babel-tangle-config
   (dired "."))
 #+END_SRC
 
-** All the icons
-#+BEGIN_SRC emacs-lisp :tangle .doom.d/packages.el :mkdirp yes
-(package! all-the-icons-dired)
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp
- (use-package! all-the-icons-dired
-   :hook
-   (dired-mode . all-the-icons-dired-mode))
-#+END_SRC
-
 ** Single frame
 #+BEGIN_SRC emacs-lisp :tangle .doom.d/packages.el :mkdirp yes
 (package! dired-single :recipe (:host github :repo "crocket/dired-single"))
@@ -337,7 +327,9 @@ This snippet adds a hook to org-mode buffers so that org/org-babel-tangle-config
 #+BEGIN_SRC emacs-lisp
 (use-package! lsp-mode
   :custom
-  (lsp-clients-typescript-server-args '("--stdio" "--tsserver-log-file" "/dev/stderr")))
+  (lsp-clients-typescript-server-args '("--stdio" "--tsserver-log-file" "/dev/stderr"))
+  :config
+  (setq lsp-eldoc-render-all t))
 #+END_SRC
 
 ** dap-mode
