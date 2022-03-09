@@ -316,9 +316,7 @@ This snippet adds a hook to org-mode buffers so that org/org-babel-tangle-config
 #+BEGIN_SRC emacs-lisp
 (use-package! adoc-mode
   :config
-  (add-to-list 'auto-mode-alist '("\\.adoc\\'" . adoc-mode))
-  (add-hook 'adoc-mode-hook (lambda()
-                              (buffer-face-mode t))))
+  (add-to-list 'auto-mode-alist '("\\.adoc\\'" . adoc-mode)))
 #+END_SRC
 
 ** kubel

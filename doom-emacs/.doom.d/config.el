@@ -223,9 +223,7 @@
 
 (use-package! adoc-mode
   :config
-  (add-to-list 'auto-mode-alist '("\\.adoc\\'" . adoc-mode))
-  (add-hook 'adoc-mode-hook (lambda()
-                              (buffer-face-mode t))))
+  (add-to-list 'auto-mode-alist '("\\.adoc\\'" . adoc-mode)))
 
 (map! :leader
     :desc "Kubel"
