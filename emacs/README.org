@@ -100,8 +100,10 @@ Mapping escape as cancel.
 #+END_SRC
 
 *** Ibuffer
+#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
 (use-package all-the-icons-ibuffer
   :after all-the-icons)
+#+END_SRC
 
 ** Theme
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
@@ -137,7 +139,6 @@ Mapping escape as cancel.
   (setq simple-modeline-segments '((simple-modeline-segment-modified simple-modeline-segment-buffer-name simple-modeline-segment-position) (simple-modeline-segment-input-method simple-modeline-segment-eol simple-modeline-segment-encoding simple-modeline-segment-vc simple-modeline-segment-misc-info simple-modeline-segment-process simple-modeline-segment-minions))))
 #+END_SRC
 
-
 * Search & completion
 ** Which-key
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
@@ -172,6 +173,15 @@ Mapping escape as cancel.
 		   #'completion--in-region)
 		 args)))
     )
+#+END_SRC
+
+** Embark
+#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+  (use-package embark
+    :straight t
+    :bind (("C-S-a" . embark-act)
+	   :map minibuffer-local-map
+	   ("C-d" . embark-act)))
 #+END_SRC
 
 ** Consult
@@ -393,6 +403,32 @@ Mapping escape as cancel.
 #+END_SRC
 
 * Development
+** Rainbow colors
+#+BEGIN_SRC emacs-lisp
+  (use-package rainbow-mode)
+#+END_SRC
+
+** Highlight parentheses
+#+BEGIN_SRC emacs-lisp
+  (use-package highlight-parentheses
+    :config
+    (global-highlight-parentheses-mode 1))
+#+END_SRC
+
+** smartparens
+#+BEGIN_SRC emacs-lisp
+  (use-package smartparens
+    :config
+    (add-hook 'lsp-mode-hook #'smartparens-mode))
+#+END_SRC
+
+** Rainbow delimiters
+** Font
+#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+  (use-package rainbow-delimiters
+    :hook (prog-mode . rainbow-delimiters-mode))
+#+END_SRC
+
 ** Magit
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
   (use-package magit)
@@ -448,7 +484,7 @@ Mapping escape as cancel.
       (setq vterm-shell "/bin/zsh"))
 #+END_SRC
 
-* File management
+* File & buffer management
 ** Treemacs
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
   (use-package treemacs)
@@ -501,6 +537,9 @@ Mapping escape as cancel.
   :hook
   (dired-mode . dired-hide-dotfiles-mode))
 #+END_SRC
+
+** IBuffer
+
 
 * Load local settings
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el

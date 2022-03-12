@@ -60,6 +60,9 @@
   :hook
   (dired-mode . all-the-icons-dired-mode))
 
+(use-package all-the-icons-ibuffer
+  :after all-the-icons)
+
 (use-package doom-themes
   :config
   (load-theme 'doom-nord t)
@@ -109,6 +112,12 @@
 		 #'completion--in-region)
 	       args)))
   )
+
+(use-package embark
+  :straight t
+  :bind (("C-S-a" . embark-act)
+	 :map minibuffer-local-map
+	 ("C-d" . embark-act)))
 
 (use-package consult
     ;; Replace bindings. Lazily loaded due by `use-package'.
@@ -309,6 +318,19 @@
 	(let ((org-confirm-babel-evaluate nil))
 	  (org-babel-tangle))))
     (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'org/org-babel-tangle-config))))
+
+(use-package rainbow-mode)
+
+(use-package highlight-parentheses
+  :config
+  (global-highlight-parentheses-mode 1))
+
+(use-package smartparens
+  :config
+  (add-hook 'lsp-mode-hook #'smartparens-mode))
+
+(use-package rainbow-delimiters
+  :hook (prog-mode . rainbow-delimiters-mode))
 
 (use-package magit)
 
