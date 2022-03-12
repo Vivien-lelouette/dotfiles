@@ -266,8 +266,13 @@
     (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'org/org-babel-tangle-config))))
 
 (use-package yasnippet
+  :bind (:map yas-minor-mode-map
+	    ("C-c C-e" . yas-expand))
   :config
-  (setq yas-snippet-dirs '("~/.emacs.d/etc/yasnippet/snippets"))
+  (setq yas-snippet-dirs '("~/.emacs.d/etc/yasnippet/snippets")
+	as-prompt-functions '(yas-dropdown-prompt
+			      yas-ido-prompt
+			      yas-completing-prompt))
   (yas-global-mode 1))
 
 (use-package lsp-mode
@@ -275,11 +280,12 @@
   ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
   (setq lsp-keymap-prefix "C-c l")
   :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
-	     (js-mode . lsp)
-	     ;; if you want which-key integration
-	     (lsp-mode . lsp-enable-which-key-integration))
+       (js-mode . lsp)
+       ;; if you want which-key integration
+       (lsp-mode . lsp-enable-which-key-integration))
   :commands lsp
   :config
+  (setq lsp-eldoc-render-all t)
   (setenv "TSSERVER_LOG_FILE" "/tmp/tsserver.log"))
 
 (use-package dap-mode)
