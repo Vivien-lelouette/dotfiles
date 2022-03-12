@@ -328,16 +328,17 @@ Mapping escape as cancel.
     :init
     ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
     (setq lsp-keymap-prefix "C-c l")
+    :custom
+      (lsp-clients-typescript-server-args '("--stdio" "--tsserver-log-file" "/dev/stderr"))
     :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
 	   (js-mode . lsp)
 	   ;; if you want which-key integration
 	   (lsp-mode . lsp-enable-which-key-integration))
-      :commands lsp
-      :config
+    :commands lsp
+    :config
       (setq 
        lsp-headerline-breadcrumb-enable nil
-       lsp-eldoc-render-all t)
-      (setenv "TSSERVER_LOG_FILE" "/tmp/tsserver.log"))
+       lsp-eldoc-render-all t))
 #+END_SRC
 
 * Dap-mode
@@ -349,6 +350,70 @@ Mapping escape as cancel.
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
   (use-package vterm
       :config
-      vterm-shell "/bin//zsh")
+      (setq vterm-shell "/bin//zsh"))
 #+END_SRC
 
+* Kubel
+#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+  (use-package kubel)
+#+END_SRC
+
+* Asciidoc
+#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+(use-package adoc-mode
+  :config
+  (add-to-list 'auto-mode-alist '("\\.adoc\\'" . adoc-mode)))
+#+END_SRC
+
+* Treemacs
+#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+  (use-package treemacs)
+#+END_SRC
+
+* Dired
+** Better defaults
+#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+(use-package dired
+  :straight (:type built-in)
+  :hook
+  (dired-mode . dired-hide-details-mode))
+#+END_SRC
+
+** Open with system default application
+#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+(defun dired-open-file ()
+  "In dired, open the file named on this line."
+  (interactive)
+  (let* ((file (dired-get-filename nil t)))
+    (message "Opening %s..." file)
+    (call-process "xdg-open" nil 0 nil file)
+    (message "Opening %s done" file)))
+#+END_SRC
+
+** Open home directory
+#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+(defun dired-open-home-dir ()
+  "Open the home directory in dired"
+  (interactive)
+  (dired "~"))
+#+END_SRC
+
+** Open home directory
+#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+(defun dired-open-current-dir ()
+  "Open the current directory in dired"
+  (interactive)
+  (dired "."))
+#+END_SRC
+
+** Single frame
+#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+(use-package dired-single)
+#+END_SRC
+
+** Hide dotfiles
+#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+(use-package dired-hide-dotfiles
+  :hook
+  (dired-mode . dired-hide-dotfiles-mode))
+#+END_SRC

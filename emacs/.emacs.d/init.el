@@ -273,19 +273,57 @@
   :init
   ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
   (setq lsp-keymap-prefix "C-c l")
+  :custom
+    (lsp-clients-typescript-server-args '("--stdio" "--tsserver-log-file" "/dev/stderr"))
   :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
 	 (js-mode . lsp)
 	 ;; if you want which-key integration
 	 (lsp-mode . lsp-enable-which-key-integration))
-    :commands lsp
-    :config
+  :commands lsp
+  :config
     (setq 
      lsp-headerline-breadcrumb-enable nil
-     lsp-eldoc-render-all t)
-    (setenv "TSSERVER_LOG_FILE" "/tmp/tsserver.log"))
+     lsp-eldoc-render-all t))
 
 (use-package dap-mode)
 
 (use-package vterm
     :config
-    vterm-shell "/bin//zsh")
+    (setq vterm-shell "/bin//zsh"))
+
+(use-package kubel)
+
+(use-package adoc-mode
+  :config
+  (add-to-list 'auto-mode-alist '("\\.adoc\\'" . adoc-mode)))
+
+(use-package treemacs)
+
+(use-package dired
+  :straight (:type built-in)
+  :hook
+  (dired-mode . dired-hide-details-mode))
+
+(defun dired-open-file ()
+  "In dired, open the file named on this line."
+  (interactive)
+  (let* ((file (dired-get-filename nil t)))
+    (message "Opening %s..." file)
+    (call-process "xdg-open" nil 0 nil file)
+    (message "Opening %s done" file)))
+
+(defun dired-open-home-dir ()
+  "Open the home directory in dired"
+  (interactive)
+  (dired "~"))
+
+(defun dired-open-current-dir ()
+  "Open the current directory in dired"
+  (interactive)
+  (dired "."))
+
+(use-package dired-single)
+
+(use-package dired-hide-dotfiles
+  :hook
+  (dired-mode . dired-hide-dotfiles-mode))
