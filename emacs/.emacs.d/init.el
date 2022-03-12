@@ -57,10 +57,10 @@
   (setq vertico-cycle t)
   (setq completion-in-region-function
       (lambda (&rest args)
-        (apply (if vertico-mode
-                   #'consult-completion-in-region
-                 #'completion--in-region)
-               args)))
+	(apply (if vertico-mode
+		   #'consult-completion-in-region
+		 #'completion--in-region)
+	       args)))
   )
 
 (use-package consult
@@ -194,34 +194,34 @@
   ;; (setq orderless-style-dispatchers '(+orderless-dispatch)
   ;;       orderless-component-separator #'orderless-escapable-split-on-space)
   (setq completion-styles '(orderless)
-        completion-category-defaults nil
-        completion-category-overrides '((file (styles partial-completion)))))
+	completion-category-defaults nil
+	completion-category-overrides '((file (styles partial-completion)))))
 
 (use-package marginalia
   ;; Either bind `marginalia-cycle` globally or only in the minibuffer
   :bind (("M-A" . marginalia-cycle)
-         :map minibuffer-local-map
-         ("M-A" . marginalia-cycle))
+	 :map minibuffer-local-map
+	 ("M-A" . marginalia-cycle))
   :init
   (marginalia-mode))
 
 (use-package cape
   ;; Bind dedicated completion commands
   :bind (("C-c p p" . completion-at-point) ;; capf
-         ("C-c p t" . complete-tag)        ;; etags
-         ("C-c p d" . cape-dabbrev)        ;; or dabbrev-completion
-         ("C-c p f" . cape-file)
-         ("C-c p k" . cape-keyword)
-         ("C-c p s" . cape-symbol)
-         ("C-c p a" . cape-abbrev)
-         ("C-c p i" . cape-ispell)
-         ("C-c p l" . cape-line)
-         ("C-c p w" . cape-dict)
-         ("C-c p \\" . cape-tex)
-         ("C-c p _" . cape-tex)
-         ("C-c p ^" . cape-tex)
-         ("C-c p &" . cape-sgml)
-         ("C-c p r" . cape-rfc1345))
+	 ("C-c p t" . complete-tag)        ;; etags
+	 ("C-c p d" . cape-dabbrev)        ;; or dabbrev-completion
+	 ("C-c p f" . cape-file)
+	 ("C-c p k" . cape-keyword)
+	 ("C-c p s" . cape-symbol)
+	 ("C-c p a" . cape-abbrev)
+	 ("C-c p i" . cape-ispell)
+	 ("C-c p l" . cape-line)
+	 ("C-c p w" . cape-dict)
+	 ("C-c p \\" . cape-tex)
+	 ("C-c p _" . cape-tex)
+	 ("C-c p ^" . cape-tex)
+	 ("C-c p &" . cape-sgml)
+	 ("C-c p r" . cape-rfc1345))
   :init
   ;; Add `completion-at-point-functions', used by `completion-at-point'.
   (add-to-list 'completion-at-point-functions #'cape-file)
@@ -266,26 +266,26 @@
     (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'org/org-babel-tangle-config))))
 
 (use-package yasnippet
-  :bind (:map yas-minor-mode-map
-	    ("C-c C-e" . yas-expand))
-  :config
-  (setq yas-snippet-dirs '("~/.emacs.d/etc/yasnippet/snippets")
-	as-prompt-functions '(yas-dropdown-prompt
-			      yas-ido-prompt
-			      yas-completing-prompt))
-  (yas-global-mode 1))
+  :ensure t
+  :hook ((lsp-mode . yas-minor-mode)))
 
 (use-package lsp-mode
   :init
   ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
   (setq lsp-keymap-prefix "C-c l")
   :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
-       (js-mode . lsp)
-       ;; if you want which-key integration
-       (lsp-mode . lsp-enable-which-key-integration))
-  :commands lsp
-  :config
-  (setq lsp-eldoc-render-all t)
-  (setenv "TSSERVER_LOG_FILE" "/tmp/tsserver.log"))
+	 (js-mode . lsp)
+	 ;; if you want which-key integration
+	 (lsp-mode . lsp-enable-which-key-integration))
+    :commands lsp
+    :config
+    (setq 
+     lsp-headerline-breadcrumb-enable nil
+     lsp-eldoc-render-all t)
+    (setenv "TSSERVER_LOG_FILE" "/tmp/tsserver.log"))
 
 (use-package dap-mode)
+
+(use-package vterm
+    :config
+    vterm-shell "/bin//zsh")

@@ -4,19 +4,19 @@
 * Defaults
 ** Theme
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
-(load-theme 'wombat)
+  (load-theme 'wombat)
 #+END_SRC
 
 ** Keybind
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
-(setq tab-always-indent 'complete)
+  (setq tab-always-indent 'complete)
 #+END_SRC
 
 Mapping escape as cancel.
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
-(define-key isearch-mode-map [escape] 'isearch-abort)   ;; isearch
-(define-key isearch-mode-map "\e" 'isearch-abort)   ;; \e seems to work better for terminals
-(global-set-key [escape] 'keyboard-escape-quit)         ;; everywhere else
+  (define-key isearch-mode-map [escape] 'isearch-abort)   ;; isearch
+  (define-key isearch-mode-map "\e" 'isearch-abort)   ;; \e seems to work better for terminals
+  (global-set-key [escape] 'keyboard-escape-quit)         ;; everywhere else
 #+END_SRC
 
 * Package manager configuration
@@ -59,37 +59,37 @@ Mapping escape as cancel.
 
 * Which-key
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
-(use-package which-key
-  :init (which-key-mode)
-  :diminish which-key-mode
-  :config
-  (setq which-key-idle-delay 1))
+  (use-package which-key
+    :init (which-key-mode)
+    :diminish which-key-mode
+    :config
+    (setq which-key-idle-delay 1))
 #+END_SRC
 
 * Vertico
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
-(use-package vertico
-  :init
-  (vertico-mode)
+  (use-package vertico
+    :init
+    (vertico-mode)
 
-  ;; Different scroll margin
-  ;; (setq vertico-scroll-margin 0)
+    ;; Different scroll margin
+    ;; (setq vertico-scroll-margin 0)
 
-  ;; Show more candidates
-  ;; (setq vertico-count 20)
+    ;; Show more candidates
+    ;; (setq vertico-count 20)
 
-  ;; Grow and shrink the Vertico minibuffer
-  ;; (setq vertico-resize t)
+    ;; Grow and shrink the Vertico minibuffer
+    ;; (setq vertico-resize t)
 
-  ;; Optionally enable cycling for `vertico-next' and `vertico-previous'.
-  (setq vertico-cycle t)
-  (setq completion-in-region-function
-      (lambda (&rest args)
-        (apply (if vertico-mode
-                   #'consult-completion-in-region
-                 #'completion--in-region)
-               args)))
-  )
+    ;; Optionally enable cycling for `vertico-next' and `vertico-previous'.
+    (setq vertico-cycle t)
+    (setq completion-in-region-function
+	(lambda (&rest args)
+	  (apply (if vertico-mode
+		     #'consult-completion-in-region
+		   #'completion--in-region)
+		 args)))
+    )
 #+END_SRC
 
 * Consult
@@ -222,129 +222,133 @@ Mapping escape as cancel.
 
 * Orderless
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
-(use-package orderless
-  :init
-  ;; Configure a custom style dispatcher (see the Consult wiki)
-  ;; (setq orderless-style-dispatchers '(+orderless-dispatch)
-  ;;       orderless-component-separator #'orderless-escapable-split-on-space)
-  (setq completion-styles '(orderless)
-        completion-category-defaults nil
-        completion-category-overrides '((file (styles partial-completion)))))
+  (use-package orderless
+    :init
+    ;; Configure a custom style dispatcher (see the Consult wiki)
+    ;; (setq orderless-style-dispatchers '(+orderless-dispatch)
+    ;;       orderless-component-separator #'orderless-escapable-split-on-space)
+    (setq completion-styles '(orderless)
+	  completion-category-defaults nil
+	  completion-category-overrides '((file (styles partial-completion)))))
 #+END_SRC
 
 * Marginalia
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
-(use-package marginalia
-  ;; Either bind `marginalia-cycle` globally or only in the minibuffer
-  :bind (("M-A" . marginalia-cycle)
-         :map minibuffer-local-map
-         ("M-A" . marginalia-cycle))
-  :init
-  (marginalia-mode))
+  (use-package marginalia
+    ;; Either bind `marginalia-cycle` globally or only in the minibuffer
+    :bind (("M-A" . marginalia-cycle)
+	   :map minibuffer-local-map
+	   ("M-A" . marginalia-cycle))
+    :init
+    (marginalia-mode))
 #+END_SRC
 
 * Cape
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
-(use-package cape
-  ;; Bind dedicated completion commands
-  :bind (("C-c p p" . completion-at-point) ;; capf
-         ("C-c p t" . complete-tag)        ;; etags
-         ("C-c p d" . cape-dabbrev)        ;; or dabbrev-completion
-         ("C-c p f" . cape-file)
-         ("C-c p k" . cape-keyword)
-         ("C-c p s" . cape-symbol)
-         ("C-c p a" . cape-abbrev)
-         ("C-c p i" . cape-ispell)
-         ("C-c p l" . cape-line)
-         ("C-c p w" . cape-dict)
-         ("C-c p \\" . cape-tex)
-         ("C-c p _" . cape-tex)
-         ("C-c p ^" . cape-tex)
-         ("C-c p &" . cape-sgml)
-         ("C-c p r" . cape-rfc1345))
-  :init
-  ;; Add `completion-at-point-functions', used by `completion-at-point'.
-  (add-to-list 'completion-at-point-functions #'cape-file)
-  (add-to-list 'completion-at-point-functions #'cape-tex)
-  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-  (add-to-list 'completion-at-point-functions #'cape-keyword)
-  ;;(add-to-list 'completion-at-point-functions #'cape-sgml)
-  ;;(add-to-list 'completion-at-point-functions #'cape-rfc1345)
-  ;;(add-to-list 'completion-at-point-functions #'cape-abbrev)
-  ;;(add-to-list 'completion-at-point-functions #'cape-ispell)
-  ;;(add-to-list 'completion-at-point-functions #'cape-dict)
-  ;;(add-to-list 'completion-at-point-functions #'cape-symbol)
-  ;;(add-to-list 'completion-at-point-functions #'cape-line)
-)
+  (use-package cape
+    ;; Bind dedicated completion commands
+    :bind (("C-c p p" . completion-at-point) ;; capf
+	   ("C-c p t" . complete-tag)        ;; etags
+	   ("C-c p d" . cape-dabbrev)        ;; or dabbrev-completion
+	   ("C-c p f" . cape-file)
+	   ("C-c p k" . cape-keyword)
+	   ("C-c p s" . cape-symbol)
+	   ("C-c p a" . cape-abbrev)
+	   ("C-c p i" . cape-ispell)
+	   ("C-c p l" . cape-line)
+	   ("C-c p w" . cape-dict)
+	   ("C-c p \\" . cape-tex)
+	   ("C-c p _" . cape-tex)
+	   ("C-c p ^" . cape-tex)
+	   ("C-c p &" . cape-sgml)
+	   ("C-c p r" . cape-rfc1345))
+    :init
+    ;; Add `completion-at-point-functions', used by `completion-at-point'.
+    (add-to-list 'completion-at-point-functions #'cape-file)
+    (add-to-list 'completion-at-point-functions #'cape-tex)
+    (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+    (add-to-list 'completion-at-point-functions #'cape-keyword)
+    ;;(add-to-list 'completion-at-point-functions #'cape-sgml)
+    ;;(add-to-list 'completion-at-point-functions #'cape-rfc1345)
+    ;;(add-to-list 'completion-at-point-functions #'cape-abbrev)
+    ;;(add-to-list 'completion-at-point-functions #'cape-ispell)
+    ;;(add-to-list 'completion-at-point-functions #'cape-dict)
+    ;;(add-to-list 'completion-at-point-functions #'cape-symbol)
+    ;;(add-to-list 'completion-at-point-functions #'cape-line)
+  )
 #+END_SRC
 
 * Savehist
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
-(use-package savehist
-  :init
-  (savehist-mode))
+  (use-package savehist
+    :init
+    (savehist-mode))
 #+END_SRC
 
 * Magit
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
-(use-package magit)
+  (use-package magit)
 #+END_SRC
 
 * Org
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
-(use-package org
-  :config
-  (defun org/org-babel-tangle-config ()
-    (when (or (string-equal (buffer-file-name)
-			      (expand-file-name "~/dotfiles/README.org"))
-		(string-equal (buffer-file-name)
-			      (expand-file-name "~/dotfiles/qutebrowser/README.org"))
-		(string-equal (buffer-file-name)
-			      (expand-file-name "~/dotfiles/emacs/README.org"))
-		(string-equal (buffer-file-name)
-			      (expand-file-name "~/dotfiles/emacs/desktop.org"))
-		(string-equal (buffer-file-name)
-			      (expand-file-name "~/dotfiles/herbstluftwm/README.org"))
-		(string-equal (buffer-file-name)
-			      (expand-file-name "~/dotfiles/rofi/README.org"))
-		(string-equal (buffer-file-name)
-			      (expand-file-name "~/dotfiles/emacs/local.org")))
-	;; Dynamic scoping to the rescue
-	(let ((org-confirm-babel-evaluate nil))
-	  (org-babel-tangle))))
-    (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'org/org-babel-tangle-config))))
+  (use-package org
+    :config
+    (defun org/org-babel-tangle-config ()
+      (when (or (string-equal (buffer-file-name)
+				(expand-file-name "~/dotfiles/README.org"))
+		  (string-equal (buffer-file-name)
+				(expand-file-name "~/dotfiles/qutebrowser/README.org"))
+		  (string-equal (buffer-file-name)
+				(expand-file-name "~/dotfiles/emacs/README.org"))
+		  (string-equal (buffer-file-name)
+				(expand-file-name "~/dotfiles/emacs/desktop.org"))
+		  (string-equal (buffer-file-name)
+				(expand-file-name "~/dotfiles/herbstluftwm/README.org"))
+		  (string-equal (buffer-file-name)
+				(expand-file-name "~/dotfiles/rofi/README.org"))
+		  (string-equal (buffer-file-name)
+				(expand-file-name "~/dotfiles/emacs/local.org")))
+	  ;; Dynamic scoping to the rescue
+	  (let ((org-confirm-babel-evaluate nil))
+	    (org-babel-tangle))))
+      (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'org/org-babel-tangle-config))))
 #+END_SRC
 
 * Yasnippet
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
-(use-package yasnippet
-  :bind (:map yas-minor-mode-map
-	    ("C-c C-e" . yas-expand))
-  :config
-  (setq yas-snippet-dirs '("~/.emacs.d/etc/yasnippet/snippets")
-	as-prompt-functions '(yas-dropdown-prompt
-			      yas-ido-prompt
-			      yas-completing-prompt))
-  (yas-global-mode 1))
+  (use-package yasnippet
+    :ensure t
+    :hook ((lsp-mode . yas-minor-mode)))
 #+END_SRC
 
 * Lsp-mode
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
-(use-package lsp-mode
-  :init
-  ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
-  (setq lsp-keymap-prefix "C-c l")
-  :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
-       (js-mode . lsp)
-       ;; if you want which-key integration
-       (lsp-mode . lsp-enable-which-key-integration))
-  :commands lsp
-  :config
-  (setq lsp-eldoc-render-all t)
-  (setenv "TSSERVER_LOG_FILE" "/tmp/tsserver.log"))
+  (use-package lsp-mode
+    :init
+    ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
+    (setq lsp-keymap-prefix "C-c l")
+    :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
+	   (js-mode . lsp)
+	   ;; if you want which-key integration
+	   (lsp-mode . lsp-enable-which-key-integration))
+      :commands lsp
+      :config
+      (setq 
+       lsp-headerline-breadcrumb-enable nil
+       lsp-eldoc-render-all t)
+      (setenv "TSSERVER_LOG_FILE" "/tmp/tsserver.log"))
 #+END_SRC
 
 * Dap-mode
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
-(use-package dap-mode)
+  (use-package dap-mode)
 #+END_SRC
+
+* Vterm
+#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+  (use-package vterm
+      :config
+      vterm-shell "/bin//zsh")
+#+END_SRC
+
