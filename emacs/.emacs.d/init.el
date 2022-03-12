@@ -1,11 +1,3 @@
-(load-theme 'wombat)
-
-(setq tab-always-indent 'complete)
-
-(define-key isearch-mode-map [escape] 'isearch-abort)   ;; isearch
-(define-key isearch-mode-map "\e" 'isearch-abort)   ;; \e seems to work better for terminals
-(global-set-key [escape] 'keyboard-escape-quit)         ;; everywhere else
-
 (defvar bootstrap-version)
 (let ((bootstrap-file
        (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
@@ -22,6 +14,16 @@
 (straight-use-package 'use-package)
 (setq straight-use-package-by-default t)
 
+(setq gc-cons-threshold 50000000)
+
+(setq large-file-warning-threshold 100000000)
+
+(setq tab-always-indent 'complete)
+
+(define-key isearch-mode-map [escape] 'isearch-abort)   ;; isearch
+(define-key isearch-mode-map "\e" 'isearch-abort)   ;; \e seems to work better for terminals
+(global-set-key [escape] 'keyboard-escape-quit)         ;; everywhere else
+
 (setq backup-directory-alist `(("." . ,(expand-file-name "tmp/backups/" user-emacs-directory))))
 ;; auto-save-mode doesn't create the path automatically!
 (make-directory (expand-file-name "tmp/auto-saves/" user-emacs-directory) t)
@@ -33,6 +35,51 @@
       lsp-session-file (expand-file-name "tmp/.lsp-session-v1" user-emacs-directory))
 
 (use-package no-littering)
+
+(scroll-bar-mode 0)
+(tool-bar-mode -1)
+(tooltip-mode -1)
+(menu-bar-mode -1)
+
+(set-face-attribute 'default nil :font "SauceCodePro NF" :height 120)
+
+;; Set the fixed pitch face
+(set-face-attribute 'fixed-pitch nil :font "SauceCodePro NF" :height 120)
+
+;; Set the variable pitch face
+(set-face-attribute 'variable-pitch nil :font "Cantarell" :height 120 :weight 'regular)
+
+(use-package mixed-pitch
+  :hook
+  (text-mode . mixed-pitch-mode))
+
+(use-package all-the-icons
+  :if (display-graphic-p))
+
+(use-package all-the-icons-dired
+  :hook
+  (dired-mode . all-the-icons-dired-mode))
+
+(use-package doom-themes
+  :config
+  (load-theme 'doom-nord t)
+  (doom-themes-org-config)
+  (doom-themes-treemacs-config))
+
+(use-package solaire-mode
+  :config
+  (solaire-global-mode +1))
+
+(use-package minions)
+
+(defun simple-modeline-segment-minions ()
+  "Displays the current major and minor modes with minions-mode in the mode-line."
+  (concat " " (format-mode-line minions-mode-line-modes)))
+
+(use-package simple-modeline
+  :hook (after-init . simple-modeline-mode)
+  :config
+  (setq simple-modeline-segments '((simple-modeline-segment-modified simple-modeline-segment-buffer-name simple-modeline-segment-position) (simple-modeline-segment-input-method simple-modeline-segment-eol simple-modeline-segment-encoding simple-modeline-segment-vc simple-modeline-segment-misc-info simple-modeline-segment-process simple-modeline-segment-minions))))
 
 (use-package which-key
   :init (which-key-mode)
@@ -241,8 +288,6 @@
   :init
   (savehist-mode))
 
-(use-package magit)
-
 (use-package org
   :config
   (defun org/org-babel-tangle-config ()
@@ -264,6 +309,8 @@
 	(let ((org-confirm-babel-evaluate nil))
 	  (org-babel-tangle))))
     (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'org/org-babel-tangle-config))))
+
+(use-package magit)
 
 (use-package yasnippet
   :ensure t
@@ -287,15 +334,15 @@
 
 (use-package dap-mode)
 
-(use-package vterm
-    :config
-    (setq vterm-shell "/bin//zsh"))
-
 (use-package kubel)
 
 (use-package adoc-mode
   :config
   (add-to-list 'auto-mode-alist '("\\.adoc\\'" . adoc-mode)))
+
+(use-package vterm
+    :config
+    (setq vterm-shell "/bin/zsh"))
 
 (use-package treemacs)
 
@@ -327,3 +374,7 @@
 (use-package dired-hide-dotfiles
   :hook
   (dired-mode . dired-hide-dotfiles-mode))
+
+(let ((local-settings "~/.emacs.d/local.el"))
+    (when (file-exists-p local-settings)
+	(load-file local-settings)))

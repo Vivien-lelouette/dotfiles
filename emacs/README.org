@@ -1,24 +1,6 @@
 #+TITLE: Emacs configuration
 #+PROPERTY: header-args:emacs-lisp :tangle .emacs.d/init.el :mkdirp yes
 
-* Defaults
-** Theme
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
-  (load-theme 'wombat)
-#+END_SRC
-
-** Keybind
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
-  (setq tab-always-indent 'complete)
-#+END_SRC
-
-Mapping escape as cancel.
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
-  (define-key isearch-mode-map [escape] 'isearch-abort)   ;; isearch
-  (define-key isearch-mode-map "\e" 'isearch-abort)   ;; \e seems to work better for terminals
-  (global-set-key [escape] 'keyboard-escape-quit)         ;; everywhere else
-#+END_SRC
-
 * Package manager configuration
 ** Initialize straight
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
@@ -42,7 +24,31 @@ Mapping escape as cancel.
   (setq straight-use-package-by-default t)
 #+END_SRC
 
-* Keep folders clean
+* Defaults
+** Perfomance
+Reduce the frequency of garbage collection by making it happen on each 50MB of allocated data (the default is on every 0.76MB).
+#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+(setq gc-cons-threshold 50000000)
+#+END_SRC
+
+Warn when opening files bigger than 100MB.
+#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+(setq large-file-warning-threshold 100000000)
+#+END_SRC
+
+** Keybind
+#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+  (setq tab-always-indent 'complete)
+#+END_SRC
+
+Mapping escape as cancel.
+#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+  (define-key isearch-mode-map [escape] 'isearch-abort)   ;; isearch
+  (define-key isearch-mode-map "\e" 'isearch-abort)   ;; \e seems to work better for terminals
+  (global-set-key [escape] 'keyboard-escape-quit)         ;; everywhere else
+#+END_SRC
+
+** Keep folders clean
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
   (setq backup-directory-alist `(("." . ,(expand-file-name "tmp/backups/" user-emacs-directory))))
   ;; auto-save-mode doesn't create the path automatically!
@@ -57,7 +63,83 @@ Mapping escape as cancel.
   (use-package no-littering)
 #+END_SRC
 
-* Which-key
+* Style
+#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+  (scroll-bar-mode 0)
+  (tool-bar-mode -1)
+  (tooltip-mode -1)
+  (menu-bar-mode -1)
+#+END_SRC
+
+** Font
+#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+  (set-face-attribute 'default nil :font "SauceCodePro NF" :height 120)
+
+  ;; Set the fixed pitch face
+  (set-face-attribute 'fixed-pitch nil :font "SauceCodePro NF" :height 120)
+
+  ;; Set the variable pitch face
+  (set-face-attribute 'variable-pitch nil :font "Cantarell" :height 120 :weight 'regular)
+
+  (use-package mixed-pitch
+    :hook
+    (text-mode . mixed-pitch-mode))
+#+END_SRC
+
+** All the icons
+#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+(use-package all-the-icons
+  :if (display-graphic-p))
+#+END_SRC
+
+*** Dired
+#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+(use-package all-the-icons-dired
+  :hook
+  (dired-mode . all-the-icons-dired-mode))
+#+END_SRC
+
+*** Ibuffer
+(use-package all-the-icons-ibuffer
+  :after all-the-icons)
+
+** Theme
+#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+  (use-package doom-themes
+    :config
+    (load-theme 'doom-nord t)
+    (doom-themes-org-config)
+    (doom-themes-treemacs-config))
+#+END_SRC
+
+*** Solaire mode
+#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+  (use-package solaire-mode
+    :config
+    (solaire-global-mode +1))
+#+END_SRC
+
+** Modeline
+*** Minions
+#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+(use-package minions)
+#+END_SRC
+
+*** Simple modeline
+#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+(defun simple-modeline-segment-minions ()
+  "Displays the current major and minor modes with minions-mode in the mode-line."
+  (concat " " (format-mode-line minions-mode-line-modes)))
+
+(use-package simple-modeline
+  :hook (after-init . simple-modeline-mode)
+  :config
+  (setq simple-modeline-segments '((simple-modeline-segment-modified simple-modeline-segment-buffer-name simple-modeline-segment-position) (simple-modeline-segment-input-method simple-modeline-segment-eol simple-modeline-segment-encoding simple-modeline-segment-vc simple-modeline-segment-misc-info simple-modeline-segment-process simple-modeline-segment-minions))))
+#+END_SRC
+
+
+* Search & completion
+** Which-key
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
   (use-package which-key
     :init (which-key-mode)
@@ -66,7 +148,7 @@ Mapping escape as cancel.
     (setq which-key-idle-delay 1))
 #+END_SRC
 
-* Vertico
+** Vertico
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
   (use-package vertico
     :init
@@ -92,7 +174,7 @@ Mapping escape as cancel.
     )
 #+END_SRC
 
-* Consult
+** Consult
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
   (use-package consult
     ;; Replace bindings. Lazily loaded due by `use-package'.
@@ -220,7 +302,7 @@ Mapping escape as cancel.
 )
 #+END_SRC
 
-* Orderless
+** Orderless
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
   (use-package orderless
     :init
@@ -232,7 +314,7 @@ Mapping escape as cancel.
 	  completion-category-overrides '((file (styles partial-completion)))))
 #+END_SRC
 
-* Marginalia
+** Marginalia
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
   (use-package marginalia
     ;; Either bind `marginalia-cycle` globally or only in the minibuffer
@@ -243,7 +325,7 @@ Mapping escape as cancel.
     (marginalia-mode))
 #+END_SRC
 
-* Cape
+** Cape
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
   (use-package cape
     ;; Bind dedicated completion commands
@@ -278,16 +360,11 @@ Mapping escape as cancel.
   )
 #+END_SRC
 
-* Savehist
+** Savehist
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
   (use-package savehist
     :init
     (savehist-mode))
-#+END_SRC
-
-* Magit
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
-  (use-package magit)
 #+END_SRC
 
 * Org
@@ -315,14 +392,20 @@ Mapping escape as cancel.
       (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'org/org-babel-tangle-config))))
 #+END_SRC
 
-* Yasnippet
+* Development
+** Magit
+#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+  (use-package magit)
+#+END_SRC
+
+** Yasnippet
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
   (use-package yasnippet
     :ensure t
     :hook ((lsp-mode . yas-minor-mode)))
 #+END_SRC
 
-* Lsp-mode
+** Lsp-mode
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
   (use-package lsp-mode
     :init
@@ -341,37 +424,38 @@ Mapping escape as cancel.
        lsp-eldoc-render-all t))
 #+END_SRC
 
-* Dap-mode
+** Dap-mode
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
   (use-package dap-mode)
 #+END_SRC
 
-* Vterm
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
-  (use-package vterm
-      :config
-      (setq vterm-shell "/bin//zsh"))
-#+END_SRC
-
-* Kubel
+** Kubel
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
   (use-package kubel)
 #+END_SRC
 
-* Asciidoc
+** Asciidoc
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
 (use-package adoc-mode
   :config
   (add-to-list 'auto-mode-alist '("\\.adoc\\'" . adoc-mode)))
 #+END_SRC
 
-* Treemacs
+* Vterm
+#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+  (use-package vterm
+      :config
+      (setq vterm-shell "/bin/zsh"))
+#+END_SRC
+
+* File management
+** Treemacs
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
   (use-package treemacs)
 #+END_SRC
 
-* Dired
-** Better defaults
+** Dired
+*** Better defaults
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
 (use-package dired
   :straight (:type built-in)
@@ -379,7 +463,7 @@ Mapping escape as cancel.
   (dired-mode . dired-hide-details-mode))
 #+END_SRC
 
-** Open with system default application
+*** Open with system default application
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
 (defun dired-open-file ()
   "In dired, open the file named on this line."
@@ -390,7 +474,7 @@ Mapping escape as cancel.
     (message "Opening %s done" file)))
 #+END_SRC
 
-** Open home directory
+*** Open home directory
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
 (defun dired-open-home-dir ()
   "Open the home directory in dired"
@@ -398,7 +482,7 @@ Mapping escape as cancel.
   (dired "~"))
 #+END_SRC
 
-** Open home directory
+*** Open home directory
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
 (defun dired-open-current-dir ()
   "Open the current directory in dired"
@@ -406,14 +490,21 @@ Mapping escape as cancel.
   (dired "."))
 #+END_SRC
 
-** Single frame
+*** Single frame
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
 (use-package dired-single)
 #+END_SRC
 
-** Hide dotfiles
+*** Hide dotfiles
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
 (use-package dired-hide-dotfiles
   :hook
   (dired-mode . dired-hide-dotfiles-mode))
+#+END_SRC
+
+* Load local settings
+#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+  (let ((local-settings "~/.emacs.d/local.el"))
+      (when (file-exists-p local-settings)
+	  (load-file local-settings)))
 #+END_SRC
