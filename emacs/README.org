@@ -3,7 +3,7 @@
 
 * Package manager configuration
 ** Initialize straight
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
   (defvar bootstrap-version)
   (let ((bootstrap-file
          (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
@@ -19,37 +19,38 @@
 #+END_SRC
 
 ** Initialize use-package
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
   (straight-use-package 'use-package)
   (setq straight-use-package-by-default t)
 #+END_SRC
 
 * Defaults
-** Perfomance
+n** Perfomance
 Reduce the frequency of garbage collection by making it happen on each 50MB of allocated data (the default is on every 0.76MB).
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
 (setq gc-cons-threshold 50000000)
 #+END_SRC
 
 Warn when opening files bigger than 100MB.
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
 (setq large-file-warning-threshold 100000000)
 #+END_SRC
 
 ** Keybind
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
   (setq tab-always-indent 'complete)
 #+END_SRC
 
 Mapping escape as cancel.
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
+  (define-key local-function-key-map (kbd "<escape>") nil)
   (define-key isearch-mode-map [escape] 'isearch-abort)   ;; isearch
   (define-key isearch-mode-map "\e" 'isearch-abort)   ;; \e seems to work better for terminals
   (global-set-key [escape] 'keyboard-escape-quit)         ;; everywhere else
 #+END_SRC
 
 ** Keep folders clean
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
   (setq backup-directory-alist `(("." . ,(expand-file-name "tmp/backups/" user-emacs-directory))))
   ;; auto-save-mode doesn't create the path automatically!
   (make-directory (expand-file-name "tmp/auto-saves/" user-emacs-directory) t)
@@ -64,15 +65,26 @@ Mapping escape as cancel.
 #+END_SRC
 
 * Style
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
   (scroll-bar-mode 0)
   (tool-bar-mode -1)
   (tooltip-mode -1)
   (menu-bar-mode -1)
+
+  ;; Add frame borders and window dividers
+  (modify-all-frames-parameters
+   '((right-divider-width . 10)
+     (internal-border-width . 10)))
+  (dolist (face '(window-divider
+                  window-divider-first-pixel
+                  window-divider-last-pixel))
+    (face-spec-reset-face face)
+    (set-face-foreground face (face-attribute 'default :background)))
+  (set-face-background 'fringe (face-attribute 'default :background))
 #+END_SRC
 
 ** Font
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
   (set-face-attribute 'default nil :font "SauceCodePro NF" :height 120)
 
   ;; Set the fixed pitch face
@@ -87,35 +99,39 @@ Mapping escape as cancel.
 #+END_SRC
 
 ** All the icons
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
 (use-package all-the-icons
   :if (display-graphic-p))
 #+END_SRC
 
 *** Dired
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
 (use-package all-the-icons-dired
   :hook
   (dired-mode . all-the-icons-dired-mode))
 #+END_SRC
 
 *** Ibuffer
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
-(use-package all-the-icons-ibuffer
-  :after all-the-icons)
+#+BEGIN_SRC emacs-lisp
+  (use-package all-the-icons-ibuffer
+    :after all-the-icons)
 #+END_SRC
 
 ** Theme
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
   (use-package doom-themes
+    :custom-face
+    (org-block ((t (:background "#242832"))))
+    (org-block-begin-line ((t (:background "#242832"))))
+    (org-block-end-line ((t (:background "#242832"))))
     :config
     (load-theme 'doom-nord t)
-    (doom-themes-org-config)
-    (doom-themes-treemacs-config))
+    (doom-themes-treemacs-config)
+    (doom-themes-org-config))
 #+END_SRC
 
 *** Solaire mode
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
   (use-package solaire-mode
     :config
     (solaire-global-mode +1))
@@ -123,12 +139,12 @@ Mapping escape as cancel.
 
 ** Modeline
 *** Minions
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
 (use-package minions)
 #+END_SRC
 
 *** Simple modeline
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
 (defun simple-modeline-segment-minions ()
   "Displays the current major and minor modes with minions-mode in the mode-line."
   (concat " " (format-mode-line minions-mode-line-modes)))
@@ -141,7 +157,7 @@ Mapping escape as cancel.
 
 * Search & completion
 ** Which-key
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
   (use-package which-key
     :init (which-key-mode)
     :diminish which-key-mode
@@ -150,7 +166,7 @@ Mapping escape as cancel.
 #+END_SRC
 
 ** Vertico
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
   (use-package vertico
     :init
     (vertico-mode)
@@ -171,73 +187,66 @@ Mapping escape as cancel.
 	  (apply (if vertico-mode
 		     #'consult-completion-in-region
 		   #'completion--in-region)
-		 args)))
-    )
+		 args))))
 #+END_SRC
 
 ** Embark
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
   (use-package embark
     :straight t
-    :bind (("C-S-a" . embark-act)
+    :bind (("C-c e" . embark-act)
 	   :map minibuffer-local-map
 	   ("C-d" . embark-act)))
 #+END_SRC
 
 ** Consult
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
   (use-package consult
     ;; Replace bindings. Lazily loaded due by `use-package'.
     :bind (;; C-c bindings (mode-specific-map)
-	   ("C-c h" . consult-history)
-	   ("C-c m" . consult-mode-command)
-	   ("C-c k" . consult-kmacro)
-	   ;; C-x bindings (ctl-x-map)
-	   ("C-x M-:" . consult-complex-command)     ;; orig. repeat-complex-command
-	   ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
-	   ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
-	   ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
-	   ("C-x r b" . consult-bookmark)            ;; orig. bookmark-jump
-	   ("C-x p b" . consult-project-buffer)      ;; orig. project-switch-to-buffer
-	   ;; Custom M-# bindings for fast register access
-	   ("M-#" . consult-register-load)
-	   ("M-'" . consult-register-store)          ;; orig. abbrev-prefix-mark (unrelated)
-	   ("C-M-#" . consult-register)
-	   ;; Other custom bindings
-	   ("M-y" . consult-yank-pop)                ;; orig. yank-pop
-	   ("<help> a" . consult-apropos)            ;; orig. apropos-command
-	   ;; M-g bindings (goto-map)
-	   ("M-g e" . consult-compile-error)
-	   ("M-g f" . consult-flymake)               ;; Alternative: consult-flycheck
-	   ("M-g g" . consult-goto-line)             ;; orig. goto-line
-	   ("M-g M-g" . consult-goto-line)           ;; orig. goto-line
-	   ("M-g o" . consult-outline)               ;; Alternative: consult-org-heading
-	   ("M-g m" . consult-mark)
-	   ("M-g k" . consult-global-mark)
-	   ("M-g i" . consult-imenu)
-	   ("M-g I" . consult-imenu-multi)
-	   ;; M-s bindings (search-map)
-	   ("M-s d" . consult-find)
-	   ("M-s D" . consult-locate)
-	   ("M-s g" . consult-grep)
-	   ("M-s G" . consult-git-grep)
-	   ("M-s r" . consult-ripgrep)
-	   ("M-s l" . consult-line)
-	   ("M-s L" . consult-line-multi)
-	   ("M-s m" . consult-multi-occur)
-	   ("M-s k" . consult-keep-lines)
-	   ("M-s u" . consult-focus-lines)
-	   ;; Isearch integration
-	   ("M-s e" . consult-isearch-history)
-	   :map isearch-mode-map
-	   ("M-e" . consult-isearch-history)         ;; orig. isearch-edit-string
-	   ("M-s e" . consult-isearch-history)       ;; orig. isearch-edit-string
-	   ("M-s l" . consult-line)                  ;; needed by consult-line to detect isearch
-	   ("M-s L" . consult-line-multi)            ;; needed by consult-line to detect isearch
-	   ;; Minibuffer history
-	   :map minibuffer-local-map
-	   ("M-s" . consult-history)                 ;; orig. next-matching-history-element
-	   ("M-r" . consult-history))                ;; orig. previous-matching-history-element
+           ("C-c h" . consult-history)
+           ("C-c m" . consult-mode-command)
+           ("C-c k" . consult-kmacro)
+           ;; C-x bindings (ctl-x-map)
+           ("C-x M-:" . consult-complex-command)     ;; orig. repeat-complex-command
+           ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
+           ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
+           ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
+           ("C-x r b" . consult-bookmark)            ;; orig. bookmark-jump
+           ("C-x p b" . consult-project-buffer)      ;; orig. project-switch-to-buffer
+           ;; Custom M-# bindings for fast register access
+           ("M-#" . consult-register-load)
+           ("M-'" . consult-register-store)          ;; orig. abbrev-prefix-mark (unrelated)
+           ("C-M-#" . consult-register)
+           ;; Other custom bindings
+           ("M-y" . consult-yank-pop)                ;; orig. yank-pop
+           ("<help> a" . consult-apropos)            ;; orig. apropos-command
+           ;; M-g bindings (goto-map)
+           ("M-g e" . consult-compile-error)
+           ("M-g f" . consult-flymake)               ;; Alternative: consult-flycheck
+           ("M-g g" . consult-goto-line)             ;; orig. goto-line
+           ("M-g M-g" . consult-goto-line)           ;; orig. goto-line
+           ("M-g o" . consult-outline)               ;; Alternative: consult-org-heading
+           ("M-g m" . consult-mark)
+           ("M-g k" . consult-global-mark)
+           ("M-g i" . consult-imenu)
+           ("M-g I" . consult-imenu-multi)
+           ;; M-s bindings (search-map)
+           ("M-s e" . consult-isearch-history)
+           ("M-s d" . consult-find)
+           ("M-s D" . consult-locate)
+           ("M-s g" . consult-grep)
+           ("M-s G" . consult-git-grep)
+           ("M-s r" . consult-ripgrep)
+           ("M-s l" . consult-line)
+           ("M-s L" . consult-line-multi)
+           ("M-s m" . consult-multi-occur)
+           ("M-s k" . consult-keep-lines)
+           ("M-s u" . consult-focus-lines)
+           ;; Minibuffer history
+           :map minibuffer-local-map
+           ("M-s" . consult-history)                 ;; orig. next-matching-history-element
+           ("M-r" . consult-history))                ;; orig. previous-matching-history-element
 
     ;; Enable automatic preview at point in the *Completions* buffer. This is
     ;; relevant when you use the default completion UI.
@@ -250,7 +259,7 @@ Mapping escape as cancel.
     ;; preview for `consult-register', `consult-register-load',
     ;; `consult-register-store' and the Emacs built-ins.
     (setq register-preview-delay 0.5
-	  register-preview-function #'consult-register-format)
+          register-preview-function #'consult-register-format)
 
     ;; Optionally tweak the register preview window.
     ;; This adds thin lines, sorting and hides the mode line of the window.
@@ -261,7 +270,7 @@ Mapping escape as cancel.
 
     ;; Use Consult to select xref locations with preview
     (setq xref-show-xrefs-function #'consult-xref
-	  xref-show-definitions-function #'consult-xref)
+          xref-show-definitions-function #'consult-xref)
 
     ;; Configure other variables and modes in the :config section,
     ;; after lazily loading the package.
@@ -308,12 +317,11 @@ Mapping escape as cancel.
         (apply (if vertico-mode
                    #'consult-completion-in-region
                  #'completion--in-region)
-               args)))
-)
+               args))))
 #+END_SRC
 
 ** Orderless
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
   (use-package orderless
     :init
     ;; Configure a custom style dispatcher (see the Consult wiki)
@@ -325,7 +333,7 @@ Mapping escape as cancel.
 #+END_SRC
 
 ** Marginalia
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
   (use-package marginalia
     ;; Either bind `marginalia-cycle` globally or only in the minibuffer
     :bind (("M-A" . marginalia-cycle)
@@ -336,7 +344,7 @@ Mapping escape as cancel.
 #+END_SRC
 
 ** Cape
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
   (use-package cape
     ;; Bind dedicated completion commands
     :bind (("C-c p p" . completion-at-point) ;; capf
@@ -371,14 +379,14 @@ Mapping escape as cancel.
 #+END_SRC
 
 ** Savehist
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
   (use-package savehist
     :init
     (savehist-mode))
 #+END_SRC
 
 * Org
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
   (use-package org
     :config
     (defun org/org-babel-tangle-config ()
@@ -402,6 +410,47 @@ Mapping escape as cancel.
       (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'org/org-babel-tangle-config))))
 #+END_SRC
 
+** Modern org
+#+BEGIN_SRC emacs-lisp
+  (use-package org-modern
+    :config
+    (setq
+     ;; Edit settings
+     org-auto-align-tags nil
+     org-tags-column 0
+     org-catch-invisible-edits 'show-and-error
+     org-special-ctrl-a/e t
+     org-insert-heading-respect-content t
+
+     ;; Org styling, hide markup etc.
+     org-hide-emphasis-markers t
+     org-pretty-entities t
+     org-ellipsis "…"
+
+     ;; Agenda styling
+     org-agenda-block-separator ?─
+     org-agenda-time-grid
+     '((daily today require-timed)
+       (800 1000 1200 1400 1600 1800 2000)
+       " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
+     org-agenda-current-time-string
+     "⭠ now ─────────────────────────────────────────────────")
+
+    ;; Enable org-modern-mode
+    (add-hook 'org-mode-hook #'org-modern-mode)
+    (add-hook 'org-mode-hook #'org-indent-mode)
+    (add-hook 'org-agenda-finalize-hook #'org-modern-agenda))
+#+END_SRC
+
+** Org-jira
+#+BEGIN_SRC emacs-lisp
+  (use-package org-jira
+    :straight (org-jira :type git :host github :repo "ahungry/org-jira"
+                        :fork (:host github
+                                     :repo "Vivien-lelouette/org-jira"))
+    :after org)
+#+END_SRC 
+
 * Development
 ** Rainbow colors
 #+BEGIN_SRC emacs-lisp
@@ -424,25 +473,25 @@ Mapping escape as cancel.
 
 ** Rainbow delimiters
 ** Font
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
   (use-package rainbow-delimiters
     :hook (prog-mode . rainbow-delimiters-mode))
 #+END_SRC
 
 ** Magit
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
   (use-package magit)
 #+END_SRC
 
 ** Yasnippet
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
   (use-package yasnippet
     :ensure t
     :hook ((lsp-mode . yas-minor-mode)))
 #+END_SRC
 
 ** Lsp-mode
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
   (use-package lsp-mode
     :init
     ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
@@ -461,24 +510,74 @@ Mapping escape as cancel.
 #+END_SRC
 
 ** Dap-mode
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
   (use-package dap-mode)
 #+END_SRC
 
-** Kubel
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
-  (use-package kubel)
-#+END_SRC
-
 ** Asciidoc
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
 (use-package adoc-mode
   :config
   (add-to-list 'auto-mode-alist '("\\.adoc\\'" . adoc-mode)))
 #+END_SRC
 
+** Rest client
+#+BEGIN_SRC emacs-lisp
+  (use-package restclient
+    :config
+    (add-to-list 'auto-mode-alist '("\\.http\\'" . restclient-mode)))
+
+  (use-package ob-restclient
+    :after org
+    :config
+    (org-babel-do-load-languages
+     'org-babel-load-languages
+     '((restclient . t))))
+#+END_SRC
+
+* Devops
+** Kubel
+#+BEGIN_SRC emacs-lisp
+  (use-package kubel)
+#+END_SRC
+
+** Docker
+*** Dockerfile
+#+BEGIN_SRC emacs-lisp
+  (use-package dockerfile-mode)
+#+END_SRC
+
+*** Docker-compose file
+#+BEGIN_SRC emacs-lisp
+  (use-package docker-compose-mode)
+#+END_SRC
+
+*** Docker
+#+BEGIN_SRC emacs-lisp
+  (use-package docker
+    :config
+    (define-derived-mode docker-container-mode tabulated-list-mode "Containers Menu"
+      "Major mode for handling a list of docker containers."
+      (setq tabulated-list-format [("Id" 5 t)("Image" 5 t)("Command" 10 t)("Created" 10 t)("Status" 10 t)("Ports" 35 t)("Names" 30 t)])
+      (setq tabulated-list-padding 2)
+      (setq tabulated-list-sort-key docker-container-default-sort-key)
+      (add-hook 'tabulated-list-revert-hook 'docker-container-refresh nil t)
+      (tabulated-list-init-header)
+      (tablist-minor-mode))
+
+    (setq docker-container-shell-file-name "/bin/sh")
+
+    (add-hook 'docker-container-mode 'docker/set-format)
+    
+    (defun docker/dcup (string-services)
+      (interactive "sDocker services to start: ")
+      (setq docker-services (split-string string-services))
+      (cl-loop for service in docker-services
+               collect (docker-compose-run-docker-compose-async "up" service)))
+#+END_SRC
+
 * Vterm
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
   (use-package vterm
       :config
       (setq vterm-shell "/bin/zsh"))
@@ -486,13 +585,13 @@ Mapping escape as cancel.
 
 * File & buffer management
 ** Treemacs
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
   (use-package treemacs)
 #+END_SRC
 
 ** Dired
 *** Better defaults
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
 (use-package dired
   :straight (:type built-in)
   :hook
@@ -500,7 +599,7 @@ Mapping escape as cancel.
 #+END_SRC
 
 *** Open with system default application
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
 (defun dired-open-file ()
   "In dired, open the file named on this line."
   (interactive)
@@ -511,7 +610,7 @@ Mapping escape as cancel.
 #+END_SRC
 
 *** Open home directory
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
 (defun dired-open-home-dir ()
   "Open the home directory in dired"
   (interactive)
@@ -519,7 +618,7 @@ Mapping escape as cancel.
 #+END_SRC
 
 *** Open home directory
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
 (defun dired-open-current-dir ()
   "Open the current directory in dired"
   (interactive)
@@ -527,12 +626,12 @@ Mapping escape as cancel.
 #+END_SRC
 
 *** Single frame
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
 (use-package dired-single)
 #+END_SRC
 
 *** Hide dotfiles
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
 (use-package dired-hide-dotfiles
   :hook
   (dired-mode . dired-hide-dotfiles-mode))
@@ -542,7 +641,7 @@ Mapping escape as cancel.
 
 
 * Load local settings
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+#+BEGIN_SRC emacs-lisp
   (let ((local-settings "~/.emacs.d/local.el"))
       (when (file-exists-p local-settings)
 	  (load-file local-settings)))
