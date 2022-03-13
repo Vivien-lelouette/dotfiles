@@ -12,7 +12,7 @@
 (defun hooks/first-frame ()
   (interactive)
         (unless (boundp 'first-frame-created)
-          (evil-snipe-mode 0)
+          ;(evil-snipe-mode 0)
           (custom/load-local-settings))
         (setq first-frame-created t))
 
@@ -88,14 +88,14 @@
 (defun theme/visual-current-line ()
   (face-remap-add-relative 'line-number-current-line nil :foreground theme/visual-current-line-fg :background theme/visual-current-line-bg))
 
-(add-hook 'evil-normal-state-entry-hook 'theme/normal-lines)
-(add-hook 'evil-normal-state-entry-hook 'theme/normal-current-line)
+;(add-hook 'evil-normal-state-entry-hook 'theme/normal-lines)
+;(add-hook 'evil-normal-state-entry-hook 'theme/normal-current-line)
 
-(add-hook 'evil-insert-state-entry-hook 'theme/insert-lines)
-(add-hook 'evil-insert-state-entry-hook 'theme/insert-current-line)
+;(add-hook 'evil-insert-state-entry-hook 'theme/insert-lines)
+;(add-hook 'evil-insert-state-entry-hook 'theme/insert-current-line)
 
-(add-hook 'evil-visual-state-entry-hook 'theme/visual-lines)
-(add-hook 'evil-visual-state-entry-hook 'theme/visual-current-line)
+;(add-hook 'evil-visual-state-entry-hook 'theme/visual-lines)
+;(add-hook 'evil-visual-state-entry-hook 'theme/visual-current-line)
 
 (defun theme/doom-nord ()
   (interactive)
@@ -176,19 +176,19 @@
   (interactive)
   (dired "."))
 
-(use-package! dired-single
-  :config
-  (evil-collection-define-key 'normal 'dired-mode-map
-   "h" 'dired-single-up-directory
-   "l" 'dired-single-buffer
-   (kbd "<C-return>") #'dired-open-file))
+(use-package! dired-single)
+;  :config
+;  (evil-collection-define-key 'normal 'dired-mode-map
+;   "h" 'dired-single-up-directory
+;   "l" 'dired-single-buffer
+;   (kbd "<C-return>") #'dired-open-file))
 
 (use-package! dired-hide-dotfiles
   :hook
-  (dired-mode . dired-hide-dotfiles-mode)
-  :config
-  (evil-collection-define-key 'normal 'dired-mode-map
-    "." 'dired-hide-dotfiles-mode))
+  (dired-mode . dired-hide-dotfiles-mode))
+;  :config
+;  (evil-collection-define-key 'normal 'dired-mode-map
+;    "." 'dired-hide-dotfiles-mode))
 
 (use-package! treemacs
   :config
@@ -224,9 +224,9 @@
 (map! :leader
     :desc "Kubel"
     "o k" #'kubel)
-(let ((local-settings "~/.emacs.d/.local/straight/repos/kubel/kubel-evil.el"))
-  (when (file-exists-p local-settings)
-      (load-file local-settings)))
+;(let ((local-settings "~/.emacs.d/.local/straight/repos/kubel/kubel-evil.el"))
+;  (when (file-exists-p local-settings)
+;      (load-file local-settings)))
 
 (use-package! lsp-mode
   :custom
