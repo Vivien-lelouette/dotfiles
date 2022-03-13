@@ -9,8 +9,8 @@ configuration {
         kb-accept-entry: "Control+m,Return,KP_Enter";
         kb-mode-next: "Shift+Right,Control+Tab";
         kb-mode-previous: "Shift+Left,Control+Shift+Tab";
-        kb-row-up: "Up,Shift+Tab,Control+k";
-        kb-row-down: "Down,Shift+ISO_Left_Tab,Control+j";
+        kb-row-up: "Up,Shift+Tab,Control+p";
+        kb-row-down: "Down,Shift+ISO_Left_Tab,Control+n";
 }
 #+END_SRC
 

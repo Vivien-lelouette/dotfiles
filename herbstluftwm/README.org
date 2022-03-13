@@ -149,25 +149,25 @@ Keep tracks of the last focused timestamp for every window.
   herbstclient keybind $Mod+Down spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-down)' 'herbstclient focus down'
   herbstclient keybind $Mod+Up spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-up)' 'herbstclient focus up'
   herbstclient keybind $Mod+Right spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-right)' 'herbstclient focus right'
-  herbstclient keybind $Mod+h spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-left)' 'herbstclient focus left'
-  herbstclient keybind $Mod+j spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-down)' 'herbstclient focus down'
-  herbstclient keybind $Mod+k spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-up)' 'herbstclient focus up'
-  herbstclient keybind $Mod+l spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-right)' 'herbstclient focus right'
+  herbstclient keybind $Mod+b spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-left)' 'herbstclient focus left'
+  herbstclient keybind $Mod+n spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-down)' 'herbstclient focus down'
+  herbstclient keybind $Mod+p spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-up)' 'herbstclient focus up'
+  herbstclient keybind $Mod+f spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-right)' 'herbstclient focus right'
 
   herbstclient keybind $Mod+Shift+Left shift left
   herbstclient keybind $Mod+Shift+Down shift down
   herbstclient keybind $Mod+Shift+Up shift up
   herbstclient keybind $Mod+Shift+Right shift right
-  herbstclient keybind $Mod+Shift+h shift left
-  herbstclient keybind $Mod+Shift+j shift down
-  herbstclient keybind $Mod+Shift+k shift up
-  herbstclient keybind $Mod+Shift+l shift right
+  herbstclient keybind $Mod+Shift+b shift left
+  herbstclient keybind $Mod+Shift+n shift down
+  herbstclient keybind $Mod+Shift+p shift up
+  herbstclient keybind $Mod+Shift+f shift right
 
   herbstclient keybind $Mod+Control+space split explode
-  herbstclient keybind $Mod+Control+h resize left +0.05
-  herbstclient keybind $Mod+Control+j resize down +0.05
-  herbstclient keybind $Mod+Control+k resize up +0.05
-  herbstclient keybind $Mod+Control+l resize right +0.05
+  herbstclient keybind $Mod+Control+b resize left +0.05
+  herbstclient keybind $Mod+Control+n resize down +0.05
+  herbstclient keybind $Mod+Control+p resize up +0.05
+  herbstclient keybind $Mod+Control+f resize right +0.05
   herbstclient keybind $Mod+Control+Left resize left +0.05
   herbstclient keybind $Mod+Control+Down resize down +0.05
   herbstclient keybind $Mod+Control+Up resize up +0.05
@@ -192,8 +192,8 @@ Keep tracks of the last focused timestamp for every window.
   herbstclient keybind $Mod+9 use_index 8
   herbstclient keybind $Mod+Shift+9 move_index 8
 
-  herbstclient keybind $Mod+f fullscreen toggle
-  herbstclient keybind $Mod+Shift+f floating toggle
+  herbstclient keybind $Mod+m fullscreen toggle
+  herbstclient keybind $Mod+Shift+m floating toggle
   herbstclient keybind $Mod+Control+f attr clients.focus.floating toggle
   herbstclient keybind $Mod+BackSpace cycle_monitor
 #+END_SRC
@@ -218,9 +218,8 @@ Keep tracks of the last focused timestamp for every window.
   herbstclient keybind $Mod+e spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh 1 'Emacs' '' 'emacsclient -c'
   herbstclient keybind $Mod+Shift+e spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh -1 'Emacs' '' 'emacsclient -c'
   herbstclient keybind $Mod+Return spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'vterm)"
-  herbstclient keybind $Mod+b spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'consult-buffer)"
   herbstclient keybind $Mod+Shift+b spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'ibuffer)"
-  herbstclient keybind $Mod+p spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'treemacs)"
+  herbstclient keybind $Mod+t spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'treemacs)"
   herbstclient keybind $Mod+period spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(funcall-interactively #'dired-open-home-dir)"
   herbstclient keybind $Mod+Shift+period spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(funcall-interactively #'dired-open-current-dir)"
   herbstclient keybind $Mod+x spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'execute-extended-command)"
