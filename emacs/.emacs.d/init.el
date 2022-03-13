@@ -433,13 +433,7 @@
 
   (setq docker-container-shell-file-name "/bin/sh")
 
-  (add-hook 'docker-container-mode 'docker/set-format)
-
-  (defun docker/dcup (string-services)
-    (interactive "sDocker services to start: ")
-    (setq docker-services (split-string string-services))
-    (cl-loop for service in docker-services
-             collect (docker-compose-run-docker-compose-async "up" service)))
+  (add-hook 'docker-container-mode 'docker/set-format))
 
 (use-package vterm
     :config
