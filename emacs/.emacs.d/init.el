@@ -44,6 +44,14 @@
 (setq-default indent-tabs-mode nil)
 (setq-default tab-width 2)
 
+(use-package multiple-cursors
+    :config
+    (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
+    (global-set-key (kbd "C->") 'mc/mark-next-like-this)
+    (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
+    (global-set-key (kbd "C-?") 'mc/mark-all-like-this)
+    (global-set-key (kbd "C-S-<mouse-1>") 'mc/add-cursor-on-click))
+
 (scroll-bar-mode 0)
 (tool-bar-mode -1)
 (tooltip-mode -1)
@@ -380,12 +388,6 @@
 
 (use-package rainbow-delimiters
   :hook (prog-mode . rainbow-delimiters-mode))
-
-(use-package aggressive-indent
-  :config
-  (add-to-list 'aggressive-indent-dont-indent-if
-             '(and (eq (char-before) ?\s) (looking-at-p "$")))
-  (global-aggressive-indent-mode 1))
 
 (use-package magit)
 
