@@ -404,7 +404,7 @@
   :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
    (js-mode . lsp)
    ;; if you want which-key integration
-   (lsp-mode . (lambda () (add-hook 'before-save-hook 'lsp-format-buffer nil t)))
+   ;;(lsp-mode . (lambda () (add-hook 'before-save-hook #'lsp-format-buffer)))
    (lsp-mode . lsp-enable-which-key-integration))
   :commands lsp
   :config
