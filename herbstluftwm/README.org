@@ -228,7 +228,7 @@ Keep tracks of the last focused timestamp for every window.
 
 *** Power menu
 #+BEGIN_SRC shell
-  herbstclient keybind $Mod+Control+p spawn bash $herbstluftwm_scripts_folder/power_menu.sh
+  herbstclient keybind $Mod+Control+l spawn bash $herbstluftwm_scripts_folder/power_menu.sh
 #+END_SRC
 
 *** Settings menu
