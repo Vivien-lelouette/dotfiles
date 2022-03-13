@@ -44,14 +44,8 @@
 
 ;; Add frame borders and window dividers
 (modify-all-frames-parameters
- '((right-divider-width . 10)
-   (internal-border-width . 10)))
-(dolist (face '(window-divider
-                window-divider-first-pixel
-                window-divider-last-pixel))
-  (face-spec-reset-face face)
-  (set-face-foreground face (face-attribute 'default :background)))
-(set-face-background 'fringe (face-attribute 'default :background))
+ '((right-divider-width . 20)
+   (internal-border-width . 20)))
 
 (set-face-attribute 'default nil :font "SauceCodePro NF" :height 120)
 
@@ -76,20 +70,19 @@
   :after all-the-icons)
 
 (use-package doom-themes
-  :custom-face
-  (org-block ((t (:background "#242832"))))
-  (org-block-begin-line ((t (:background "#242832"))))
-  (org-block-end-line ((t (:background "#242832"))))
-  (window-divider ((t (:foreground "#2e3440"))))
-  (window-divider-first-pixel ((t (:foreground "#2e3440"))))
-  (window-divider-last-pixel ((t (:foreground "#2e3440"))))
-  :hook (server-after-make-frame . (lambda () (load-theme
-                                             'doom-nord t)))
-  :config
-  (doom-themes-treemacs-config)
-  (defun doom-themes-hide-modeline ()
-    (setq mode-line-format "Treemacs"))
- (doom-themes-org-config))
+   :custom-face
+   (org-block ((t (:background "#272C36"))))
+   (org-block-begin-line ((t (:background "#272C36"))))
+   (org-block-end-line ((t (:background "#272C36"))))
+   (window-divider ((t (:foreground "#2e3440"))))
+   (window-divider-first-pixel ((t (:foreground "#2e3440"))))
+   (window-divider-last-pixel ((t (:foreground "#2e3440"))))
+   :hook (server-after-make-frame . (lambda () (load-theme
+                                              'doom-nord t)))
+   :config
+   (doom-themes-treemacs-config)
+   (defun doom-themes-hide-modeline ())
+   (doom-themes-org-config))
 
 (use-package solaire-mode
   :config
