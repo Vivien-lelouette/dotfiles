@@ -80,8 +80,12 @@
   (org-block ((t (:background "#242832"))))
   (org-block-begin-line ((t (:background "#242832"))))
   (org-block-end-line ((t (:background "#242832"))))
+  (window-divider ((t (:foreground "#2e3440"))))
+  (window-divider-first-pixel ((t (:foreground "#2e3440"))))
+  (window-divider-last-pixel ((t (:foreground "#2e3440"))))
+  :hook (server-after-make-frame . (lambda () (load-theme
+                                             'doom-nord t)))
   :config
-  (load-theme 'doom-nord t)
   (doom-themes-treemacs-config)
   (doom-themes-org-config))
 
