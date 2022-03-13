@@ -1,205 +1,205 @@
 #!/usr/bin/env bash
-  herbstluftwm_folder=~/.config/herbstluftwm
-  herbstluftwm_scripts_folder=$herbstluftwm_folder/scripts
+herbstluftwm_folder=~/.config/herbstluftwm
+herbstluftwm_scripts_folder=$herbstluftwm_folder/scripts
 
-  watch_focus_time()
-  {
-      herbstclient --idle 'focus_changed' | while read hook winid wintitle
-      do
-          herbstclient silent new_attr string clients.$winid.my_last_focused
-          herbstclient set_attr clients.$winid.my_last_focused $(echo '('`date +"%s.%N"` ' * 1000000)/1' | bc)
-      done
-  }
+watch_focus_time()
+{
+    herbstclient --idle 'focus_changed' | while read hook winid wintitle
+    do
+        herbstclient silent new_attr string clients.$winid.my_last_focused
+        herbstclient set_attr clients.$winid.my_last_focused $(echo '('`date +"%s.%N"` ' * 1000000)/1' | bc)
+    done
+}
 
-  herbstclient emit_hook reload
+herbstclient emit_hook reload
 
-  herbstclient rule focus=on
+herbstclient rule focus=on
 
-  herbstclient set frame_gap 0
+herbstclient set frame_gap 0
 
-  herbstclient set auto_detect_monitors 1
+herbstclient set auto_detect_monitors 1
 
-  # default layout to max
-  herbstclient set_layout max
-  herbstclient set default_frame_layout 2
+# default layout to max
+herbstclient set_layout max
+herbstclient set default_frame_layout 2
 
-  export FG_COLOR='#d8dee9'
-  export FG_ALT_COLOR='#93979f'
-  export BG_COLOR='#2e3440'
-  export BG_ALT_COLOR='#242832'
-  export FOCUS_COLOR='#a3be8c'
-  export ALERT_COLOR='#b48ead'
+export FG_COLOR='#d8dee9'
+export FG_ALT_COLOR='#93979f'
+export BG_COLOR='#2e3440'
+export BG_ALT_COLOR='#242832'
+export FOCUS_COLOR='#a3be8c'
+export ALERT_COLOR='#b48ead'
 
-  xsetroot -solid "$BG_COLOR"
+xsetroot -solid "$BG_COLOR"
 
-  herbstclient attr theme.tiling.reset 1
-  herbstclient attr theme.floating.reset 1
-  herbstclient set frame_border_active_color "$FOCUS_COLOR"
-  herbstclient set frame_border_normal_color "$BG_ALT_COLOR"
-  herbstclient set frame_bg_normal_color "$BG_COLOR"
-  herbstclient set frame_bg_active_color "$BG_ALT_COLOR"
-  herbstclient set frame_border_width 1
-  herbstclient set always_show_frame on
-  herbstclient set frame_bg_transparent on
-  herbstclient set frame_transparent_width 5
-  herbstclient set frame_gap 0
+herbstclient attr theme.tiling.reset 1
+herbstclient attr theme.floating.reset 1
+herbstclient set frame_border_active_color "$FOCUS_COLOR"
+herbstclient set frame_border_normal_color "$BG_ALT_COLOR"
+herbstclient set frame_bg_normal_color "$BG_COLOR"
+herbstclient set frame_bg_active_color "$BG_ALT_COLOR"
+herbstclient set frame_border_width 1
+herbstclient set always_show_frame on
+herbstclient set frame_bg_transparent on
+herbstclient set frame_transparent_width 5
+herbstclient set frame_gap 0
 
-  herbstclient attr theme.title_height 0
-  herbstclient attr theme.title_font 'SauceCodePro:pixelsize=12'  # example using Xft
-  herbstclient attr theme.padding_top 0  # space below the title's baseline (i.e. text depth)
-  herbstclient attr theme.active.color "$FOCUS_COLOR"
-  herbstclient attr theme.normal.color "$BG_COLOR"
-  herbstclient attr theme.urgent.color "$ALERT_COLOR"
-  herbstclient attr theme.inner_width 1
-  herbstclient attr theme.inner_color "$BG_COLOR"
-  herbstclient attr theme.border_width 1
-  herbstclient attr theme.floating.border_width 4
-  herbstclient attr theme.floating.outer_width 1
-  herbstclient attr theme.floating.outer_color "$BG_COLOR"
-  herbstclient attr theme.active.inner_color "$FOCUS_COLOR"
-  herbstclient attr theme.active.outer_color "$FOCUS_COLOR"
-  herbstclient attr theme.background_color "$BG_COLOR"
+herbstclient attr theme.title_height 0
+herbstclient attr theme.title_font 'SauceCodePro:pixelsize=12'  # example using Xft
+herbstclient attr theme.padding_top 0  # space below the title's baseline (i.e. text depth)
+herbstclient attr theme.active.color "$FOCUS_COLOR"
+herbstclient attr theme.normal.color "$BG_COLOR"
+herbstclient attr theme.urgent.color "$ALERT_COLOR"
+herbstclient attr theme.inner_width 1
+herbstclient attr theme.inner_color "$BG_COLOR"
+herbstclient attr theme.border_width 1
+herbstclient attr theme.floating.border_width 4
+herbstclient attr theme.floating.outer_width 1
+herbstclient attr theme.floating.outer_color "$BG_COLOR"
+herbstclient attr theme.active.inner_color "$FOCUS_COLOR"
+herbstclient attr theme.active.outer_color "$FOCUS_COLOR"
+herbstclient attr theme.background_color "$BG_COLOR"
 
-  herbstclient set window_gap 0
-  herbstclient set frame_padding 0
-  herbstclient set smart_window_surroundings off
-  herbstclient set smart_frame_surroundings off
-  herbstclient set mouse_recenter_gap 0
+herbstclient set window_gap 0
+herbstclient set frame_padding 0
+herbstclient set smart_window_surroundings off
+herbstclient set smart_frame_surroundings off
+herbstclient set mouse_recenter_gap 0
 
-  herbstclient keyunbind --all
+herbstclient keyunbind --all
 
-  Mod=Mod4
+Mod=Mod4
 
-  herbstclient keybind $Mod+Shift+r reload
+herbstclient keybind $Mod+Shift+r reload
 
-  tag_names=( {1..9} 0 )
-  tag_keys=( {1..9} 0 )
+tag_names=( {1..9} 0 )
+tag_keys=( {1..9} 0 )
 
-  herbstclient rename default "${tag_names[0]}" || true
-  for i in "${!tag_names[@]}" ; do
-      herbstclient add "${tag_names[$i]}"
-      key="${tag_keys[$i]}"
-      if ! [ -z "$key" ] ; then
-          herbstclient keybind "$Mod-$key" use_index "$i"
-          herbstclient keybind "$Mod-Shift-$key" move_index "$i"
-      fi
-  done
+herbstclient rename default "${tag_names[0]}" || true
+for i in "${!tag_names[@]}" ; do
+    herbstclient add "${tag_names[$i]}"
+    key="${tag_keys[$i]}"
+    if ! [ -z "$key" ] ; then
+        herbstclient keybind "$Mod-$key" use_index "$i"
+        herbstclient keybind "$Mod-Shift-$key" move_index "$i"
+    fi
+done
 
-  herbstclient keybind $Mod+q spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(kill-this-buffer)' 'herbstclient close'
-  herbstclient keybind $Mod+Control+q close
-  herbstclient keybind $Mod+Shift+q spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(evil-quit)' 'herbstclient remove'
+herbstclient keybind $Mod+q spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(kill-this-buffer)' 'herbstclient close'
+herbstclient keybind $Mod+Control+q close
+herbstclient keybind $Mod+Shift+q spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(evil-quit)' 'herbstclient remove'
 
-  herbstclient keybind $Mod+s split right 0.5
-  herbstclient keybind $Mod+Shift+s split bottom 0.5
+herbstclient keybind $Mod+s split right 0.5
+herbstclient keybind $Mod+Shift+s split bottom 0.5
 
-  herbstclient keybind $Mod+w spawn bash $herbstluftwm_scripts_folder/switch_window.sh
+herbstclient keybind $Mod+w spawn bash $herbstluftwm_scripts_folder/switch_window.sh
 
-  herbstclient keybind $Mod+Left spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-left)' 'herbstclient focus left'
-  herbstclient keybind $Mod+Down spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-down)' 'herbstclient focus down'
-  herbstclient keybind $Mod+Up spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-up)' 'herbstclient focus up'
-  herbstclient keybind $Mod+Right spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-right)' 'herbstclient focus right'
-  herbstclient keybind $Mod+h spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-left)' 'herbstclient focus left'
-  herbstclient keybind $Mod+j spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-down)' 'herbstclient focus down'
-  herbstclient keybind $Mod+k spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-up)' 'herbstclient focus up'
-  herbstclient keybind $Mod+l spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-right)' 'herbstclient focus right'
+herbstclient keybind $Mod+Left spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-left)' 'herbstclient focus left'
+herbstclient keybind $Mod+Down spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-down)' 'herbstclient focus down'
+herbstclient keybind $Mod+Up spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-up)' 'herbstclient focus up'
+herbstclient keybind $Mod+Right spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-right)' 'herbstclient focus right'
+herbstclient keybind $Mod+h spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-left)' 'herbstclient focus left'
+herbstclient keybind $Mod+j spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-down)' 'herbstclient focus down'
+herbstclient keybind $Mod+k spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-up)' 'herbstclient focus up'
+herbstclient keybind $Mod+l spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(windmove-right)' 'herbstclient focus right'
 
-  herbstclient keybind $Mod+Shift+Left shift left
-  herbstclient keybind $Mod+Shift+Down shift down
-  herbstclient keybind $Mod+Shift+Up shift up
-  herbstclient keybind $Mod+Shift+Right shift right
-  herbstclient keybind $Mod+Shift+h shift left
-  herbstclient keybind $Mod+Shift+j shift down
-  herbstclient keybind $Mod+Shift+k shift up
-  herbstclient keybind $Mod+Shift+l shift right
+herbstclient keybind $Mod+Shift+Left shift left
+herbstclient keybind $Mod+Shift+Down shift down
+herbstclient keybind $Mod+Shift+Up shift up
+herbstclient keybind $Mod+Shift+Right shift right
+herbstclient keybind $Mod+Shift+h shift left
+herbstclient keybind $Mod+Shift+j shift down
+herbstclient keybind $Mod+Shift+k shift up
+herbstclient keybind $Mod+Shift+l shift right
 
-  herbstclient keybind $Mod+Control+space split explode
-  herbstclient keybind $Mod+Control+h resize left +0.05
-  herbstclient keybind $Mod+Control+j resize down +0.05
-  herbstclient keybind $Mod+Control+k resize up +0.05
-  herbstclient keybind $Mod+Control+l resize right +0.05
-  herbstclient keybind $Mod+Control+Left resize left +0.05
-  herbstclient keybind $Mod+Control+Down resize down +0.05
-  herbstclient keybind $Mod+Control+Up resize up +0.05
-  herbstclient keybind $Mod+Control+Right resize right +0.05
+herbstclient keybind $Mod+Control+space split explode
+herbstclient keybind $Mod+Control+h resize left +0.05
+herbstclient keybind $Mod+Control+j resize down +0.05
+herbstclient keybind $Mod+Control+k resize up +0.05
+herbstclient keybind $Mod+Control+l resize right +0.05
+herbstclient keybind $Mod+Control+Left resize left +0.05
+herbstclient keybind $Mod+Control+Down resize down +0.05
+herbstclient keybind $Mod+Control+Up resize up +0.05
+herbstclient keybind $Mod+Control+Right resize right +0.05
 
-  herbstclient keybind $Mod+1 use_index 0
-  herbstclient keybind $Mod+Shift+1 move_index 0
-  herbstclient keybind $Mod+2 use_index 1
-  herbstclient keybind $Mod+Shift+2 move_index 1
-  herbstclient keybind $Mod+3 use_index 2
-  herbstclient keybind $Mod+Shift+3 move_index 2
-  herbstclient keybind $Mod+4 use_index 3
-  herbstclient keybind $Mod+Shift+4 move_index 3
-  herbstclient keybind $Mod+5 use_index 4
-  herbstclient keybind $Mod+Shift+5 move_index 4
-  herbstclient keybind $Mod+6 use_index 5
-  herbstclient keybind $Mod+Shift+6 move_index 5
-  herbstclient keybind $Mod+7 use_index 6
-  herbstclient keybind $Mod+Shift+7 move_index 6
-  herbstclient keybind $Mod+8 use_index 7
-  herbstclient keybind $Mod+Shift+8 move_index 7
-  herbstclient keybind $Mod+9 use_index 8
-  herbstclient keybind $Mod+Shift+9 move_index 8
+herbstclient keybind $Mod+1 use_index 0
+herbstclient keybind $Mod+Shift+1 move_index 0
+herbstclient keybind $Mod+2 use_index 1
+herbstclient keybind $Mod+Shift+2 move_index 1
+herbstclient keybind $Mod+3 use_index 2
+herbstclient keybind $Mod+Shift+3 move_index 2
+herbstclient keybind $Mod+4 use_index 3
+herbstclient keybind $Mod+Shift+4 move_index 3
+herbstclient keybind $Mod+5 use_index 4
+herbstclient keybind $Mod+Shift+5 move_index 4
+herbstclient keybind $Mod+6 use_index 5
+herbstclient keybind $Mod+Shift+6 move_index 5
+herbstclient keybind $Mod+7 use_index 6
+herbstclient keybind $Mod+Shift+7 move_index 6
+herbstclient keybind $Mod+8 use_index 7
+herbstclient keybind $Mod+Shift+8 move_index 7
+herbstclient keybind $Mod+9 use_index 8
+herbstclient keybind $Mod+Shift+9 move_index 8
 
-  herbstclient keybind $Mod+f fullscreen toggle
-  herbstclient keybind $Mod+Shift+f floating toggle
-  herbstclient keybind $Mod+Control+f attr clients.focus.floating toggle
-  herbstclient keybind $Mod+BackSpace cycle_monitor
+herbstclient keybind $Mod+f fullscreen toggle
+herbstclient keybind $Mod+Shift+f floating toggle
+herbstclient keybind $Mod+Control+f attr clients.focus.floating toggle
+herbstclient keybind $Mod+BackSpace cycle_monitor
 
-  herbstclient keybind $Mod+Shift+Return spawn gnome-terminal
+herbstclient keybind $Mod+Shift+Return spawn gnome-terminal
 
-  herbstclient keybind $Mod+c cycle_all +1
+herbstclient keybind $Mod+c cycle_all +1
 
-  herbstclient keybind $Mod+Tab spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh 1 "" 'qutebrowser\|Vivaldi-stable\|Emacs'
-  herbstclient keybind $Mod+Shift+Tab spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh -1 "" 'qutebrowser\|Vivaldi-stable\|Emacs'
+herbstclient keybind $Mod+Tab spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh 1 "" 'qutebrowser\|Vivaldi-stable\|Emacs'
+herbstclient keybind $Mod+Shift+Tab spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh -1 "" 'qutebrowser\|Vivaldi-stable\|Emacs'
 
-  herbstclient keybind $Mod+Control+i spawn vivaldi-stable
-  herbstclient keybind $Mod+i spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh 1 'qutebrowser\|Vivaldi-stable' '' 'vivaldi-stable'
-  herbstclient keybind $Mod+Shift+i spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh -1 'qutebrowser\|Vivaldi-stable' '' 'vivaldi-stable'
+herbstclient keybind $Mod+Control+i spawn vivaldi-stable
+herbstclient keybind $Mod+i spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh 1 'qutebrowser\|Vivaldi-stable' '' 'vivaldi-stable'
+herbstclient keybind $Mod+Shift+i spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh -1 'qutebrowser\|Vivaldi-stable' '' 'vivaldi-stable'
 
-  herbstclient keybind $Mod+a spawn rofi -show drun -display-drun ''
-  herbstclient keybind $Mod+Shift+a spawn rofi -show run -display-run ''
+herbstclient keybind $Mod+a spawn rofi -show drun -display-drun ''
+herbstclient keybind $Mod+Shift+a spawn rofi -show run -display-run ''
 
-  herbstclient keybind $Mod+Control+e spawn emacsclient -c
-  herbstclient keybind $Mod+e spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh 1 'Emacs' '' 'emacsclient -c'
-  herbstclient keybind $Mod+Shift+e spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh -1 'Emacs' '' 'emacsclient -c'
-  herbstclient keybind $Mod+Return spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'+vterm/here)"
-  herbstclient keybind $Mod+b spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'consult-buffer)"
-  herbstclient keybind $Mod+Shift+b spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'ibuffer)"
-  herbstclient keybind $Mod+p spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'treemacs)"
-  herbstclient keybind $Mod+period spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(funcall-interactively #'dired-open-home-dir)"
-  herbstclient keybind $Mod+Shift+period spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(funcall-interactively #'dired-open-current-dir)"
-  herbstclient keybind $Mod+x spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'execute-extended-command)"
-  herbstclient keybind $Mod+Control+Return spawn bash -c 'RULES="pseudotile=on focus=on" '$herbstluftwm_scripts_folder'/spawn_with_rules.sh emacsclient --eval "(emacs-everywhere)"'
+herbstclient keybind $Mod+Control+e spawn emacsclient -c
+herbstclient keybind $Mod+e spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh 1 'Emacs' '' 'emacsclient -c'
+herbstclient keybind $Mod+Shift+e spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh -1 'Emacs' '' 'emacsclient -c'
+herbstclient keybind $Mod+Return spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'vterm)"
+herbstclient keybind $Mod+b spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'consult-buffer)"
+herbstclient keybind $Mod+Shift+b spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'ibuffer)"
+herbstclient keybind $Mod+p spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'treemacs)"
+herbstclient keybind $Mod+period spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(funcall-interactively #'dired-open-home-dir)"
+herbstclient keybind $Mod+Shift+period spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(funcall-interactively #'dired-open-current-dir)"
+herbstclient keybind $Mod+x spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'execute-extended-command)"
+herbstclient keybind $Mod+Control+Return spawn bash -c 'RULES="pseudotile=on focus=on" '$herbstluftwm_scripts_folder'/spawn_with_rules.sh emacsclient --eval "(emacs-everywhere)"'
 
-  herbstclient keybind $Mod+Control+p spawn bash $herbstluftwm_scripts_folder/power_menu.sh
+herbstclient keybind $Mod+Control+p spawn bash $herbstluftwm_scripts_folder/power_menu.sh
 
-  herbstclient keybind $Mod+Control+o spawn bash $herbstluftwm_scripts_folder/settings_menu.sh
+herbstclient keybind $Mod+Control+o spawn bash $herbstluftwm_scripts_folder/settings_menu.sh
 
-  herbstclient mouseunbind --all
-  herbstclient mousebind $Mod-Button1 move
-  herbstclient mousebind $Mod-Button2 zoom
-  herbstclient mousebind $Mod-Button3 resize
+herbstclient mouseunbind --all
+herbstclient mousebind $Mod-Button1 move
+herbstclient mousebind $Mod-Button2 zoom
+herbstclient mousebind $Mod-Button3 resize
 
-  herbstclient set focus_follows_mouse 0
+herbstclient set focus_follows_mouse 0
 
-  bash ~/.scripts/trackball-setup.sh &
+bash ~/.scripts/trackball-setup.sh &
 
-  herbstclient detect_monitors
-  herbstclient set focus_crosses_monitor_boundaries 1
+herbstclient detect_monitors
+herbstclient set focus_crosses_monitor_boundaries 1
 
-  for monitor in $(herbstclient list_monitors | cut -d: -f1) ; do
-      # start it on each monitor
-      herbstclient pad $monitor 22 &
-  done
+for monitor in $(herbstclient list_monitors | cut -d: -f1) ; do
+    # start it on each monitor
+    herbstclient pad $monitor 22 &
+done
 
-  setxkbmap -layout us -option 'compose:rctrl' -option 'caps:ctrl_modifier' && xcape -e 'Caps_Lock=Escape'
+setxkbmap -layout us -option 'compose:rctrl' -option 'caps:ctrl_modifier' && xcape -e 'Caps_Lock=Escape'
 
-  gsettings set org.gnome.gnome-flashback.desktop.icons show-home false
-  gsettings set org.gnome.gnome-flashback.desktop.icons show-trash false
+gsettings set org.gnome.gnome-flashback.desktop.icons show-home false
+gsettings set org.gnome.gnome-flashback.desktop.icons show-trash false
 
-  bash ~/.config/polybar/start_polybar.sh
+bash ~/.config/polybar/start_polybar.sh
 
-  nohup emacs --daemon >> /dev/null &
+nohup emacs --daemon >> /dev/null &
 
-  watch_focus_time &
+watch_focus_time &

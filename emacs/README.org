@@ -36,6 +36,11 @@ Warn when opening files bigger than 100MB.
 (setq large-file-warning-threshold 100000000)
 #+END_SRC
 
+Increase the amount of data which Emacs reads from a process
+#+BEGIN_SRC emacs-lisp
+(setq read-process-output-max (* 5 (* 1024 1024)))
+#+END_SRC
+
 ** Keybind
 #+BEGIN_SRC emacs-lisp
   (setq tab-always-indent 'complete)
@@ -62,6 +67,14 @@ Mapping escape as cancel.
         lsp-session-file (expand-file-name "tmp/.lsp-session-v1" user-emacs-directory))
   
   (use-package no-littering)
+#+END_SRC
+
+** Identation
+#+BEGIN_SRC emacs-lisp
+  (setq indent-tabs-mode nil)
+  (setq indent-line-function 'insert-tab)
+  (setq-default indent-tabs-mode nil)
+  (setq-default tab-width 2)
 #+END_SRC
 
 * Style
@@ -471,10 +484,18 @@ Mapping escape as cancel.
 #+END_SRC
 
 ** Rainbow delimiters
-** Font
 #+BEGIN_SRC emacs-lisp
   (use-package rainbow-delimiters
     :hook (prog-mode . rainbow-delimiters-mode))
+#+END_SRC
+
+** Aggressive indent
+#+BEGIN_SRC emacs-lisp
+  (use-package aggressive-indent
+    :config
+    (add-to-list 'aggressive-indent-dont-indent-if
+               '(and (eq (char-before) ?\s) (looking-at-p "$")))
+    (global-aggressive-indent-mode 1))
 #+END_SRC
 
 ** Magit
@@ -498,9 +519,10 @@ Mapping escape as cancel.
     :custom
       (lsp-clients-typescript-server-args '("--stdio" "--tsserver-log-file" "/dev/stderr"))
     :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
-	   (js-mode . lsp)
-	   ;; if you want which-key integration
-	   (lsp-mode . lsp-enable-which-key-integration))
+     (js-mode . lsp)
+     ;; if you want which-key integration
+     (lsp-mode . (lambda () (add-hook 'before-save-hook 'lsp-format-buffer nil t)))
+     (lsp-mode . lsp-enable-which-key-integration))
     :commands lsp
     :config
       (setq 

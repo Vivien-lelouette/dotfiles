@@ -18,6 +18,8 @@
 
 (setq large-file-warning-threshold 100000000)
 
+(setq read-process-output-max (* 5 (* 1024 1024)))
+
 (setq tab-always-indent 'complete)
 
 (define-key local-function-key-map (kbd "<escape>") nil)
@@ -36,6 +38,11 @@
       lsp-session-file (expand-file-name "tmp/.lsp-session-v1" user-emacs-directory))
 
 (use-package no-littering)
+
+(setq indent-tabs-mode nil)
+(setq indent-line-function 'insert-tab)
+(setq-default indent-tabs-mode nil)
+(setq-default tab-width 2)
 
 (scroll-bar-mode 0)
 (tool-bar-mode -1)
@@ -121,11 +128,11 @@
   ;; Optionally enable cycling for `vertico-next' and `vertico-previous'.
   (setq vertico-cycle t)
   (setq completion-in-region-function
-      (lambda (&rest args)
+(lambda (&rest args)
 	(apply (if vertico-mode
 		   #'consult-completion-in-region
 		 #'completion--in-region)
-	       args))))
+	 args))))
 
 (use-package embark
   :straight t
@@ -308,19 +315,19 @@
   :config
   (defun org/org-babel-tangle-config ()
     (when (or (string-equal (buffer-file-name)
-			      (expand-file-name "~/dotfiles/README.org"))
+			(expand-file-name "~/dotfiles/README.org"))
 		(string-equal (buffer-file-name)
-			      (expand-file-name "~/dotfiles/qutebrowser/README.org"))
+			(expand-file-name "~/dotfiles/qutebrowser/README.org"))
 		(string-equal (buffer-file-name)
-			      (expand-file-name "~/dotfiles/emacs/README.org"))
+			(expand-file-name "~/dotfiles/emacs/README.org"))
 		(string-equal (buffer-file-name)
-			      (expand-file-name "~/dotfiles/emacs/desktop.org"))
+			(expand-file-name "~/dotfiles/emacs/desktop.org"))
 		(string-equal (buffer-file-name)
-			      (expand-file-name "~/dotfiles/herbstluftwm/README.org"))
+			(expand-file-name "~/dotfiles/herbstluftwm/README.org"))
 		(string-equal (buffer-file-name)
-			      (expand-file-name "~/dotfiles/rofi/README.org"))
+			(expand-file-name "~/dotfiles/rofi/README.org"))
 		(string-equal (buffer-file-name)
-			      (expand-file-name "~/dotfiles/emacs/local.org")))
+			(expand-file-name "~/dotfiles/emacs/local.org")))
 	;; Dynamic scoping to the rescue
 	(let ((org-confirm-babel-evaluate nil))
 	  (org-babel-tangle))))
@@ -374,6 +381,12 @@
 (use-package rainbow-delimiters
   :hook (prog-mode . rainbow-delimiters-mode))
 
+(use-package aggressive-indent
+  :config
+  (add-to-list 'aggressive-indent-dont-indent-if
+             '(and (eq (char-before) ?\s) (looking-at-p "$")))
+  (global-aggressive-indent-mode 1))
+
 (use-package magit)
 
 (use-package yasnippet
@@ -387,9 +400,10 @@
   :custom
     (lsp-clients-typescript-server-args '("--stdio" "--tsserver-log-file" "/dev/stderr"))
   :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
-	 (js-mode . lsp)
-	 ;; if you want which-key integration
-	 (lsp-mode . lsp-enable-which-key-integration))
+   (js-mode . lsp)
+   ;; if you want which-key integration
+   (lsp-mode . (lambda () (add-hook 'before-save-hook 'lsp-format-buffer nil t)))
+   (lsp-mode . lsp-enable-which-key-integration))
   :commands lsp
   :config
     (setq 

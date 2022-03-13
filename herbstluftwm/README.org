@@ -217,7 +217,7 @@ Keep tracks of the last focused timestamp for every window.
   herbstclient keybind $Mod+Control+e spawn emacsclient -c
   herbstclient keybind $Mod+e spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh 1 'Emacs' '' 'emacsclient -c'
   herbstclient keybind $Mod+Shift+e spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh -1 'Emacs' '' 'emacsclient -c'
-  herbstclient keybind $Mod+Return spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'+vterm/here)"
+  herbstclient keybind $Mod+Return spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'vterm)"
   herbstclient keybind $Mod+b spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'consult-buffer)"
   herbstclient keybind $Mod+Shift+b spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'ibuffer)"
   herbstclient keybind $Mod+p spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'treemacs)"
