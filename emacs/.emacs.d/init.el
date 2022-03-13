@@ -87,7 +87,9 @@
                                              'doom-nord t)))
   :config
   (doom-themes-treemacs-config)
-  (doom-themes-org-config))
+  (defun doom-themes-hide-modeline ()
+    (setq mode-line-format "Treemacs"))
+ (doom-themes-org-config))
 
 (use-package solaire-mode
   :config
