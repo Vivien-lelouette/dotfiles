@@ -605,10 +605,13 @@ Mapping escape as cancel.
   (dired-mode . dired-hide-dotfiles-mode))
 #+END_SRC
 
-** IBuffer
-
 * Grammar and spell check
+This requires a Java runtime environment.
 #+BEGIN_SRC emacs-lisp
+  (use-package lsp-ltex
+    :hook (text-mode . (lambda ()
+                         (require 'lsp-ltex)
+                         (lsp))))
 #+END_SRC
 
 * Org

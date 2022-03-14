@@ -434,7 +434,10 @@
   :hook
   (dired-mode . dired-hide-dotfiles-mode))
 
-
+(use-package lsp-ltex
+  :hook (text-mode . (lambda ()
+                       (require 'lsp-ltex)
+                       (lsp))))
 
 (use-package org
   :config
