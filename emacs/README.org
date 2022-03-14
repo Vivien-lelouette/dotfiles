@@ -25,15 +25,15 @@
 #+END_SRC
 
 * Defaults
-** Perfomance
+** Performance
 Reduce the frequency of garbage collection by making it happen on each 50MB of allocated data (the default is on every 0.76MB).
 #+BEGIN_SRC emacs-lisp
-(setq gc-cons-threshold 50000000)
+  (setq gc-cons-threshold 50000000)
 #+END_SRC
 
 Warn when opening files bigger than 100MB.
 #+BEGIN_SRC emacs-lisp
-(setq large-file-warning-threshold 100000000)
+  (setq large-file-warning-threshold 100000000)
 #+END_SRC
 
 Increase the amount of data which Emacs reads from a process
@@ -44,6 +44,7 @@ Increase the amount of data which Emacs reads from a process
 ** Keybind
 #+BEGIN_SRC emacs-lisp
   (setq tab-always-indent 'complete)
+  (defalias 'yes-or-no-p 'y-or-n-p)
 #+END_SRC
 
 Mapping escape as cancel.
@@ -103,13 +104,13 @@ Mapping escape as cancel.
 
 ** Font
 #+BEGIN_SRC emacs-lisp
-  (set-face-attribute 'default nil :font "SauceCodePro NF" :height 120)
+  (set-face-attribute 'default nil :font "SauceCodePro NF" :height 100)
 
   ;; Set the fixed pitch face
-  (set-face-attribute 'fixed-pitch nil :font "SauceCodePro NF" :height 120)
+  (set-face-attribute 'fixed-pitch nil :font "SauceCodePro NF" :height 100)
 
   ;; Set the variable pitch face
-  (set-face-attribute 'variable-pitch nil :font "Cantarell" :height 120 :weight 'regular)
+  (set-face-attribute 'variable-pitch nil :font "Cantarell" :height 100 :weight 'regular)
 
   (use-package mixed-pitch
     :hook
@@ -246,7 +247,7 @@ Mapping escape as cancel.
            ("<help> a" . consult-apropos)            ;; orig. apropos-command
            ;; M-g bindings (goto-map)
            ("M-g e" . consult-compile-error)
-           ("M-g f" . consult-flymake)               ;; Alternative: consult-flycheck
+           ("M-g f" . consult-flycheck)               ;; Alternative: consult-flycheck
            ("M-g g" . consult-goto-line)             ;; orig. goto-line
            ("M-g M-g" . consult-goto-line)           ;; orig. goto-line
            ("M-g o" . consult-outline)               ;; Alternative: consult-org-heading
@@ -408,71 +409,13 @@ Mapping escape as cancel.
     (savehist-mode))
 #+END_SRC
 
-* Org
+* Flycheck
 #+BEGIN_SRC emacs-lisp
-  (use-package org
-    :config
-    (defun org/org-babel-tangle-config ()
-      (when (or (string-equal (buffer-file-name)
-				(expand-file-name "~/dotfiles/README.org"))
-		  (string-equal (buffer-file-name)
-				(expand-file-name "~/dotfiles/qutebrowser/README.org"))
-		  (string-equal (buffer-file-name)
-				(expand-file-name "~/dotfiles/emacs/README.org"))
-		  (string-equal (buffer-file-name)
-				(expand-file-name "~/dotfiles/emacs/desktop.org"))
-		  (string-equal (buffer-file-name)
-				(expand-file-name "~/dotfiles/herbstluftwm/README.org"))
-		  (string-equal (buffer-file-name)
-				(expand-file-name "~/dotfiles/rofi/README.org"))
-		  (string-equal (buffer-file-name)
-				(expand-file-name "~/dotfiles/emacs/local.org")))
-	  ;; Dynamic scoping to the rescue
-	  (let ((org-confirm-babel-evaluate nil))
-	    (org-babel-tangle))))
-      (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'org/org-babel-tangle-config))))
+  (use-package flycheck
+    :init (global-flycheck-mode))
+
+  (use-package consult-flycheck)
 #+END_SRC
-
-** Modern org
-#+BEGIN_SRC emacs-lisp
-  (use-package org-modern
-    :config
-    (setq
-     ;; Edit settings
-     org-auto-align-tags nil
-     org-tags-column 0
-     org-catch-invisible-edits 'show-and-error
-     org-special-ctrl-a/e t
-     org-insert-heading-respect-content t
-
-     ;; Org styling, hide markup etc.
-     org-hide-emphasis-markers t
-     org-pretty-entities t
-     org-ellipsis "…"
-
-     ;; Agenda styling
-     org-agenda-block-separator ?─
-     org-agenda-time-grid
-     '((daily today require-timed)
-       (800 1000 1200 1400 1600 1800 2000)
-       " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
-     org-agenda-current-time-string
-     "⭠ now ─────────────────────────────────────────────────")
-
-    ;; Enable org-modern-mode
-    (add-hook 'org-mode-hook #'org-modern-mode)
-    (add-hook 'org-mode-hook #'org-indent-mode)
-    (add-hook 'org-agenda-finalize-hook #'org-modern-agenda))
-#+END_SRC
-
-** Org-jira
-#+BEGIN_SRC emacs-lisp
-  (use-package org-jira
-    :straight (org-jira :type git :host github :repo "ahungry/org-jira"
-                        :fork (:host github
-                                     :repo "Vivien-lelouette/org-jira"))
-    :after org)
-#+END_SRC 
 
 * Development
 ** Rainbow colors
@@ -655,6 +598,76 @@ Mapping escape as cancel.
 #+END_SRC
 
 ** IBuffer
+
+* Grammar and spell check
+#+BEGIN_SRC emacs-lisp
+#+END_SRC
+
+* Org
+#+BEGIN_SRC emacs-lisp
+  (use-package org
+    :config
+    (defun org/org-babel-tangle-config ()
+      (when (or (string-equal (buffer-file-name)
+				(expand-file-name "~/dotfiles/README.org"))
+		  (string-equal (buffer-file-name)
+				(expand-file-name "~/dotfiles/qutebrowser/README.org"))
+		  (string-equal (buffer-file-name)
+				(expand-file-name "~/dotfiles/emacs/README.org"))
+		  (string-equal (buffer-file-name)
+				(expand-file-name "~/dotfiles/emacs/desktop.org"))
+		  (string-equal (buffer-file-name)
+				(expand-file-name "~/dotfiles/herbstluftwm/README.org"))
+		  (string-equal (buffer-file-name)
+				(expand-file-name "~/dotfiles/rofi/README.org"))
+		  (string-equal (buffer-file-name)
+				(expand-file-name "~/dotfiles/emacs/local.org")))
+	  ;; Dynamic scoping to the rescue
+	  (let ((org-confirm-babel-evaluate nil))
+	    (org-babel-tangle))))
+      (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'org/org-babel-tangle-config))))
+#+END_SRC
+
+** Modern org
+#+BEGIN_SRC emacs-lisp
+  (use-package org-modern
+    :config
+    (setq
+     ;; Edit settings
+     org-auto-align-tags nil
+     org-tags-column 0
+     org-catch-invisible-edits 'show-and-error
+     org-special-ctrl-a/e t
+     org-insert-heading-respect-content t
+
+     ;; Org styling, hide markup etc.
+     org-hide-emphasis-markers t
+     org-pretty-entities t
+     org-ellipsis "…"
+
+     ;; Agenda styling
+     org-agenda-block-separator ?─
+     org-agenda-time-grid
+     '((daily today require-timed)
+       (800 1000 1200 1400 1600 1800 2000)
+       " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
+     org-agenda-current-time-string
+     "⭠ now ─────────────────────────────────────────────────")
+
+    ;; Enable org-modern-mode
+    (add-hook 'org-mode-hook #'org-modern-mode)
+    (add-hook 'org-mode-hook #'org-indent-mode)
+    (add-hook 'org-agenda-finalize-hook #'org-modern-agenda))
+#+END_SRC
+
+** Org-jira
+#+BEGIN_SRC emacs-lisp
+  (use-package org-jira
+    :straight (org-jira :type git :host github :repo "ahungry/org-jira"
+                        :fork (:host github
+                                     :repo "Vivien-lelouette/org-jira"))
+    :after org)
+#+END_SRC 
 
 * Load local settings
 #+BEGIN_SRC emacs-lisp

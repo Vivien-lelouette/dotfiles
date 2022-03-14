@@ -21,6 +21,7 @@
 (setq read-process-output-max (* 5 (* 1024 1024)))
 
 (setq tab-always-indent 'complete)
+(defalias 'yes-or-no-p 'y-or-n-p)
 
 (define-key local-function-key-map (kbd "<escape>") nil)
 (define-key isearch-mode-map [escape] 'isearch-abort)   ;; isearch
@@ -62,13 +63,13 @@
  '((right-divider-width . 20)
    (internal-border-width . 20)))
 
-(set-face-attribute 'default nil :font "SauceCodePro NF" :height 120)
+(set-face-attribute 'default nil :font "SauceCodePro NF" :height 100)
 
 ;; Set the fixed pitch face
-(set-face-attribute 'fixed-pitch nil :font "SauceCodePro NF" :height 120)
+(set-face-attribute 'fixed-pitch nil :font "SauceCodePro NF" :height 100)
 
 ;; Set the variable pitch face
-(set-face-attribute 'variable-pitch nil :font "Cantarell" :height 120 :weight 'regular)
+(set-face-attribute 'variable-pitch nil :font "Cantarell" :height 100 :weight 'regular)
 
 (use-package mixed-pitch
   :hook
@@ -170,7 +171,7 @@
          ("<help> a" . consult-apropos)            ;; orig. apropos-command
          ;; M-g bindings (goto-map)
          ("M-g e" . consult-compile-error)
-         ("M-g f" . consult-flymake)               ;; Alternative: consult-flycheck
+         ("M-g f" . consult-flycheck)               ;; Alternative: consult-flycheck
          ("M-g g" . consult-goto-line)             ;; orig. goto-line
          ("M-g M-g" . consult-goto-line)           ;; orig. goto-line
          ("M-g o" . consult-outline)               ;; Alternative: consult-org-heading
@@ -319,62 +320,10 @@
   :init
   (savehist-mode))
 
-(use-package org
-  :config
-  (defun org/org-babel-tangle-config ()
-    (when (or (string-equal (buffer-file-name)
-			(expand-file-name "~/dotfiles/README.org"))
-		(string-equal (buffer-file-name)
-			(expand-file-name "~/dotfiles/qutebrowser/README.org"))
-		(string-equal (buffer-file-name)
-			(expand-file-name "~/dotfiles/emacs/README.org"))
-		(string-equal (buffer-file-name)
-			(expand-file-name "~/dotfiles/emacs/desktop.org"))
-		(string-equal (buffer-file-name)
-			(expand-file-name "~/dotfiles/herbstluftwm/README.org"))
-		(string-equal (buffer-file-name)
-			(expand-file-name "~/dotfiles/rofi/README.org"))
-		(string-equal (buffer-file-name)
-			(expand-file-name "~/dotfiles/emacs/local.org")))
-	;; Dynamic scoping to the rescue
-	(let ((org-confirm-babel-evaluate nil))
-	  (org-babel-tangle))))
-    (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'org/org-babel-tangle-config))))
+(use-package flycheck
+  :init (global-flycheck-mode))
 
-(use-package org-modern
-  :config
-  (setq
-   ;; Edit settings
-   org-auto-align-tags nil
-   org-tags-column 0
-   org-catch-invisible-edits 'show-and-error
-   org-special-ctrl-a/e t
-   org-insert-heading-respect-content t
-
-   ;; Org styling, hide markup etc.
-   org-hide-emphasis-markers t
-   org-pretty-entities t
-   org-ellipsis "…"
-
-   ;; Agenda styling
-   org-agenda-block-separator ?─
-   org-agenda-time-grid
-   '((daily today require-timed)
-     (800 1000 1200 1400 1600 1800 2000)
-     " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
-   org-agenda-current-time-string
-   "⭠ now ─────────────────────────────────────────────────")
-
-  ;; Enable org-modern-mode
-  (add-hook 'org-mode-hook #'org-modern-mode)
-  (add-hook 'org-mode-hook #'org-indent-mode)
-  (add-hook 'org-agenda-finalize-hook #'org-modern-agenda))
-
-(use-package org-jira
-  :straight (org-jira :type git :host github :repo "ahungry/org-jira"
-                      :fork (:host github
-                                   :repo "Vivien-lelouette/org-jira"))
-  :after org)
+(use-package consult-flycheck)
 
 (use-package rainbow-mode)
 
@@ -484,6 +433,65 @@
 (use-package dired-hide-dotfiles
   :hook
   (dired-mode . dired-hide-dotfiles-mode))
+
+
+
+(use-package org
+  :config
+  (defun org/org-babel-tangle-config ()
+    (when (or (string-equal (buffer-file-name)
+			(expand-file-name "~/dotfiles/README.org"))
+		(string-equal (buffer-file-name)
+			(expand-file-name "~/dotfiles/qutebrowser/README.org"))
+		(string-equal (buffer-file-name)
+			(expand-file-name "~/dotfiles/emacs/README.org"))
+		(string-equal (buffer-file-name)
+			(expand-file-name "~/dotfiles/emacs/desktop.org"))
+		(string-equal (buffer-file-name)
+			(expand-file-name "~/dotfiles/herbstluftwm/README.org"))
+		(string-equal (buffer-file-name)
+			(expand-file-name "~/dotfiles/rofi/README.org"))
+		(string-equal (buffer-file-name)
+			(expand-file-name "~/dotfiles/emacs/local.org")))
+	;; Dynamic scoping to the rescue
+	(let ((org-confirm-babel-evaluate nil))
+	  (org-babel-tangle))))
+    (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'org/org-babel-tangle-config))))
+
+(use-package org-modern
+  :config
+  (setq
+   ;; Edit settings
+   org-auto-align-tags nil
+   org-tags-column 0
+   org-catch-invisible-edits 'show-and-error
+   org-special-ctrl-a/e t
+   org-insert-heading-respect-content t
+
+   ;; Org styling, hide markup etc.
+   org-hide-emphasis-markers t
+   org-pretty-entities t
+   org-ellipsis "…"
+
+   ;; Agenda styling
+   org-agenda-block-separator ?─
+   org-agenda-time-grid
+   '((daily today require-timed)
+     (800 1000 1200 1400 1600 1800 2000)
+     " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
+   org-agenda-current-time-string
+   "⭠ now ─────────────────────────────────────────────────")
+
+  ;; Enable org-modern-mode
+  (add-hook 'org-mode-hook #'org-modern-mode)
+  (add-hook 'org-mode-hook #'org-indent-mode)
+  (add-hook 'org-agenda-finalize-hook #'org-modern-agenda))
+
+(use-package org-jira
+  :straight (org-jira :type git :host github :repo "ahungry/org-jira"
+                      :fork (:host github
+                                   :repo "Vivien-lelouette/org-jira"))
+  :after org)
 
 (let ((local-settings "~/.emacs.d/local.el"))
     (when (file-exists-p local-settings)

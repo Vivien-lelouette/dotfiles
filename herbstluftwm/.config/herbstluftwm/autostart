@@ -164,7 +164,6 @@ herbstclient keybind $Mod+Control+e spawn emacsclient -c
 herbstclient keybind $Mod+e spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh 1 'Emacs' '' 'emacsclient -c'
 herbstclient keybind $Mod+Shift+e spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh -1 'Emacs' '' 'emacsclient -c'
 herbstclient keybind $Mod+Return spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'vterm)"
-herbstclient keybind $Mod+Shift+b spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'ibuffer)"
 herbstclient keybind $Mod+t spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'treemacs)"
 herbstclient keybind $Mod+period spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(funcall-interactively #'dired-open-home-dir)"
 herbstclient keybind $Mod+Shift+period spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(funcall-interactively #'dired-open-current-dir)"
