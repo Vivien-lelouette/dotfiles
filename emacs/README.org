@@ -48,12 +48,12 @@ Increase the amount of data which Emacs reads from a process
 #+END_SRC
 
 Mapping escape as cancel.
-#+BEGIN_SRC emacs-lisp
-  (define-key local-function-key-map (kbd "<escape>") nil)
-  (define-key isearch-mode-map [escape] 'isearch-abort)   ;; isearch
-  (define-key isearch-mode-map "\e" 'isearch-abort)   ;; \e seems to work better for terminals
-  (global-set-key [escape] 'keyboard-escape-quit)         ;; everywhere else
-#+END_SRC
+
+  ;(define-key local-function-key-map (kbd "<escape>") nil)
+  ;(define-key isearch-mode-map [escape] 'isearch-abort)   ;; isearch
+  ;(define-key isearch-mode-map "\e" 'isearch-abort)   ;; \e seems to work better for terminals
+  ;(global-set-key [escape] 'keyboard-escape-quit)         ;; everywhere else
+
 
 ** Keep folders clean
 #+BEGIN_SRC emacs-lisp
@@ -98,8 +98,8 @@ Mapping escape as cancel.
 
   ;; Add frame borders and window dividers
   (modify-all-frames-parameters
-   '((right-divider-width . 20)
-     (internal-border-width . 20)))
+   '((right-divider-width . 40)
+     (internal-border-width . 40)))
 #+END_SRC
 
 ** Font
@@ -177,6 +177,14 @@ Mapping escape as cancel.
   :hook (after-init . simple-modeline-mode)
   :config
   (setq simple-modeline-segments '((simple-modeline-segment-modified simple-modeline-segment-buffer-name simple-modeline-segment-position) (simple-modeline-segment-input-method simple-modeline-segment-eol simple-modeline-segment-encoding simple-modeline-segment-vc simple-modeline-segment-misc-info simple-modeline-segment-process simple-modeline-segment-minions))))
+#+END_SRC
+
+** Olivetti
+#+BEGIN_SRC emacs-lisp
+  (use-package olivetti
+    :config
+    (setq olivetti-margin-width 0)
+    (setq olivetti-minimum-body-width 100))
 #+END_SRC
 
 * Search & completion

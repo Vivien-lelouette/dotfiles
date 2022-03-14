@@ -23,11 +23,6 @@
 (setq tab-always-indent 'complete)
 (defalias 'yes-or-no-p 'y-or-n-p)
 
-(define-key local-function-key-map (kbd "<escape>") nil)
-(define-key isearch-mode-map [escape] 'isearch-abort)   ;; isearch
-(define-key isearch-mode-map "\e" 'isearch-abort)   ;; \e seems to work better for terminals
-(global-set-key [escape] 'keyboard-escape-quit)         ;; everywhere else
-
 (setq backup-directory-alist `(("." . ,(expand-file-name "tmp/backups/" user-emacs-directory))))
 ;; auto-save-mode doesn't create the path automatically!
 (make-directory (expand-file-name "tmp/auto-saves/" user-emacs-directory) t)
@@ -60,8 +55,8 @@
 
 ;; Add frame borders and window dividers
 (modify-all-frames-parameters
- '((right-divider-width . 20)
-   (internal-border-width . 20)))
+ '((right-divider-width . 40)
+   (internal-border-width . 40)))
 
 (set-face-attribute 'default nil :font "SauceCodePro NF" :height 100)
 
@@ -114,6 +109,11 @@
   :hook (after-init . simple-modeline-mode)
   :config
   (setq simple-modeline-segments '((simple-modeline-segment-modified simple-modeline-segment-buffer-name simple-modeline-segment-position) (simple-modeline-segment-input-method simple-modeline-segment-eol simple-modeline-segment-encoding simple-modeline-segment-vc simple-modeline-segment-misc-info simple-modeline-segment-process simple-modeline-segment-minions))))
+
+(use-package olivetti
+  :config
+  (setq olivetti-margin-width 0)
+  (setq olivetti-minimum-body-width 100))
 
 (use-package which-key
   :init (which-key-mode)
