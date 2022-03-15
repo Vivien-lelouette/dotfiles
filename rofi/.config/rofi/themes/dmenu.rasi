@@ -1,14 +1,14 @@
 * {
-    background-color:           #242832;
+    background-color:           #272C36;
     background-alt:             #2e3440;
-    border-color:               #242832;
+    border-color:               #272C36;
     text-color:                 #d8dee9;
     height:                     22px;
     font:                       "Cantarell 10";
     prompt-font:                "SauceCodePro Bold 16";
     prompt-padding:             -2px 4px;
     selected-normal-background: #a3be8c;
-    selected-normal-foreground: #242832;
+    selected-normal-foreground: #272C36;
 }
 #window {
     anchor: north west;
