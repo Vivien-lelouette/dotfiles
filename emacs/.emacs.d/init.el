@@ -351,7 +351,6 @@
 (use-package magit)
 
 (use-package yasnippet
-  :ensure t
   :hook ((lsp-mode . yas-minor-mode)))
 
 (use-package lsp-mode

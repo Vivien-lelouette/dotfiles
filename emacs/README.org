@@ -477,7 +477,6 @@ Mapping escape as cancel.
 ** Yasnippet
 #+BEGIN_SRC emacs-lisp
   (use-package yasnippet
-    :ensure t
     :hook ((lsp-mode . yas-minor-mode)))
 #+END_SRC
 
