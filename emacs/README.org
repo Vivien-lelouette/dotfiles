@@ -88,6 +88,14 @@ Mapping escape as cancel.
       (global-set-key (kbd "C-S-<mouse-1>") 'mc/add-cursor-on-click))
 #+END_SRC
 
+* Expand region
+#+BEGIN_SRC emacs-lisp
+  (use-package expand-region
+    :config
+    (global-set-key (kbd "C-=") 'er/expand-region)
+    (global-set-key (kbd "C--") 'er/contract-region))
+#+END_SRC
+
 * Pulsar
 #+BEGIN_SRC emacs-lisp
   (use-package pulsar
