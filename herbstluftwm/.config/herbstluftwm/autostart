@@ -191,7 +191,7 @@ for monitor in $(herbstclient list_monitors | cut -d: -f1) ; do
     herbstclient pad $monitor 22 &
 done
 
-setxkbmap -layout us -option 'compose:rctrl' -option 'caps:ctrl_modifier' && xcape -e 'Caps_Lock=Escape'
+setxkbmap -layout us -option 'compose:rctrl' -option 'caps:ctrl_modifier'
 
 gsettings set org.gnome.gnome-flashback.desktop.icons show-home false
 gsettings set org.gnome.gnome-flashback.desktop.icons show-trash false

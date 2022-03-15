@@ -261,7 +261,7 @@ Keep tracks of the last focused timestamp for every window.
 
 *** Keyboard layout
 #+BEGIN_SRC shell
-  setxkbmap -layout us -option 'compose:rctrl' -option 'caps:ctrl_modifier' && xcape -e 'Caps_Lock=Escape'
+  setxkbmap -layout us -option 'compose:rctrl' -option 'caps:ctrl_modifier'
 #+END_SRC
 
 *** Gnome flashback
