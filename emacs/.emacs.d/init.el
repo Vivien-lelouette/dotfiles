@@ -48,6 +48,13 @@
     (global-set-key (kbd "C-?") 'mc/mark-all-like-this)
     (global-set-key (kbd "C-S-<mouse-1>") 'mc/add-cursor-on-click))
 
+(use-package pulsar
+  :straight (pulsar :type git :host gitlab :repo "protesilaos/pulsar")
+  :config
+  (pulsar-setup)
+  (setq pulse-flag t)
+  (setq pulsar-face 'pulsar-cyan))
+
 (scroll-bar-mode 0)
 (tool-bar-mode -1)
 (tooltip-mode -1)
@@ -99,16 +106,9 @@
   :config
   (solaire-global-mode +1))
 
-(use-package minions)
-
-(defun simple-modeline-segment-minions ()
-  "Displays the current major and minor modes with minions-mode in the mode-line."
-  (concat " " (format-mode-line minions-mode-line-modes)))
-
-(use-package simple-modeline
-  :hook (after-init . simple-modeline-mode)
-  :config
-  (setq simple-modeline-segments '((simple-modeline-segment-modified simple-modeline-segment-buffer-name simple-modeline-segment-position) (simple-modeline-segment-input-method simple-modeline-segment-eol simple-modeline-segment-encoding simple-modeline-segment-vc simple-modeline-segment-misc-info simple-modeline-segment-process simple-modeline-segment-minions))))
+(use-package doom-modeline
+  :init
+  (doom-modeline-mode 1))
 
 (use-package olivetti
   :config
