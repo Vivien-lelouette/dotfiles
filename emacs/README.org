@@ -93,6 +93,11 @@ Mapping escape as cancel.
   (use-package sudo-edit)
 #+END_SRC
 
+* Emacs everywhere
+#+BEGIN_SRC emacs-lisp
+  (use-package emacs-everywhere)
+#+END_SRC
+
 * Expand region
 #+BEGIN_SRC emacs-lisp
   (use-package expand-region

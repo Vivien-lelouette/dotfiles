@@ -50,6 +50,8 @@
 
 (use-package sudo-edit)
 
+(use-package emacs-everywhere)
+
 (use-package expand-region
   :config
   (global-set-key (kbd "C-=") 'er/expand-region)
