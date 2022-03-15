@@ -48,6 +48,8 @@
     (global-set-key (kbd "C-?") 'mc/mark-all-like-this)
     (global-set-key (kbd "C-S-<mouse-1>") 'mc/add-cursor-on-click))
 
+(use-package sudo-edit)
+
 (use-package expand-region
   :config
   (global-set-key (kbd "C-=") 'er/expand-region)
