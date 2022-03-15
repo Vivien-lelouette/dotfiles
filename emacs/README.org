@@ -572,7 +572,9 @@ Mapping escape as cancel.
 * File & buffer management
 ** Treemacs
 #+BEGIN_SRC emacs-lisp
-  (use-package treemacs)
+  (use-package treemacs
+    :config
+          (global-set-key (kbd "C-c t") 'treemacs))
 #+END_SRC
 
 ** Dired

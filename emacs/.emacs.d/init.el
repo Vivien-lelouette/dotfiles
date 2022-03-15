@@ -413,7 +413,9 @@
     :config
     (setq vterm-shell "/bin/zsh"))
 
-(use-package treemacs)
+(use-package treemacs
+  :config
+        (global-set-key (kbd "C-c t") 'treemacs))
 
 (use-package dired
   :straight (:type built-in)
