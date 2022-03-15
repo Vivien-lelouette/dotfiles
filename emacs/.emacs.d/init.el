@@ -61,6 +61,7 @@
   :straight (pulsar :type git :host gitlab :repo "protesilaos/pulsar")
   :config
   (pulsar-setup)
+  (global-set-key (kbd "C-c SPC") 'pulsar-pulse-line)
   (setq pulse-flag t)
   (setq pulsar-face 'pulsar-cyan))
 
