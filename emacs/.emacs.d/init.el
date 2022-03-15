@@ -369,7 +369,8 @@
   :config
     (setq 
      lsp-headerline-breadcrumb-enable nil
-     lsp-eldoc-render-all t))
+     lsp-eldoc-render-all t)
+    (global-set-key (kbd "C-.") 'lsp-execute-code-action))
 
 (use-package dap-mode)
 
