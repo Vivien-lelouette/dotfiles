@@ -194,7 +194,7 @@ Keep tracks of the last focused timestamp for every window.
 
   herbstclient keybind $Mod+m fullscreen toggle
   herbstclient keybind $Mod+Shift+m floating toggle
-  herbstclient keybind $Mod+Control+f attr clients.focus.floating toggle
+  herbstclient keybind $Mod+Control+m attr clients.focus.floating toggle
   herbstclient keybind $Mod+BackSpace cycle_monitor
 #+END_SRC
 

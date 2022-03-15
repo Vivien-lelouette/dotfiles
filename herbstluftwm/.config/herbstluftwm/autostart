@@ -143,7 +143,7 @@ herbstclient keybind $Mod+Shift+9 move_index 8
 
 herbstclient keybind $Mod+m fullscreen toggle
 herbstclient keybind $Mod+Shift+m floating toggle
-herbstclient keybind $Mod+Control+f attr clients.focus.floating toggle
+herbstclient keybind $Mod+Control+m attr clients.focus.floating toggle
 herbstclient keybind $Mod+BackSpace cycle_monitor
 
 herbstclient keybind $Mod+Shift+Return spawn gnome-terminal
