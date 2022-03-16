@@ -152,9 +152,12 @@
    (defun doom-themes-hide-modeline ())
    (doom-themes-org-config))
 
-(use-package solaire-mode
-  :config
-  (solaire-global-mode +1))
+(use-package solaire-mode)
+;  :config
+;  (defun solaire-mode-real-buffer-p ()
+;    "Return t if the current buffer is a real (file-visiting) buffer."
+;    (and (buffer-file-name (buffer-base-buffer)) (string= (buffer-name) "*Echo Area 0*")))
+;    (solaire-global-mode +1))
 
 (use-package doom-modeline
   :init
