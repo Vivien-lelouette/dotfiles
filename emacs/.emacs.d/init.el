@@ -451,7 +451,9 @@
 
 (use-package treemacs
   :config
-  (setq treemacs-width 45)
+  (setq
+   treemacs-width 45
+   treemacs-default-visit-action 'treemacs-visit-node-close-treemacs)
   (global-set-key (kbd "C-c t") 'treemacs))
 
 (use-package dired
