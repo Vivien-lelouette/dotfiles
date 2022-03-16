@@ -75,6 +75,42 @@ Mapping escape as cancel.
   (setq indent-line-function 'insert-tab)
   (setq-default indent-tabs-mode nil)
   (setq-default tab-width 2)
+  (setq c-basic-offset tab-width
+        c-basic-offset tab-width
+        c-basic-offset tab-width
+        csharp-tree-sitter-indent-offset tab-width
+        c-basic-offset tab-width
+        c-basic-offset tab-width
+        c-basic-offset tab-width
+        js-indent-level tab-width
+        js2-basic-offset tab-width
+        js3-indent-level tab-width
+        js-indent-level tab-width
+        lua-indent-level tab-width
+        c-basic-offset tab-width
+        c-basic-offset tab-width
+        perl-indent-level tab-width
+        cperl-indent-level tab-width
+        raku-indent-offset tab-width
+        erlang-indent-level tab-width
+        ada-indent tab-width
+        sgml-basic-offset tab-width
+        nxml-child-indent tab-width
+        pascal-indent-level tab-width
+        typescript-indent-level tab-width
+        sh-basic-offset tab-width
+        ruby-indent-level tab-width
+        enh-ruby-indent-level tab-width
+        crystal-indent-level tab-width
+        css-indent-offset tab-width
+        rust-indent-offset tab-width
+        rustic-indent-offset tab-width
+        scala-indent:step tab-width
+        powershell-indent tab-width
+        ess-indent-offset tab-width
+        yaml-indent-offset tab-width
+        hack-indent-offset tab-width
+        standard-indent tab-width)
 #+END_SRC
 
 * Multiple cursors
@@ -638,24 +674,25 @@ This requires a Java runtime environment.
 #+BEGIN_SRC emacs-lisp
   (use-package org
     :config
+    (setq org-confirm-babel-evaluate nil)
     (defun org/org-babel-tangle-config ()
       (when (or (string-equal (buffer-file-name)
-				(expand-file-name "~/dotfiles/README.org"))
-		  (string-equal (buffer-file-name)
-				(expand-file-name "~/dotfiles/qutebrowser/README.org"))
-		  (string-equal (buffer-file-name)
-				(expand-file-name "~/dotfiles/emacs/README.org"))
-		  (string-equal (buffer-file-name)
-				(expand-file-name "~/dotfiles/emacs/desktop.org"))
-		  (string-equal (buffer-file-name)
-				(expand-file-name "~/dotfiles/herbstluftwm/README.org"))
-		  (string-equal (buffer-file-name)
-				(expand-file-name "~/dotfiles/rofi/README.org"))
-		  (string-equal (buffer-file-name)
-				(expand-file-name "~/dotfiles/emacs/local.org")))
-	  ;; Dynamic scoping to the rescue
-	  (let ((org-confirm-babel-evaluate nil))
-	    (org-babel-tangle))))
+        (expand-file-name "~/dotfiles/README.org"))
+      (string-equal (buffer-file-name)
+        (expand-file-name "~/dotfiles/qutebrowser/README.org"))
+      (string-equal (buffer-file-name)
+        (expand-file-name "~/dotfiles/emacs/README.org"))
+      (string-equal (buffer-file-name)
+        (expand-file-name "~/dotfiles/emacs/desktop.org"))
+      (string-equal (buffer-file-name)
+        (expand-file-name "~/dotfiles/herbstluftwm/README.org"))
+      (string-equal (buffer-file-name)
+        (expand-file-name "~/dotfiles/rofi/README.org"))
+      (string-equal (buffer-file-name)
+        (expand-file-name "~/dotfiles/emacs/local.org")))
+    ;; Dynamic scoping to the rescue
+    (let ((org-confirm-babel-evaluate nil))
+      (org-babel-tangle))))
       (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'org/org-babel-tangle-config))))
 #+END_SRC
 
