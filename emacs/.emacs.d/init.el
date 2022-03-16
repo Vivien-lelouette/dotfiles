@@ -99,6 +99,7 @@
   (pulsar-setup)
   (global-set-key (kbd "C-c SPC") 'pulsar-pulse-line)
   (setq pulse-flag t)
+  (set-face-attribute 'pulsar-cyan nil :background "#79a4c4")
   (setq pulsar-face 'pulsar-cyan))
 
 (scroll-bar-mode 0)
