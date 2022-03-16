@@ -45,6 +45,7 @@ Increase the amount of data which Emacs reads from a process
 #+BEGIN_SRC emacs-lisp
   (setq tab-always-indent 'complete)
   (defalias 'yes-or-no-p 'y-or-n-p)
+  (global-set-key (kbd "C-z") 'delete-frame)
 #+END_SRC
 
 Mapping escape as cancel.
@@ -111,6 +112,11 @@ Mapping escape as cancel.
         yaml-indent-offset tab-width
         hack-indent-offset tab-width
         standard-indent tab-width)
+#+END_SRC
+
+** Log levels
+#+BEGIN_SRC emacs-lisp
+  (setq warning-minimum-level :error)
 #+END_SRC
 
 * Multiple cursors
@@ -524,18 +530,20 @@ Mapping escape as cancel.
     ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
     (setq lsp-keymap-prefix "C-c l")
     :custom
-      (lsp-clients-typescript-server-args '("--stdio" "--tsserver-log-file" "/dev/stderr"))
+    (lsp-clients-typescript-server-args '("--stdio" "--tsserver-log-file" "/dev/stderr"))
     :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
-     (js-mode . lsp)
-     ;; if you want which-key integration
-     ;;(lsp-mode . (lambda () (add-hook 'before-save-hook #'lsp-format-buffer)))
-     (lsp-mode . lsp-enable-which-key-integration))
+           (js-mode . lsp)
+           ;; if you want which-key integration
+           ;;(lsp-mode . (lambda () (add-hook 'before-save-hook #'lsp-format-buffer)))
+           (lsp-mode . lsp-enable-which-key-integration))
     :commands lsp
     :config
-      (setq 
-       lsp-headerline-breadcrumb-enable nil
-       lsp-eldoc-render-all t)
-      (global-set-key (kbd "C-.") 'lsp-execute-code-action))
+    (setq
+     lsp-idle-delay 0.500
+     lsp-log-io nil
+     lsp-headerline-breadcrumb-enable nil
+     lsp-eldoc-render-all t)
+    (global-set-key (kbd "C-.") 'lsp-execute-code-action))
 #+END_SRC
 
 ** Dap-mode

@@ -22,6 +22,7 @@
 
 (setq tab-always-indent 'complete)
 (defalias 'yes-or-no-p 'y-or-n-p)
+(global-set-key (kbd "C-z") 'delete-frame)
 
 (setq backup-directory-alist `(("." . ,(expand-file-name "tmp/backups/" user-emacs-directory))))
 ;; auto-save-mode doesn't create the path automatically!
@@ -75,6 +76,8 @@
       yaml-indent-offset tab-width
       hack-indent-offset tab-width
       standard-indent tab-width)
+
+(setq warning-minimum-level :error)
 
 (use-package multiple-cursors
     :config
@@ -395,18 +398,20 @@
   ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
   (setq lsp-keymap-prefix "C-c l")
   :custom
-    (lsp-clients-typescript-server-args '("--stdio" "--tsserver-log-file" "/dev/stderr"))
+  (lsp-clients-typescript-server-args '("--stdio" "--tsserver-log-file" "/dev/stderr"))
   :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
-   (js-mode . lsp)
-   ;; if you want which-key integration
-   ;;(lsp-mode . (lambda () (add-hook 'before-save-hook #'lsp-format-buffer)))
-   (lsp-mode . lsp-enable-which-key-integration))
+         (js-mode . lsp)
+         ;; if you want which-key integration
+         ;;(lsp-mode . (lambda () (add-hook 'before-save-hook #'lsp-format-buffer)))
+         (lsp-mode . lsp-enable-which-key-integration))
   :commands lsp
   :config
-    (setq 
-     lsp-headerline-breadcrumb-enable nil
-     lsp-eldoc-render-all t)
-    (global-set-key (kbd "C-.") 'lsp-execute-code-action))
+  (setq
+   lsp-idle-delay 0.500
+   lsp-log-io nil
+   lsp-headerline-breadcrumb-enable nil
+   lsp-eldoc-render-all t)
+  (global-set-key (kbd "C-.") 'lsp-execute-code-action))
 
 (use-package dap-mode)
 
