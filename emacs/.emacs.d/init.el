@@ -452,7 +452,8 @@
 
 (use-package treemacs
   :config
-        (global-set-key (kbd "C-c t") 'treemacs))
+  (setq treemacs-width 45)
+  (global-set-key (kbd "C-c t") 'treemacs))
 
 (use-package dired
   :straight (:type built-in)

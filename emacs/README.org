@@ -611,7 +611,8 @@ Mapping escape as cancel.
 #+BEGIN_SRC emacs-lisp
   (use-package treemacs
     :config
-          (global-set-key (kbd "C-c t") 'treemacs))
+    (setq treemacs-width 45)
+    (global-set-key (kbd "C-c t") 'treemacs))
 #+END_SRC
 
 ** Dired
