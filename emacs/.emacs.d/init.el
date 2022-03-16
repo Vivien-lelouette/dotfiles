@@ -185,13 +185,7 @@
   ;; (setq vertico-resize t)
 
   ;; Optionally enable cycling for `vertico-next' and `vertico-previous'.
-  (setq vertico-cycle t)
-  (setq completion-in-region-function
-(lambda (&rest args)
-	(apply (if vertico-mode
-		   #'consult-completion-in-region
-		 #'completion--in-region)
-	 args))))
+  (setq vertico-cycle t))
 
 (use-package embark
   :straight t

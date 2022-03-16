@@ -148,7 +148,6 @@ Mapping escape as cancel.
     (global-set-key (kbd "C--") 'er/contract-region))
 #+END_SRC
 
-
 * Pulsar
 #+BEGIN_SRC emacs-lisp
   (use-package pulsar
@@ -274,13 +273,7 @@ Mapping escape as cancel.
     ;; (setq vertico-resize t)
 
     ;; Optionally enable cycling for `vertico-next' and `vertico-previous'.
-    (setq vertico-cycle t)
-    (setq completion-in-region-function
-	(lambda (&rest args)
-	  (apply (if vertico-mode
-		     #'consult-completion-in-region
-		   #'completion--in-region)
-		 args))))
+    (setq vertico-cycle t))
 #+END_SRC
 
 ** Embark
