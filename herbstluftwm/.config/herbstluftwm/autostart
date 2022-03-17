@@ -85,9 +85,9 @@ for i in "${!tag_names[@]}" ; do
     fi
 done
 
-herbstclient keybind $Mod+q spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(kill-this-buffer)' 'herbstclient close'
-herbstclient keybind $Mod+Control+q close
-herbstclient keybind $Mod+Shift+q spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(evil-quit)' 'herbstclient remove'
+herbstclient keybind $Mod+k spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(kill-this-buffer)' 'herbstclient close'
+herbstclient keybind $Mod+Control+k close
+herbstclient keybind $Mod+Shift+k spawn bash $herbstluftwm_scripts_folder/emacs_or_herbstluftwm_command.sh '(evil-quit)' 'herbstclient remove'
 
 herbstclient keybind $Mod+s split right 0.5
 herbstclient keybind $Mod+Shift+s split bottom 0.5
