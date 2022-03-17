@@ -102,7 +102,7 @@
   (pulsar-setup)
   (global-set-key (kbd "C-c SPC") 'pulsar-pulse-line)
   (setq pulse-flag t)
-  (set-face-attribute 'pulsar-cyan nil :background "#79a4c4")
+  (set-face-attribute 'pulsar-cyan nil :background "#81a1c1")
   (setq pulsar-face 'pulsar-cyan))
 
 (scroll-bar-mode 0)
@@ -178,26 +178,18 @@
   (setq which-key-idle-delay 1))
 
 (use-package vertico
-  :init
-  (vertico-mode)
-
-  ;; Different scroll margin
-  ;; (setq vertico-scroll-margin 0)
-
-  ;; Show more candidates
-  ;; (setq vertico-count 20)
-
-  ;; Grow and shrink the Vertico minibuffer
-  ;; (setq vertico-resize t)
-
-  ;; Optionally enable cycling for `vertico-next' and `vertico-previous'.
-  (setq vertico-cycle t))
+  :straight (vertico :type git :host github :repo "minad/vertico")
+  :config
+  (setq vertico-cycle t)
+  (vertico-mode))
 
 (use-package embark
   :straight t
   :bind (("C-c e" . embark-act)
 	 :map minibuffer-local-map
 	 ("C-d" . embark-act)))
+
+(use-package wgrep)
 
 (use-package consult
   ;; Replace bindings. Lazily loaded due by `use-package'.
@@ -410,6 +402,10 @@
   (setq lsp-keymap-prefix "C-c l")
   :custom
   (lsp-clients-typescript-server-args '("--stdio" "--tsserver-log-file" "/dev/stderr"))
+  :bind (
+         ("C-h ." . lsp-describe-thing-at-point)
+         ("C-." . lsp-execute-code-action)
+         )
   :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
          (js-mode . lsp)
          ;; if you want which-key integration
@@ -421,8 +417,7 @@
    lsp-idle-delay 0.500
    lsp-log-io nil
    lsp-headerline-breadcrumb-enable nil
-   lsp-eldoc-render-all t)
-  (global-set-key (kbd "C-.") 'lsp-execute-code-action))
+   lsp-eldoc-render-all t))
 
 (use-package dap-mode)
 
@@ -523,6 +518,8 @@
       (expand-file-name "~/dotfiles/herbstluftwm/README.org"))
     (string-equal (buffer-file-name)
       (expand-file-name "~/dotfiles/rofi/README.org"))
+    (string-equal (buffer-file-name)
+      (expand-file-name "~/dotfiles/polybar/README.org"))
     (string-equal (buffer-file-name)
       (expand-file-name "~/dotfiles/emacs/local.org")))
   ;; Dynamic scoping to the rescue

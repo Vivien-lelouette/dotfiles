@@ -7,7 +7,7 @@
     font:                       "Cantarell 10";
     prompt-font:                "SauceCodePro Bold 16";
     prompt-padding:             -2px 4px;
-    selected-normal-background: #a3be8c;
+    selected-normal-background: #8fbcbb;
     selected-normal-foreground: #272C36;
 }
 #window {

@@ -31,7 +31,7 @@ configuration {
     font:                       "Cantarell 10";
     prompt-font:                "SauceCodePro Bold 16";
     prompt-padding:             -2px 4px;
-    selected-normal-background: #a3be8c;
+    selected-normal-background: #8fbcbb;
     selected-normal-foreground: #272C36;
 }
 #window {
@@ -87,11 +87,11 @@ element-text {
     height:                     22px;
     font:                       "Source Code Pro Medium 10";
     prompt-font:                "Source Code Pro Bold 10";
-    prompt-background:          #a3be8c;
+    prompt-background:          #8fbcbb;
     prompt-foreground:          #272C36;
     prompt-padding:             2px;
-    selected-normal-background: #a3be8c;
-    selected-normal-foreground: #a3be8c;
+    selected-normal-background: #8fbcbb;
+    selected-normal-foreground: #8fbcbb;
 }
 #window {
     anchor: north;

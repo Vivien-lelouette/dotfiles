@@ -8,11 +8,11 @@ for (( i=0; i<$((${#MONITOR_LIST[@]})); i++ )); do
   [[ ${MONITOR_LIST[${i}]} == "$MONITOR" ]] && MON_IDX="$i"
 done;
 
-background=#242832
+background=#272C36
 background_alt=#2e3440
 foreground=#d8dee9
 foreground_alt=#93979f
-primary=#a3be8c
+primary=#8fbcbb
 secondary=#80a1c0
 alert=#b48ead
 

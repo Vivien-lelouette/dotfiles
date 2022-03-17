@@ -59,7 +59,7 @@ Keep tracks of the last focused timestamp for every window.
   export FG_ALT_COLOR='#93979f'
   export BG_COLOR='#2e3440'
   export BG_ALT_COLOR='#242832'
-  export FOCUS_COLOR='#a3be8c'
+  export FOCUS_COLOR='#8fbcbb'
   export ALERT_COLOR='#b48ead'
 #+END_SRC
 
