@@ -459,7 +459,9 @@
 
 (use-package vterm
     :config
-    (setq vterm-shell "/bin/zsh"))
+    (setq
+     vterm-shell "/bin/zsh"
+     vterm-buffer-name-string "vterm: %s"))
 
 (use-package treemacs
   :config

@@ -619,7 +619,9 @@ Mapping escape as cancel.
 #+BEGIN_SRC emacs-lisp
   (use-package vterm
       :config
-      (setq vterm-shell "/bin/zsh"))
+      (setq
+       vterm-shell "/bin/zsh"
+       vterm-buffer-name-string "vterm: %s"))
 #+END_SRC
 
 * File & buffer management
