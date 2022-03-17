@@ -152,16 +152,14 @@
    (defun doom-themes-hide-modeline ())
    (doom-themes-org-config))
 
-(use-package solaire-mode)
-;   :config
-;   (defun solaire-mode-real-buffer-p ()
-;     "Return t if the current buffer is a real (file-visiting) buffer."
-;     (and
-;      (not (string-match-p "treemacs" (buffer-name)))
-;      (not (string-match-p "*" (buffer-name)))
-;      (string-match-p "Echo" (buffer-name))
-;     ))
-;     (solaire-global-mode +1))
+(defun darken-buffer ()
+  (setq buffer-face-mode-face `(:background "#272C36"))
+  (face-remap-add-relative 'hl-line `(:background "#2e3440"))
+  (face-remap-add-relative 'fringe `(:background "#272C36"))
+  (buffer-face-mode 1))
+
+(add-hook 'treemacs-mode-hook #'darken-buffer)
+(add-hook 'helpful-mode-hook #'darken-buffer)
 
 (use-package doom-modeline
   :init
@@ -370,6 +368,17 @@
 (use-package savehist
   :init
   (savehist-mode))
+
+(use-package helpful
+  :config
+  (setq counsel-describe-function-function #'helpful-callable)
+  (setq counsel-describe-variable-function #'helpful-variable)
+  (global-set-key (kbd "C-h f") #'helpful-callable)
+  (global-set-key (kbd "C-h v") #'helpful-variable)
+  (global-set-key (kbd "C-h k") #'helpful-key)
+  (global-set-key (kbd "C-c C-d") #'helpful-at-point)
+  (global-set-key (kbd "C-h F") #'helpful-function)
+  (global-set-key (kbd "C-h C") #'helpful-command))
 
 (use-package flycheck
   :init (global-flycheck-mode))
