@@ -636,14 +636,6 @@ Mapping escape as cancel.
 #+END_SRC
 
 ** Dired
-*** Better defaults
-#+BEGIN_SRC emacs-lisp
-(use-package dired
-  :straight (:type built-in)
-  :hook
-  (dired-mode . dired-hide-details-mode))
-#+END_SRC
-
 *** Open with system default application
 #+BEGIN_SRC emacs-lisp
 (defun dired-open-file ()
@@ -669,6 +661,18 @@ Mapping escape as cancel.
   "Open the current directory in dired"
   (interactive)
   (dired "."))
+#+END_SRC
+
+*** Better defaults
+#+BEGIN_SRC emacs-lisp
+  (use-package dired
+    :straight (:type built-in)
+    :bind (
+           ("<C-return>" . dired-open-file)
+           ("M-p" . dired-up-directory)
+           ("M-n" . dired-find-file))
+    :hook
+    (dired-mode . dired-hide-details-mode))
 #+END_SRC
 
 *** Single frame

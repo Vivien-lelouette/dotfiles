@@ -470,11 +470,6 @@
    treemacs-default-visit-action 'treemacs-visit-node-close-treemacs)
   (global-set-key (kbd "C-c t") 'treemacs))
 
-(use-package dired
-  :straight (:type built-in)
-  :hook
-  (dired-mode . dired-hide-details-mode))
-
 (defun dired-open-file ()
   "In dired, open the file named on this line."
   (interactive)
@@ -492,6 +487,15 @@
   "Open the current directory in dired"
   (interactive)
   (dired "."))
+
+(use-package dired
+  :straight (:type built-in)
+  :bind (
+         ("<C-return>" . dired-open-file)
+         ("M-p" . dired-up-directory)
+         ("M-n" . dired-find-file))
+  :hook
+  (dired-mode . dired-hide-details-mode))
 
 (use-package dired-single)
 
