@@ -23,6 +23,7 @@
 (setq tab-always-indent 'complete)
 (defalias 'yes-or-no-p 'y-or-n-p)
 (global-set-key (kbd "C-z") 'delete-frame)
+(global-set-key (kbd "C-j") 'consult-imenu)
 
 (setq backup-directory-alist `(("." . ,(expand-file-name "tmp/backups/" user-emacs-directory))))
 ;; auto-save-mode doesn't create the path automatically!

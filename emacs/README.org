@@ -46,6 +46,7 @@ Increase the amount of data which Emacs reads from a process
   (setq tab-always-indent 'complete)
   (defalias 'yes-or-no-p 'y-or-n-p)
   (global-set-key (kbd "C-z") 'delete-frame)
+  (global-set-key (kbd "C-j") 'consult-imenu)
 #+END_SRC
 
 Mapping escape as cancel.
