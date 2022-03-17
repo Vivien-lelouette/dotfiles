@@ -153,11 +153,15 @@
    (doom-themes-org-config))
 
 (use-package solaire-mode)
-;  :config
-;  (defun solaire-mode-real-buffer-p ()
-;    "Return t if the current buffer is a real (file-visiting) buffer."
-;    (and (buffer-file-name (buffer-base-buffer)) (string= (buffer-name) "*Echo Area 0*")))
-;    (solaire-global-mode +1))
+;   :config
+;   (defun solaire-mode-real-buffer-p ()
+;     "Return t if the current buffer is a real (file-visiting) buffer."
+;     (and
+;      (not (string-match-p "treemacs" (buffer-name)))
+;      (not (string-match-p "*" (buffer-name)))
+;      (string-match-p "Echo" (buffer-name))
+;     ))
+;     (solaire-global-mode +1))
 
 (use-package doom-modeline
   :init
