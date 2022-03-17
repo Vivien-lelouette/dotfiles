@@ -159,6 +159,7 @@
   (buffer-face-mode 1))
 
 (add-hook 'treemacs-mode-hook #'darken-buffer)
+(add-hook 'help-mode-hook #'darken-buffer)
 (add-hook 'helpful-mode-hook #'darken-buffer)
 
 (use-package doom-modeline
