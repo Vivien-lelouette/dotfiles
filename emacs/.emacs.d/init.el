@@ -23,7 +23,6 @@
 (setq tab-always-indent 'complete)
 (defalias 'yes-or-no-p 'y-or-n-p)
 (global-set-key (kbd "C-z") 'delete-frame)
-(global-set-key (kbd "C-j") 'consult-imenu)
 
 (setq backup-directory-alist `(("." . ,(expand-file-name "tmp/backups/" user-emacs-directory))))
 ;; auto-save-mode doesn't create the path automatically!
@@ -170,7 +169,7 @@
 (use-package olivetti
   :config
   (setq olivetti-margin-width 0)
-  (setq olivetti-minimum-body-width 100))
+  (setq olivetti-minimum-body-width 120))
 
 (use-package which-key
   :init (which-key-mode)
@@ -195,6 +194,7 @@
 (use-package consult
   ;; Replace bindings. Lazily loaded due by `use-package'.
   :bind (;; C-c bindings (mode-specific-map)
+         ("C-j" . consult-imenu)
          ("C-c h" . consult-history)
          ("C-c m" . consult-mode-command)
          ("C-c k" . consult-kmacro)
@@ -532,7 +532,14 @@
   ;; Dynamic scoping to the rescue
   (let ((org-confirm-babel-evaluate nil))
     (org-babel-tangle))))
-    (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'org/org-babel-tangle-config))))
+    (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'org/org-babel-tangle-config)))
+    (custom-set-faces
+     '(org-level-1 ((t (:inherit outline-1 :height 2.5))))
+     '(org-level-2 ((t (:inherit outline-2 :height 1.8))))
+     '(org-level-3 ((t (:inherit outline-3 :height 1.4))))
+     '(org-level-4 ((t (:inherit outline-4 :height 1.2))))
+     '(org-level-5 ((t (:inherit outline-5 :height 1.0))))
+     ))
 
 (use-package org-modern
   :config
