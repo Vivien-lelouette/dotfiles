@@ -46,6 +46,7 @@ Increase the amount of data which Emacs reads from a process
   (setq tab-always-indent 'complete)
   (defalias 'yes-or-no-p 'y-or-n-p)
   (global-set-key (kbd "C-z") 'delete-frame)
+  (setq xref-prompt-for-identifier nil)
 #+END_SRC
 
 Mapping escape as cancel.
@@ -540,6 +541,7 @@ Mapping escape as cancel.
     :bind (
            ("C-h ." . lsp-describe-thing-at-point)
            ("C-." . lsp-execute-code-action)
+           ("M-." . lsp-find-definition)
            )
     :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
            (js-mode . lsp)
@@ -548,12 +550,15 @@ Mapping escape as cancel.
            (lsp-mode . lsp-enable-which-key-integration))
     :commands lsp
     :config
+    (with-eval-after-load 'js
+      (define-key js-mode-map (kbd "M-.") nil)
+      )
     (setq
      lsp-idle-delay 0.500
      lsp-log-io nil
      lsp-headerline-breadcrumb-enable nil
      lsp-eldoc-render-all t))
-#+END_SRC
+ #+END_SRC
 
 ** Dap-mode
 #+BEGIN_SRC emacs-lisp

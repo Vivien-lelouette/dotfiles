@@ -23,6 +23,7 @@
 (setq tab-always-indent 'complete)
 (defalias 'yes-or-no-p 'y-or-n-p)
 (global-set-key (kbd "C-z") 'delete-frame)
+(setq xref-prompt-for-identifier nil)
 
 (setq backup-directory-alist `(("." . ,(expand-file-name "tmp/backups/" user-emacs-directory))))
 ;; auto-save-mode doesn't create the path automatically!
@@ -406,6 +407,7 @@
   :bind (
          ("C-h ." . lsp-describe-thing-at-point)
          ("C-." . lsp-execute-code-action)
+         ("M-." . lsp-find-definition)
          )
   :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
          (js-mode . lsp)
@@ -414,6 +416,9 @@
          (lsp-mode . lsp-enable-which-key-integration))
   :commands lsp
   :config
+  (with-eval-after-load 'js
+    (define-key js-mode-map (kbd "M-.") nil)
+    )
   (setq
    lsp-idle-delay 0.500
    lsp-log-io nil
