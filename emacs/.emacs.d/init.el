@@ -169,8 +169,9 @@
 
 (use-package olivetti
   :config
-  (setq olivetti-margin-width 0)
-  (setq olivetti-minimum-body-width 120))
+  (setq olivetti-margin-width 0
+        olivetti-minimum-body-width 70
+        olivetti-body-width 120))
 
 (use-package which-key
   :init (which-key-mode)

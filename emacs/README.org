@@ -247,8 +247,9 @@ Mapping escape as cancel.
 #+BEGIN_SRC emacs-lisp
   (use-package olivetti
     :config
-    (setq olivetti-margin-width 0)
-    (setq olivetti-minimum-body-width 120))
+    (setq olivetti-margin-width 0
+          olivetti-minimum-body-width 70
+          olivetti-body-width 120))
 #+END_SRC
 
 * Search & completion
