@@ -414,6 +414,7 @@
   :hook ((lsp-mode . yas-minor-mode)))
 
 (use-package lsp-mode
+  :straight (lsp-mode :type git :host github :repo "emacs-lsp/lsp-mode")
   :init
   ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
   (setq lsp-keymap-prefix "C-c l")
@@ -440,7 +441,8 @@
    lsp-headerline-breadcrumb-enable nil
    lsp-eldoc-render-all t))
 
-(use-package dap-mode)
+(use-package dap-mode
+  :straight (dap-mode :type git :host github :repo "emacs-lsp/dap-mode"))
 
 (use-package adoc-mode
   :config
