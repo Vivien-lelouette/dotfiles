@@ -124,15 +124,15 @@
 (tooltip-mode -1)
 (menu-bar-mode -1)
 
-(setq window-divider-default-right-width 40
-      window-divider-default-bottom-width 40)
+(setq window-divider-default-right-width 20
+      window-divider-default-bottom-width 20)
 
 (window-divider-mode 1)
 
 (modify-all-frames-parameters
- '((right-divider-width . 40)
-   (bottom-divider-width . 40)
-   (internal-border-width . 40)))
+ '((right-divider-width . 20)
+   (bottom-divider-width . 20)
+   (internal-border-width . 20)))
 
 (set-face-attribute 'default nil :font "SauceCodePro NF" :height 100)
 
