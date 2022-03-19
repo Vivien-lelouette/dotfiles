@@ -597,6 +597,20 @@
                                    :repo "Vivien-lelouette/org-jira"))
   :after org)
 
+(use-package eaf
+  :straight (eaf :type git
+                            :host github
+                            :repo "emacs-eaf/emacs-application-framework"
+                            :files ("*.el" "*.py" "*.json" "core" "app"))
+  :custom
+  (eaf-browser-continue-where-left-off t)
+  (eaf-browser-enable-adblocker t)
+  (eaf-browser-default-search-engine "duckduckgo")
+  (browse-url-browser-function 'eaf-open-browser)
+  (eaf-wm-focus-fix-wms `("i3" "LG3D" "Xpra" "EXWM" "Xfwm4" "herbstluftwm"))
+  :config
+  (require 'eaf-browser))
+
 (let ((local-settings "~/.emacs.d/local.el"))
     (when (file-exists-p local-settings)
 	(load-file local-settings)))
