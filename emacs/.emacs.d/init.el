@@ -124,9 +124,14 @@
 (tooltip-mode -1)
 (menu-bar-mode -1)
 
-;; Add frame borders and window dividers
+(setq window-divider-default-right-width 40
+      window-divider-default-bottom-width 40)
+
+(window-divider-mode 1)
+
 (modify-all-frames-parameters
  '((right-divider-width . 40)
+   (bottom-divider-width . 40)
    (internal-border-width . 40)))
 
 (set-face-attribute 'default nil :font "SauceCodePro NF" :height 100)
@@ -614,4 +619,4 @@
 
 (let ((local-settings "~/.emacs.d/local.el"))
     (when (file-exists-p local-settings)
-	(load-file local-settings)))
+  (load-file local-settings)))

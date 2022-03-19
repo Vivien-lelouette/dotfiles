@@ -187,9 +187,14 @@ Mapping escape as cancel.
   (tooltip-mode -1)
   (menu-bar-mode -1)
 
-  ;; Add frame borders and window dividers
+  (setq window-divider-default-right-width 40
+        window-divider-default-bottom-width 40)
+
+  (window-divider-mode 1)
+
   (modify-all-frames-parameters
    '((right-divider-width . 40)
+     (bottom-divider-width . 40)
      (internal-border-width . 40)))
 #+END_SRC
 
@@ -822,5 +827,5 @@ This requires a Java runtime environment.
 #+BEGIN_SRC emacs-lisp
   (let ((local-settings "~/.emacs.d/local.el"))
       (when (file-exists-p local-settings)
-	  (load-file local-settings)))
+    (load-file local-settings)))
 #+END_SRC
