@@ -88,6 +88,12 @@
     (global-set-key (kbd "C-?") 'mc/mark-all-like-this)
     (global-set-key (kbd "C-S-<mouse-1>") 'mc/add-cursor-on-click))
 
+(use-package ace-window
+  :config
+  (global-set-key (kbd "M-o") 'ace-window)
+  (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
+  (ace-window-display-mode 1))
+
 (use-package ediff
     :straight (:type built-in)
     :custom
