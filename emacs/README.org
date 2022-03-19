@@ -131,6 +131,15 @@ Mapping escape as cancel.
       (global-set-key (kbd "C-S-<mouse-1>") 'mc/add-cursor-on-click))
 #+END_SRC
 
+* Ediff
+#+BEGIN_SRC emacs-lisp
+  (use-package ediff
+      :straight (:type built-in)
+      :custom
+      ((ediff-window-setup-function 'ediff-setup-windows-plain)
+       (ediff-diff-options "-w")
+       (ediff-split-window-function 'split-window-horizontally)))
+#+END_SRC
 * Sudo edit
 #+BEGIN_SRC emacs-lisp
   (use-package sudo-edit)
@@ -209,6 +218,7 @@ Mapping escape as cancel.
 #+END_SRC
 
 ** Theme
+One can use (global-hl-line-mode 1) to highlight the current line.
 #+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
   (use-package doom-themes
      :custom-face
@@ -218,12 +228,14 @@ Mapping escape as cancel.
      (window-divider ((t (:foreground "#2e3440"))))
      (window-divider-first-pixel ((t (:foreground "#2e3440"))))
      (window-divider-last-pixel ((t (:foreground "#2e3440"))))
+     (hl-line ((t (:background "#434C5E"))))
      :hook (server-after-make-frame . (lambda () (load-theme
                                                 'doom-nord t)))
      :config
      (doom-themes-treemacs-config)
      (defun doom-themes-hide-modeline ())
      (doom-themes-org-config))
+
 
   (defun darken-buffer ()
     (setq buffer-face-mode-face `(:background "#272C36"))

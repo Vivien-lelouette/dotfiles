@@ -88,6 +88,13 @@
     (global-set-key (kbd "C-?") 'mc/mark-all-like-this)
     (global-set-key (kbd "C-S-<mouse-1>") 'mc/add-cursor-on-click))
 
+(use-package ediff
+    :straight (:type built-in)
+    :custom
+    ((ediff-window-setup-function 'ediff-setup-windows-plain)
+     (ediff-diff-options "-w")
+     (ediff-split-window-function 'split-window-horizontally)))
+
 (use-package sudo-edit)
 
 (use-package emacs-everywhere)
@@ -146,12 +153,14 @@
    (window-divider ((t (:foreground "#2e3440"))))
    (window-divider-first-pixel ((t (:foreground "#2e3440"))))
    (window-divider-last-pixel ((t (:foreground "#2e3440"))))
+   (hl-line ((t (:background "#434C5E"))))
    :hook (server-after-make-frame . (lambda () (load-theme
                                               'doom-nord t)))
    :config
    (doom-themes-treemacs-config)
    (defun doom-themes-hide-modeline ())
    (doom-themes-org-config))
+
 
 (defun darken-buffer ()
   (setq buffer-face-mode-face `(:background "#272C36"))
