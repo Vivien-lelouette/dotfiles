@@ -609,6 +609,7 @@
   (browse-url-browser-function 'eaf-open-browser)
   (eaf-wm-focus-fix-wms `("i3" "LG3D" "Xpra" "EXWM" "Xfwm4" "herbstluftwm"))
   :config
+  (defalias 'browse-web #'eaf-open-browser)
   (require 'eaf-browser))
 
 (let ((local-settings "~/.emacs.d/local.el"))
