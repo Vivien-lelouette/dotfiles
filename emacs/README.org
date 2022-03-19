@@ -808,10 +808,6 @@ This requires a Java runtime environment.
 
 * Web browsing
 ** Shr (html renderer)
-#+BEGIN_SRC emacs-lisp :tangle .doom.d/packages.el :mkdirp yes
-(package! shr)
-#+END_SRC
-
 #+BEGIN_SRC emacs-lisp
   (use-package shr
     :straight (:type built-in)
@@ -931,7 +927,7 @@ This requires a Java runtime environment.
     (eaf-bind-key eval_js_file "M-J" eaf-browser-keybinding)
     (eaf-bind-key insert_or_export_text "M-t" eaf-browser-keybinding))
 
-
+  (require 'eaf)
   (defun eaf/open-in-eww ()
     (interactive)
     (eww (eaf-get-path-or-url)))

@@ -711,7 +711,7 @@ Version 2017-11-10"
   (eaf-bind-key eval_js_file "M-J" eaf-browser-keybinding)
   (eaf-bind-key insert_or_export_text "M-t" eaf-browser-keybinding))
 
-
+(require 'eaf)
 (defun eaf/open-in-eww ()
   (interactive)
   (eww (eaf-get-path-or-url)))
