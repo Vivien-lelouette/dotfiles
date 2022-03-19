@@ -189,9 +189,9 @@
 
 (use-package olivetti
   :config
-  (setq olivetti-margin-width 0
-        olivetti-minimum-body-width 130
-        olivetti-body-width 130))
+  (setq olivetti-margin-width 160
+        olivetti-minimum-body-width 160
+        olivetti-body-width 160))
 
 (use-package which-key
   :init (which-key-mode)
@@ -602,11 +602,99 @@
                                    :repo "Vivien-lelouette/org-jira"))
   :after org)
 
+(use-package shr
+  :straight (:type built-in)
+  :config
+  (setq gnus-inhibit-images nil)
+  (setq shr-use-fonts nil)
+  (setq shr-use-colors nil)
+  (setq shr-max-image-proportion 1)
+  (setq shr-width nil)
+  (setq shr-folding-mode t))
+
+;; Used to highlight code
+(use-package shr-tag-pre-highlight
+  :after shr
+    :config
+    (add-to-list 'shr-external-rendering-functions
+                 '(pre . shr-tag-pre-highlight))
+    (when (version< emacs-version "26")
+      (with-eval-after-load 'eww
+        (advice-add 'eww-display-html :around
+                    'eww-display-html--override-shr-external-rendering-functions))))
+
+(use-package shrface
+    :config
+    (shrface-basic)
+    (shrface-trial)
+    (shrface-default-keybindings)
+    (setq shrface-href-versatile t)
+
+    ;; Code highlighting
+    (require 'shr-tag-pre-highlight)
+    (add-to-list 'shr-external-rendering-functions '(pre . shrface-shr-tag-pre-highlight))
+    (defun shrface-shr-tag-pre-highlight (pre)
+      "Highlighting code in PRE."
+      (let* ((shr-folding-mode 'none)
+             (shr-current-font 'default)
+             (code (with-temp-buffer
+                     (shr-generic pre)
+                     (setq-local fill-column 120)
+                     (indent-rigidly (point-min) (point-max) 2)
+                     (if (eq "" (dom-texts pre))
+                         nil
+                       (progn
+                         (setq-local fill-column shrface-paragraph-fill-column)
+                         (indent-rigidly (point-min) (point-max) shrface-paragraph-indentation)))
+                     (buffer-string)))
+             (lang (or (shr-tag-pre-highlight-guess-language-attr pre)
+                       (let ((sym (language-detection-string code)))
+                         (and sym (symbol-name sym)))))
+             (mode (and lang
+                        (shr-tag-pre-highlight--get-lang-mode lang))))
+        (shr-ensure-newline)
+        (insert (propertize (concat "#+BEGIN_SRC " lang) 'face 'org-block-begin-line))
+        (shr-ensure-newline)
+        (setq start (point))
+        (insert
+         (or (and (fboundp mode)
+                  (with-demoted-errors "Error while fontifying: %S"
+                    (shrface-tag-pre-highlight-fontify code mode)
+                    ))
+             code))
+        (shr-ensure-newline)
+        (setq end (point))
+        (insert (propertize "#+END_SRC" 'face 'org-block-end-line ) )
+        (shr-ensure-newline)
+        (insert "\n"))))
+
+(use-package eww
+  :straight (:type built-in)
+  :bind (("M-r" . eww/open-in-eaf))
+  :config
+  (require 'shrface))
+
+(defun eww/rename-buffer ()
+    "Rename `eww-mode' buffer so sites open in new page.
+URL `http://xahlee.info/emacs/emacs/emacs_eww_web_browser.html'
+Version 2017-11-10"
+    (let (($title (plist-get eww-data :title)))
+      (when (eq major-mode 'eww-mode )
+        (if $title
+            (rename-buffer $title t)
+          (rename-buffer "eww" t)))))
+
+(add-hook 'eww-after-render-hook 'eww/rename-buffer)
+(add-hook 'eww-after-render-hook #'shrface-mode)
+(add-hook 'eww-after-render-hook #'mixed-pitch-mode)
+(add-hook 'eww-after-render-hook #'olivetti-mode)
+
 (use-package eaf
   :straight (eaf :type git
                             :host github
                             :repo "emacs-eaf/emacs-application-framework"
                             :files ("*.el" "*.py" "*.json" "core" "app"))
+  :bind (("M-r" . eaf/open-in-eww))
   :custom
   (eaf-browser-continue-where-left-off t)
   (eaf-browser-enable-adblocker t)
@@ -614,8 +702,23 @@
   (browse-url-browser-function 'eaf-open-browser)
   (eaf-wm-focus-fix-wms `("i3" "LG3D" "Xpra" "EXWM" "Xfwm4" "herbstluftwm"))
   :config
+  (require 'eaf-browser)
   (defalias 'browse-web #'eaf-open-browser)
-  (require 'eaf-browser))
+  (eaf-bind-key ace-window "M-o" eaf-browser-keybinding)
+  (eaf-bind-key ace-window "M-O" eaf-browser-keybinding)
+  (eaf-bind-key nil "n" eaf-browser-keybinding)
+  (eaf-bind-key eval_js "M-j" eaf-browser-keybinding)
+  (eaf-bind-key eval_js_file "M-J" eaf-browser-keybinding)
+  (eaf-bind-key insert_or_export_text "M-t" eaf-browser-keybinding))
+
+
+(defun eaf/open-in-eww ()
+  (interactive)
+  (eww (eaf-get-path-or-url)))
+
+(defun eww/open-in-eaf ()
+  (interactive)
+  (eaf-open-browser (eww-current-url)))
 
 (let ((local-settings "~/.emacs.d/local.el"))
     (when (file-exists-p local-settings)
