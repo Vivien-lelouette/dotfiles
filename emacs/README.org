@@ -546,6 +546,17 @@ One can use (global-hl-line-mode 1) to highlight the current line.
     :hook (prog-mode . rainbow-delimiters-mode))
 #+END_SRC
 
+** Aggressive indent
+#+begin_src emacs-lisp
+  (use-package aggressive-indent
+      :config
+      (add-to-list 'aggressive-indent-dont-indent-if
+                   '(and (eq (char-before) ?\s) (looking-at-p "$")))
+      (add-to-list 'aggressive-indent-dont-indent-if
+                   '(minibufferp))
+      (global-aggressive-indent-mode 1))
+#+end_src
+
 ** Magit
 #+BEGIN_SRC emacs-lisp
   (use-package magit)
@@ -554,7 +565,12 @@ One can use (global-hl-line-mode 1) to highlight the current line.
 ** Yasnippet
 #+BEGIN_SRC emacs-lisp
   (use-package yasnippet
-    :hook ((lsp-mode . yas-minor-mode)))
+    :config
+    (yas-global-mode 1))
+
+  (use-package yasnippet-snippets)
+
+  (use-package consult-yasnippet)
 #+END_SRC
 
 ** Lsp-mode
@@ -585,7 +601,8 @@ One can use (global-hl-line-mode 1) to highlight the current line.
      lsp-idle-delay 0.500
      lsp-log-io nil
      lsp-headerline-breadcrumb-enable nil
-     lsp-eldoc-render-all t))
+     lsp-eldoc-render-all t
+     lsp-eslint-auto-fix-on-save t))
  #+END_SRC
 
 ** Dap-mode

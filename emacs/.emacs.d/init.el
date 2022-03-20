@@ -413,10 +413,23 @@
 (use-package rainbow-delimiters
   :hook (prog-mode . rainbow-delimiters-mode))
 
+(use-package aggressive-indent
+    :config
+    (add-to-list 'aggressive-indent-dont-indent-if
+                 '(and (eq (char-before) ?\s) (looking-at-p "$")))
+    (add-to-list 'aggressive-indent-dont-indent-if
+                 '(minibufferp))
+    (global-aggressive-indent-mode 1))
+
 (use-package magit)
 
 (use-package yasnippet
-  :hook ((lsp-mode . yas-minor-mode)))
+  :config
+  (yas-global-mode 1))
+
+(use-package yasnippet-snippets)
+
+(use-package consult-yasnippet)
 
 (use-package lsp-mode
   :straight (lsp-mode :type git :host github :repo "emacs-lsp/lsp-mode")
@@ -444,7 +457,8 @@
    lsp-idle-delay 0.500
    lsp-log-io nil
    lsp-headerline-breadcrumb-enable nil
-   lsp-eldoc-render-all t))
+   lsp-eldoc-render-all t
+   lsp-eslint-auto-fix-on-save t))
 
 (use-package dap-mode
   :straight (dap-mode :type git :host github :repo "emacs-lsp/dap-mode"))
