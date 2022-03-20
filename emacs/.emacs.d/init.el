@@ -574,6 +574,8 @@
     (string-equal (buffer-file-name)
       (expand-file-name "~/dotfiles/polybar/README.org"))
     (string-equal (buffer-file-name)
+      (expand-file-name "~/dotfiles/kmonad/README.org"))
+    (string-equal (buffer-file-name)
       (expand-file-name "~/dotfiles/emacs/local.org")))
   ;; Dynamic scoping to the rescue
   (let ((org-confirm-babel-evaluate nil))

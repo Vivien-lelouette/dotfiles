@@ -28,3 +28,4 @@ emacs/.emacs.d/amx-items
 /emacs/.emacs.d/undo-fu-session/
 /emacs/.emacs.d/eln-cache/
 /fonts/.local/share/fonts/*/.uuid
+/kmonad/.config/kmonad/*.kbd

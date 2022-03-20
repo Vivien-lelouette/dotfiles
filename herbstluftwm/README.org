@@ -261,7 +261,8 @@ Keep tracks of the last focused timestamp for every window.
 
 *** Keyboard layout
 #+BEGIN_SRC shell
-  setxkbmap -layout us -option 'compose:rctrl' -option 'caps:ctrl_modifier'
+  sudo sh ~/.config/kmonad/kmonad-generate-and-start.sh
+  setxkbmap -layout us -option 'compose:rctrl'
 #+END_SRC
 
 *** Gnome flashback
