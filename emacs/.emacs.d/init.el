@@ -458,7 +458,12 @@
    lsp-log-io nil
    lsp-headerline-breadcrumb-enable nil
    lsp-eldoc-render-all t
-   lsp-eslint-auto-fix-on-save t))
+   lsp-eslint-auto-fix-on-save t)
+  (defun lsp--eslint-before-save (orig-fun)  
+    "Run lsp-eslint-apply-all-fixes and then run the original lsp--before-save."  
+    (when lsp-eslint-auto-fix-on-save (lsp-eslint-fix-all))  
+    (funcall orig-fun))
+  (advice-add 'lsp--before-save :around #'lsp--eslint-before-save))
 
 (use-package dap-mode
   :straight (dap-mode :type git :host github :repo "emacs-lsp/dap-mode"))

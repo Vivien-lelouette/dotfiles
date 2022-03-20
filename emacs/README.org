@@ -602,7 +602,12 @@ One can use (global-hl-line-mode 1) to highlight the current line.
      lsp-log-io nil
      lsp-headerline-breadcrumb-enable nil
      lsp-eldoc-render-all t
-     lsp-eslint-auto-fix-on-save t))
+     lsp-eslint-auto-fix-on-save t)
+    (defun lsp--eslint-before-save (orig-fun)  
+      "Run lsp-eslint-apply-all-fixes and then run the original lsp--before-save."  
+      (when lsp-eslint-auto-fix-on-save (lsp-eslint-fix-all))  
+      (funcall orig-fun))
+    (advice-add 'lsp--before-save :around #'lsp--eslint-before-save))
  #+END_SRC
 
 ** Dap-mode
