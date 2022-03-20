@@ -191,7 +191,8 @@ for monitor in $(herbstclient list_monitors | cut -d: -f1) ; do
     herbstclient pad $monitor 22 &
 done
 
-sudo sh ~/.config/kmonad/kmonad-generate-and-start.sh
+#not yet working
+#sudo sh ~/.config/kmonad/kmonad-generate-and-start.sh
 setxkbmap -layout us -option 'compose:rctrl'
 
 gsettings set org.gnome.gnome-flashback.desktop.icons show-home false
