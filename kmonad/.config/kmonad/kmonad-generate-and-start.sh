@@ -11,7 +11,7 @@ keyboardSetup() {
   )" >> "$FILE"
 
   echo "(defalias
-    cspc (tap-next-release spc lctrl)
+    cspc (tap-hold-next-release 150 spc lctrl)
   )" >> "$FILE"
 
   echo "(deflayer name

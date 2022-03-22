@@ -186,6 +186,7 @@ Mapping escape as cancel.
   (tool-bar-mode -1)
   (tooltip-mode -1)
   (menu-bar-mode -1)
+#+END_SRC
 
   (setq window-divider-default-right-width 20
         window-divider-default-bottom-width 20)
@@ -196,7 +197,7 @@ Mapping escape as cancel.
    '((right-divider-width . 20)
      (bottom-divider-width . 20)
      (internal-border-width . 20)))
-#+END_SRC
+
 
 ** Font
 #+BEGIN_SRC emacs-lisp
@@ -232,9 +233,17 @@ Mapping escape as cancel.
     :after all-the-icons)
 #+END_SRC
 
+*** Treemacs
+#+BEGIN_SRC emacs-lisp
+  (use-package treemacs-all-the-icons
+    :after all-the-icons
+    :config
+    (treemacs-load-theme "all-the-icons"))
+#+END_SRC
+
 ** Theme
 One can use (global-hl-line-mode 1) to highlight the current line.
-#+BEGIN_SRC emacs-lisp :tangle .emacs.d/init.el
+
   (use-package doom-themes
      :custom-face
      (org-block ((t (:background "#272C36"))))
@@ -261,7 +270,7 @@ One can use (global-hl-line-mode 1) to highlight the current line.
   (add-hook 'treemacs-mode-hook #'darken-buffer)
   (add-hook 'help-mode-hook #'darken-buffer)
   (add-hook 'helpful-mode-hook #'darken-buffer)
-#+END_SRC
+
 
 ** Doom modeline
 #+BEGIN_SRC emacs-lisp
@@ -274,9 +283,9 @@ One can use (global-hl-line-mode 1) to highlight the current line.
 #+BEGIN_SRC emacs-lisp
   (use-package olivetti
     :config
-    (setq olivetti-margin-width 160
-          olivetti-minimum-body-width 160
-          olivetti-body-width 160))
+    (setq olivetti-margin-width 120
+          olivetti-minimum-body-width 120
+          olivetti-body-width 120))
 #+END_SRC
 
 * Search & completion
@@ -554,6 +563,8 @@ One can use (global-hl-line-mode 1) to highlight the current line.
                    '(and (eq (char-before) ?\s) (looking-at-p "$")))
       (add-to-list 'aggressive-indent-dont-indent-if
                    '(minibufferp))
+      (add-to-list 'aggressive-indent-excluded-modes 'yaml-mode)
+      (add-to-list 'aggressive-indent-excluded-modes 'eshell-mode)
       (global-aggressive-indent-mode 1))
 #+end_src
 
