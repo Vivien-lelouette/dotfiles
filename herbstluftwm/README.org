@@ -55,12 +55,14 @@ Keep tracks of the last focused timestamp for every window.
 ** Theme
 *** Colors
 #+BEGIN_SRC shell
-  export FG_COLOR='#d8dee9'
-  export FG_ALT_COLOR='#93979f'
-  export BG_COLOR='#2e3440'
-  export BG_ALT_COLOR='#242832'
-  export FOCUS_COLOR='#8fbcbb'
-  export ALERT_COLOR='#b48ead'
+  source ~/.colors
+
+  export FG_COLOR=$foreground
+  export FG_ALT_COLOR=$foregroung_alt
+  export BG_COLOR=$background
+  export BG_ALT_COLOR=$background_alt
+  export FOCUS_COLOR=$highlight
+  export ALERT_COLOR=$alert
 #+END_SRC
 
 *** Theme

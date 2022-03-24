@@ -12,9 +12,11 @@ background=#272C36
 background_alt=#2e3440
 foreground=#d8dee9
 foreground_alt=#93979f
-primary=#8fbcbb
-secondary=#80a1c0
+highlight=#8fbcbb
+selected=#80a1c0
 alert=#b48ead
+
+source ~/.colors
 
 herbstclient --idle "tag_*" 2>/dev/null | {
 
@@ -36,11 +38,11 @@ herbstclient --idle "tag_*" 2>/dev/null | {
                         ;;
                     '+')
                         # the tag is viewed on the specified MONITOR, but this monitor is not focused.
-                        echo "%{F${background}}%{B${primary}}"
+                        echo "%{F${background}}%{B${highlight}}"
                         ;;
                     '#')
                         # the tag is viewed on the specified MONITOR and it is focused.
-                        echo "%{F${background}}%{B${primary}}"
+                        echo "%{F${background}}%{B${highlight}}"
                         ;;
                     '-')
                         # the tag is viewed on a different MONITOR, but this monitor is not focused.

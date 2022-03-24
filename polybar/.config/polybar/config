@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 [colors]
-background=#272C36
-background_alt=#2e3440
-foreground=#d8dee9
-foreground_alt=#93979f
-primary=#8fbcbb
-secondary=#80a1c0
-alert=#b48ead
+background = ${env:BACKGROUND}
+background_alt = ${env:BACKGROUND_ALT}
+foreground = ${env:FOREGROUND}
+foreground_alt = ${env:FOREGROUND_ALT}
+highlight = ${env:HIGHLIGHT}
+selected = ${env:SELECTED}
+alert = ${env:ALERT}
 
 [bar/hlwm]
 monitor = ${env:MONITOR}
@@ -72,15 +72,15 @@ blacklist-0 = num lock
 
 format-prefix = "%{A1:gnome-control-center keyboard &:}%{A3:gnome-control-center region &:}%{A}%{A}  "
 format-prefix-foreground = ${colors.foreground}
-format-prefix-underline = ${colors.secondary}
+format-prefix-underline = ${colors.selected}
 
 label-layout = %layout%
-label-layout-underline = ${colors.secondary}
+label-layout-underline = ${colors.selected}
 
 label-indicator-padding = 0
 label-indicator-margin = 0
-label-indicator-background = ${colors.secondary}
-label-indicator-underline = ${colors.secondary}
+label-indicator-background = ${colors.selected}
+label-indicator-underline = ${colors.selected}
 
 [module/filesystem]
 type = internal/fs
@@ -163,12 +163,12 @@ label-muted = %{A3:gnome-control-center sound &:}%{A}   %percentage%%
 label-muted-foreground = #666
 
 bar-volume-width = 8
-bar-volume-foreground-0 = ${colors.secondary}
-bar-volume-foreground-1 = ${colors.secondary}
-bar-volume-foreground-2 = ${colors.secondary}
-bar-volume-foreground-3 = ${colors.secondary}
-bar-volume-foreground-4 = ${colors.secondary}
-bar-volume-foreground-5 = ${colors.primary}
+bar-volume-foreground-0 = ${colors.selected}
+bar-volume-foreground-1 = ${colors.selected}
+bar-volume-foreground-2 = ${colors.selected}
+bar-volume-foreground-3 = ${colors.selected}
+bar-volume-foreground-4 = ${colors.selected}
+bar-volume-foreground-5 = ${colors.highlight}
 bar-volume-foreground-6 = ${colors.alert}
 bar-volume-gradient = false
 bar-volume-indicator = 
@@ -199,7 +199,7 @@ format-full-underline = ${self.format-charging-underline}
 ramp-capacity-0 = "%{A1:bash ~/.config/herbstluftwm/scripts/power_menu.sh &:}%{A3:gnome-control-center power &:}%{A}%{A} "
 ramp-capacity-0-foreground = ${colors.alert}
 ramp-capacity-1 = "%{A1:bash ~/.config/herbstluftwm/scripts/power_menu.sh &:}%{A3:gnome-control-center power &:}%{A}%{A}  "
-ramp-capacity-1-foreground = ${colors.secondary}
+ramp-capacity-1-foreground = ${colors.selected}
 ramp-capacity-2 = "%{A1:bash ~/.config/herbstluftwm/scripts/power_menu.sh &:}%{A3:gnome-control-center power &:}%{A}%{A}  "
 ramp-capacity-3 = "%{A1:bash ~/.config/herbstluftwm/scripts/power_menu.sh &:}%{A3:gnome-control-center power &:}%{A}%{A}  "
 ramp-capacity-foreground = ${colors.foreground}
@@ -233,7 +233,7 @@ format-warn-underline = ${self.format-underline}
 
 label = %temperature-c%
 label-warn = %temperature-c%
-label-warn-foreground = ${colors.secondary}
+label-warn-foreground = ${colors.selected}
 
 ramp-0 = 
 ramp-1 = 
@@ -248,9 +248,9 @@ expand-right = true
 format-spacing = 1
 
 label-open = 
-label-open-foreground = ${colors.secondary}
+label-open-foreground = ${colors.selected}
 label-close =  cancel
-label-close-foreground = ${colors.secondary}
+label-close-foreground = ${colors.selected}
 label-separator = |
 label-separator-foreground = ${colors.foreground_alt}
 

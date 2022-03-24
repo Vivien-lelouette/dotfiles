@@ -124,13 +124,13 @@
 (tooltip-mode -1)
 (menu-bar-mode -1)
 
-(set-face-attribute 'default nil :font "SauceCodePro NF" :height 100)
+(set-face-attribute 'default nil :font "SauceCodePro NF" :height 110)
 
 ;; Set the fixed pitch face
-(set-face-attribute 'fixed-pitch nil :font "SauceCodePro NF" :height 100)
+(set-face-attribute 'fixed-pitch nil :font "SauceCodePro NF" :height 110)
 
 ;; Set the variable pitch face
-(set-face-attribute 'variable-pitch nil :font "Cantarell" :height 100 :weight 'regular)
+(set-face-attribute 'variable-pitch nil :font "Cantarell" :height 110 :weight 'regular)
 
 (use-package mixed-pitch
   :hook
@@ -150,6 +150,129 @@
   :after all-the-icons
   :config
   (treemacs-load-theme "all-the-icons"))
+
+(defun generate-colors-file ()
+  "Function to generate my colors file."
+  (interactive)
+  (delete-file "~/.colors")
+  (append-to-file
+   (concat
+    "background="
+    (face-background 'default)
+
+    "\nbackground_alt="
+    (face-background 'Info-quoted)
+
+    "\nforeground="
+    (face-foreground 'default)
+
+    "\nforeground_alt="
+    (face-foreground 'diff-context)
+
+    "\nselected="
+    (face-background 'region)
+
+    "\nhighlight="
+    (face-background 'cursor)
+
+    "\nalert="
+    (face-background 'trailing-whitespace)
+
+    "\n"
+    )
+
+   nil
+
+   "~/.colors"
+   )
+  )
+
+(defun custom/load-theme ()
+  "Load a theme, generate my colors file and refresh my window manager."
+  (interactive)
+  (call-interactively 'load-theme)
+  (generate-colors-file)
+  (async-shell-command "herbstclient reload")
+  )
+
+(use-package doom-themes
+  ;:custom-face
+  ; (org-block ((t (:background "#272C36"))))
+  ; (org-block-begin-line ((t (:background "#272C36"))))
+  ; (org-block-end-line ((t (:background "#272C36"))))
+  ; (window-divider ((t (:foreground "#2e3440"))))
+  ; (window-divider-first-pixel ((t (:foreground "#2e3440"))))
+  ; (window-divider-last-pixel ((t (:foreground "#2e3440"))))
+  ; (hl-line ((t (:background "#434C5E"))))
+  ; :hook (server-after-make-frame . (lambda () (load-theme
+  ;                                            'doom-nord t)))
+   :config
+   (doom-themes-treemacs-config)
+   (defun doom-themes-hide-modeline ())
+   (doom-themes-org-config))
+
+
+;(defun darken-buffer ()
+;  (setq buffer-face-mode-face `(:background "#272C36"))
+;  (face-remap-add-relative 'hl-line `(:background "#2e3440"))
+;  (face-remap-add-relative 'fringe `(:background "#272C36"))
+;  (buffer-face-mode 1))
+
+;(add-hook 'treemacs-mode-hook #'darken-buffer)
+;(add-hook 'help-mode-hook #'darken-buffer)
+;(add-hook 'helpful-mode-hook #'darken-buffer)
+
+(use-package ligature
+  :straight (ligature :type git :host github :repo "mickeynp/ligature.el")
+  :config
+  (ligature-set-ligatures 'prog-mode '("www" "**" "***" "**/" "*>" "*/" "\\\\" "\\\\\\" "{-" "::"
+                                       ":::" ":=" "!!" "!=" "!==" "-}" "----" "-->" "->" "->>"
+                                       "-<" "-<<" "-~" "#{" "#[" "##" "###" "####" "#(" "#?" "#_"
+                                       "#_(" ".-" ".=" ".." "..<" "..." "?=" "??" ";;" "/*" "/**"
+                                       "/=" "/==" "/>" "//" "///" "&&" "||" "||=" "|=" "|>" "^=" "$>"
+                                       "++" "+++" "+>" "=:=" "==" "===" "==>" "=>" "=>>" "<="
+                                       "=<<" "=/=" ">-" ">=" ">=>" ">>" ">>-" ">>=" ">>>" "<*"
+                                       "<*>" "<|" "<|>" "<$" "<$>" "<!--" "<-" "<--" "<->" "<+"
+                                       "<+>" "<=" "<==" "<=>" "<=<" "<>" "<<" "<<-" "<<=" "<<<"
+                                       "<~" "<~~" "</" "</>" "~@" "~-" "~>" "~~" "~~>" "%%"))
+  ;; Enables ligature checks globally in all buffers. You can also do it
+  ;; per mode with `ligature-mode'.
+  (global-ligature-mode 0))
+
+(add-hook 'server-after-make-frame (lambda () 
+        (set-face-attribute 'font-lock-keyword-face nil :weight 'ultra-bold)
+        (set-face-attribute 'font-lock-comment-face nil :slant 'italic :weight 'semi-light)
+        (set-face-attribute 'font-lock-function-name-face nil :slant 'italic :weight 'semi-bold)
+        (set-face-attribute 'font-lock-string-face nil :weight 'light)
+        (set-face-attribeute 'font-lock-variable-name-face nil :slant 'italic)))
+
+
+(use-package prism
+  :hook
+  (js-mode . prism-mode)
+  :config
+  (setq prism-num-faces 16)
+
+  (prism-set-colors
+    :desaturations '(0) ; do not change---may lower the contrast ratio
+    :lightens '(0)      ; same
+    :colors (modus-themes-with-colors
+              (list fg-main
+                    magenta
+                    cyan-alt-other
+                    magenta-alt-other
+                    blue
+                    magenta-alt
+                    cyan-alt
+                    red-alt-other
+                    green
+                    fg-main
+                    cyan
+                    yellow
+                    blue-alt
+                    red-alt
+                    green-alt-other
+                    fg-special-warm))))
 
 (use-package doom-modeline
   :init
