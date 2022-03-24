@@ -37,6 +37,9 @@
 
 (use-package no-littering)
 
+(setq global-auto-revert-non-file-buffers t)
+(global-auto-revert-mode 1)
+
 (setq indent-tabs-mode nil)
 (setq indent-line-function 'insert-tab)
 (setq-default indent-tabs-mode nil)
@@ -151,6 +154,14 @@
   :config
   (treemacs-load-theme "all-the-icons"))
 
+(defun custom/codding-faces ()
+  (interactive)
+  (set-face-attribute 'font-lock-keyword-face nil :weight 'ultra-bold)
+  (set-face-attribute 'font-lock-comment-face nil :slant 'italic :weight 'semi-light)
+  (set-face-attribute 'font-lock-function-name-face nil :slant 'italic :weight 'semi-bold)
+  (set-face-attribute 'font-lock-string-face nil :weight 'light)
+  (set-face-attribeute 'font-lock-variable-name-face nil :slant 'italic))
+
 (defun generate-colors-file ()
   "Function to generate my colors file."
   (interactive)
@@ -193,6 +204,7 @@
   (call-interactively 'load-theme)
   (generate-colors-file)
   (async-shell-command "herbstclient reload")
+  (custom/codding-facesx)
   )
 
 (use-package doom-themes
@@ -239,13 +251,7 @@
   ;; per mode with `ligature-mode'.
   (global-ligature-mode 0))
 
-(add-hook 'server-after-make-frame (lambda () 
-        (set-face-attribute 'font-lock-keyword-face nil :weight 'ultra-bold)
-        (set-face-attribute 'font-lock-comment-face nil :slant 'italic :weight 'semi-light)
-        (set-face-attribute 'font-lock-function-name-face nil :slant 'italic :weight 'semi-bold)
-        (set-face-attribute 'font-lock-string-face nil :weight 'light)
-        (set-face-attribeute 'font-lock-variable-name-face nil :slant 'italic)))
-
+(add-hook 'server-after-make-frame #'custom/codding-faces)
 
 (use-package prism
   :hook

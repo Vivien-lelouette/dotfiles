@@ -70,6 +70,11 @@ Mapping escape as cancel.
   
   (use-package no-littering)
 #+END_SRC
+** Auto revert buffer
+#+BEGIN_SRC emacs-lisp
+(setq global-auto-revert-non-file-buffers t)
+(global-auto-revert-mode 1)
+#+END_SRC
 
 ** Indentation
 #+BEGIN_SRC emacs-lisp
@@ -246,6 +251,14 @@ Mapping escape as cancel.
 The following functions allow me to change my emacs theme and have my topbar and search application using emacs colors.
 
 #+BEGIN_SRC emacs-lisp
+  (defun custom/codding-faces ()
+    (interactive)
+    (set-face-attribute 'font-lock-keyword-face nil :weight 'ultra-bold)
+    (set-face-attribute 'font-lock-comment-face nil :slant 'italic :weight 'semi-light)
+    (set-face-attribute 'font-lock-function-name-face nil :slant 'italic :weight 'semi-bold)
+    (set-face-attribute 'font-lock-string-face nil :weight 'light)
+    (set-face-attribeute 'font-lock-variable-name-face nil :slant 'italic))
+
   (defun generate-colors-file ()
     "Function to generate my colors file."
     (interactive)
@@ -254,7 +267,7 @@ The following functions allow me to change my emacs theme and have my topbar and
      (concat
       "background="
       (face-background 'default)
-    
+
       "\nbackground_alt="
       (face-background 'Info-quoted)
 
@@ -288,6 +301,7 @@ The following functions allow me to change my emacs theme and have my topbar and
     (call-interactively 'load-theme)
     (generate-colors-file)
     (async-shell-command "herbstclient reload")
+    (custom/codding-facesx)
     )
 #+END_SRC
 
@@ -337,13 +351,7 @@ One can use (global-hl-line-mode 1) to highlight the current line.
           ;; per mode with `ligature-mode'.
           (global-ligature-mode 0))
 
-        (add-hook 'server-after-make-frame (lambda () 
-                (set-face-attribute 'font-lock-keyword-face nil :weight 'ultra-bold)
-                (set-face-attribute 'font-lock-comment-face nil :slant 'italic :weight 'semi-light)
-                (set-face-attribute 'font-lock-function-name-face nil :slant 'italic :weight 'semi-bold)
-                (set-face-attribute 'font-lock-string-face nil :weight 'light)
-                (set-face-attribeute 'font-lock-variable-name-face nil :slant 'italic)))
-
+        (add-hook 'server-after-make-frame #'custom/codding-faces)
 
         (use-package prism
           :hook
