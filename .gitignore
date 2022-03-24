@@ -30,3 +30,4 @@ emacs/.emacs.d/amx-items
 /fonts/.local/share/fonts/*/.uuid
 /kmonad/.config/kmonad/*.kbd
 /kmonad/.config/kmonad/split-keyboard/
+/rofi/.config/rofi/themes/
