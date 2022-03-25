@@ -361,8 +361,6 @@ One can use (global-hl-line-mode 1) to highlight the current line.
               (add-hook 'prog-mode-hook #'custom/coding-faces)
 
               (use-package prism
-                :hook
-                (js-mode . prism-mode)
                 :config
                 (setq prism-num-faces 16)
 

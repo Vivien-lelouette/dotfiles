@@ -257,8 +257,6 @@
 (add-hook 'prog-mode-hook #'custom/coding-faces)
 
 (use-package prism
-  :hook
-  (js-mode . prism-mode)
   :config
   (setq prism-num-faces 16)
 
