@@ -251,7 +251,7 @@ Mapping escape as cancel.
 The following functions allow me to change my emacs theme and have my topbar and search application using emacs colors.
 
 #+BEGIN_SRC emacs-lisp
-  (defun custom/codding-faces ()
+  (defun custom/coding-faces ()
     (interactive)
     (set-face-attribute 'font-lock-keyword-face nil :weight 'ultra-bold)
     (set-face-attribute 'font-lock-comment-face nil :slant 'italic :weight 'semi-light)
@@ -301,7 +301,7 @@ The following functions allow me to change my emacs theme and have my topbar and
     (call-interactively 'load-theme)
     (generate-colors-file)
     (call-process-shell-command "herbstclient reload &" nil 0)
-    (custom/codding-facesx)
+    (custom/coding-faces)
     )
 #+END_SRC
 
@@ -351,7 +351,7 @@ One can use (global-hl-line-mode 1) to highlight the current line.
           ;; per mode with `ligature-mode'.
           (global-ligature-mode 0))
 
-        (add-hook 'server-after-make-frame #'custom/codding-faces)
+        (add-hook 'prog-mode-hook #'custom/coding-faces)
 
         (use-package prism
           :hook

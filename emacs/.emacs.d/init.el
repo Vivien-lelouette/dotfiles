@@ -154,7 +154,7 @@
   :config
   (treemacs-load-theme "all-the-icons"))
 
-(defun custom/codding-faces ()
+(defun custom/coding-faces ()
   (interactive)
   (set-face-attribute 'font-lock-keyword-face nil :weight 'ultra-bold)
   (set-face-attribute 'font-lock-comment-face nil :slant 'italic :weight 'semi-light)
@@ -204,7 +204,7 @@
   (call-interactively 'load-theme)
   (generate-colors-file)
   (call-process-shell-command "herbstclient reload &" nil 0)
-  (custom/codding-facesx)
+  (custom/coding-faces)
   )
 
 (use-package doom-themes
@@ -251,7 +251,7 @@
   ;; per mode with `ligature-mode'.
   (global-ligature-mode 0))
 
-(add-hook 'server-after-make-frame #'custom/codding-faces)
+(add-hook 'prog-mode-hook #'custom/coding-faces)
 
 (use-package prism
   :hook
