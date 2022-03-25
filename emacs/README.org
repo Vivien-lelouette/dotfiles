@@ -300,7 +300,7 @@ The following functions allow me to change my emacs theme and have my topbar and
     (interactive)
     (call-interactively 'load-theme)
     (generate-colors-file)
-    (async-shell-command "herbstclient reload")
+    (call-process-shell-command "herbstclient reload &" nil 0)
     (custom/codding-facesx)
     )
 #+END_SRC

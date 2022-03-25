@@ -203,7 +203,7 @@
   (interactive)
   (call-interactively 'load-theme)
   (generate-colors-file)
-  (async-shell-command "herbstclient reload")
+  (call-process-shell-command "herbstclient reload &" nil 0)
   (custom/codding-facesx)
   )
 
