@@ -160,7 +160,7 @@
   (set-face-attribute 'font-lock-comment-face nil :slant 'italic :weight 'semi-light)
   (set-face-attribute 'font-lock-function-name-face nil :slant 'italic :weight 'semi-bold)
   (set-face-attribute 'font-lock-string-face nil :weight 'light)
-  (set-face-attribeute 'font-lock-variable-name-face nil :slant 'italic))
+  (set-face-attribute 'font-lock-variable-name-face nil :slant 'italic))
 
 (defun generate-colors-file ()
   "Function to generate my colors file."
@@ -198,14 +198,17 @@
    )
   )
 
+(use-package theme-magic)
+
 (defun custom/load-theme ()
-  "Load a theme, generate my colors file and refresh my window manager."
-  (interactive)
-  (call-interactively 'load-theme)
-  (generate-colors-file)
-  (call-process-shell-command "herbstclient reload &" nil 0)
-  (custom/coding-faces)
-  )
+    "Load a theme, generate my colors file and refresh my window manager."
+    (interactive)
+    (call-interactively 'load-theme)
+    (generate-colors-file)
+    (theme-magic-from-emacs)
+    (call-process-shell-command "wpg -i .wallpaper ~/.cache/wal/colors.json && wpg -s .wallpaper && herbstclient reload &" nil 0)
+    (custom/coding-faces)
+    )
 
 (use-package doom-themes
   ;:custom-face
@@ -296,11 +299,11 @@
   :config
   (setq which-key-idle-delay 1))
 
-(use-package vertico
-  :straight (vertico :type git :host github :repo "minad/vertico")
+(use-package mct
   :config
-  (setq vertico-cycle t)
-  (vertico-mode))
+  (setq mct-hide-completion-mode-line t)
+  (mct-mode)
+  (mct-region-mode))
 
 (use-package embark
   :straight t
@@ -403,7 +406,7 @@
 
   ;; Optionally configure the narrowing key.
   ;; Both < and C-+ work reasonably well.
-  (setq consult-narrow-key "<") ;; (kbd "C-+")
+  (setq consult-narrow-key "<")) ;; (kbd "C-+")
 
   ;; Optionally make narrowing help available in the minibuffer.
   ;; You may want to use `embark-prefix-help-command' or which-key instead.
@@ -421,12 +424,12 @@
   ;; (setq consult-project-function (lambda (_) (vc-root-dir)))
   ;;;; 4. locate-dominating-file
   ;; (setq consult-project-function (lambda (_) (locate-dominating-file "." ".git")))
-  (setq completion-in-region-function
-    (lambda (&rest args)
-      (apply (if vertico-mode
-                 #'consult-completion-in-region
-               #'completion--in-region)
-             args))))
+  ;;(setq completion-in-region-function
+  ;;  (lambda (&rest args)
+  ;;    (apply (if vertico-mode
+  ;;               #'consult-completion-in-region
+  ;;             #'completion--in-region)
+  ;;           args))))
 
 (use-package orderless
   :init

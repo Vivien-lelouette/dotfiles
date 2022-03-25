@@ -257,7 +257,7 @@ The following functions allow me to change my emacs theme and have my topbar and
     (set-face-attribute 'font-lock-comment-face nil :slant 'italic :weight 'semi-light)
     (set-face-attribute 'font-lock-function-name-face nil :slant 'italic :weight 'semi-bold)
     (set-face-attribute 'font-lock-string-face nil :weight 'light)
-    (set-face-attribeute 'font-lock-variable-name-face nil :slant 'italic))
+    (set-face-attribute 'font-lock-variable-name-face nil :slant 'italic))
 
   (defun generate-colors-file ()
     "Function to generate my colors file."
@@ -294,91 +294,98 @@ The following functions allow me to change my emacs theme and have my topbar and
      "~/.colors"
      )
     )
+#+END_SRC
+
+The following allows emacs to interact with Pywal and wpgtk to generate a theme based on the Emacs one for the rest of my system.
+After installing both tools, you just need to execute the command: `wpg-install.sh -Iig` and select the FlatColors gnome theme.
+#+BEGIN_SRC emacs-lisp
+  (use-package theme-magic)
 
   (defun custom/load-theme ()
-    "Load a theme, generate my colors file and refresh my window manager."
-    (interactive)
-    (call-interactively 'load-theme)
-    (generate-colors-file)
-    (call-process-shell-command "herbstclient reload &" nil 0)
-    (custom/coding-faces)
-    )
+      "Load a theme, generate my colors file and refresh my window manager."
+      (interactive)
+      (call-interactively 'load-theme)
+      (generate-colors-file)
+      (theme-magic-from-emacs)
+      (call-process-shell-command "wpg -i .wallpaper ~/.cache/wal/colors.json && wpg -s .wallpaper && herbstclient reload &" nil 0)
+      (custom/coding-faces)
+      )
 #+END_SRC
 
 One can use (global-hl-line-mode 1) to highlight the current line.
-      #+BEGIN_SRC emacs-lisp
-        (use-package doom-themes
-          ;:custom-face
-          ; (org-block ((t (:background "#272C36"))))
-          ; (org-block-begin-line ((t (:background "#272C36"))))
-          ; (org-block-end-line ((t (:background "#272C36"))))
-          ; (window-divider ((t (:foreground "#2e3440"))))
-          ; (window-divider-first-pixel ((t (:foreground "#2e3440"))))
-          ; (window-divider-last-pixel ((t (:foreground "#2e3440"))))
-          ; (hl-line ((t (:background "#434C5E"))))
-          ; :hook (server-after-make-frame . (lambda () (load-theme
-          ;                                            'doom-nord t)))
-           :config
-           (doom-themes-treemacs-config)
-           (defun doom-themes-hide-modeline ())
-           (doom-themes-org-config))
+            #+BEGIN_SRC emacs-lisp
+              (use-package doom-themes
+                ;:custom-face
+                ; (org-block ((t (:background "#272C36"))))
+                ; (org-block-begin-line ((t (:background "#272C36"))))
+                ; (org-block-end-line ((t (:background "#272C36"))))
+                ; (window-divider ((t (:foreground "#2e3440"))))
+                ; (window-divider-first-pixel ((t (:foreground "#2e3440"))))
+                ; (window-divider-last-pixel ((t (:foreground "#2e3440"))))
+                ; (hl-line ((t (:background "#434C5E"))))
+                ; :hook (server-after-make-frame . (lambda () (load-theme
+                ;                                            'doom-nord t)))
+                 :config
+                 (doom-themes-treemacs-config)
+                 (defun doom-themes-hide-modeline ())
+                 (doom-themes-org-config))
 
 
-        ;(defun darken-buffer ()
-        ;  (setq buffer-face-mode-face `(:background "#272C36"))
-        ;  (face-remap-add-relative 'hl-line `(:background "#2e3440"))
-        ;  (face-remap-add-relative 'fringe `(:background "#272C36"))
-        ;  (buffer-face-mode 1))
+              ;(defun darken-buffer ()
+              ;  (setq buffer-face-mode-face `(:background "#272C36"))
+              ;  (face-remap-add-relative 'hl-line `(:background "#2e3440"))
+              ;  (face-remap-add-relative 'fringe `(:background "#272C36"))
+              ;  (buffer-face-mode 1))
 
-        ;(add-hook 'treemacs-mode-hook #'darken-buffer)
-        ;(add-hook 'help-mode-hook #'darken-buffer)
-        ;(add-hook 'helpful-mode-hook #'darken-buffer)
+              ;(add-hook 'treemacs-mode-hook #'darken-buffer)
+              ;(add-hook 'help-mode-hook #'darken-buffer)
+              ;(add-hook 'helpful-mode-hook #'darken-buffer)
 
-        (use-package ligature
-          :straight (ligature :type git :host github :repo "mickeynp/ligature.el")
-          :config
-          (ligature-set-ligatures 'prog-mode '("www" "**" "***" "**/" "*>" "*/" "\\\\" "\\\\\\" "{-" "::"
-                                               ":::" ":=" "!!" "!=" "!==" "-}" "----" "-->" "->" "->>"
-                                               "-<" "-<<" "-~" "#{" "#[" "##" "###" "####" "#(" "#?" "#_"
-                                               "#_(" ".-" ".=" ".." "..<" "..." "?=" "??" ";;" "/*" "/**"
-                                               "/=" "/==" "/>" "//" "///" "&&" "||" "||=" "|=" "|>" "^=" "$>"
-                                               "++" "+++" "+>" "=:=" "==" "===" "==>" "=>" "=>>" "<="
-                                               "=<<" "=/=" ">-" ">=" ">=>" ">>" ">>-" ">>=" ">>>" "<*"
-                                               "<*>" "<|" "<|>" "<$" "<$>" "<!--" "<-" "<--" "<->" "<+"
-                                               "<+>" "<=" "<==" "<=>" "<=<" "<>" "<<" "<<-" "<<=" "<<<"
-                                               "<~" "<~~" "</" "</>" "~@" "~-" "~>" "~~" "~~>" "%%"))
-          ;; Enables ligature checks globally in all buffers. You can also do it
-          ;; per mode with `ligature-mode'.
-          (global-ligature-mode 0))
+              (use-package ligature
+                :straight (ligature :type git :host github :repo "mickeynp/ligature.el")
+                :config
+                (ligature-set-ligatures 'prog-mode '("www" "**" "***" "**/" "*>" "*/" "\\\\" "\\\\\\" "{-" "::"
+                                                     ":::" ":=" "!!" "!=" "!==" "-}" "----" "-->" "->" "->>"
+                                                     "-<" "-<<" "-~" "#{" "#[" "##" "###" "####" "#(" "#?" "#_"
+                                                     "#_(" ".-" ".=" ".." "..<" "..." "?=" "??" ";;" "/*" "/**"
+                                                     "/=" "/==" "/>" "//" "///" "&&" "||" "||=" "|=" "|>" "^=" "$>"
+                                                     "++" "+++" "+>" "=:=" "==" "===" "==>" "=>" "=>>" "<="
+                                                     "=<<" "=/=" ">-" ">=" ">=>" ">>" ">>-" ">>=" ">>>" "<*"
+                                                     "<*>" "<|" "<|>" "<$" "<$>" "<!--" "<-" "<--" "<->" "<+"
+                                                     "<+>" "<=" "<==" "<=>" "<=<" "<>" "<<" "<<-" "<<=" "<<<"
+                                                     "<~" "<~~" "</" "</>" "~@" "~-" "~>" "~~" "~~>" "%%"))
+                ;; Enables ligature checks globally in all buffers. You can also do it
+                ;; per mode with `ligature-mode'.
+                (global-ligature-mode 0))
 
-        (add-hook 'prog-mode-hook #'custom/coding-faces)
+              (add-hook 'prog-mode-hook #'custom/coding-faces)
 
-        (use-package prism
-          :hook
-          (js-mode . prism-mode)
-          :config
-          (setq prism-num-faces 16)
+              (use-package prism
+                :hook
+                (js-mode . prism-mode)
+                :config
+                (setq prism-num-faces 16)
 
-          (prism-set-colors
-            :desaturations '(0) ; do not change---may lower the contrast ratio
-            :lightens '(0)      ; same
-            :colors (modus-themes-with-colors
-                      (list fg-main
-                            magenta
-                            cyan-alt-other
-                            magenta-alt-other
-                            blue
-                            magenta-alt
-                            cyan-alt
-                            red-alt-other
-                            green
-                            fg-main
-                            cyan
-                            yellow
-                            blue-alt
-                            red-alt
-                            green-alt-other
-                            fg-special-warm))))
+                (prism-set-colors
+                  :desaturations '(0) ; do not change---may lower the contrast ratio
+                  :lightens '(0)      ; same
+                  :colors (modus-themes-with-colors
+                            (list fg-main
+                                  magenta
+                                  cyan-alt-other
+                                  magenta-alt-other
+                                  blue
+                                  magenta-alt
+                                  cyan-alt
+                                  red-alt-other
+                                  green
+                                  fg-main
+                                  cyan
+                                  yellow
+                                  blue-alt
+                                  red-alt
+                                  green-alt-other
+                                  fg-special-warm))))
 #+END_SRC
 
 ** Doom modeline
@@ -407,13 +414,19 @@ One can use (global-hl-line-mode 1) to highlight the current line.
     (setq which-key-idle-delay 1))
 #+END_SRC
 
-** Vertico
-#+BEGIN_SRC emacs-lisp
+** Mct
+
   (use-package vertico
     :straight (vertico :type git :host github :repo "minad/vertico")
     :config
     (setq vertico-cycle t)
     (vertico-mode))
+#+BEGIN_SRC emacs-lisp
+  (use-package mct
+    :config
+    (setq mct-hide-completion-mode-line t)
+    (mct-mode)
+    (mct-region-mode))
 #+END_SRC
 
 ** Embark
@@ -525,7 +538,7 @@ One can use (global-hl-line-mode 1) to highlight the current line.
 
     ;; Optionally configure the narrowing key.
     ;; Both < and C-+ work reasonably well.
-    (setq consult-narrow-key "<") ;; (kbd "C-+")
+    (setq consult-narrow-key "<")) ;; (kbd "C-+")
 
     ;; Optionally make narrowing help available in the minibuffer.
     ;; You may want to use `embark-prefix-help-command' or which-key instead.
@@ -543,12 +556,12 @@ One can use (global-hl-line-mode 1) to highlight the current line.
     ;; (setq consult-project-function (lambda (_) (vc-root-dir)))
     ;;;; 4. locate-dominating-file
     ;; (setq consult-project-function (lambda (_) (locate-dominating-file "." ".git")))
-    (setq completion-in-region-function
-      (lambda (&rest args)
-        (apply (if vertico-mode
-                   #'consult-completion-in-region
-                 #'completion--in-region)
-               args))))
+    ;;(setq completion-in-region-function
+    ;;  (lambda (&rest args)
+    ;;    (apply (if vertico-mode
+    ;;               #'consult-completion-in-region
+    ;;             #'completion--in-region)
+    ;;           args))))
 #+END_SRC
 
 ** Orderless
