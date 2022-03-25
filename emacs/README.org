@@ -424,7 +424,9 @@ One can use (global-hl-line-mode 1) to highlight the current line.
 #+BEGIN_SRC emacs-lisp
   (use-package mct
     :config
-    (setq mct-hide-completion-mode-line t)
+    (setq
+     mct-hide-completion-mode-line t
+     mct-live-update-delay 0)
     (mct-mode)
     (mct-region-mode))
 #+END_SRC

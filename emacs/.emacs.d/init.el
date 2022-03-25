@@ -301,7 +301,9 @@
 
 (use-package mct
   :config
-  (setq mct-hide-completion-mode-line t)
+  (setq
+   mct-hide-completion-mode-line t
+   mct-live-update-delay 0)
   (mct-mode)
   (mct-region-mode))
 
