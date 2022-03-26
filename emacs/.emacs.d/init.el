@@ -206,7 +206,7 @@
     (call-interactively 'load-theme)
     (generate-colors-file)
     (theme-magic-from-emacs)
-    (call-process-shell-command "wpg -i .wallpaper ~/.cache/wal/colors.json && wpg -s .wallpaper && herbstclient reload &" nil 0)
+    (call-process-shell-command "herbstclient reload &" nil 0)
     (custom/coding-faces)
     )
 

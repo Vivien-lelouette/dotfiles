@@ -67,41 +67,45 @@ Keep tracks of the last focused timestamp for every window.
 
 *** Theme
 #+BEGIN_SRC shell
-  xsetroot -solid "$BG_COLOR"
+   herbstclient attr theme.tiling.reset 1
+   herbstclient attr theme.floating.reset 1
+   herbstclient set frame_border_active_color "$FOCUS_COLOR"
+   herbstclient set frame_border_normal_color "$BG_ALT_COLOR"
+   herbstclient set frame_bg_normal_color "$BG_COLOR"
+   herbstclient set frame_bg_active_color "$BG_ALT_COLOR"
+   herbstclient set frame_border_width 1
+   herbstclient set always_show_frame on
+   herbstclient set frame_bg_transparent on
+   herbstclient set frame_transparent_width 5
+   herbstclient set frame_gap 0
 
-  herbstclient attr theme.tiling.reset 1
-  herbstclient attr theme.floating.reset 1
-  herbstclient set frame_border_active_color "$FOCUS_COLOR"
-  herbstclient set frame_border_normal_color "$BG_ALT_COLOR"
-  herbstclient set frame_bg_normal_color "$BG_COLOR"
-  herbstclient set frame_bg_active_color "$BG_ALT_COLOR"
-  herbstclient set frame_border_width 1
-  herbstclient set always_show_frame on
-  herbstclient set frame_bg_transparent on
-  herbstclient set frame_transparent_width 5
-  herbstclient set frame_gap 0
+   herbstclient attr theme.title_height 0
+   herbstclient attr theme.title_font 'SauceCodePro:pixelsize=12'  # example using Xft
+   herbstclient attr theme.padding_top 0  # space below the title's baseline (i.e. text depth)
+   herbstclient attr theme.active.color "$FOCUS_COLOR"
+   herbstclient attr theme.normal.color "$BG_COLOR"
+   herbstclient attr theme.urgent.color "$ALERT_COLOR"
+   herbstclient attr theme.inner_width 1
+   herbstclient attr theme.inner_color "$BG_COLOR"
+   herbstclient attr theme.border_width 1
+   herbstclient attr theme.floating.border_width 4
+   herbstclient attr theme.floating.outer_width 1
+   herbstclient attr theme.floating.outer_color "$BG_COLOR"
+   herbstclient attr theme.active.inner_color "$FOCUS_COLOR"
+   herbstclient attr theme.active.outer_color "$FOCUS_COLOR"
+   herbstclient attr theme.background_color "$BG_COLOR"
 
-  herbstclient attr theme.title_height 0
-  herbstclient attr theme.title_font 'SauceCodePro:pixelsize=12'  # example using Xft
-  herbstclient attr theme.padding_top 0  # space below the title's baseline (i.e. text depth)
-  herbstclient attr theme.active.color "$FOCUS_COLOR"
-  herbstclient attr theme.normal.color "$BG_COLOR"
-  herbstclient attr theme.urgent.color "$ALERT_COLOR"
-  herbstclient attr theme.inner_width 1
-  herbstclient attr theme.inner_color "$BG_COLOR"
-  herbstclient attr theme.border_width 1
-  herbstclient attr theme.floating.border_width 4
-  herbstclient attr theme.floating.outer_width 1
-  herbstclient attr theme.floating.outer_color "$BG_COLOR"
-  herbstclient attr theme.active.inner_color "$FOCUS_COLOR"
-  herbstclient attr theme.active.outer_color "$FOCUS_COLOR"
-  herbstclient attr theme.background_color "$BG_COLOR"
+   herbstclient set window_gap 0
+   herbstclient set frame_padding 0
+   herbstclient set smart_window_surroundings off
+   herbstclient set smart_frame_surroundings off
+   herbstclient set mouse_recenter_gap 0
 
-  herbstclient set window_gap 0
-  herbstclient set frame_padding 0
-  herbstclient set smart_window_surroundings off
-  herbstclient set smart_frame_surroundings off
-  herbstclient set mouse_recenter_gap 0
+   wpg -i .wallpaper ~/.cache/wal/colors.json &
+   wpg -s .wallpaper &
+   gsettings set org.gnome.desktop.background picture-options 'none' &
+   gsettings set org.gnome.desktop.background primary-color "$BG_COLOR" &
+   bash ~/.config/rofi/generate_themes.sh &
 #+END_SRC
 
 ** Keybinds

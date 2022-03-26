@@ -32,8 +32,6 @@ export BG_ALT_COLOR=$background_alt
 export FOCUS_COLOR=$highlight
 export ALERT_COLOR=$alert
 
-xsetroot -solid "$BG_COLOR"
-
 herbstclient attr theme.tiling.reset 1
 herbstclient attr theme.floating.reset 1
 herbstclient set frame_border_active_color "$FOCUS_COLOR"
@@ -67,6 +65,12 @@ herbstclient set frame_padding 0
 herbstclient set smart_window_surroundings off
 herbstclient set smart_frame_surroundings off
 herbstclient set mouse_recenter_gap 0
+
+wpg -i .wallpaper ~/.cache/wal/colors.json &
+wpg -s .wallpaper &
+gsettings set org.gnome.desktop.background picture-options 'none' &
+gsettings set org.gnome.desktop.background primary-color "$BG_COLOR" &
+bash ~/.config/rofi/generate_themes.sh &
 
 herbstclient keyunbind --all
 
@@ -201,7 +205,6 @@ gsettings set org.gnome.gnome-flashback.desktop.icons show-home false
 gsettings set org.gnome.gnome-flashback.desktop.icons show-trash false
 
 bash ~/.config/polybar/start_polybar.sh
-bash ~/.config/rofi/generate_themes.sh
 
 nohup emacs --daemon >> /dev/null &
 
