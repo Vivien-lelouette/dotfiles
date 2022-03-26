@@ -97,6 +97,9 @@
   (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
   (ace-window-display-mode 1))
 
+(use-package avy
+  :bind (("M-j" . avy-goto-char-timer)))
+
 (use-package hideshow
   :hook
   (prog-mode . hs-minor-mode)
@@ -343,7 +346,7 @@
   :config
   (setq
    mct-hide-completion-mode-line t
-   mct-live-update-delay 0)
+   mct-live-update-delay 0.1)
   (mct-mode)
   (mct-region-mode))
 

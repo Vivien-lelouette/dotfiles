@@ -145,6 +145,12 @@ Mapping escape as cancel.
     (ace-window-display-mode 1))
 #+END_SRC
 
+* Avy
+#+BEGIN_SRC emacs-lisp
+    (use-package avy
+      :bind (("M-j" . avy-goto-char-timer)))
+#+END_SRC
+
 * Hideshow
 #+BEGIN_SRC emacs-lisp
   (use-package hideshow
@@ -469,7 +475,7 @@ One can use (global-hl-line-mode 1) to highlight the current line.
     :config
     (setq
      mct-hide-completion-mode-line t
-     mct-live-update-delay 0)
+     mct-live-update-delay 0.1)
     (mct-mode)
     (mct-region-mode))
 #+END_SRC
