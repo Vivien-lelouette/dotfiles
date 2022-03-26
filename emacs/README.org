@@ -454,6 +454,12 @@ One can use (global-hl-line-mode 1) to highlight the current line.
 #+END_SRC
 
 * Search & completion
+** Better defaults
+#+begin_src emacs-lisp
+  (define-key minibuffer-local-completion-map " " nil)
+  (define-key minibuffer-local-must-match-map " " nil)
+#+end_src
+
 ** Which-key
 #+BEGIN_SRC emacs-lisp
   (use-package which-key

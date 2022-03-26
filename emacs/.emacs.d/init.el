@@ -336,6 +336,9 @@
         olivetti-minimum-body-width 120
         olivetti-body-width 120))
 
+(define-key minibuffer-local-completion-map " " nil)
+(define-key minibuffer-local-must-match-map " " nil)
+
 (use-package which-key
   :init (which-key-mode)
   :diminish which-key-mode
