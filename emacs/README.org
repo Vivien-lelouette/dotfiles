@@ -1137,8 +1137,10 @@ This requires a Java runtime environment.
     (eaf-bind-key ace-window "M-o" eaf-browser-keybinding)
     (eaf-bind-key ace-window "M-O" eaf-browser-keybinding)
     (eaf-bind-key nil "n" eaf-browser-keybinding)
-    (eaf-bind-key eval_js "M-j" eaf-browser-keybinding)
-    (eaf-bind-key eval_js_file "M-J" eaf-browser-keybinding)
+    (eaf-bind-key open_link "M-j" eaf-browser-keybinding)
+    (eaf-bind-key open_link_new_buffer "M-J" eaf-browser-keybinding)
+    (eaf-bind-key eval_js "M-n" eaf-browser-keybinding)
+    (eaf-bind-key eval_js_file "M-N" eaf-browser-keybinding)
     (eaf-bind-key insert_or_export_text "M-t" eaf-browser-keybinding))
 
   (require 'eaf)
