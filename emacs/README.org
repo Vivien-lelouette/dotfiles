@@ -458,6 +458,8 @@ One can use (global-hl-line-mode 1) to highlight the current line.
 #+begin_src emacs-lisp
   (define-key minibuffer-local-completion-map " " nil)
   (define-key minibuffer-local-must-match-map " " nil)
+  (define-key minibuffer-local-completion-map "?" nil)
+  (define-key minibuffer-local-must-match-map "?" nil)
 #+end_src
 
 ** Which-key
@@ -482,6 +484,10 @@ One can use (global-hl-line-mode 1) to highlight the current line.
     (setq
      mct-hide-completion-mode-line t
      mct-live-update-delay 0.1)
+    (setq completion-styles
+      '(orderless basic substring initials flex partial-completion))
+    (setq completion-category-overrides
+      '((file (styles . (orderless basic partial-completion)))))
     (mct-mode)
     (mct-region-mode))
 #+END_SRC

@@ -338,6 +338,8 @@
 
 (define-key minibuffer-local-completion-map " " nil)
 (define-key minibuffer-local-must-match-map " " nil)
+(define-key minibuffer-local-completion-map "?" nil)
+(define-key minibuffer-local-must-match-map "?" nil)
 
 (use-package which-key
   :init (which-key-mode)
@@ -350,6 +352,10 @@
   (setq
    mct-hide-completion-mode-line t
    mct-live-update-delay 0.1)
+  (setq completion-styles
+    '(orderless basic substring initials flex partial-completion))
+  (setq completion-category-overrides
+    '((file (styles . (orderless basic partial-completion)))))
   (mct-mode)
   (mct-region-mode))
 
