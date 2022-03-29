@@ -39,6 +39,9 @@
 
 (setq global-auto-revert-non-file-buffers t)
 (global-auto-revert-mode 1)
+(require 'bind-key)
+(bind-key* "C-x k" #'kill-current-buffer)
+(bind-key* "C-x K" #'kill-buffer)
 
 (setq indent-tabs-mode nil)
 (setq indent-line-function 'insert-tab)
@@ -383,9 +386,7 @@
 
 (use-package embark
   :straight t
-  :bind (("C-c e" . embark-act)
-	 :map minibuffer-local-map
-	 ("C-d" . embark-act)))
+  :bind (("C-c e" . embark-act)))
 
 (use-package wgrep)
 
@@ -401,6 +402,7 @@
          ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
          ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
          ("C-x r b" . consult-bookmark)            ;; orig. bookmark-jump
+         ("C-c b" . consult-bookmark)
          ("C-x p b" . consult-project-buffer)      ;; orig. project-switch-to-buffer
          ;; Custom M-# bindings for fast register access
          ("M-#" . consult-register-load)
