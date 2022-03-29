@@ -726,11 +726,19 @@
 (use-package dired
   :straight (:type built-in)
   :bind (
+         ("C-." . dired-hide-dotfiles-mode)
          ("<C-return>" . dired-open-file)
          ("M-p" . dired-up-directory)
          ("M-n" . dired-find-file))
   :hook
   (dired-mode . dired-hide-details-mode))
+
+(use-package dired-subtree
+  :bind (
+         :map dired-mode-map
+         ("C-<tab>" . dired-subtree-cycle)
+         ("<tab>" . dired-subtree-toggle)
+         ("<backtab>" . dired-subtree-remove)))
 
 (use-package dired-single)
 
