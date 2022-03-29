@@ -686,15 +686,20 @@
 (use-package aweshell
       :straight (aweshell :type git :host github :repo "manateelazycat/aweshell"))
 
+(defun custom/vterm-auto-copy-mode (buffer description)
+  (with-current-buffer buffer
+    (vterm-copy-mode nil)))
+
 (use-package vterm
-    :config
-    (setq
-     vterm-shell "/bin/zsh"
-     vterm-buffer-name-string "vterm: %s"))
+  :config
+  (setq
+   vterm-shell "/bin/zsh"
+   vterm-buffer-name-string "vterm: %s")
+  (add-hook 'vterm-exit-functions #'custom/vterm-auto-copy-mode))
 
 (use-package eshell-vterm
-  :after vterm
   :config
+  (require 'vterm)
   (defalias 'eshell/v 'eshell-exec-visual)
   (eshell-vterm-mode))
 

@@ -1,8 +1,6 @@
 #+TITLE: Emacs configuration
 #+PROPERTY: header-args:emacs-lisp :tangle .emacs.d/init.el :mkdirp yes
 
-* Package manager configuration
-** Initialize straight
 #+BEGIN_SRC emacs-lisp
   (defvar bootstrap-version)
   (let ((bootstrap-file
@@ -18,14 +16,11 @@
     (load bootstrap-file nil 'nomessage))
 #+END_SRC
 
-** Initialize use-package
 #+BEGIN_SRC emacs-lisp
   (straight-use-package 'use-package)
   (setq straight-use-package-by-default t)
 #+END_SRC
 
-* Defaults
-** Performance
 Reduce the frequency of garbage collection by making it happen on each 50MB of allocated data (the default is on every 0.76MB).
 #+BEGIN_SRC emacs-lisp
   (setq gc-cons-threshold 50000000)
@@ -41,7 +36,6 @@ Increase the amount of data which Emacs reads from a process
 (setq read-process-output-max (* 5 (* 1024 1024)))
 #+END_SRC
 
-** Keybind
 #+BEGIN_SRC emacs-lisp
   (setq tab-always-indent 'complete)
   (defalias 'yes-or-no-p 'y-or-n-p)
@@ -56,7 +50,6 @@ Mapping escape as cancel.
   ;(define-key isearch-mode-map "\e" 'isearch-abort)   ;; \e seems to work better for terminals
   ;(global-set-key [escape] 'keyboard-escape-quit)         ;; everywhere else
 
-** Keep folders clean
 #+BEGIN_SRC emacs-lisp
   (setq backup-directory-alist `(("." . ,(expand-file-name "tmp/backups/" user-emacs-directory))))
   ;; auto-save-mode doesn't create the path automatically!
@@ -70,13 +63,11 @@ Mapping escape as cancel.
   
   (use-package no-littering)
 #+END_SRC
-** Auto revert buffer
 #+BEGIN_SRC emacs-lisp
 (setq global-auto-revert-non-file-buffers t)
 (global-auto-revert-mode 1)
 #+END_SRC
 
-** Indentation
 #+BEGIN_SRC emacs-lisp
   (setq indent-tabs-mode nil)
   (setq indent-line-function 'insert-tab)
@@ -120,17 +111,14 @@ Mapping escape as cancel.
         standard-indent tab-width)
 #+END_SRC
 
-** Log levels
 #+BEGIN_SRC emacs-lisp
   (setq warning-minimum-level :error)
 #+END_SRC
 
-** Keyboard map
 #+begin_src emacs-lisp
   (require 'iso-transl)
 #+end_src
 
-* Multiple cursors
 #+BEGIN_SRC emacs-lisp
   (use-package multiple-cursors
       :config
@@ -141,7 +129,6 @@ Mapping escape as cancel.
       (global-set-key (kbd "C-S-<mouse-1>") 'mc/add-cursor-on-click))
 #+END_SRC
 
-* Ace window
 #+BEGIN_SRC emacs-lisp
   (use-package ace-window
     :config
@@ -150,7 +137,6 @@ Mapping escape as cancel.
     (ace-window-display-mode 1))
 #+END_SRC
 
-* Avy
 #+BEGIN_SRC emacs-lisp
   (use-package avy
     :config
@@ -158,7 +144,6 @@ Mapping escape as cancel.
     (bind-key* "C-j" #'avy-goto-char-timer))
 #+END_SRC
 
-* Hideshow
 #+BEGIN_SRC emacs-lisp
   (use-package hideshow
     :hook
@@ -203,7 +188,6 @@ Mapping escape as cancel.
         (_ (hs-hide-all)))))
 #+END_SRC
 
-* Ediff
 #+BEGIN_SRC emacs-lisp
   (use-package ediff
       :straight (:type built-in)
@@ -213,17 +197,14 @@ Mapping escape as cancel.
        (ediff-split-window-function 'split-window-horizontally)))
 #+END_SRC
 
-* Sudo edit
 #+BEGIN_SRC emacs-lisp
   (use-package sudo-edit)
 #+END_SRC
 
-* Emacs everywhere
 #+BEGIN_SRC emacs-lisp
   (use-package emacs-everywhere)
 #+END_SRC
 
-* Expand region
 #+BEGIN_SRC emacs-lisp
   (use-package expand-region
     :config
@@ -231,7 +212,6 @@ Mapping escape as cancel.
     (global-set-key (kbd "C--") 'er/contract-region))
 #+END_SRC
 
-* Pulsar
 #+BEGIN_SRC emacs-lisp
   (use-package pulsar
     :straight (pulsar :type git :host gitlab :repo "protesilaos/pulsar")
@@ -243,7 +223,6 @@ Mapping escape as cancel.
     (setq pulsar-face 'pulsar-cyan))
 #+END_SRC
 
-* Style
 #+BEGIN_SRC emacs-lisp
   (scroll-bar-mode 0)
   (tool-bar-mode -1)
@@ -262,7 +241,6 @@ Mapping escape as cancel.
      (internal-border-width . 20)))
 
 
-** Font
 #+BEGIN_SRC emacs-lisp
   (set-face-attribute 'default nil :font "SauceCodePro NF" :height 110)
 
@@ -277,26 +255,22 @@ Mapping escape as cancel.
     (text-mode . mixed-pitch-mode))
 #+END_SRC
 
-** All the icons
 #+BEGIN_SRC emacs-lisp
   (use-package all-the-icons
     :if (display-graphic-p))
 #+END_SRC
 
-*** Dired
 #+BEGIN_SRC emacs-lisp
   (use-package all-the-icons-dired
     :hook
     (dired-mode . all-the-icons-dired-mode))
 #+END_SRC
 
-*** Ibuffer
 #+BEGIN_SRC emacs-lisp
   (use-package all-the-icons-ibuffer
     :after all-the-icons)
 #+END_SRC
 
-*** Treemacs
 #+BEGIN_SRC emacs-lisp
   (use-package treemacs-all-the-icons
     :after all-the-icons
@@ -304,7 +278,6 @@ Mapping escape as cancel.
     (treemacs-load-theme "all-the-icons"))
 #+END_SRC
 
-** Theme
 
 The following functions allow me to change my emacs theme and have my topbar and search application using emacs colors.
 
@@ -444,14 +417,12 @@ One can use (global-hl-line-mode 1) to highlight the current line.
                                   fg-special-warm))))
 #+END_SRC
 
-** Doom modeline
 #+BEGIN_SRC emacs-lisp
   (use-package doom-modeline
     :init
     (doom-modeline-mode 1))
 #+END_SRC
 
-** Olivetti
 #+BEGIN_SRC emacs-lisp
   (use-package olivetti
     :config
@@ -460,8 +431,6 @@ One can use (global-hl-line-mode 1) to highlight the current line.
           olivetti-body-width 120))
 #+END_SRC
 
-* Search & completion
-** Better defaults
 #+begin_src emacs-lisp
   (define-key minibuffer-local-completion-map " " nil)
   (define-key minibuffer-local-must-match-map " " nil)
@@ -469,7 +438,6 @@ One can use (global-hl-line-mode 1) to highlight the current line.
   (define-key minibuffer-local-must-match-map "?" nil)
 #+end_src
 
-** Which-key
 #+BEGIN_SRC emacs-lisp
   (use-package which-key
     :init (which-key-mode)
@@ -478,7 +446,6 @@ One can use (global-hl-line-mode 1) to highlight the current line.
     (setq which-key-idle-delay 1))
 #+END_SRC
 
-** Mct
 
   (use-package mct
     :config
@@ -524,7 +491,6 @@ One can use (global-hl-line-mode 1) to highlight the current line.
     (corfu-global-mode))
 #+END_SRC
 
-** Embark
 #+BEGIN_SRC emacs-lisp
   (use-package embark
     :straight t
@@ -533,12 +499,10 @@ One can use (global-hl-line-mode 1) to highlight the current line.
 	   ("C-d" . embark-act)))
 #+END_SRC
 
-** Wgrep
 #+BEGIN_SRC emacs-lisp
   (use-package wgrep)
 #+END_SRC
 
-** Consult
 #+BEGIN_SRC emacs-lisp
   (use-package consult
     ;; Replace bindings. Lazily loaded due by `use-package'.
@@ -659,7 +623,6 @@ One can use (global-hl-line-mode 1) to highlight the current line.
     ;;           args))))
 #+END_SRC
 
-** Orderless
 #+BEGIN_SRC emacs-lisp
   (use-package orderless
     :init
@@ -671,7 +634,6 @@ One can use (global-hl-line-mode 1) to highlight the current line.
 	  completion-category-overrides '((file (styles partial-completion)))))
 #+END_SRC
 
-** Marginalia
 #+BEGIN_SRC emacs-lisp
   (use-package marginalia
     ;; Either bind `marginalia-cycle` globally or only in the minibuffer
@@ -682,7 +644,6 @@ One can use (global-hl-line-mode 1) to highlight the current line.
     (marginalia-mode))
 #+END_SRC
 
-** Cape
 #+BEGIN_SRC emacs-lisp
   (use-package cape
     ;; Bind dedicated completion commands
@@ -717,14 +678,12 @@ One can use (global-hl-line-mode 1) to highlight the current line.
   )
 #+END_SRC
 
-** Savehist
 #+BEGIN_SRC emacs-lisp
   (use-package savehist
     :init
     (savehist-mode))
 #+END_SRC
 
-* Helpful
 #+BEGIN_SRC emacs-lisp
   (use-package helpful
     :config
@@ -738,7 +697,6 @@ One can use (global-hl-line-mode 1) to highlight the current line.
     (global-set-key (kbd "C-h C") #'helpful-command))
 #+END_SRC
 
-* Flycheck
 #+BEGIN_SRC emacs-lisp
   (use-package flycheck
     :init (global-flycheck-mode))
@@ -746,33 +704,27 @@ One can use (global-hl-line-mode 1) to highlight the current line.
   (use-package consult-flycheck)
 #+END_SRC
 
-* Development
-** Rainbow colors
 #+BEGIN_SRC emacs-lisp
   (use-package rainbow-mode)
 #+END_SRC
 
-** Highlight parentheses
 #+BEGIN_SRC emacs-lisp
   (use-package highlight-parentheses
     :config
     (global-highlight-parentheses-mode 1))
 #+END_SRC
 
-** smartparens
 #+BEGIN_SRC emacs-lisp
   (use-package smartparens
     :config
     (add-hook 'lsp-mode-hook #'smartparens-mode))
 #+END_SRC
 
-** Rainbow delimiters
 #+BEGIN_SRC emacs-lisp
   (use-package rainbow-delimiters
     :hook (prog-mode . rainbow-delimiters-mode))
 #+END_SRC
 
-** Aggressive indent
 #+begin_src emacs-lisp
   (use-package aggressive-indent
       :config
@@ -785,13 +737,11 @@ One can use (global-hl-line-mode 1) to highlight the current line.
       (global-aggressive-indent-mode 1))
 #+end_src
 
-** Magit
 #+BEGIN_SRC emacs-lisp
   (use-package magit)
   (use-package forge)
 #+END_SRC
 
-** Yasnippet
 #+BEGIN_SRC emacs-lisp
   (use-package yasnippet
     :config
@@ -802,7 +752,6 @@ One can use (global-hl-line-mode 1) to highlight the current line.
   (use-package consult-yasnippet)
 #+END_SRC
 
-** Lsp-mode
 #+BEGIN_SRC emacs-lisp
   (use-package lsp-mode
     :straight (lsp-mode :type git :host github :repo "emacs-lsp/lsp-mode")
@@ -839,20 +788,17 @@ One can use (global-hl-line-mode 1) to highlight the current line.
     (advice-add 'lsp--before-save :around #'lsp--eslint-before-save))
  #+END_SRC
 
-** Dap-mode
 #+BEGIN_SRC emacs-lisp
   (use-package dap-mode
     :straight (dap-mode :type git :host github :repo "emacs-lsp/dap-mode"))
 #+END_SRC
 
-** Asciidoc
 #+BEGIN_SRC emacs-lisp
 (use-package adoc-mode
   :config
   (add-to-list 'auto-mode-alist '("\\.adoc\\'" . adoc-mode)))
 #+END_SRC
 
-** Rest client
 #+BEGIN_SRC emacs-lisp
   (use-package restclient
     :config
@@ -866,24 +812,18 @@ One can use (global-hl-line-mode 1) to highlight the current line.
      '((restclient . t))))
 #+END_SRC
 
-* Devops
-** Kubel
 #+BEGIN_SRC emacs-lisp
   (use-package kubel)
 #+END_SRC
 
-** Docker
-*** Dockerfile
 #+BEGIN_SRC emacs-lisp
   (use-package dockerfile-mode)
 #+END_SRC
 
-*** Docker-compose file
 #+BEGIN_SRC emacs-lisp
   (use-package docker-compose-mode)
 #+END_SRC
 
-*** Docker
 #+BEGIN_SRC emacs-lisp
   (use-package docker
     :config
@@ -901,30 +841,30 @@ One can use (global-hl-line-mode 1) to highlight the current line.
     (add-hook 'docker-container-mode 'docker/set-format))
 #+END_SRC
 
-* Terminal & shells
-** Eshell
 #+begin_src emacs-lisp
     (use-package aweshell
           :straight (aweshell :type git :host github :repo "manateelazycat/aweshell"))
 #+end_src
 
-** Vterm
 #+BEGIN_SRC emacs-lisp
-  (use-package vterm
+    (defun custom/vterm-auto-copy-mode (buffer description)
+      (with-current-buffer buffer
+        (vterm-copy-mode nil)))
+
+    (use-package vterm
       :config
       (setq
        vterm-shell "/bin/zsh"
-       vterm-buffer-name-string "vterm: %s"))
+       vterm-buffer-name-string "vterm: %s")
+      (add-hook 'vterm-exit-functions #'custom/vterm-auto-copy-mode))
 
-  (use-package eshell-vterm
-    :after vterm
-    :config
-    (defalias 'eshell/v 'eshell-exec-visual)
-    (eshell-vterm-mode))
+    (use-package eshell-vterm
+      :config
+      (require 'vterm)
+      (defalias 'eshell/v 'eshell-exec-visual)
+      (eshell-vterm-mode))
 #+END_SRC
 
-* File & buffer management
-** Treemacs
 #+BEGIN_SRC emacs-lisp
   (use-package treemacs
     :config
@@ -934,8 +874,6 @@ One can use (global-hl-line-mode 1) to highlight the current line.
     (global-set-key (kbd "C-c t") 'treemacs))
 #+END_SRC
 
-** Dired
-*** Open with system default application
 #+BEGIN_SRC emacs-lisp
 (defun dired-open-file ()
   "In dired, open the file named on this line."
@@ -946,7 +884,6 @@ One can use (global-hl-line-mode 1) to highlight the current line.
     (message "Opening %s done" file)))
 #+END_SRC
 
-*** Open home directory
 #+BEGIN_SRC emacs-lisp
 (defun dired-open-home-dir ()
   "Open the home directory in dired"
@@ -954,7 +891,6 @@ One can use (global-hl-line-mode 1) to highlight the current line.
   (dired "~"))
 #+END_SRC
 
-*** Open home directory
 #+BEGIN_SRC emacs-lisp
 (defun dired-open-current-dir ()
   "Open the current directory in dired"
@@ -962,7 +898,6 @@ One can use (global-hl-line-mode 1) to highlight the current line.
   (dired "."))
 #+END_SRC
 
-*** Better defaults
 #+BEGIN_SRC emacs-lisp
   (use-package dired
     :straight (:type built-in)
@@ -982,19 +917,16 @@ One can use (global-hl-line-mode 1) to highlight the current line.
            ("<backtab>" . dired-subtree-remove)))
 #+END_SRC
 
-*** Single frame
 #+BEGIN_SRC emacs-lisp
 (use-package dired-single)
 #+END_SRC
 
-*** Hide dotfiles
 #+BEGIN_SRC emacs-lisp
 (use-package dired-hide-dotfiles
   :hook
   (dired-mode . dired-hide-dotfiles-mode))
 #+END_SRC
 
-* Grammar and spell check
 This requires a Java runtime environment.
 #+BEGIN_SRC emacs-lisp
   (use-package lsp-ltex
@@ -1003,7 +935,6 @@ This requires a Java runtime environment.
                          (lsp))))
 #+END_SRC
 
-* Org
 #+BEGIN_SRC emacs-lisp
   (use-package org
     :config
@@ -1040,7 +971,6 @@ This requires a Java runtime environment.
        ))
 #+END_SRC
 
-** Modern org
 #+BEGIN_SRC emacs-lisp
   (use-package org-modern
     :config
@@ -1071,7 +1001,6 @@ This requires a Java runtime environment.
     (add-hook 'org-agenda-finalize-hook #'org-modern-agenda))
 #+END_SRC
 
-** Org-jira
 #+BEGIN_SRC emacs-lisp
   (use-package org-jira
     :straight (org-jira :type git :host github :repo "ahungry/org-jira"
@@ -1080,8 +1009,6 @@ This requires a Java runtime environment.
     :after org)
 #+END_SRC 
 
-* Web browsing
-** Shr (html renderer)
 #+BEGIN_SRC emacs-lisp
   (use-package shr
     :straight (:type built-in)
@@ -1094,7 +1021,6 @@ This requires a Java runtime environment.
     (setq shr-folding-mode t))
 #+END_SRC
 
-** Shrface
 #+BEGIN_SRC emacs-lisp
   ;; Used to highlight code
   (use-package shr-tag-pre-highlight
@@ -1153,7 +1079,6 @@ This requires a Java runtime environment.
           (insert "\n"))))
 #+END_SRC
 
-** Eww
 #+BEGIN_SRC emacs-lisp
   (use-package eww
     :straight (:type built-in)
@@ -1177,7 +1102,6 @@ This requires a Java runtime environment.
   (add-hook 'eww-after-render-hook #'olivetti-mode)
 #+END_SRC
 
-** Emacs application framework
 #+BEGIN_SRC emacs-lisp
   (use-package eaf
     :straight (eaf :type git
@@ -1212,7 +1136,6 @@ This requires a Java runtime environment.
     (interactive)
     (eaf-open-browser (eww-current-url)))
 #+END_SRC
-* Load local settings
 #+BEGIN_SRC emacs-lisp
   (let ((local-settings "~/.emacs.d/local.el"))
       (when (file-exists-p local-settings)
