@@ -908,9 +908,11 @@ One can use (global-hl-line-mode 1) to highlight the current line.
       (setq
        vterm-shell "/bin/zsh"
        vterm-buffer-name-string "vterm: %s"))
+
   (use-package eshell-vterm
     :after vterm
     :config
+    (defalias 'eshell/v 'eshell-exec-visual)
     (eshell-vterm-mode))
 #+END_SRC
 

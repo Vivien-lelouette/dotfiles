@@ -688,9 +688,11 @@
     (setq
      vterm-shell "/bin/zsh"
      vterm-buffer-name-string "vterm: %s"))
+
 (use-package eshell-vterm
   :after vterm
   :config
+  (defalias 'eshell/v 'eshell-exec-visual)
   (eshell-vterm-mode))
 
 (use-package treemacs
