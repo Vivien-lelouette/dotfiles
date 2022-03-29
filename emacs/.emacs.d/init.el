@@ -918,7 +918,8 @@ Version 2017-11-10"
                             :host github
                             :repo "emacs-eaf/emacs-application-framework"
                             :files ("*.el" "*.py" "*.json" "core" "app"))
-  :bind (("M-r" . eaf/open-in-eww))
+  :bind (("M-r" . eaf/open-in-eww)
+         ("C-c i" . eaf-open-browser-with-history))
   :custom
   (eaf-browser-continue-where-left-off t)
   (eaf-browser-enable-adblocker t)
