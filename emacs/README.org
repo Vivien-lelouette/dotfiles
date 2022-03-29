@@ -125,6 +125,11 @@ Mapping escape as cancel.
   (setq warning-minimum-level :error)
 #+END_SRC
 
+** Keyboard map
+#+begin_src emacs-lisp
+  (require 'iso-transl)
+#+end_src
+
 * Multiple cursors
 #+BEGIN_SRC emacs-lisp
   (use-package multiple-cursors
@@ -147,8 +152,10 @@ Mapping escape as cancel.
 
 * Avy
 #+BEGIN_SRC emacs-lisp
-    (use-package avy
-      :bind (("M-j" . avy-goto-char-timer)))
+  (use-package avy
+    :config
+    (require 'bind-key)
+    (bind-key* "C-j" #'avy-goto-char-timer))
 #+END_SRC
 
 * Hideshow
@@ -781,6 +788,7 @@ One can use (global-hl-line-mode 1) to highlight the current line.
 ** Magit
 #+BEGIN_SRC emacs-lisp
   (use-package magit)
+  (use-package forge)
 #+END_SRC
 
 ** Yasnippet
@@ -900,6 +908,10 @@ One can use (global-hl-line-mode 1) to highlight the current line.
       (setq
        vterm-shell "/bin/zsh"
        vterm-buffer-name-string "vterm: %s"))
+  (use-package eshell-vterm
+    :after vterm
+    :config
+    (eshell-vterm-mode))
 #+END_SRC
 
 * File & buffer management
@@ -1130,7 +1142,7 @@ This requires a Java runtime environment.
     :straight (:type built-in)
     :bind (("M-r" . eww/open-in-eaf))
     :config
-    (require 'shrface))
+    (require 'shrface)) 
 
   (defun eww/rename-buffer ()
       "Rename `eww-mode' buffer so sites open in new page.
@@ -1168,8 +1180,8 @@ This requires a Java runtime environment.
     (eaf-bind-key ace-window "M-o" eaf-browser-keybinding)
     (eaf-bind-key ace-window "M-O" eaf-browser-keybinding)
     (eaf-bind-key nil "n" eaf-browser-keybinding)
-    (eaf-bind-key open_link "M-j" eaf-browser-keybinding)
-    (eaf-bind-key open_link_new_buffer "M-J" eaf-browser-keybinding)
+    (eaf-bind-key open_link "C-j" eaf-browser-keybinding)
+    (eaf-bind-key open_link_new_buffer "C-S-j" eaf-browser-keybinding)
     (eaf-bind-key eval_js "M-n" eaf-browser-keybinding)
     (eaf-bind-key eval_js_file "M-N" eaf-browser-keybinding)
     (eaf-bind-key insert_or_export_text "M-t" eaf-browser-keybinding))

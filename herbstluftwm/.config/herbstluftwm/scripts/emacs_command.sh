@@ -11,7 +11,7 @@ then
     echo $emacs_client_id
     if [ -z "$emacs_client_id" ]
     then
-      emacsclient -c &
+      XMODIFIERS=@im=none emacsclient -c &
     else
       herbstclient bring $emacs_client_id &
     fi

@@ -220,15 +220,15 @@ Keep tracks of the last focused timestamp for every window.
   herbstclient keybind $Mod+a spawn rofi -show drun -display-drun ''
   herbstclient keybind $Mod+Shift+a spawn rofi -show run -display-run ''
 
-  herbstclient keybind $Mod+Control+e spawn emacsclient -c
-  herbstclient keybind $Mod+e spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh 1 'Emacs' '' 'emacsclient -c'
-  herbstclient keybind $Mod+Shift+e spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh -1 'Emacs' '' 'emacsclient -c'
+  herbstclient keybind $Mod+Control+e spawn XMODIFIERS=@im=none emacsclient -c
+  herbstclient keybind $Mod+e spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh 1 'Emacs' '' 'XMODIFIERS=@im=none emacsclient -c'
+  herbstclient keybind $Mod+Shift+e spawn bash $herbstluftwm_scripts_folder/switch_by_classes.sh -1 'Emacs' '' 'XMODIFIERS=@im=none emacsclient -c'
   herbstclient keybind $Mod+Return spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'vterm)"
   herbstclient keybind $Mod+t spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'treemacs)"
   herbstclient keybind $Mod+period spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(funcall-interactively #'dired-open-home-dir)"
   herbstclient keybind $Mod+Shift+period spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(funcall-interactively #'dired-open-current-dir)"
   herbstclient keybind $Mod+x spawn bash $herbstluftwm_scripts_folder/emacs_command.sh "(call-interactively #'execute-extended-command)"
-  herbstclient keybind $Mod+Control+Return spawn bash -c 'RULES="pseudotile=on focus=on" '$herbstluftwm_scripts_folder'/spawn_with_rules.sh emacsclient --eval "(emacs-everywhere)"'
+  herbstclient keybind $Mod+Control+Return spawn bash -c 'RULES="pseudotile=on focus=on" XMODIFIERS=@im=none '$herbstluftwm_scripts_folder'/spawn_with_rules.sh emacsclient --eval "(emacs-everywhere)"'
 #+END_SRC
 
 *** Power menu
@@ -496,7 +496,7 @@ exec "$@"
       echo $emacs_client_id
       if [ -z "$emacs_client_id" ]
       then
-        emacsclient -c &
+        XMODIFIERS=@im=none emacsclient -c &
       else
         herbstclient bring $emacs_client_id &
       fi

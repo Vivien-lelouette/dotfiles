@@ -83,6 +83,8 @@
 
 (setq warning-minimum-level :error)
 
+(require 'iso-transl)
+
 (use-package multiple-cursors
     :config
     (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
@@ -98,7 +100,9 @@
   (ace-window-display-mode 1))
 
 (use-package avy
-  :bind (("M-j" . avy-goto-char-timer)))
+  :config
+  (require 'bind-key)
+  (bind-key* "C-j" #'avy-goto-char-timer))
 
 (use-package hideshow
   :hook
@@ -596,6 +600,7 @@
     (global-aggressive-indent-mode 1))
 
 (use-package magit)
+(use-package forge)
 
 (use-package yasnippet
   :config
@@ -683,6 +688,10 @@
     (setq
      vterm-shell "/bin/zsh"
      vterm-buffer-name-string "vterm: %s"))
+(use-package eshell-vterm
+  :after vterm
+  :config
+  (eshell-vterm-mode))
 
 (use-package treemacs
   :config
@@ -867,7 +876,7 @@
   :straight (:type built-in)
   :bind (("M-r" . eww/open-in-eaf))
   :config
-  (require 'shrface))
+  (require 'shrface)) 
 
 (defun eww/rename-buffer ()
     "Rename `eww-mode' buffer so sites open in new page.
@@ -902,8 +911,8 @@ Version 2017-11-10"
   (eaf-bind-key ace-window "M-o" eaf-browser-keybinding)
   (eaf-bind-key ace-window "M-O" eaf-browser-keybinding)
   (eaf-bind-key nil "n" eaf-browser-keybinding)
-  (eaf-bind-key open_link "M-j" eaf-browser-keybinding)
-  (eaf-bind-key open_link_new_buffer "M-J" eaf-browser-keybinding)
+  (eaf-bind-key open_link "C-j" eaf-browser-keybinding)
+  (eaf-bind-key open_link_new_buffer "C-S-j" eaf-browser-keybinding)
   (eaf-bind-key eval_js "M-n" eaf-browser-keybinding)
   (eaf-bind-key eval_js_file "M-N" eaf-browser-keybinding)
   (eaf-bind-key insert_or_export_text "M-t" eaf-browser-keybinding))
