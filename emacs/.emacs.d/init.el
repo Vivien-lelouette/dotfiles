@@ -683,6 +683,9 @@
 
   (add-hook 'docker-container-mode 'docker/set-format))
 
+(use-package aweshell
+      :straight (aweshell :type git :host github :repo "manateelazycat/aweshell"))
+
 (use-package vterm
     :config
     (setq

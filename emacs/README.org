@@ -901,7 +901,14 @@ One can use (global-hl-line-mode 1) to highlight the current line.
     (add-hook 'docker-container-mode 'docker/set-format))
 #+END_SRC
 
-* Vterm
+* Terminal & shells
+** Eshell
+#+begin_src emacs-lisp
+    (use-package aweshell
+          :straight (aweshell :type git :host github :repo "manateelazycat/aweshell"))
+#+end_src
+
+** Vterm
 #+BEGIN_SRC emacs-lisp
   (use-package vterm
       :config
