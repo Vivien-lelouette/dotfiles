@@ -584,9 +584,13 @@
   :config
   (global-highlight-parentheses-mode 1))
 
-(use-package smartparens
-  :config
-  (add-hook 'lsp-mode-hook #'smartparens-mode))
+(setq electric-pair-pairs
+  '(
+    (?\' . ?\')
+    (?\" . ?\")
+    (?\[ . ?\])
+    (?\{ . ?\})))
+(electric-pair-mode 1)
 
 (use-package rainbow-delimiters
   :hook (prog-mode . rainbow-delimiters-mode))

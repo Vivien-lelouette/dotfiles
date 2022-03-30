@@ -720,9 +720,13 @@ One can use (global-hl-line-mode 1) to highlight the current line.
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (use-package smartparens
-    :config
-    (add-hook 'lsp-mode-hook #'smartparens-mode))
+  (setq electric-pair-pairs
+    '(
+      (?\' . ?\')
+      (?\" . ?\")
+      (?\[ . ?\])
+      (?\{ . ?\})))
+  (electric-pair-mode 1)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
