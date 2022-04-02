@@ -20,10 +20,19 @@
 
 (setq read-process-output-max (* 5 (* 1024 1024)))
 
+(scroll-bar-mode 0)
+(tool-bar-mode -1)
+(tooltip-mode -1)
+(menu-bar-mode -1)
+
 (setq tab-always-indent 'complete)
 (defalias 'yes-or-no-p 'y-or-n-p)
-(global-set-key (kbd "C-z") 'delete-frame)
 (setq xref-prompt-for-identifier nil)
+
+(define-key minibuffer-local-completion-map " " nil)
+(define-key minibuffer-local-must-match-map " " nil)
+(define-key minibuffer-local-completion-map "?" nil)
+(define-key minibuffer-local-must-match-map "?" nil)
 
 (setq backup-directory-alist `(("." . ,(expand-file-name "tmp/backups/" user-emacs-directory))))
 ;; auto-save-mode doesn't create the path automatically!
@@ -42,6 +51,7 @@
 (require 'bind-key)
 (bind-key* "C-x k" #'kill-current-buffer)
 (bind-key* "C-x K" #'kill-buffer)
+(global-set-key (kbd "C-z") 'delete-frame)
 
 (setq indent-tabs-mode nil)
 (setq indent-line-function 'insert-tab)
@@ -88,14 +98,6 @@
 
 (require 'iso-transl)
 
-(use-package multiple-cursors
-    :config
-    (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
-    (global-set-key (kbd "C->") 'mc/mark-next-like-this)
-    (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
-    (global-set-key (kbd "C-?") 'mc/mark-all-like-this)
-    (global-set-key (kbd "C-S-<mouse-1>") 'mc/add-cursor-on-click))
-
 (use-package ace-window
   :config
   (global-set-key (kbd "M-o") 'ace-window)
@@ -107,77 +109,18 @@
   (require 'bind-key)
   (bind-key* "C-j" #'avy-goto-char-timer))
 
-(use-package hideshow
-  :hook
-  (prog-mode . hs-minor-mode)
-  :bind
-      :bind (
-             ("C-<tab>" . hs-cycle)
-             ("C-<iso-lefttab>" . hs-global-cycle))
-  :config
-  (defun hs-cycle (&optional level)
-    (interactive "p")
-    (let (message-log-max
-          (inhibit-message t))
-      (if (= level 1)
-          (pcase last-command
-            ('hs-cycle
-             (hs-hide-level 1)
-             (setq this-command 'hs-cycle-children))
-            ('hs-cycle-children
-             ;; TODO: Fix this case. `hs-show-block' needs to be
-             ;; called twice to open all folds of the parent
-             ;; block.
-             (save-excursion (hs-show-block))
-             (hs-show-block)
-             (setq this-command 'hs-cycle-subtree))
-            ('hs-cycle-subtree
-             (hs-hide-block))
-            (_
-             (if (not (hs-already-hidden-p))
-                 (hs-hide-block)
-               (hs-hide-level 1)
-               (setq this-command 'hs-cycle-children))))
-        (hs-hide-level level)
-        (setq this-command 'hs-hide-level))))
-
-  (defun hs-global-cycle ()
-    (interactive)
-    (pcase last-command
-      ('hs-global-cycle
-       (save-excursion (hs-show-all))
-       (setq this-command 'hs-global-show))
-      (_ (hs-hide-all)))))
-
-(use-package ediff
-    :straight (:type built-in)
-    :custom
-    ((ediff-window-setup-function 'ediff-setup-windows-plain)
-     (ediff-diff-options "-w")
-     (ediff-split-window-function 'split-window-horizontally)))
-
-(use-package sudo-edit)
-
-(use-package emacs-everywhere)
+(use-package multiple-cursors
+    :config
+    (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
+    (global-set-key (kbd "C->") 'mc/mark-next-like-this)
+    (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
+    (global-set-key (kbd "C-?") 'mc/mark-all-like-this)
+    (global-set-key (kbd "C-S-<mouse-1>") 'mc/add-cursor-on-click))
 
 (use-package expand-region
   :config
   (global-set-key (kbd "C-=") 'er/expand-region)
   (global-set-key (kbd "C--") 'er/contract-region))
-
-(use-package pulsar
-  :straight (pulsar :type git :host gitlab :repo "protesilaos/pulsar")
-  :config
-  (pulsar-setup)
-  (global-set-key (kbd "C-c SPC") 'pulsar-pulse-line)
-  (setq pulse-flag t)
-  (set-face-attribute 'pulsar-cyan nil :background "#81a1c1")
-  (setq pulsar-face 'pulsar-cyan))
-
-(scroll-bar-mode 0)
-(tool-bar-mode -1)
-(tooltip-mode -1)
-(menu-bar-mode -1)
 
 (set-face-attribute 'default nil :font "SauceCodePro NF" :height 110)
 
@@ -190,24 +133,6 @@
 (use-package mixed-pitch
   :hook
   (text-mode . mixed-pitch-mode))
-
-(use-package all-the-icons
-  :if (display-graphic-p))
-
-(use-package all-the-icons-dired
-  :hook
-  (dired-mode . all-the-icons-dired-mode))
-
-(use-package all-the-icons-ibuffer
-  :after all-the-icons)
-
-(defun custom/coding-faces ()
-  (interactive)
-  (set-face-attribute 'font-lock-keyword-face nil :weight 'ultra-bold)
-  (set-face-attribute 'font-lock-comment-face nil :slant 'italic :weight 'semi-light)
-  (set-face-attribute 'font-lock-function-name-face nil :slant 'italic :weight 'semi-bold)
-  (set-face-attribute 'font-lock-string-face nil :weight 'light)
-  (set-face-attribute 'font-lock-variable-name-face nil :slant 'italic))
 
 (defun generate-colors-file ()
   "Function to generate my colors file."
@@ -258,46 +183,107 @@
     )
 
 (use-package doom-themes
-  ;:custom-face
-  ; (org-block ((t (:background "#272C36"))))
-  ; (org-block-begin-line ((t (:background "#272C36"))))
-  ; (org-block-end-line ((t (:background "#272C36"))))
-  ; (window-divider ((t (:foreground "#2e3440"))))
-  ; (window-divider-first-pixel ((t (:foreground "#2e3440"))))
-  ; (window-divider-last-pixel ((t (:foreground "#2e3440"))))
-  ; (hl-line ((t (:background "#434C5E"))))
-  ; :hook (server-after-make-frame . (lambda () (load-theme
-  ;                                            'doom-nord t)))
-   :config
-   (defun doom-themes-hide-modeline ())
-   (doom-themes-org-config))
-
-
-;(defun darken-buffer ()
-;  (setq buffer-face-mode-face `(:background "#272C36"))
-;  (face-remap-add-relative 'hl-line `(:background "#2e3440"))
-;  (face-remap-add-relative 'fringe `(:background "#272C36"))
-;  (buffer-face-mode 1))
-
-;(add-hook 'help-mode-hook #'darken-buffer)
-;(add-hook 'helpful-mode-hook #'darken-buffer)
-
-(use-package ligature
-  :straight (ligature :type git :host github :repo "mickeynp/ligature.el")
+  ;;:custom-face
+  ;; (org-block ((t (:background "#272C36"))))
+  ;; (org-block-begin-line ((t (:background "#272C36"))))
+  ;; (org-block-end-line ((t (:background "#272C36"))))
+  ;; (window-divider ((t (:foreground "#2e3440"))))
+  ;; (window-divider-first-pixel ((t (:foreground "#2e3440"))))
+  ;; (window-divider-last-pixel ((t (:foreground "#2e3440"))))
+  ;; (hl-line ((t (:background "#434C5E"))))
+  ;; :hook (server-after-make-frame . (lambda () (load-theme
+  ;;                                            'doom-nord t)))
   :config
-  (ligature-set-ligatures 'prog-mode '("www" "**" "***" "**/" "*>" "*/" "\\\\" "\\\\\\" "{-" "::"
-                                       ":::" ":=" "!!" "!=" "!==" "-}" "----" "-->" "->" "->>"
-                                       "-<" "-<<" "-~" "#{" "#[" "##" "###" "####" "#(" "#?" "#_"
-                                       "#_(" ".-" ".=" ".." "..<" "..." "?=" "??" ";;" "/*" "/**"
-                                       "/=" "/==" "/>" "//" "///" "&&" "||" "||=" "|=" "|>" "^=" "$>"
-                                       "++" "+++" "+>" "=:=" "==" "===" "==>" "=>" "=>>" "<="
-                                       "=<<" "=/=" ">-" ">=" ">=>" ">>" ">>-" ">>=" ">>>" "<*"
-                                       "<*>" "<|" "<|>" "<$" "<$>" "<!--" "<-" "<--" "<->" "<+"
-                                       "<+>" "<=" "<==" "<=>" "<=<" "<>" "<<" "<<-" "<<=" "<<<"
-                                       "<~" "<~~" "</" "</>" "~@" "~-" "~>" "~~" "~~>" "%%"))
-  ;; Enables ligature checks globally in all buffers. You can also do it
-  ;; per mode with `ligature-mode'.
-  (global-ligature-mode 0))
+  (defun doom-themes-hide-modeline ())
+  (doom-themes-org-config))
+
+  ;;(defun darken-buffer ()
+  ;;  (setq buffer-face-mode-face `(:background "#272C36"))
+  ;;  (face-remap-add-relative 'hl-line `(:background "#2e3440"))
+  ;;  (face-remap-add-relative 'fringe `(:background "#272C36"))
+  ;;  (buffer-face-mode 1))
+
+  ;;(add-hook 'help-mode-hook #'darken-buffer)
+  ;;(add-hook 'helpful-mode-hook #'darken-buffer)
+
+(use-package doom-modeline
+  :init
+  (doom-modeline-mode 1))
+
+(use-package olivetti
+  :config
+  (setq olivetti-margin-width 120
+        olivetti-minimum-body-width 120
+        olivetti-body-width 120))
+
+(use-package hideshow
+  :hook
+  (prog-mode . hs-minor-mode)
+  :bind
+      :bind (
+             ("C-<tab>" . hs-cycle)
+             ("C-<iso-lefttab>" . hs-global-cycle))
+  :config
+  (defun hs-cycle (&optional level)
+    (interactive "p")
+    (let (message-log-max
+          (inhibit-message t))
+      (if (= level 1)
+          (pcase last-command
+            ('hs-cycle
+             (hs-hide-level 1)
+             (setq this-command 'hs-cycle-children))
+            ('hs-cycle-children
+             ;; TODO: Fix this case. `hs-show-block' needs to be
+             ;; called twice to open all folds of the parent
+             ;; block.
+             (save-excursion (hs-show-block))
+             (hs-show-block)
+             (setq this-command 'hs-cycle-subtree))
+            ('hs-cycle-subtree
+             (hs-hide-block))
+            (_
+             (if (not (hs-already-hidden-p))
+                 (hs-hide-block)
+               (hs-hide-level 1)
+               (setq this-command 'hs-cycle-children))))
+        (hs-hide-level level)
+        (setq this-command 'hs-hide-level))))
+
+  (defun hs-global-cycle ()
+    (interactive)
+    (pcase last-command
+      ('hs-global-cycle
+       (save-excursion (hs-show-all))
+       (setq this-command 'hs-global-show))
+      (_ (hs-hide-all)))))
+
+(use-package pulsar
+  :straight (pulsar :type git :host gitlab :repo "protesilaos/pulsar")
+  :config
+  (pulsar-setup)
+  (global-set-key (kbd "C-c SPC") 'pulsar-pulse-line)
+  (setq pulse-flag t)
+  (set-face-attribute 'pulsar-cyan nil :background "#81a1c1")
+  (setq pulsar-face 'pulsar-cyan))
+
+(use-package all-the-icons
+  :if (display-graphic-p))
+
+(use-package all-the-icons-dired
+  :hook
+  (dired-mode . all-the-icons-dired-mode))
+
+(use-package all-the-icons-ibuffer
+  :after all-the-icons)
+
+(defun custom/coding-faces ()
+  (interactive)
+  (set-face-attribute 'font-lock-keyword-face nil :weight 'ultra-bold)
+  (set-face-attribute 'font-lock-comment-face nil :slant 'italic :weight 'semi-light)
+  (set-face-attribute 'font-lock-function-name-face nil :slant 'italic :weight 'semi-bold)
+  (set-face-attribute 'font-lock-string-face nil :weight 'light)
+  (set-face-attribute 'font-lock-variable-name-face nil :slant 'italic))
 
 (add-hook 'prog-mode-hook #'custom/coding-faces)
 
@@ -326,20 +312,16 @@
                     green-alt-other
                     fg-special-warm))))
 
-(use-package doom-modeline
-  :init
-  (doom-modeline-mode 1))
+(use-package ediff
+    :straight (:type built-in)
+    :custom
+    ((ediff-window-setup-function 'ediff-setup-windows-plain)
+     (ediff-diff-options "-w")
+     (ediff-split-window-function 'split-window-horizontally)))
 
-(use-package olivetti
-  :config
-  (setq olivetti-margin-width 120
-        olivetti-minimum-body-width 120
-        olivetti-body-width 120))
+(use-package sudo-edit)
 
-(define-key minibuffer-local-completion-map " " nil)
-(define-key minibuffer-local-must-match-map " " nil)
-(define-key minibuffer-local-completion-map "?" nil)
-(define-key minibuffer-local-must-match-map "?" nil)
+(use-package emacs-everywhere)
 
 (use-package which-key
   :init (which-key-mode)
@@ -575,6 +557,9 @@
 
 (use-package rainbow-mode)
 
+(use-package rainbow-delimiters
+  :hook (prog-mode . rainbow-delimiters-mode))
+
 (use-package highlight-parentheses
   :config
   (global-highlight-parentheses-mode 1))
@@ -586,9 +571,6 @@
     (?\[ . ?\])
     (?\{ . ?\})))
 (electric-pair-mode 1)
-
-(use-package rainbow-delimiters
-  :hook (prog-mode . rainbow-delimiters-mode))
 
 (use-package aggressive-indent
     :config
@@ -650,6 +632,11 @@
     (when lsp-eslint-auto-fix-on-save (lsp-eslint-fix-all))  
     (funcall orig-fun))
   (advice-add 'lsp--before-save :around #'lsp--eslint-before-save))
+
+(use-package lsp-ltex
+  :hook (text-mode . (lambda ()
+                       (require 'lsp-ltex)
+                       (lsp))))
 
 (use-package dap-mode
   :straight (dap-mode :type git :host github :repo "emacs-lsp/dap-mode"))
@@ -745,16 +732,9 @@
          ("<tab>" . dired-subtree-toggle)
          ("<backtab>" . dired-subtree-remove)))
 
-(use-package dired-single)
-
 (use-package dired-hide-dotfiles
   :hook
   (dired-mode . dired-hide-dotfiles-mode))
-
-(use-package lsp-ltex
-  :hook (text-mode . (lambda ()
-                       (require 'lsp-ltex)
-                       (lsp))))
 
 (use-package org
   :config
@@ -911,43 +891,43 @@ Version 2017-11-10"
 (add-hook 'eww-after-render-hook #'mixed-pitch-mode)
 (add-hook 'eww-after-render-hook #'olivetti-mode)
 
-(use-package epc)
-(require 'epc)
-(use-package eaf
-  :straight (eaf :type git
-                            :host github
-                            :repo "emacs-eaf/emacs-application-framework"
-                            :files ("*.el" "*.py" "*.json" "core" "app"))
-  :bind (("M-r" . eaf/open-in-eww)
-         ("C-c i" . eaf-open-browser-with-history))
-  :custom
-  (eaf-browser-continue-where-left-off t)
-  (eaf-browser-enable-adblocker t)
-  (eaf-browser-default-search-engine "duckduckgo")
-  ;;(browse-url-browser-function 'eaf-open-browser)
-  (eaf-wm-focus-fix-wms `("i3" "LG3D" "Xpra" "EXWM" "Xfwm4" "herbstluftwm"))
-  :config
-  (require 'eaf-browser)
-  (require 'eaf-airshare)
-  (setq eaf-enable-debug t)
-  ;;(defalias 'browse-web #'eaf-open-browser)
-  (eaf-bind-key ace-window "M-o" eaf-browser-keybinding)
-  (eaf-bind-key ace-window "M-O" eaf-browser-keybinding)
-  (eaf-bind-key nil "n" eaf-browser-keybinding)
-  (eaf-bind-key open_link "C-j" eaf-browser-keybinding)
-  (eaf-bind-key open_link_new_buffer "C-S-j" eaf-browser-keybinding)
-  (eaf-bind-key eval_js "M-n" eaf-browser-keybinding)
-  (eaf-bind-key eval_js_file "M-N" eaf-browser-keybinding)
-  (eaf-bind-key insert_or_export_text "M-t" eaf-browser-keybinding))
+;;(use-package epc)
+;;(require 'epc)
+;;(use-package eaf
+;;  :straight (eaf :type git
+;;                            :host github
+;;                            :repo "emacs-eaf/emacs-application-framework"
+;;                            :files ("*.el" "*.py" "*.json" "core" "app"))
+;;  :bind (("M-r" . eaf/open-in-eww)
+;;         ("C-c i" . eaf-open-browser-with-history))
+;;  :custom
+;;  (eaf-browser-continue-where-left-off t)
+;;  (eaf-browser-enable-adblocker t)
+;;  (eaf-browser-default-search-engine "duckduckgo")
+;;  ;;(browse-url-browser-function 'eaf-open-browser)
+;;  (eaf-wm-focus-fix-wms `("i3" "LG3D" "Xpra" "EXWM" "Xfwm4" "herbstluftwm"))
+;;  :config
+;;  (require 'eaf-browser)
+;;  (require 'eaf-airshare)
+;;  (setq eaf-enable-debug t)
+;;  ;;(defalias 'browse-web #'eaf-open-browser)
+;;  (eaf-bind-key ace-window "M-o" eaf-browser-keybinding)
+;;  (eaf-bind-key ace-window "M-O" eaf-browser-keybinding)
+;;  (eaf-bind-key nil "n" eaf-browser-keybinding)
+;;  (eaf-bind-key open_link "C-j" eaf-browser-keybinding)
+;;  (eaf-bind-key open_link_new_buffer "C-S-j" eaf-browser-keybinding)
+;;  (eaf-bind-key eval_js "M-n" eaf-browser-keybinding)
+;;  (eaf-bind-key eval_js_file "M-N" eaf-browser-keybinding)
+;;  (eaf-bind-key insert_or_export_text "M-t" eaf-browser-keybinding))
 
-(require 'eaf)
-(defun eaf/open-in-eww ()
-  (interactive)
-  (eww (eaf-get-path-or-url)))
+;;(require 'eaf)
+;;(defun eaf/open-in-eww ()
+;;  (interactive)
+;;  (eww (eaf-get-path-or-url)))
 
-(defun eww/open-in-eaf ()
-  (interactive)
-  (eaf-open-browser (eww-current-url)))
+;;(defun eww/open-in-eaf ()
+;;  (interactive)
+;;  (eaf-open-browser (eww-current-url)))
 
 (let ((local-settings "~/.emacs.d/local.el"))
     (when (file-exists-p local-settings)
