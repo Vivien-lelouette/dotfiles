@@ -509,6 +509,8 @@
   ;;             #'completion--in-region)
   ;;           args))))
 
+(use-package embark-consult)
+
 (use-package orderless
   :init
   ;; Configure a custom style dispatcher (see the Consult wiki)
@@ -607,6 +609,11 @@
 
 (use-package magit)
 (use-package forge)
+(use-package code-review
+  :config
+  (define-key forge-topic-mode-map (kbd "C-c r") 'code-review-forge-pr-at-point)
+  (define-key code-review-mode-map (kbd "C-c C-n") 'code-review-comment-jump-next)
+  (define-key code-review-mode-map (kbd "C-c C-p") 'code-review-comment-jump-previous))
 
 (use-package yasnippet
   :config
@@ -642,6 +649,7 @@
    lsp-idle-delay 0.500
    lsp-log-io nil
    lsp-headerline-breadcrumb-enable nil
+   lsp-completion-provide :none
    lsp-eldoc-render-all t
    lsp-eslint-auto-fix-on-save t)
   (defun lsp--eslint-before-save (orig-fun)  
@@ -917,6 +925,8 @@ Version 2017-11-10"
 (add-hook 'eww-after-render-hook #'mixed-pitch-mode)
 (add-hook 'eww-after-render-hook #'olivetti-mode)
 
+(use-package epc)
+(require 'epc)
 (use-package eaf
   :straight (eaf :type git
                             :host github
@@ -928,11 +938,13 @@ Version 2017-11-10"
   (eaf-browser-continue-where-left-off t)
   (eaf-browser-enable-adblocker t)
   (eaf-browser-default-search-engine "duckduckgo")
-  (browse-url-browser-function 'eaf-open-browser)
+  ;;(browse-url-browser-function 'eaf-open-browser)
   (eaf-wm-focus-fix-wms `("i3" "LG3D" "Xpra" "EXWM" "Xfwm4" "herbstluftwm"))
   :config
   (require 'eaf-browser)
-  (defalias 'browse-web #'eaf-open-browser)
+  (require 'eaf-airshare)
+  (setq eaf-enable-debug t)
+  ;;(defalias 'browse-web #'eaf-open-browser)
   (eaf-bind-key ace-window "M-o" eaf-browser-keybinding)
   (eaf-bind-key ace-window "M-O" eaf-browser-keybinding)
   (eaf-bind-key nil "n" eaf-browser-keybinding)
