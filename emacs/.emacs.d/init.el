@@ -201,11 +201,6 @@
 (use-package all-the-icons-ibuffer
   :after all-the-icons)
 
-(use-package treemacs-all-the-icons
-  :after all-the-icons
-  :config
-  (treemacs-load-theme "all-the-icons"))
-
 (defun custom/coding-faces ()
   (interactive)
   (set-face-attribute 'font-lock-keyword-face nil :weight 'ultra-bold)
@@ -274,7 +269,6 @@
   ; :hook (server-after-make-frame . (lambda () (load-theme
   ;                                            'doom-nord t)))
    :config
-   (doom-themes-treemacs-config)
    (defun doom-themes-hide-modeline ())
    (doom-themes-org-config))
 
@@ -285,7 +279,6 @@
 ;  (face-remap-add-relative 'fringe `(:background "#272C36"))
 ;  (buffer-face-mode 1))
 
-;(add-hook 'treemacs-mode-hook #'darken-buffer)
 ;(add-hook 'help-mode-hook #'darken-buffer)
 ;(add-hook 'helpful-mode-hook #'darken-buffer)
 
@@ -716,13 +709,6 @@
   (require 'vterm)
   (defalias 'eshell/v 'eshell-exec-visual)
   (eshell-vterm-mode))
-
-(use-package treemacs
-  :config
-  (setq
-   treemacs-width 45
-   treemacs-default-visit-action 'treemacs-visit-node-close-treemacs)
-  (global-set-key (kbd "C-c t") 'treemacs))
 
 (defun dired-open-file ()
   "In dired, open the file named on this line."
