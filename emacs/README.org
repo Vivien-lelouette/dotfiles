@@ -144,11 +144,13 @@ Increase the amount of data which Emacs reads from a process
 * Movement packages
 ** Ace window
 #+BEGIN_SRC emacs-lisp
-  (use-package ace-window
-    :config
-    (global-set-key (kbd "M-o") 'ace-window)
-    (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
-    (ace-window-display-mode 1))
+    (use-package ace-window
+      :config
+      (global-set-key (kbd "M-o") 'ace-window)
+      (setq
+       aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l ?z ?x ?c ?v ?b ?n ?m ?q ?w ?e ?r ?t ?y ?u ?i ?o ?p)
+       aw-background nil)
+      (ace-window-display-mode 1))
 #+END_SRC
 
 ** Avy
@@ -246,9 +248,7 @@ After installing both tools, you just need to execute the command: `wpg-install.
       (call-interactively 'load-theme)
       (generate-colors-file)
       (theme-magic-from-emacs)
-      (call-process-shell-command "herbstclient reload &" nil 0)
-      (custom/coding-faces)
-      )
+      (exwm/refresh-monitors))
 #+END_SRC
 
 ** Doom themes
@@ -442,8 +442,13 @@ One can use (global-hl-line-mode 1) to highlight the current line.
   (use-package vertico
     :straight (vertico :type git :host github :repo "minad/vertico")
     :config
-    (setq vertico-cycle t)
-    (vertico-mode))
+    (load-file "~/.emacs.d/straight/build/vertico/extensions/vertico-buffer.el")
+    (setq
+     vertico-cycle t
+     vertico-buffer-display-action '(display-buffer-below-selected (window-height . 10)))
+    (add-hook 'minibuffer-setup-hook (lambda () (setq mode-line-format nil)))
+    (vertico-mode)
+    (vertico-buffer-mode))
 #+END_SRC
 
 ** Corfu
@@ -480,7 +485,7 @@ One can use (global-hl-line-mode 1) to highlight the current line.
     :bind (("C-c e" . embark-act)))
 #+END_SRC
 
-** Wgrep
+** Wgrep 
 #+BEGIN_SRC emacs-lisp
   (use-package wgrep)
 #+END_SRC
@@ -1164,3 +1169,8 @@ Sometimes, settings are specific to one of my computers. Those settings are stor
 #+END_SRC
 
 
+* Start desktop mode if needed
+#+BEGIN_SRC emacs-lisp
+    (autoload 'exwm-enable "~/.emacs.d/desktop.el")
+#+END_SRC
+ 

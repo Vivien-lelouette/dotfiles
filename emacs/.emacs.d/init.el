@@ -101,7 +101,9 @@
 (use-package ace-window
   :config
   (global-set-key (kbd "M-o") 'ace-window)
-  (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
+  (setq
+   aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l ?z ?x ?c ?v ?b ?n ?m ?q ?w ?e ?r ?t ?y ?u ?i ?o ?p)
+   aw-background nil)
   (ace-window-display-mode 1))
 
 (use-package avy
@@ -178,9 +180,7 @@
     (call-interactively 'load-theme)
     (generate-colors-file)
     (theme-magic-from-emacs)
-    (call-process-shell-command "herbstclient reload &" nil 0)
-    (custom/coding-faces)
-    )
+    (exwm/refresh-monitors))
 
 (use-package doom-themes
   ;;:custom-face
@@ -332,8 +332,13 @@
 (use-package vertico
   :straight (vertico :type git :host github :repo "minad/vertico")
   :config
-  (setq vertico-cycle t)
-  (vertico-mode))
+  (load-file "~/.emacs.d/straight/build/vertico/extensions/vertico-buffer.el")
+  (setq
+   vertico-cycle t
+   vertico-buffer-display-action '(display-buffer-below-selected (window-height . 10)))
+  (add-hook 'minibuffer-setup-hook (lambda () (setq mode-line-format nil)))
+  (vertico-mode)
+  (vertico-buffer-mode))
 
 (use-package corfu
   ;; Optional customizations
@@ -932,3 +937,5 @@ Version 2017-11-10"
 (let ((local-settings "~/.emacs.d/local.el"))
     (when (file-exists-p local-settings)
   (load-file local-settings)))
+
+(autoload 'exwm-enable "~/.emacs.d/desktop.el")
