@@ -14,16 +14,11 @@
 (straight-use-package 'use-package)
 (setq straight-use-package-by-default t)
 
-(setq gc-cons-threshold 50000000)
+(use-package gcmh)
 
 (setq large-file-warning-threshold 100000000)
 
 (setq read-process-output-max (* 5 (* 1024 1024)))
-
-(scroll-bar-mode 0)
-(tool-bar-mode -1)
-(tooltip-mode -1)
-(menu-bar-mode -1)
 
 (setq tab-always-indent 'complete)
 (defalias 'yes-or-no-p 'y-or-n-p)
@@ -52,6 +47,13 @@
 (bind-key* "C-x k" #'kill-current-buffer)
 (bind-key* "C-x K" #'kill-buffer)
 (global-set-key (kbd "C-z") 'delete-frame)
+
+(setq display-buffer-base-action
+  '((display-buffer-below-selected
+     display-buffer-reuse-window
+     display-buffer-reuse-mode-window
+     display-buffer-same-window
+     display-buffer-in-previous-window)))
 
 (setq indent-tabs-mode nil)
 (setq indent-line-function 'insert-tab)
@@ -116,7 +118,7 @@
     (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
     (global-set-key (kbd "C->") 'mc/mark-next-like-this)
     (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
-    (global-set-key (kbd "C-?") 'mc/mark-all-like-this)
+    (global-set-key (kbd "C-;") 'mc/mark-all-like-this)
     (global-set-key (kbd "C-S-<mouse-1>") 'mc/add-cursor-on-click))
 
 (use-package expand-region
@@ -124,17 +126,35 @@
   (global-set-key (kbd "C-=") 'er/expand-region)
   (global-set-key (kbd "C--") 'er/contract-region))
 
-(set-face-attribute 'default nil :font "SauceCodePro NF" :height 110)
+(use-package undo-fu
+  :config
+  (global-unset-key (kbd "C-/"))
+  (global-unset-key (kbd "C-?"))
+  (global-set-key (kbd "C-/")   'undo-fu-only-undo)
+  (global-set-key (kbd "C-?") 'undo-fu-only-redo))
+
+(scroll-bar-mode 0)
+(tool-bar-mode -1)
+(tooltip-mode -1)
+(menu-bar-mode -1)
+
+(set-face-attribute 'default nil :font "SauceCodePro NF")
 
 ;; Set the fixed pitch face
-(set-face-attribute 'fixed-pitch nil :font "SauceCodePro NF" :height 110)
+(set-face-attribute 'fixed-pitch nil :font "SauceCodePro NF")
 
 ;; Set the variable pitch face
-(set-face-attribute 'variable-pitch nil :font "Cantarell" :height 110 :weight 'regular)
+(set-face-attribute 'variable-pitch nil :font "Cantarell" :weight 'regular)
 
 (use-package mixed-pitch
   :hook
   (text-mode . mixed-pitch-mode))
+
+(use-package textsize
+  :commands textsize-mode
+  :init (textsize-mode)
+  :custom
+  (textsize-default-points 12))
 
 (defun generate-colors-file ()
   "Function to generate my colors file."
@@ -319,6 +339,10 @@
      (ediff-diff-options "-w")
      (ediff-split-window-function 'split-window-horizontally)))
 
+(use-package eldoc-box
+  :hook
+  (lsp-mode . eldoc-box-hover-mode))
+
 (use-package sudo-edit)
 
 (use-package emacs-everywhere)
@@ -336,7 +360,7 @@
   (setq
    vertico-cycle t
    vertico-buffer-display-action '(display-buffer-below-selected (window-height . 10)))
-  (add-hook 'minibuffer-setup-hook (lambda () (setq mode-line-format nil)))
+  ;;(add-hook 'minibuffer-setup-hook (lambda () (setq mode-line-format nil)))
   (vertico-mode)
   (vertico-buffer-mode))
 
@@ -585,6 +609,7 @@
                  '(minibufferp))
     (add-to-list 'aggressive-indent-excluded-modes 'yaml-mode)
     (add-to-list 'aggressive-indent-excluded-modes 'eshell-mode)
+    (add-to-list 'aggressive-indent-excluded-modes 'comint-mode)
     (global-aggressive-indent-mode 1))
 
 (use-package magit)
@@ -602,6 +627,17 @@
 (use-package yasnippet-snippets)
 
 (use-package consult-yasnippet)
+
+(use-package nodejs-repl
+  :config
+  (add-hook 'js-mode-hook
+    (lambda ()
+      (define-key js-mode-map (kbd "C-x C-e") 'nodejs-repl-send-last-expression)
+      (define-key js-mode-map (kbd "C-c C-j") 'nodejs-repl-send-line)
+      (define-key js-mode-map (kbd "C-c C-r") 'nodejs-repl-send-region)
+      (define-key js-mode-map (kbd "C-c C-c") 'nodejs-repl-send-buffer)
+      (define-key js-mode-map (kbd "C-c C-l") 'nodejs-repl-load-file)
+      (define-key js-mode-map (kbd "C-c C-z") 'nodejs-repl-switch-to-repl))))
 
 (use-package lsp-mode
   :straight (lsp-mode :type git :host github :repo "emacs-lsp/lsp-mode")
@@ -626,17 +662,38 @@
     (define-key js-mode-map (kbd "M-.") nil)
     )
   (setq
-   lsp-idle-delay 0.500
    lsp-log-io nil
-   lsp-headerline-breadcrumb-enable nil
    lsp-completion-provide :none
-   lsp-eldoc-render-all t
-   lsp-eslint-auto-fix-on-save t)
+   lsp-eldoc-render-all nil
+   lsp-eslint-auto-fix-on-save t
+   lsp-auto-guess-root t
+   lsp-log-io nil
+   lsp-restart 'auto-restart
+   lsp-enable-symbol-highlighting t
+   lsp-enable-on-type-formatting nil
+   lsp-signature-auto-activate nil
+   lsp-signature-render-documentation nil
+   lsp-eldoc-hook nil
+   lsp-headerline-breadcrumb-enable nil
+   lsp-semantic-tokens-enable nil
+   lsp-enable-folding nil
+   lsp-enable-snippet nil
+   lsp-idle-delay 0.5)
   (defun lsp--eslint-before-save (orig-fun)  
     "Run lsp-eslint-apply-all-fixes and then run the original lsp--before-save."  
     (when lsp-eslint-auto-fix-on-save (lsp-eslint-fix-all))  
     (funcall orig-fun))
   (advice-add 'lsp--before-save :around #'lsp--eslint-before-save))
+
+(use-package lsp-ui
+  :commands lsp-ui-mode
+  :config
+  (setq lsp-ui-doc-enable nil
+        lsp-ui-doc-header t
+        lsp-ui-doc-include-signature t
+        lsp-ui-doc-border (face-foreground 'default)
+        lsp-ui-sideline-show-code-actions t
+        lsp-ui-sideline-delay 0.05))
 
 (use-package lsp-ltex
   :hook (text-mode . (lambda ()

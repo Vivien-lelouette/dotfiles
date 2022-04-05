@@ -1,7 +1,7 @@
-#!/bin/sh
+#!/usr/bin/env bash
 mkdir -p ~/Tools
 cd ~/Tools
-git clone git://git.savannah.gnu.org/emacs.git
+git clone --branch emacs-28 git://git.savannah.gnu.org/emacs.git
 cd emacs
 export CC=/usr/bin/gcc-10 CXX=/usr/bin/gcc-10
 ./autogen.sh

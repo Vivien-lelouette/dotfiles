@@ -151,6 +151,7 @@
 
 (use-package exwm
   :config
+  (winner-mode 1)
   (keys/keyboard-setup)
 
   ;; When window "class" updates, use it to set the buffer name
@@ -187,6 +188,9 @@
           ([C-s-R] . exwm-reset)
           ([?\s-r] . exwm-input-release-keyboard)
 
+          ([?\s-/] . winner-undo)
+          ([?\s-?] . winner-redo)
+
           ;; refresh monitors
           ([?\s-R] . exwm/refresh-monitors)
           ([?\s-x] . execute-extended-command)
@@ -202,8 +206,8 @@
           ([S-s-x] . execute-extended-command)
 
           ([?\s-a] . app-launcher-run-app)
-          ([s-return] . vterm)
-          ([S-s-return] . (shell/run-in-background "gnome-terminal"))
+          ([s-return] . eshell)
+          ([S-s-return] . vterm)
 
           ;; 's-N': Switch to certain workspace with Super (Win) plus a number key (0 - 9)
           ,@(mapcar (lambda (i)
