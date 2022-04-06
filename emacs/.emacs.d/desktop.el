@@ -45,20 +45,19 @@
   (build-exwm-monitors-aux 1 (order-monitors)))
 
 ;; This defines a function to refresh the workspaces position and xrandr
-(defun exwm/refresh-monitors ()
+(defun exwm/refresh-setup ()
   (interactive)
   (setq exwm-randr-workspace-monitor-plist (build-exwm-monitors))
 
-  ;; Start the Polybar panel
-  (shell/run-in-background "~/.config/polybar/start_polybar.sh"))
+  (shell/run-in-background "~/.config/polybar/start_polybar.sh")
+  (setup/input))
 
 ;; logout function
-(defun my-logout ()
+(defun exwm/logout ()
   (interactive)
   (shell-command "gnome-session-quit --force"))
 
-;; keyboard setup
-(defun keys/keyboard-setup ()
+(defun setup/input ()
   (interactive)
   (start-process-shell-command "trackball" nil "bash ~/.scripts/trackball-setup.sh")
   ;; Rebind CapsLock to Esc
@@ -131,7 +130,7 @@
                                    (windmove-down))))
 
 (defun exwm/exwm-init-hook ()
-  (exwm/refresh-monitors)
+  (exwm/refresh-setup)
   ;; Launch apps that will run in the background
   (shell/run-in-background "gsettings set org.gnome.gnome-flashback.desktop.icons show-home false")
   (shell/run-in-background "gsettings set org.gnome.gnome-flashback.desktop.icons show-trash false"))
@@ -148,12 +147,26 @@
 
 (defun exwm/exwm-set-fringe ()
   (setq left-fringe-width 4)
+
   (setq right-fringe-width 4))
+
+(defun exwm/kill-current-buffer-and-window ()
+  (interactive)
+  (kill-current-buffer)
+  (delete-window))
+
+(defun utils/gnome-terminal ()
+  (interactive)
+  (shell/run-in-background "gnome-terminal"))
+
+(defun utils/gnome-lock-screen ()
+  (interactive)
+  (shell/run-in-background "gnome-screensaver-command -l"))
 
 (use-package exwm
   :config
   (winner-mode 1)
-  (keys/keyboard-setup)
+  (setup/input)
 
   ;; When window "class" updates, use it to set the buffer name
   (add-hook 'exwm-update-class-hook #'exwm/exwm-update-title)
@@ -186,6 +199,8 @@
   (setq exwm-input-global-keys
         `(
           ;; Reset to line-mode (C-c C-k switches to char-mode via exwm-input-release-keyboard)
+          ([?\s-g] . keyboard-quit)
+
           ([C-s-R] . exwm-reset)
           ([?\s-r] . exwm-input-release-keyboard)
 
@@ -193,26 +208,37 @@
           ([?\s-?] . winner-redo)
 
           ;; refresh monitors
-          ([?\s-R] . exwm/refresh-monitors)
+          ([?\s-R] . exwm/refresh-setup)
           ([?\s-x] . execute-extended-command)
+
           ;; move to another window using switch-window
           ([?\s-o] . ace-window)
           ([?\s-O] . ace-swap-window)
 
+          ([?\s-k] . kill-current-buffer)
+          ([?\s-q] . exwm/kill-current-buffer-and-window)
+
           ([?\s-m] . exwm-layout-toggle-fullscreen)
           ([?\s-M] . exwm-floating-toggle-floating)
 
-          ([?\s-L] . (shell/run-in-background "gnome-screensaver-command -l"))
+          ([?\s-L] . utils/gnome-lock-screen)
 
           ([S-s-x] . execute-extended-command)
 
           ([?\s-a] . app-launcher-run-app)
+
           ([s-return] . eshell)
           ([S-s-return] . vterm)
+          ([C-s-return] . utils/gnome-terminal)
+
+          ([?\s-0] . delete-window)
+          ([?\s-1] . delete-other-windows)
+          ([?\s-2] . split-window-below)
+          ([?\s-3] . split-window-right)
 
           ;; 's-N': Switch to certain workspace with Super (Win) plus a number key (0 - 9)
           ,@(mapcar (lambda (i)
-                      `(,(kbd (format "s-%d" i)) .
+                      `(,(kbd (format "C-s-%d" i)) .
                         (lambda ()
                           (interactive)
                           (exwm-workspace-switch-create ,i))))
@@ -227,9 +253,9 @@
           ))
 
   (exwm-enable)
-  (exwm/refresh-monitors)
+  (exwm/refresh-setup)
   ;; This is for multiscreen support
   (require 'exwm-randr)
-  (add-hook 'exwm-randr-screen-change-hook 'exwm/refresh-monitors)
+  (add-hook 'exwm-randr-screen-change-hook 'exwm/refresh-setup)
   (exwm-randr-enable)
   (load-theme 'modus-vivendi t))
