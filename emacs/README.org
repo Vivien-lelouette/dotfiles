@@ -39,7 +39,9 @@ sudo make install
 ** Sane 2022 file setup
 Reduce the frequency of garbage collection by making it happen on each 50MB of allocated data (the default is on every 0.76MB).
 #+BEGIN_SRC emacs-lisp
-  (use-package gcmh)
+  (use-package gcmh
+    :config
+    (gcmh-mode 1))
 #+END_SRC
 
 Warn when opening files bigger than 100MB
@@ -92,6 +94,15 @@ Increase the amount of data which Emacs reads from a process
   (global-set-key (kbd "C-z") 'delete-frame)
 #+END_SRC
 
+** Bookmarks
+This persists the bookmarks state after each bookmark modification.
+It ensures that bookmarks are always up-to-date even when Emacs crashes.
+As bookmarks are at the center of my workflow, this is a crucial option.
+
+#+begin_src emacs-lisp
+  (setq bookmark-save-flag 1)
+#+end_src
+
 ** Saner window creation ?
 #+begin_src emacs-lisp
   (setq display-buffer-base-action
@@ -101,6 +112,7 @@ Increase the amount of data which Emacs reads from a process
        display-buffer-same-window
        display-buffer-in-previous-window)))
 #+end_src
+
 ** Indentation
 #+BEGIN_SRC emacs-lisp
   (setq indent-tabs-mode nil)
@@ -210,6 +222,10 @@ Increase the amount of data which Emacs reads from a process
   (tool-bar-mode -1)
   (tooltip-mode -1)
   (menu-bar-mode -1)
+  (setq
+   window-divider-default-places 'bottom-only
+   window-divider-default-bottom-width 1)
+  (window-divider-mode 1)
 #+END_SRC
 
 ** Fonts setting
@@ -474,7 +490,28 @@ One can use (global-hl-line-mode 1) to highlight the current line.
     :init (which-key-mode)
     :diminish which-key-mode
     :config
-    (setq which-key-idle-delay 1))
+    (setq which-key-idle-delay 2)
+    (setq which-key-popup-type 'side-window)
+
+    ;; TODO Pretty damn ugly, must understand the correct way to customize
+    (defun which-key--show-buffer-side-window (act-popup-dim)
+      "Show which-key buffer when popup type is side-window."
+      (when (and which-key-preserve-window-configuration
+                 (not which-key--saved-window-configuration))
+        (setq which-key--saved-window-configuration (current-window-configuration)))
+      (let* ((height (car act-popup-dim))
+             (width (cdr act-popup-dim))
+             (alist
+              (if which-key-allow-imprecise-window-fit
+                  `((window-width .  ,(which-key--text-width-to-total width))
+                    (window-height . ,height))
+                `((window-width . which-key--fit-buffer-to-window-horizontally)
+                  (window-height . (lambda (w) (fit-window-to-buffer w nil 1)))
+                  ))))
+        ;; Previously used `display-buffer-in-major-side-window' here, but
+        ;; apparently that is meant to be an internal function. See emacs bug #24828
+        ;; and advice given there.
+        (display-buffer-below-selected which-key--buffer alist))))
 #+END_SRC
 
 * Search & completion
@@ -482,15 +519,16 @@ One can use (global-hl-line-mode 1) to highlight the current line.
 ** Vertico
 #+BEGIN_SRC emacs-lisp
   (use-package vertico
-    :straight (vertico :type git :host github :repo "minad/vertico")
-    :config
-    (load-file "~/.emacs.d/straight/build/vertico/extensions/vertico-buffer.el")
-    (setq
-     vertico-cycle t
-     vertico-buffer-display-action '(display-buffer-below-selected (window-height . 10)))
-    ;;(add-hook 'minibuffer-setup-hook (lambda () (setq mode-line-format nil)))
-    (vertico-mode)
-    (vertico-buffer-mode))
+      :straight (vertico :type git :host github :repo "minad/vertico")
+      :config
+      (load-file "~/.emacs.d/straight/build/vertico/extensions/vertico-buffer.el")
+      (setq
+       vertico-cycle t
+       vertico-buffer-display-action '(display-buffer-below-selected (window-height . 10)))
+      (defun custom/hide-modline () (setq mode-line-format nil))
+      (add-hook 'minibuffer-setup-hook #'custom/hide-modline)
+      (vertico-mode)
+      (vertico-buffer-mode))
 #+END_SRC
 
 ** Corfu
@@ -790,13 +828,17 @@ It is nice but sometimes too aggressive !
 
 ** The only holy git client !
 #+BEGIN_SRC emacs-lisp
-  (use-package magit)
-  (use-package forge)
-  (use-package code-review
+  (use-package magit
     :config
-    (define-key forge-topic-mode-map (kbd "C-c r") 'code-review-forge-pr-at-point)
-    (define-key code-review-mode-map (kbd "C-c C-n") 'code-review-comment-jump-next)
-    (define-key code-review-mode-map (kbd "C-c C-p") 'code-review-comment-jump-previous))
+    (setq transient-display-buffer-action 'display-buffer-below-selected))
+
+  (use-package forge)
+
+  (use-package code-review
+      :config
+      (define-key forge-topic-mode-map (kbd "C-c r") 'code-review-forge-pr-at-point)
+      (define-key code-review-mode-map (kbd "C-c C-n") 'code-review-comment-jump-next)
+      (define-key code-review-mode-map (kbd "C-c C-p") 'code-review-comment-jump-previous))
 #+END_SRC
 
 ** Yasnippet

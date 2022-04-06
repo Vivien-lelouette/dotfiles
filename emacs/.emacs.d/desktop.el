@@ -60,6 +60,7 @@
 ;; keyboard setup
 (defun keys/keyboard-setup ()
   (interactive)
+  (start-process-shell-command "trackball" nil "bash ~/.scripts/trackball-setup.sh")
   ;; Rebind CapsLock to Esc
   (start-process-shell-command "qwerty" nil "setxkbmap -layout us -option 'compose:rctrl'"))
 

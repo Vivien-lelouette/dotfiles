@@ -14,7 +14,9 @@
 (straight-use-package 'use-package)
 (setq straight-use-package-by-default t)
 
-(use-package gcmh)
+(use-package gcmh
+  :config
+  (gcmh-mode 1))
 
 (setq large-file-warning-threshold 100000000)
 
@@ -47,6 +49,8 @@
 (bind-key* "C-x k" #'kill-current-buffer)
 (bind-key* "C-x K" #'kill-buffer)
 (global-set-key (kbd "C-z") 'delete-frame)
+
+(setq bookmark-save-flag 1)
 
 (setq display-buffer-base-action
   '((display-buffer-below-selected
@@ -137,6 +141,10 @@
 (tool-bar-mode -1)
 (tooltip-mode -1)
 (menu-bar-mode -1)
+(setq
+ window-divider-default-places 'bottom-only
+ window-divider-default-bottom-width 1)
+(window-divider-mode 1)
 
 (set-face-attribute 'default nil :font "SauceCodePro NF")
 
@@ -351,18 +359,40 @@
   :init (which-key-mode)
   :diminish which-key-mode
   :config
-  (setq which-key-idle-delay 1))
+  (setq which-key-idle-delay 2)
+  (setq which-key-popup-type 'side-window)
+
+  ;; TODO Pretty damn ugly, must understand the correct way to customize
+  (defun which-key--show-buffer-side-window (act-popup-dim)
+    "Show which-key buffer when popup type is side-window."
+    (when (and which-key-preserve-window-configuration
+               (not which-key--saved-window-configuration))
+      (setq which-key--saved-window-configuration (current-window-configuration)))
+    (let* ((height (car act-popup-dim))
+           (width (cdr act-popup-dim))
+           (alist
+            (if which-key-allow-imprecise-window-fit
+                `((window-width .  ,(which-key--text-width-to-total width))
+                  (window-height . ,height))
+              `((window-width . which-key--fit-buffer-to-window-horizontally)
+                (window-height . (lambda (w) (fit-window-to-buffer w nil 1)))
+                ))))
+      ;; Previously used `display-buffer-in-major-side-window' here, but
+      ;; apparently that is meant to be an internal function. See emacs bug #24828
+      ;; and advice given there.
+      (display-buffer-below-selected which-key--buffer alist))))
 
 (use-package vertico
-  :straight (vertico :type git :host github :repo "minad/vertico")
-  :config
-  (load-file "~/.emacs.d/straight/build/vertico/extensions/vertico-buffer.el")
-  (setq
-   vertico-cycle t
-   vertico-buffer-display-action '(display-buffer-below-selected (window-height . 10)))
-  ;;(add-hook 'minibuffer-setup-hook (lambda () (setq mode-line-format nil)))
-  (vertico-mode)
-  (vertico-buffer-mode))
+    :straight (vertico :type git :host github :repo "minad/vertico")
+    :config
+    (load-file "~/.emacs.d/straight/build/vertico/extensions/vertico-buffer.el")
+    (setq
+     vertico-cycle t
+     vertico-buffer-display-action '(display-buffer-below-selected (window-height . 10)))
+    (defun custom/hide-modline () (setq mode-line-format nil))
+    (add-hook 'minibuffer-setup-hook #'custom/hide-modline)
+    (vertico-mode)
+    (vertico-buffer-mode))
 
 (use-package corfu
   ;; Optional customizations
@@ -612,13 +642,17 @@
     (add-to-list 'aggressive-indent-excluded-modes 'comint-mode)
     (global-aggressive-indent-mode 1))
 
-(use-package magit)
-(use-package forge)
-(use-package code-review
+(use-package magit
   :config
-  (define-key forge-topic-mode-map (kbd "C-c r") 'code-review-forge-pr-at-point)
-  (define-key code-review-mode-map (kbd "C-c C-n") 'code-review-comment-jump-next)
-  (define-key code-review-mode-map (kbd "C-c C-p") 'code-review-comment-jump-previous))
+  (setq transient-display-buffer-action 'display-buffer-below-selected))
+
+(use-package forge)
+
+(use-package code-review
+    :config
+    (define-key forge-topic-mode-map (kbd "C-c r") 'code-review-forge-pr-at-point)
+    (define-key code-review-mode-map (kbd "C-c C-n") 'code-review-comment-jump-next)
+    (define-key code-review-mode-map (kbd "C-c C-p") 'code-review-comment-jump-previous))
 
 (use-package yasnippet
   :config
