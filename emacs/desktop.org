@@ -202,9 +202,8 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
 
 
   (defun exwm/exwm-set-fringe ()
-    (setq left-fringe-width 4)
-
-    (setq right-fringe-width 4))
+    (setq left-fringe-width 2
+          right-fringe-width 2))
 
   (defun exwm/kill-current-buffer-and-window ()
     (interactive)
@@ -257,14 +256,16 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
             ;; Reset to line-mode (C-c C-k switches to char-mode via exwm-input-release-keyboard)
             ([?\s-g] . keyboard-quit)
 
-            ([C-s-R] . exwm-reset)
-            ([?\s-r] . exwm-input-release-keyboard)
+            ;; refresh setup
+            ([?\s-r] . exwm-reset)
+            ([?\s-R] . exwm/refresh-setup)
+
+            ([?\s-i] . exwm-input-release-keyboard)
+            ([?\s-I] . exwm-input-grab-keyboard)
 
             ([?\s-/] . winner-undo)
             ([?\s-?] . winner-redo)
 
-            ;; refresh monitors
-            ([?\s-R] . exwm/refresh-setup)
             ([?\s-x] . execute-extended-command)
 
             ;; move to another window using switch-window
@@ -284,13 +285,13 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
 
             ([?\s-L] . utils/gnome-lock-screen)
 
-            ([S-s-x] . execute-extended-command)
-
             ([?\s-a] . app-launcher-run-app)
 
             ([?\s-b] . consult-buffer)
-            ([?\s-B] . consult-bookmark)
-            ([C-s-b] . ibuffer-jump)
+            ([?\s-B] . ibuffer-jump)
+
+            ([?\s-f] . consult-bookmark)
+            ([?\s-F] . bookmark-bmenu-list)
 
             ([s-return] . eshell)
             ([S-s-return] . vterm)

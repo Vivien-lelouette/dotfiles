@@ -146,9 +146,8 @@
 
 
 (defun exwm/exwm-set-fringe ()
-  (setq left-fringe-width 4)
-
-  (setq right-fringe-width 4))
+  (setq left-fringe-width 2
+        right-fringe-width 2))
 
 (defun exwm/kill-current-buffer-and-window ()
   (interactive)
@@ -202,8 +201,8 @@
           ([?\s-g] . keyboard-quit)
 
           ;; refresh setup
-          ([?\s-R] . exwm/refresh-setup)
           ([?\s-r] . exwm-reset)
+          ([?\s-R] . exwm/refresh-setup)
 
           ([?\s-i] . exwm-input-release-keyboard)
           ([?\s-I] . exwm-input-grab-keyboard)
@@ -230,13 +229,11 @@
 
           ([?\s-L] . utils/gnome-lock-screen)
 
-          ([S-s-x] . execute-extended-command)
-
           ([?\s-a] . app-launcher-run-app)
 
           ([?\s-b] . consult-buffer)
           ([?\s-B] . ibuffer-jump)
-          
+
           ([?\s-f] . consult-bookmark)
           ([?\s-F] . bookmark-bmenu-list)
 
