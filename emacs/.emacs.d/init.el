@@ -333,8 +333,7 @@
   (set-face-attribute 'font-lock-keyword-face nil :weight 'ultra-bold)
   (set-face-attribute 'font-lock-comment-face nil :slant 'italic :weight 'semi-light)
   (set-face-attribute 'font-lock-function-name-face nil :slant 'italic :weight 'semi-bold)
-  (set-face-attribute 'font-lock-string-face nil :weight 'light)
-  (set-face-attribute 'font-lock-variable-name-face nil :slant 'italic))
+  (set-face-attribute 'font-lock-string-face nil :weight 'normal :slant 'italic))
 
 (add-hook 'prog-mode-hook #'custom/coding-faces)
 
