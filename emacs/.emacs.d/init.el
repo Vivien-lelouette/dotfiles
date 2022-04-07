@@ -394,7 +394,7 @@
       (setq which-key--saved-window-configuration (current-window-configuration)))
     (let* ((height (car act-popup-dim))
            (alist
-            `((window-height . 5)
+            `((window-height . 6)
               )))
       (display-buffer-below-selected which-key--buffer alist))))
 
