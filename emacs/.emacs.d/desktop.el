@@ -146,8 +146,8 @@
 
 
 (defun exwm/exwm-set-fringe ()
-  (setq left-fringe-width 2
-        right-fringe-width 2))
+  (setq left-fringe-width 1
+        right-fringe-width 1))
 
 (defun exwm/kill-current-buffer-and-window ()
   (interactive)
