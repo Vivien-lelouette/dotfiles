@@ -268,8 +268,13 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
             ([?\s-x] . execute-extended-command)
 
             ;; move to another window using switch-window
-            ([?\s-o] . ace-window)
-            ([?\s-O] . ace-swap-window)
+            ([?\s-j] . ace-window)
+            ([?\s-J] . ace-swap-window)
+
+            ([?\s-^] . enlarge-window)
+            ([?\s-&] . shrink-window)
+            ([?\s-{] . shrink-window-horizontally)
+            ([?\s-}] . enlarge-window-horizontally)
 
             ([?\s-k] . kill-current-buffer)
             ([?\s-q] . exwm/kill-current-buffer-and-window)
@@ -282,6 +287,10 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
             ([S-s-x] . execute-extended-command)
 
             ([?\s-a] . app-launcher-run-app)
+
+            ([?\s-b] . consult-buffer)
+            ([?\s-B] . consult-bookmark)
+            ([C-s-b] . ibuffer-jump)
 
             ([s-return] . eshell)
             ([S-s-return] . vterm)

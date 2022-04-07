@@ -13,6 +13,7 @@ export CC=/usr/bin/gcc-10 CXX=/usr/bin/gcc-10
 make -j 8 NATIVE_FULL_AOT=1
 sudo make install
 #+END_SRC
+
 * Straight setup
 #+BEGIN_SRC emacs-lisp
   (defvar bootstrap-version)
@@ -170,13 +171,15 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 * Movement packages
 ** Ace window
 #+BEGIN_SRC emacs-lisp
-    (use-package ace-window
-      :config
-      (global-set-key (kbd "M-o") 'ace-window)
-      (setq
-       aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l ?z ?x ?c ?v ?b ?n ?m ?q ?w ?e ?r ?t ?y ?u ?i ?o ?p)
-       aw-background nil)
-      (ace-window-display-mode 1))
+  (use-package ace-window
+    :config
+    (global-set-key (kbd "M-o") 'ace-window)
+    (setq
+     aw-keys '(?a ?s ?d ?f ?g ?h ?k ?l ?z ?q ?w ?e ?r ?t ?y ?u ?i ?p)
+     aw-background nil
+     aw-dispatch-always t
+     aw-display-mode-overlay nil)
+    (ace-window-display-mode 1))
 #+END_SRC
 
 ** Avy
@@ -215,7 +218,32 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (global-set-key (kbd "C-/")   'undo-fu-only-undo)
     (global-set-key (kbd "C-?") 'undo-fu-only-redo))
 #+end_src
+
 * Appearance
+** Hide mode-line minor mode
+#+begin_src emacs-lisp
+  (defvar-local hidden-mode-line-mode nil)
+
+  (define-minor-mode hidden-mode-line-mode
+    "Minor mode to hide the mode-line in the current buffer."
+    :init-value nil
+    :global t
+    :variable hidden-mode-line-mode
+    :group 'editing-basics
+    (if hidden-mode-line-mode
+        (setq hide-mode-line mode-line-format
+              mode-line-format nil)
+      (setq mode-line-format hide-mode-line
+            hide-mode-line nil))
+    (force-mode-line-update)
+    (when (and (called-interactively-p 'interactive)
+               hidden-mode-line-mode)
+      (run-with-idle-timer
+       0 nil 'message
+       (concat "Hidden Mode Line Mode enabled.  "
+               "Use M-x hidden-mode-line-mode to make the mode-line appear."))))
+#+end_src
+
 ** Lighter interface
 #+BEGIN_SRC emacs-lisp
   (scroll-bar-mode 0)
@@ -471,48 +499,48 @@ One can use (global-hl-line-mode 1) to highlight the current line.
 #+END_SRC
 
 * Utilities
-#+begin_src emacs-lisp
-  (use-package eldoc-box
-    :hook
-    (lsp-mode . eldoc-box-hover-mode))
-#+end_src
-
+** Sudo edit
 #+BEGIN_SRC emacs-lisp
   (use-package sudo-edit)
 #+END_SRC
 
+** Emacs everywhere
 #+BEGIN_SRC emacs-lisp
   (use-package emacs-everywhere)
 #+END_SRC
 
+** which-key
 #+BEGIN_SRC emacs-lisp
   (use-package which-key
     :init (which-key-mode)
     :diminish which-key-mode
     :config
-    (setq which-key-idle-delay 2)
-    (setq which-key-popup-type 'side-window)
-
+    (setq which-key-idle-delay 1
+          which-key-popup-type 'side-window)
     ;; TODO Pretty damn ugly, must understand the correct way to customize
+    (defun which-key--side-window-max-dimensions ()
+      (cons
+       ;; height
+       5
+       ;; width
+       (window-width)))
+
     (defun which-key--show-buffer-side-window (act-popup-dim)
       "Show which-key buffer when popup type is side-window."
       (when (and which-key-preserve-window-configuration
                  (not which-key--saved-window-configuration))
         (setq which-key--saved-window-configuration (current-window-configuration)))
       (let* ((height (car act-popup-dim))
-             (width (cdr act-popup-dim))
              (alist
-              (if which-key-allow-imprecise-window-fit
-                  `((window-width .  ,(which-key--text-width-to-total width))
-                    (window-height . ,height))
-                `((window-width . which-key--fit-buffer-to-window-horizontally)
-                  (window-height . (lambda (w) (fit-window-to-buffer w nil 1)))
-                  ))))
-        ;; Previously used `display-buffer-in-major-side-window' here, but
-        ;; apparently that is meant to be an internal function. See emacs bug #24828
-        ;; and advice given there.
+              `((window-height . 5)
+                )))
         (display-buffer-below-selected which-key--buffer alist))))
 #+END_SRC
+
+** Ibuffer
+#+begin_src emacs-lisp
+  (use-package ibuffer-vc)
+#+end_src
 
 * Search & completion
 
@@ -525,8 +553,7 @@ One can use (global-hl-line-mode 1) to highlight the current line.
       (setq
        vertico-cycle t
        vertico-buffer-display-action '(display-buffer-below-selected (window-height . 10)))
-      (defun custom/hide-modline () (setq mode-line-format nil))
-      (add-hook 'minibuffer-setup-hook #'custom/hide-modline)
+      (add-hook 'minibuffer-setup-hook 'hidden-mode-line-mode)
       (vertico-mode)
       (vertico-buffer-mode))
 #+END_SRC
@@ -561,7 +588,6 @@ One can use (global-hl-line-mode 1) to highlight the current line.
 ** Embark
 #+BEGIN_SRC emacs-lisp
   (use-package embark
-    :straight t
     :bind (("C-c e" . embark-act)))
 #+END_SRC
 
@@ -866,6 +892,13 @@ It is nice but sometimes too aggressive !
         (define-key js-mode-map (kbd "C-c C-z") 'nodejs-repl-switch-to-repl))))
 #+end_src
 
+** TypeScript
+#+begin_src emacs-lisp
+  (use-package typescript-mode
+    :mode "\\.ts\\'"
+    :config
+    (add-hook 'typescript-mode-hook #'lsp))
+#+end_src
 ** Lsp mode (or emacs as an IDE)
 #+BEGIN_SRC emacs-lisp
   (use-package lsp-mode

@@ -201,19 +201,26 @@
           ;; Reset to line-mode (C-c C-k switches to char-mode via exwm-input-release-keyboard)
           ([?\s-g] . keyboard-quit)
 
-          ([C-s-R] . exwm-reset)
-          ([?\s-r] . exwm-input-release-keyboard)
+          ;; refresh setup
+          ([?\s-R] . exwm/refresh-setup)
+          ([?\s-r] . exwm-reset)
+
+          ([?\s-i] . exwm-input-release-keyboard)
+          ([?\s-I] . exwm-input-grab-keyboard)
 
           ([?\s-/] . winner-undo)
           ([?\s-?] . winner-redo)
 
-          ;; refresh monitors
-          ([?\s-R] . exwm/refresh-setup)
           ([?\s-x] . execute-extended-command)
 
           ;; move to another window using switch-window
-          ([?\s-o] . ace-window)
-          ([?\s-O] . ace-swap-window)
+          ([?\s-j] . ace-window)
+          ([?\s-J] . ace-swap-window)
+
+          ([?\s-^] . enlarge-window)
+          ([?\s-&] . shrink-window)
+          ([?\s-{] . shrink-window-horizontally)
+          ([?\s-}] . enlarge-window-horizontally)
 
           ([?\s-k] . kill-current-buffer)
           ([?\s-q] . exwm/kill-current-buffer-and-window)
@@ -226,6 +233,12 @@
           ([S-s-x] . execute-extended-command)
 
           ([?\s-a] . app-launcher-run-app)
+
+          ([?\s-b] . consult-buffer)
+          ([?\s-B] . ibuffer-jump)
+          
+          ([?\s-f] . consult-bookmark)
+          ([?\s-F] . bookmark-bmenu-list)
 
           ([s-return] . eshell)
           ([S-s-return] . vterm)

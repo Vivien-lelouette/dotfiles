@@ -108,8 +108,10 @@
   :config
   (global-set-key (kbd "M-o") 'ace-window)
   (setq
-   aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l ?z ?x ?c ?v ?b ?n ?m ?q ?w ?e ?r ?t ?y ?u ?i ?o ?p)
-   aw-background nil)
+   aw-keys '(?a ?s ?d ?f ?g ?h ?k ?l ?z ?q ?w ?e ?r ?t ?y ?u ?i ?p)
+   aw-background nil
+   aw-dispatch-always t
+   aw-display-mode-overlay nil)
   (ace-window-display-mode 1))
 
 (use-package avy
@@ -136,6 +138,27 @@
   (global-unset-key (kbd "C-?"))
   (global-set-key (kbd "C-/")   'undo-fu-only-undo)
   (global-set-key (kbd "C-?") 'undo-fu-only-redo))
+
+(defvar-local hidden-mode-line-mode nil)
+
+(define-minor-mode hidden-mode-line-mode
+  "Minor mode to hide the mode-line in the current buffer."
+  :init-value nil
+  :global t
+  :variable hidden-mode-line-mode
+  :group 'editing-basics
+  (if hidden-mode-line-mode
+      (setq hide-mode-line mode-line-format
+            mode-line-format nil)
+    (setq mode-line-format hide-mode-line
+          hide-mode-line nil))
+  (force-mode-line-update)
+  (when (and (called-interactively-p 'interactive)
+             hidden-mode-line-mode)
+    (run-with-idle-timer
+     0 nil 'message
+     (concat "Hidden Mode Line Mode enabled.  "
+             "Use M-x hidden-mode-line-mode to make the mode-line appear."))))
 
 (scroll-bar-mode 0)
 (tool-bar-mode -1)
@@ -347,10 +370,6 @@
      (ediff-diff-options "-w")
      (ediff-split-window-function 'split-window-horizontally)))
 
-(use-package eldoc-box
-  :hook
-  (lsp-mode . eldoc-box-hover-mode))
-
 (use-package sudo-edit)
 
 (use-package emacs-everywhere)
@@ -359,28 +378,28 @@
   :init (which-key-mode)
   :diminish which-key-mode
   :config
-  (setq which-key-idle-delay 2)
-  (setq which-key-popup-type 'side-window)
-
+  (setq which-key-idle-delay 1
+        which-key-popup-type 'side-window)
   ;; TODO Pretty damn ugly, must understand the correct way to customize
+  (defun which-key--side-window-max-dimensions ()
+    (cons
+     ;; height
+     5
+     ;; width
+     (window-width)))
+
   (defun which-key--show-buffer-side-window (act-popup-dim)
     "Show which-key buffer when popup type is side-window."
     (when (and which-key-preserve-window-configuration
                (not which-key--saved-window-configuration))
       (setq which-key--saved-window-configuration (current-window-configuration)))
     (let* ((height (car act-popup-dim))
-           (width (cdr act-popup-dim))
            (alist
-            (if which-key-allow-imprecise-window-fit
-                `((window-width .  ,(which-key--text-width-to-total width))
-                  (window-height . ,height))
-              `((window-width . which-key--fit-buffer-to-window-horizontally)
-                (window-height . (lambda (w) (fit-window-to-buffer w nil 1)))
-                ))))
-      ;; Previously used `display-buffer-in-major-side-window' here, but
-      ;; apparently that is meant to be an internal function. See emacs bug #24828
-      ;; and advice given there.
+            `((window-height . 5)
+              )))
       (display-buffer-below-selected which-key--buffer alist))))
+
+(use-package ibuffer-vc)
 
 (use-package vertico
     :straight (vertico :type git :host github :repo "minad/vertico")
@@ -389,8 +408,7 @@
     (setq
      vertico-cycle t
      vertico-buffer-display-action '(display-buffer-below-selected (window-height . 10)))
-    (defun custom/hide-modline () (setq mode-line-format nil))
-    (add-hook 'minibuffer-setup-hook #'custom/hide-modline)
+    (add-hook 'minibuffer-setup-hook 'hidden-mode-line-mode)
     (vertico-mode)
     (vertico-buffer-mode))
 
@@ -419,7 +437,6 @@
   (corfu-global-mode))
 
 (use-package embark
-  :straight t
   :bind (("C-c e" . embark-act)))
 
 (use-package wgrep)
@@ -672,6 +689,11 @@
       (define-key js-mode-map (kbd "C-c C-c") 'nodejs-repl-send-buffer)
       (define-key js-mode-map (kbd "C-c C-l") 'nodejs-repl-load-file)
       (define-key js-mode-map (kbd "C-c C-z") 'nodejs-repl-switch-to-repl))))
+
+(use-package typescript-mode
+  :mode "\\.ts\\'"
+  :config
+  (add-hook 'typescript-mode-hook #'lsp))
 
 (use-package lsp-mode
   :straight (lsp-mode :type git :host github :repo "emacs-lsp/lsp-mode")
