@@ -198,8 +198,8 @@
 (use-package textsize
   :commands textsize-mode
   :init (textsize-mode)
-  :custom
-  (textsize-default-points 12))
+  :config
+  (setq textsize-default-points 10))
 
 (defun generate-colors-file ()
   "Function to generate my colors file."

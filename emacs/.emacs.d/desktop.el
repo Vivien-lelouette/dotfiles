@@ -67,8 +67,21 @@
   :straight '(app-launcher :host github :repo "SebastienWae/app-launcher"))
 
 (use-package exwm-edit
-    :config
-    (setq exwm-edit-split  "below"))
+  :bind (
+         :map exwm-edit-mode-map
+         ("C-c <return>" . exwm-edit--finish-and-press-return)
+         ("C-c <C-return>" . exwm-edit--finish-and-press-control-return)
+         )
+  :config
+  (defun exwm-edit--finish-and-press-return ()
+    (interactive)
+    (exwm-edit--finish)
+    (run-with-timer 0.2 nil (lambda () (exwm-input--fake-key 'return))))
+  (defun exwm-edit--finish-and-press-control-return ()
+    (interactive)
+    (exwm-edit--finish)
+    (run-with-timer 0.2 nil (lambda () (exwm-input--fake-key 'C-return))))
+  (setq exwm-edit-split  "below"))
 
 (defcustom my-skippable-buffer-regexp
   (rx bos (or (seq "*" (zero-or-more anything))

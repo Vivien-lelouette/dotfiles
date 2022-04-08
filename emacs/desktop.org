@@ -105,8 +105,21 @@ We use the [[https://github.com/DamienCassou/desktop-environment][desktop-enviro
 ** EXWM edit
 #+begin_src emacs-lisp
   (use-package exwm-edit
-      :config
-      (setq exwm-edit-split  "below"))
+    :bind (
+           :map exwm-edit-mode-map
+           ("C-c <return>" . exwm-edit--finish-and-press-return)
+           ("C-c <C-return>" . exwm-edit--finish-and-press-control-return)
+           )
+    :config
+    (defun exwm-edit--finish-and-press-return ()
+      (interactive)
+      (exwm-edit--finish)
+      (run-with-timer 0.2 nil (lambda () (exwm-input--fake-key 'return))))
+    (defun exwm-edit--finish-and-press-control-return ()
+      (interactive)
+      (exwm-edit--finish)
+      (run-with-timer 0.2 nil (lambda () (exwm-input--fake-key 'C-return))))
+    (setq exwm-edit-split  "below"))
 #+end_src
 * Window Management
 ** Buffer management
