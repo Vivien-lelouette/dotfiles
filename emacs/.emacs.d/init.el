@@ -112,6 +112,20 @@
    aw-background nil
    aw-dispatch-always t
    aw-display-mode-overlay nil)
+  (defvar aw-dispatch-alist
+    '((?x aw-delete-window "Delete Window")
+      (?M aw-swap-window "Swap Windows")
+      (?m aw-move-window "Move Window")
+      (?c aw-copy-window "Copy Window")
+      (?j aw-switch-buffer-in-window "Select Buffer")
+      (?n aw-flip-window)
+      (?u aw-switch-buffer-other-window "Switch Buffer Other Window")
+      (?c aw-split-window-fair "Split Fair Window")
+      (?v aw-split-window-vert "Split Vert Window")
+      (?b aw-split-window-horz "Split Horz Window")
+      (?o delete-other-windows "Delete Other Windows")
+      (?? aw-show-dispatch-help))
+    "List of actions for `aw-dispatch-default'.")
   (ace-window-display-mode 1))
 
 (use-package avy
@@ -1005,44 +1019,6 @@ Version 2017-11-10"
 (add-hook 'eww-after-render-hook #'shrface-mode)
 (add-hook 'eww-after-render-hook #'mixed-pitch-mode)
 (add-hook 'eww-after-render-hook #'olivetti-mode)
-
-;;(use-package epc)
-;;(require 'epc)
-;;(use-package eaf
-;;  :straight (eaf :type git
-;;                            :host github
-;;                            :repo "emacs-eaf/emacs-application-framework"
-;;                            :files ("*.el" "*.py" "*.json" "core" "app"))
-;;  :bind (("M-r" . eaf/open-in-eww)
-;;         ("C-c i" . eaf-open-browser-with-history))
-;;  :custom
-;;  (eaf-browser-continue-where-left-off t)
-;;  (eaf-browser-enable-adblocker t)
-;;  (eaf-browser-default-search-engine "duckduckgo")
-;;  ;;(browse-url-browser-function 'eaf-open-browser)
-;;  (eaf-wm-focus-fix-wms `("i3" "LG3D" "Xpra" "EXWM" "Xfwm4" "herbstluftwm"))
-;;  :config
-;;  (require 'eaf-browser)
-;;  (require 'eaf-airshare)
-;;  (setq eaf-enable-debug t)
-;;  ;;(defalias 'browse-web #'eaf-open-browser)
-;;  (eaf-bind-key ace-window "M-o" eaf-browser-keybinding)
-;;  (eaf-bind-key ace-window "M-O" eaf-browser-keybinding)
-;;  (eaf-bind-key nil "n" eaf-browser-keybinding)
-;;  (eaf-bind-key open_link "C-j" eaf-browser-keybinding)
-;;  (eaf-bind-key open_link_new_buffer "C-S-j" eaf-browser-keybinding)
-;;  (eaf-bind-key eval_js "M-n" eaf-browser-keybinding)
-;;  (eaf-bind-key eval_js_file "M-N" eaf-browser-keybinding)
-;;  (eaf-bind-key insert_or_export_text "M-t" eaf-browser-keybinding))
-
-;;(require 'eaf)
-;;(defun eaf/open-in-eww ()
-;;  (interactive)
-;;  (eww (eaf-get-path-or-url)))
-
-;;(defun eww/open-in-eaf ()
-;;  (interactive)
-;;  (eaf-open-browser (eww-current-url)))
 
 (let ((local-settings "~/.emacs.d/local.el"))
     (when (file-exists-p local-settings)
