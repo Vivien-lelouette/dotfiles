@@ -864,15 +864,21 @@ It is nice but sometimes too aggressive !
 #+BEGIN_SRC emacs-lisp
   (use-package magit
     :config
-    (setq transient-display-buffer-action 'display-buffer-below-selected))
+    (setq transient-display-buffer-action 'display-buffer-below-selected)
+    (defun magit/magit-status-no-split ()
+      "Don't split window."
+      (interactive)
+      (let ((magit-display-buffer-function 'magit-display-buffer-same-window-except-diff-v1))
+        (magit-status)))
+    (global-set-key (kbd "C-x C-g") 'magit/magit-status-no-split))
 
   (use-package forge)
 
   (use-package code-review
-      :config
-      (define-key forge-topic-mode-map (kbd "C-c r") 'code-review-forge-pr-at-point)
-      (define-key code-review-mode-map (kbd "C-c C-n") 'code-review-comment-jump-next)
-      (define-key code-review-mode-map (kbd "C-c C-p") 'code-review-comment-jump-previous))
+    :config
+    (define-key forge-topic-mode-map (kbd "C-c r") 'code-review-forge-pr-at-point)
+    (define-key code-review-mode-map (kbd "C-c C-n") 'code-review-comment-jump-next)
+    (define-key code-review-mode-map (kbd "C-c C-p") 'code-review-comment-jump-previous))
 #+END_SRC
 
 ** Yasnippet
