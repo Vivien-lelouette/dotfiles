@@ -371,8 +371,6 @@
 
 (use-package sudo-edit)
 
-(use-package emacs-everywhere)
-
 (use-package which-key
   :init (which-key-mode)
   :diminish which-key-mode

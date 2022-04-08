@@ -66,6 +66,10 @@
 (use-package app-launcher
   :straight '(app-launcher :host github :repo "SebastienWae/app-launcher"))
 
+(use-package exwm-edit
+    :config
+    (setq exwm-edit-split  "below"))
+
 (defcustom my-skippable-buffer-regexp
   (rx bos (or (seq "*" (zero-or-more anything))
               (seq "magit" (zero-or-more anything))

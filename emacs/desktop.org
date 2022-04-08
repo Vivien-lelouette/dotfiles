@@ -101,6 +101,13 @@ We use the [[https://github.com/DamienCassou/desktop-environment][desktop-enviro
     :straight '(app-launcher :host github :repo "SebastienWae/app-launcher"))
 #+END_SRC
 
+* Utils
+** EXWM edit
+#+begin_src emacs-lisp
+  (use-package exwm-edit
+      :config
+      (setq exwm-edit-split  "below"))
+#+end_src
 * Window Management
 ** Buffer management
   The next functions are tools to easily switch buffer only switch to next relevant buffer.

@@ -503,11 +503,6 @@ One can use (global-hl-line-mode 1) to highlight the current line.
   (use-package sudo-edit)
 #+END_SRC
 
-** Emacs everywhere
-#+BEGIN_SRC emacs-lisp
-  (use-package emacs-everywhere)
-#+END_SRC
-
 ** which-key
 #+BEGIN_SRC emacs-lisp
   (use-package which-key
