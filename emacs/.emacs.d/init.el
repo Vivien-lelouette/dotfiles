@@ -199,7 +199,7 @@
   :commands textsize-mode
   :init (textsize-mode)
   :config
-  (setq textsize-default-points 10))
+  (setq textsize-default-points 12))
 
 (defun generate-colors-file ()
   "Function to generate my colors file."

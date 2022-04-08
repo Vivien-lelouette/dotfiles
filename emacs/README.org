@@ -288,7 +288,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     :commands textsize-mode
     :init (textsize-mode)
     :config
-    (setq textsize-default-points 10))
+    (setq textsize-default-points 12))
 #+END_SRC
 
 ** Theme magic
