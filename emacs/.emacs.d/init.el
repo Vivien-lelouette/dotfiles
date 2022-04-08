@@ -678,7 +678,7 @@
     (interactive)
     (let ((magit-display-buffer-function 'magit-display-buffer-same-window-except-diff-v1))
       (magit-status)))
-  (global-set-key (kbd "C-x C-g") 'magit/magit-status-no-split))
+  (global-set-key (kbd "C-x S-g") 'magit/magit-status-no-split))
 
 (use-package forge)
 
