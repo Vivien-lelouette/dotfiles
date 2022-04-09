@@ -31,54 +31,61 @@ Those functions will organize 10 workspaces according to your monitors relative 
 Workspace 1 & 2 will be allocated to the most left monitor, the 3 & 4 to the one on its right, etc. The most right monitor will have the rest of the workspaces.
 
 #+begin_src emacs-lisp
+  (defun car-string-to-number (list-two-elements)
+    (append (list (string-to-number (car list-two-elements))) (cdr list-two-elements)))
 
-    (defun car-string-to-number (list-two-elements)
-      (append (list (string-to-number (car list-two-elements))) (cdr list-two-elements)))
+  (defun sort-from-car (a b)
+    (< (car a) (car b)))
 
-    (defun sort-from-car (a b)
-      (< (car a) (car b)))
+  (defun xrandr-active-monitors ()
+    (mapcar 'car-string-to-number
+            (remove nil
+                    (mapcar 'split-string
+                            (split-string
+                             (shell-command-to-string "xrandr --listactivemonitors | grep / | cut -d '/' -f3 | sed -e 's/^[0-9]\\++//g' -e 's/+[0-9]\\+//g'")
+                             "\n")))))
 
-    (defun xrandr-active-monitors ()
-      (mapcar 'car-string-to-number
-              (remove nil
-                      (mapcar 'split-string
-                              (split-string
-                               (shell-command-to-string "xrandr --listactivemonitors | grep / | cut -d '/' -f3 | sed -e 's/^[0-9]\\++//g' -e 's/+[0-9]\\+//g'")
-                               "\n")))))
+  (defun order-monitors ()    (apply #'append
+           (mapcar 'cdr
+                   (sort
+                    (xrandr-active-monitors)
+                    'sort-from-car))))
 
-    (defun order-monitors ()    (apply #'append
-             (mapcar 'cdr
-                     (sort
-                      (xrandr-active-monitors)
-                      'sort-from-car))))
+  (defun build-workspace-monitor (monitor current_workspace max_workspace)
+    (if (> current_workspace max_workspace)
+        '()
+      (append (list current_workspace monitor) (build-workspace-monitor monitor (+ current_workspace 1) max_workspace))))
 
-    (defun build-workspace-monitor (monitor current_workspace max_workspace)
-      (if (> current_workspace max_workspace)
-          '()
-        (append (list current_workspace monitor) (build-workspace-monitor monitor (+ current_workspace 1) max_workspace))))
+  (defun build-exwm-monitors-aux (current_workspace monitor-list)
+    (cond
+     ((equal (length monitor-list) 1)
+      (list 9 (car monitor-list) 0 (car monitor-list))
+      )
+     ((equal (length monitor-list) 2)
+      (append (build-workspace-monitor (car monitor-list) current_workspace 8) (build-exwm-monitors-aux (+ current_workspace 2) (cdr monitor-list)))
+      )
+     (t
+      (append (build-workspace-monitor (car monitor-list) current_workspace (+ current_workspace 1)) (build-exwm-monitors-aux (+ current_workspace 2) (cdr monitor-list))))))
 
-    (defun build-exwm-monitors-aux (current_workspace monitor-list)
-      (cond
-       ((equal (length monitor-list) 1)
-        (list 9 (car monitor-list) 0 (car monitor-list))
-        )
-       ((equal (length monitor-list) 2)
-        (append (build-workspace-monitor (car monitor-list) current_workspace 8) (build-exwm-monitors-aux (+ current_workspace 2) (cdr monitor-list)))
-        )
-       (t
-        (append (build-workspace-monitor (car monitor-list) current_workspace (+ current_workspace 1)) (build-exwm-monitors-aux (+ current_workspace 2) (cdr monitor-list))))))
+  (defun build-exwm-monitors ()
+    (build-exwm-monitors-aux 1 (order-monitors)))
 
-    (defun build-exwm-monitors ()
-      (build-exwm-monitors-aux 1 (order-monitors)))
+  ;; This defines a function to refresh the workspaces position and xrandr
+  (defun exwm/refresh-setup ()
+    (interactive)
+    (setq exwm-randr-workspace-monitor-plist (build-exwm-monitors))
 
-    ;; This defines a function to refresh the workspaces position and xrandr
-    (defun exwm/refresh-setup ()
-      (interactive)
-      (setq exwm-randr-workspace-monitor-plist (build-exwm-monitors))
-
-      (shell/run-in-background "~/.config/polybar/start_polybar.sh")
-      (setup/input))
+    (shell/run-in-background "~/.config/polybar/start_polybar.sh")
+    (setup/input)
+    (exwm-randr-refresh))
     #+end_src
+
+  #+begin_src emacs-lisp :tangle no
+  (build-exwm-monitors)
+  #+end_src
+
+  #+RESULTS:
+  | 1 | DP-1 | 2 | DP-1 | 3 | DP-1 | 4 | DP-1 | 5 | DP-1 | 6 | DP-1 | 7 | DP-1 | 8 | DP-1 | 9 | eDP-1 | 0 | eDP-1 |
 
 ** Desktop Function & Key Bindings
 We use the [[https://github.com/DamienCassou/desktop-environment][desktop-environment]] package to automatically bind to well-known programs for controlling the volume, screen brightness, media playback, and doing other things like locking the screen and taking screenshots.  Make sure that you install the necessary programs to make this functionality work!  Check the [[https://github.com/DamienCassou/desktop-environment#default-configuration][default programs]] list to know what you need to install.

@@ -50,7 +50,8 @@
   (setq exwm-randr-workspace-monitor-plist (build-exwm-monitors))
 
   (shell/run-in-background "~/.config/polybar/start_polybar.sh")
-  (setup/input))
+  (setup/input)
+  (exwm-randr-refresh))
 
 ;; logout function
 (defun exwm/logout ()
