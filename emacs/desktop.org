@@ -102,7 +102,9 @@ We use the [[https://github.com/DamienCassou/desktop-environment][desktop-enviro
 ** Application runner
 #+BEGIN_SRC emacs-lisp
   (use-package app-launcher
-    :straight '(app-launcher :host github :repo "SebastienWae/app-launcher"))
+    :straight '(app-launcher :host github :repo "SebastienWae/app-launcher"
+                              :fork (:host github
+                                          :repo "vivien-lelouette/app-launcher")))
 #+END_SRC
 
 * Utils

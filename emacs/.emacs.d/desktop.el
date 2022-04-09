@@ -69,7 +69,9 @@
   (start-process-shell-command "qwerty" nil "setxkbmap -layout us -option 'compose:rctrl'"))
 
 (use-package app-launcher
-  :straight '(app-launcher :host github :repo "SebastienWae/app-launcher"))
+  :straight '(app-launcher :host github :repo "SebastienWae/app-launcher"
+                            :fork (:host github
+                                        :repo "vivien-lelouette/app-launcher")))
 
 (use-package exwm-edit
   :bind (
