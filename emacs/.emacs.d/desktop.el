@@ -281,10 +281,34 @@
 
   ;; Send copy/paste easily
   (setq exwm-input-simulation-keys
-        `(
-          ([?\s-y] . [?\C-v])
-          ([?\s-w] . [?\C-c])
-          ))
+    '(
+      ([?\M-b] . [C-left])
+      ([?\M-f] . [C-right])
+      ([?\C-b] . [left])
+      ([?\C-f] . [right])
+      ([?\C-p] . [up])
+      ([?\C-n] . [down])
+      ([?\C-a] . [home])
+      ([?\C-e] . [end])
+
+      ([M-S-B] . [C-\S-left])
+      ([M-S-F] . [C-\S-right])
+      ([?\C-\S-b] . [S-left])
+      ([?\C-\S-f] . [S-right])
+      ([?\C-\S-p] . [S-up])
+      ([?\C-\S-n] . [S-down])
+      ([?\C-\S-a] . [S-home])
+      ([?\C-\S-e] . [S-end])
+
+      ([?\C-s] . [?\C-f])
+      ([?\C-x ?\C-s] . [?\C-s])
+      ([?\M-v] . [prior])
+      ([?\C-v] . [next])
+      ([?\C-d] . [delete])
+      ([?\C-k] . [S-end ?\C-x])
+      ([?\C-y] . [?\C-v])
+      ([?\M-w] . [?\C-c])
+      ([?\C-w] . [?\C-x])))
 
   (exwm-enable)
   (exwm/refresh-setup)
