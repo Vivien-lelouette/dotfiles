@@ -19,7 +19,8 @@
                            (shell-command-to-string "xrandr --listactivemonitors | grep / | cut -d '/' -f3 | sed -e 's/^[0-9]\\++//g' -e 's/+[0-9]\\+//g'")
                            "\n")))))
 
-(defun order-monitors ()    (apply #'append
+(defun order-monitors ()
+  (apply #'append
          (mapcar 'cdr
                  (sort
                   (xrandr-active-monitors)
@@ -48,8 +49,11 @@
 (defun exwm/refresh-setup ()
   (interactive)
   (setq exwm-randr-workspace-monitor-plist (build-exwm-monitors))
-
   (shell/run-in-background "~/.config/polybar/start_polybar.sh")
+  (setup/input))
+
+(defun exwm/refresh-setup-and-monitors ()
+  (interactive)
   (setup/input)
   (exwm-randr-refresh))
 
@@ -220,7 +224,7 @@
 
           ;; refresh setup
           ([?\s-r] . exwm-reset)
-          ([?\s-R] . exwm/refresh-setup)
+          ([?\s-R] . exwm/refresh-setup-and-monitors)
 
           ([?\s-i] . exwm-input-release-keyboard)
           ([?\s-I] . exwm-input-grab-keyboard)

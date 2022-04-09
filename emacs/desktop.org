@@ -45,7 +45,8 @@ Workspace 1 & 2 will be allocated to the most left monitor, the 3 & 4 to the one
                              (shell-command-to-string "xrandr --listactivemonitors | grep / | cut -d '/' -f3 | sed -e 's/^[0-9]\\++//g' -e 's/+[0-9]\\+//g'")
                              "\n")))))
 
-  (defun order-monitors ()    (apply #'append
+  (defun order-monitors ()
+    (apply #'append
            (mapcar 'cdr
                    (sort
                     (xrandr-active-monitors)
@@ -74,18 +75,14 @@ Workspace 1 & 2 will be allocated to the most left monitor, the 3 & 4 to the one
   (defun exwm/refresh-setup ()
     (interactive)
     (setq exwm-randr-workspace-monitor-plist (build-exwm-monitors))
-
     (shell/run-in-background "~/.config/polybar/start_polybar.sh")
+    (setup/input))
+
+  (defun exwm/refresh-setup-and-monitors ()
+    (interactive)
     (setup/input)
     (exwm-randr-refresh))
     #+end_src
-
-  #+begin_src emacs-lisp :tangle no
-  (build-exwm-monitors)
-  #+end_src
-
-  #+RESULTS:
-  | 1 | DP-1 | 2 | DP-1 | 3 | DP-1 | 4 | DP-1 | 5 | DP-1 | 6 | DP-1 | 7 | DP-1 | 8 | DP-1 | 9 | eDP-1 | 0 | eDP-1 |
 
 ** Desktop Function & Key Bindings
 We use the [[https://github.com/DamienCassou/desktop-environment][desktop-environment]] package to automatically bind to well-known programs for controlling the volume, screen brightness, media playback, and doing other things like locking the screen and taking screenshots.  Make sure that you install the necessary programs to make this functionality work!  Check the [[https://github.com/DamienCassou/desktop-environment#default-configuration][default programs]] list to know what you need to install.
@@ -285,7 +282,7 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
 
             ;; refresh setup
             ([?\s-r] . exwm-reset)
-            ([?\s-R] . exwm/refresh-setup)
+            ([?\s-R] . exwm/refresh-setup-and-monitors)
 
             ([?\s-i] . exwm-input-release-keyboard)
             ([?\s-I] . exwm-input-grab-keyboard)
