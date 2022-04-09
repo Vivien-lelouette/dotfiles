@@ -199,7 +199,7 @@
   :commands textsize-mode
   :init (textsize-mode)
   :config
-  (setq textsize-default-points 12))
+  (setq textsize-default-points 14))
 
 (defun generate-colors-file ()
   "Function to generate my colors file."
@@ -245,7 +245,7 @@
     (call-interactively 'load-theme)
     (generate-colors-file)
     (theme-magic-from-emacs)
-    (exwm/refresh-monitors))
+    (exwm/refresh-setup-and-monitors))
 
 (use-package doom-themes
   ;;:custom-face

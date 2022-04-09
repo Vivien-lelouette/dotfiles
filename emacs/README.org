@@ -288,7 +288,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     :commands textsize-mode
     :init (textsize-mode)
     :config
-    (setq textsize-default-points 12))
+    (setq textsize-default-points 14))
 #+END_SRC
 
 ** Theme magic
@@ -342,7 +342,7 @@ After installing both tools, you just need to execute the command: `wpg-install.
       (call-interactively 'load-theme)
       (generate-colors-file)
       (theme-magic-from-emacs)
-      (exwm/refresh-monitors))
+      (exwm/refresh-setup-and-monitors))
 #+END_SRC
 
 ** Doom themes
