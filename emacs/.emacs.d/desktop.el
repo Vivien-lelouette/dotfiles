@@ -221,9 +221,6 @@
   ;; Keep in mind that changing this list after EXWM initializes has no effect.
   (setq exwm-input-global-keys
         `(
-          ;; Reset to line-mode (C-c C-k switches to char-mode via exwm-input-release-keyboard)
-          ([?\s-g] . keyboard-quit)
-
           ;; refresh setup
           ([?\s-r] . exwm-reset)
           ([?\s-R] . exwm/refresh-setup-and-monitors)
@@ -311,7 +308,8 @@
 
       ([?\C-y] . [?\C-v])
       ([?\M-w] . [?\C-c])
-      ([?\C-w] . [?\C-x])))
+      ([?\C-w] . [?\C-x])
+      ([?\s-g] . [esc])))
 
   (exwm-enable)
   (exwm/refresh-setup)
