@@ -241,6 +241,7 @@
           ([?\s-&] . shrink-window)
           ([?\s-{] . shrink-window-horizontally)
           ([?\s-}] . enlarge-window-horizontally)
+          ([?\s-=] . balance-windows)
 
           ([?\s-k] . kill-current-buffer)
           ([?\s-q] . exwm/kill-current-buffer-and-window)
