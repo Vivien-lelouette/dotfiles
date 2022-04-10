@@ -413,6 +413,10 @@
 
 (use-package ibuffer-vc)
 
+(use-package zoom
+  :custom
+  (zoom-size '(0.618 . 0.618)))
+
 (use-package vertico
     :straight (vertico :type git :host github :repo "minad/vertico")
     :config
