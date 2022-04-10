@@ -291,8 +291,8 @@
       ([?\C-a] . [home])
       ([?\C-e] . [end])
 
-      ([M-S-B] . [C-\S-left])
-      ([M-S-F] . [C-\S-right])
+      ([?\M-B] . [C-\S-left])
+      ([?\M-F] . [C-\S-right])
       ([?\C-\S-b] . [S-left])
       ([?\C-\S-f] . [S-right])
       ([?\C-\S-p] . [S-up])
@@ -304,8 +304,11 @@
       ([?\C-x ?\C-s] . [?\C-s])
       ([?\M-v] . [prior])
       ([?\C-v] . [next])
+
+      ([?\M-d] . [C-delete])
       ([?\C-d] . [delete])
       ([?\C-k] . [S-end ?\C-x])
+
       ([?\C-y] . [?\C-v])
       ([?\M-w] . [?\C-c])
       ([?\C-w] . [?\C-x])))

@@ -211,168 +211,177 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
 *NOTE:* Make sure you've installed =nm-applet=, =pasystray= and =blueman= for the system tray apps to work!
 
 #+begin_src emacs-lisp
-    (defun exwm/exwm-init-hook ()
-      (exwm/refresh-setup)
-      ;; Launch apps that will run in the background
-      (shell/run-in-background "gsettings set org.gnome.gnome-flashback.desktop.icons show-home false")
-      (shell/run-in-background "gsettings set org.gnome.gnome-flashback.desktop.icons show-trash false"))
+  (defun exwm/exwm-init-hook ()
+    (exwm/refresh-setup)
+    ;; Launch apps that will run in the background
+    (shell/run-in-background "gsettings set org.gnome.gnome-flashback.desktop.icons show-home false")
+    (shell/run-in-background "gsettings set org.gnome.gnome-flashback.desktop.icons show-trash false"))
 
-    (defun exwm/win-title ()
-      (replace-regexp-in-string (concat " . " exwm-class-name) "" exwm-title))
+  (defun exwm/win-title ()
+    (replace-regexp-in-string (concat " . " exwm-class-name) "" exwm-title))
 
-    (defun exwm/exwm-update-title ()
-      (exwm-workspace-rename-buffer
-       (concat exwm-class-name ": "
-               (if (<= (length exwm-title) 100) exwm-title
-                 (concat (substring exwm-title 0 99) "...")))))
+  (defun exwm/exwm-update-title ()
+    (exwm-workspace-rename-buffer
+     (concat exwm-class-name ": "
+             (if (<= (length exwm-title) 100) exwm-title
+               (concat (substring exwm-title 0 99) "...")))))
 
 
-    (defun exwm/exwm-set-fringe ()
-      (setq left-fringe-width 1
-            right-fringe-width 1))
+  (defun exwm/exwm-set-fringe ()
+    (setq left-fringe-width 1
+          right-fringe-width 1))
 
-    (defun exwm/kill-current-buffer-and-window ()
-      (interactive)
-      (kill-current-buffer)
-      (delete-window))
+  (defun exwm/kill-current-buffer-and-window ()
+    (interactive)
+    (kill-current-buffer)
+    (delete-window))
 
-    (defun utils/gnome-terminal ()
-      (interactive)
-      (shell/run-in-background "gnome-terminal"))
+  (defun utils/gnome-terminal ()
+    (interactive)
+    (shell/run-in-background "gnome-terminal"))
 
-    (defun utils/gnome-lock-screen ()
-      (interactive)
-      (shell/run-in-background "gnome-screensaver-command -l"))
+  (defun utils/gnome-lock-screen ()
+    (interactive)
+    (shell/run-in-background "gnome-screensaver-command -l"))
 
-    (use-package exwm
-      :config
-      (winner-mode 1)
-      (setup/input)
+  (use-package exwm
+    :config
+    (winner-mode 1)
+    (setup/input)
 
-      ;; When window "class" updates, use it to set the buffer name
-      (add-hook 'exwm-update-class-hook #'exwm/exwm-update-title)
+    ;; When window "class" updates, use it to set the buffer name
+    (add-hook 'exwm-update-class-hook #'exwm/exwm-update-title)
 
-      ;; When window title updates, use it to set the buffer name
-      (add-hook 'exwm-update-title-hook #'exwm/exwm-update-title)
+    ;; When window title updates, use it to set the buffer name
+    (add-hook 'exwm-update-title-hook #'exwm/exwm-update-title)
 
-      ;; When EXWM starts up, do some extra confifuration
-      (add-hook 'exwm-init-hook #'exwm/exwm-init-hook)
+    ;; When EXWM starts up, do some extra confifuration
+    (add-hook 'exwm-init-hook #'exwm/exwm-init-hook)
 
-      (add-hook 'exwm-mode-hook #'exwm/exwm-set-fringe)
+    (add-hook 'exwm-mode-hook #'exwm/exwm-set-fringe)
 
-      ;; Automatically move EXWM buffer to current workspace when selected
-      (setq exwm-layout-show-all-buffers t)
+    ;; Automatically move EXWM buffer to current workspace when selected
+    (setq exwm-layout-show-all-buffers t)
 
-      ;; Display all EXWM buffers in every workspace buffer list
-      (setq exwm-workspace-show-all-buffers t)
+    ;; Display all EXWM buffers in every workspace buffer list
+    (setq exwm-workspace-show-all-buffers t)
 
-      ;; Automatically send the mouse cursor to the selected workspace's display
-      (setq exwm-workspace-warp-cursor t)
+    ;; Automatically send the mouse cursor to the selected workspace's display
+    (setq exwm-workspace-warp-cursor t)
 
-      ;; These keys should always pass through to Emacs
-      (add-to-list 'exwm-input-prefix-keys ?\s-d)
+    ;; These keys should always pass through to Emacs
+    (add-to-list 'exwm-input-prefix-keys ?\s-d)
 
-      ;; Ctrl+Q will enable the next key to be sent directly
-      (define-key exwm-mode-map [?\s-,] 'exwm-input-send-next-key)
+    ;; Ctrl+Q will enable the next key to be sent directly
+    (define-key exwm-mode-map [?\s-,] 'exwm-input-send-next-key)
 
-      ;; Set up global key bindings.  These always work, no matter the input state!
-      ;; Keep in mind that changing this list after EXWM initializes has no effect.
-      (setq exwm-input-global-keys
-            `(
-              ;; Reset to line-mode (C-c C-k switches to char-mode via exwm-input-release-keyboard)
-              ([?\s-g] . keyboard-quit)
+    ;; Set up global key bindings.  These always work, no matter the input state!
+    ;; Keep in mind that changing this list after EXWM initializes has no effect.
+    (setq exwm-input-global-keys
+          `(
+            ;; Reset to line-mode (C-c C-k switches to char-mode via exwm-input-release-keyboard)
+            ([?\s-g] . keyboard-quit)
 
-              ;; refresh setup
-              ([?\s-r] . exwm-reset)
-              ([?\s-R] . exwm/refresh-setup-and-monitors)
+            ;; refresh setup
+            ([?\s-r] . exwm-reset)
+            ([?\s-R] . exwm/refresh-setup-and-monitors)
 
-              ([?\s-i] . exwm-input-release-keyboard)
-              ([?\s-I] . exwm-input-grab-keyboard)
+            ([?\s-i] . exwm-input-release-keyboard)
+            ([?\s-I] . exwm-input-grab-keyboard)
 
-              ([?\s-/] . winner-undo)
-              ([?\s-?] . winner-redo)
+            ([?\s-/] . winner-undo)
+            ([?\s-?] . winner-redo)
 
-              ([?\s-x] . execute-extended-command)
+            ([?\s-x] . execute-extended-command)
 
-              ;; move to another window using switch-window
-              ([?\s-j] . ace-window)
-              ([?\s-J] . ace-swap-window)
+            ;; move to another window using switch-window
+            ([?\s-j] . ace-window)
+            ([?\s-J] . ace-swap-window)
 
-              ([?\s-^] . enlarge-window)
-              ([?\s-&] . shrink-window)
-              ([?\s-{] . shrink-window-horizontally)
-              ([?\s-}] . enlarge-window-horizontally)
+            ([?\s-^] . enlarge-window)
+            ([?\s-&] . shrink-window)
+            ([?\s-{] . shrink-window-horizontally)
+            ([?\s-}] . enlarge-window-horizontally)
 
-              ([?\s-k] . kill-current-buffer)
-              ([?\s-q] . exwm/kill-current-buffer-and-window)
+            ([?\s-k] . kill-current-buffer)
+            ([?\s-q] . exwm/kill-current-buffer-and-window)
 
-              ([?\s-m] . exwm-layout-toggle-fullscreen)
-              ([?\s-M] . exwm-floating-toggle-floating)
+            ([?\s-m] . exwm-layout-toggle-fullscreen)
+            ([?\s-M] . exwm-floating-toggle-floating)
 
-              ([?\s-L] . utils/gnome-lock-screen)
+            ([?\s-L] . utils/gnome-lock-screen)
 
-              ([?\s-a] . app-launcher-run-app)
+            ([?\s-a] . app-launcher-run-app)
 
-              ([?\s-b] . consult-buffer)
-              ([?\s-B] . ibuffer-jump)
+            ([?\s-b] . consult-buffer)
+            ([?\s-B] . ibuffer-jump)
 
-              ([?\s-f] . consult-bookmark)
-              ([?\s-F] . bookmark-bmenu-list)
+            ([?\s-f] . consult-bookmark)
+            ([?\s-F] . bookmark-bmenu-list)
 
-              ([s-return] . eshell)
-              ([S-s-return] . vterm)
-              ([C-s-return] . utils/gnome-terminal)
+            ([s-return] . eshell)
+            ([S-s-return] . vterm)
+            ([C-s-return] . utils/gnome-terminal)
 
-              ([?\s-0] . delete-window)
-              ([?\s-1] . delete-other-windows)
-              ([?\s-2] . split-window-below)
-              ([?\s-3] . split-window-right)
+            ([?\s-0] . delete-window)
+            ([?\s-1] . delete-other-windows)
+            ([?\s-2] . split-window-below)
+            ([?\s-3] . split-window-right)
 
-              ;; 's-N': Switch to certain workspace with Super (Win) plus a number key (0 - 9)
-              ,@(mapcar (lambda (i)
-                          `(,(kbd (format "C-s-%d" i)) .
-                            (lambda ()
-                              (interactive)
-                              (exwm-workspace-switch-create ,i))))
-                        (number-sequence 0 9))
-              ))
+            ;; 's-N': Switch to certain workspace with Super (Win) plus a number key (0 - 9)
+            ,@(mapcar (lambda (i)
+                        `(,(kbd (format "C-s-%d" i)) .
+                          (lambda ()
+                            (interactive)
+                            (exwm-workspace-switch-create ,i))))
+                      (number-sequence 0 9))
+            ))
 
-      ;; Send copy/paste easily
-      (setq exwm-input-simulation-keys
-        '(
-          ([?\M-b] . [C-left])
-          ([?\M-f] . [C-right])
-          ([?\C-b] . [left])
-          ([?\C-f] . [right])
-          ([?\C-p] . [up])
-          ([?\C-n] . [down])
-          ([?\C-a] . [home])
-          ([?\C-e] . [end])
+    ;; Send copy/paste easily
+    (setq exwm-input-simulation-keys
+      '(
+        ([?\M-b] . [C-left])
+        ([?\M-f] . [C-right])
+        ([?\C-b] . [left])
+        ([?\C-f] . [right])
+        ([?\C-p] . [up])
+        ([?\C-n] . [down])
+        ([?\C-a] . [home])
+        ([?\C-e] . [end])
 
-          ([M-S-B] . [C-\S-left])
-          ([M-S-F] . [C-\S-right])
-          ([?\C-\S-b] . [S-left])
-          ([?\C-\S-f] . [S-right])
-          ([?\C-\S-p] . [S-up])
-          ([?\C-\S-n] . [S-down])
-          ([?\C-\S-a] . [S-home])
-          ([?\C-\S-e] . [S-end])
+        ([?\M-B] . [C-\S-left])
+        ([?\M-F] . [C-\S-right])
+        ([?\C-\S-b] . [S-left])
+        ([?\C-\S-f] . [S-right])
+        ([?\C-\S-p] . [S-up])
+        ([?\C-\S-n] . [S-down])
+        ([?\C-\S-a] . [S-home])
+        ([?\C-\S-e] . [S-end])
 
-          ([?\C-s] . [?\C-f])
-          ([?\C-x ?\C-s] . [?\C-s])
-          ([?\M-v] . [prior])
-          ([?\C-v] . [next])
-          ([?\C-d] . [delete])
-          ([?\C-k] . [S-end ?\C-x])
-          ([?\C-y] . [?\C-v])
-          ([?\M-w] . [?\C-c])
-          ([?\C-w] . [?\C-x])))
+        ([?\C-s] . [?\C-f])
+        ([?\C-x ?\C-s] . [?\C-s])
+        ([?\M-v] . [prior])
+        ([?\C-v] . [next])
 
-      (exwm-enable)
-      (exwm/refresh-setup)
-      ;; This is for multiscreen support
-      (require 'exwm-randr)
-      (add-hook 'exwm-randr-screen-change-hook 'exwm/refresh-setup)
-      (exwm-randr-enable)
-      (load-theme 'modus-vivendi t))
+        ([?\M-d] . [C-delete])
+        ([?\C-d] . [delete])
+        ([?\C-k] . [S-end ?\C-x])
+
+        ([?\C-y] . [?\C-v])
+        ([?\M-w] . [?\C-c])
+        ([?\C-w] . [?\C-x])))
+
+    (exwm-enable)
+    (exwm/refresh-setup)
+    ;; This is for multiscreen support
+    (require 'exwm-randr)
+    (add-hook 'exwm-randr-screen-change-hook 'exwm/refresh-setup)
+    (exwm-randr-enable)
+    (load-theme 'modus-vivendi t))
+#+end_src
+
+* Helpers
+** Know the key chords
+#+begin_src emacs-lisp :tangle no
+  (key-description (vector (read-key)))
 #+end_src
