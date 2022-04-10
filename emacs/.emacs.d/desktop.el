@@ -57,11 +57,6 @@
   (setup/input)
   (exwm-randr-refresh))
 
-;; logout function
-(defun exwm/logout ()
-  (interactive)
-  (shell-command "gnome-session-quit --force"))
-
 (defun setup/input ()
   (interactive)
   (start-process-shell-command "trackball" nil "bash ~/.scripts/trackball-setup.sh")
@@ -184,7 +179,7 @@
 
 (defun utils/gnome-lock-screen ()
   (interactive)
-  (shell/run-in-background "gnome-screensaver-command -l"))
+  (shell/run-in-background "xdg-screensaver lock"))
 
 (defun utils/gnome-logout ()
   (interactive)
@@ -263,9 +258,9 @@
           ([?\s-M] . exwm-floating-toggle-floating)
 
           ([?\s-l ?\s-l] . utils/gnome-lock-screen)
-          ([?\s-l L] . utils/gnome-logout)
-          ([?\s-l S] . utils/gnome-shutdown)
-          ([?\s-l R] . utils/gnome-reboot)
+          ([?\s-l ?\M-l] . utils/gnome-logout)
+          ([?\s-l ?\M-s] . utils/gnome-shutdown)
+          ([?\s-l ?\M-r] . utils/gnome-reboot)
 
           ([?\s-a] . app-launcher-run-app)
 

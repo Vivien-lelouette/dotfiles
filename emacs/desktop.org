@@ -88,11 +88,6 @@ Workspace 1 & 2 will be allocated to the most left monitor, the 3 & 4 to the one
 We use the [[https://github.com/DamienCassou/desktop-environment][desktop-environment]] package to automatically bind to well-known programs for controlling the volume, screen brightness, media playback, and doing other things like locking the screen and taking screenshots.  Make sure that you install the necessary programs to make this functionality work!  Check the [[https://github.com/DamienCassou/desktop-environment#default-configuration][default programs]] list to know what you need to install.
 
 #+begin_src emacs-lisp
-  ;; logout function
-  (defun exwm/logout ()
-    (interactive)
-    (shell-command "gnome-session-quit --force"))
-
   (defun setup/input ()
     (interactive)
     (start-process-shell-command "trackball" nil "bash ~/.scripts/trackball-setup.sh")
@@ -242,7 +237,7 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
 
   (defun utils/gnome-lock-screen ()
     (interactive)
-    (shell/run-in-background "gnome-screensaver-command -l"))
+    (shell/run-in-background "xdg-screensaver lock"))
 
   (defun utils/gnome-logout ()
     (interactive)
@@ -321,9 +316,9 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
             ([?\s-M] . exwm-floating-toggle-floating)
 
             ([?\s-l ?\s-l] . utils/gnome-lock-screen)
-            ([?\s-l L] . utils/gnome-logout)
-            ([?\s-l S] . utils/gnome-shutdown)
-            ([?\s-l R] . utils/gnome-reboot)
+            ([?\s-l ?\M-l] . utils/gnome-logout)
+            ([?\s-l ?\M-s] . utils/gnome-shutdown)
+            ([?\s-l ?\M-r] . utils/gnome-reboot)
 
             ([?\s-a] . app-launcher-run-app)
 
