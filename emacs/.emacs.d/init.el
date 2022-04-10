@@ -326,11 +326,11 @@
 (use-package pulsar
   :straight (pulsar :type git :host gitlab :repo "protesilaos/pulsar")
   :config
-  (pulsar-setup)
   (global-set-key (kbd "C-c SPC") 'pulsar-pulse-line)
   (setq pulse-flag t)
   (set-face-attribute 'pulsar-cyan nil :background "#81a1c1")
-  (setq pulsar-face 'pulsar-cyan))
+  (setq pulsar-face 'pulsar-cyan)
+  (pulsar-global-mode 1))
 
 (use-package all-the-icons
   :if (display-graphic-p))
@@ -352,6 +352,7 @@
 (add-hook 'prog-mode-hook #'custom/coding-faces)
 
 (use-package prism
+  :defer t
   :config
   (setq prism-num-faces 16)
 
