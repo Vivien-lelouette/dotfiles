@@ -186,6 +186,18 @@
   (interactive)
   (shell/run-in-background "gnome-screensaver-command -l"))
 
+(defun utils/gnome-logout ()
+  (interactive)
+  (shell/run-in-background "gnome-session-quit --force"))
+
+(defun utils/gnome-shutdown ()
+  (interactive)
+  (shell/run-in-background "shutdown -h 0"))
+
+(defun utils/gnome-reboot ()
+  (interactive)
+  (shell/run-in-background "reboot"))
+
 (use-package exwm
   :config
   (winner-mode 1)
@@ -250,7 +262,10 @@
           ([?\s-m] . exwm-layout-toggle-fullscreen)
           ([?\s-M] . exwm-floating-toggle-floating)
 
-          ([?\s-L] . utils/gnome-lock-screen)
+          ([?\s-l ?\s-l] . utils/gnome-lock-screen)
+          ([?\s-l L] . utils/gnome-logout)
+          ([?\s-l S] . utils/gnome-shutdown)
+          ([?\s-l R] . utils/gnome-reboot)
 
           ([?\s-a] . app-launcher-run-app)
 
