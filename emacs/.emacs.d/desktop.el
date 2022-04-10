@@ -309,7 +309,7 @@
       ([?\C-y] . [?\C-v])
       ([?\M-w] . [?\C-c])
       ([?\C-w] . [?\C-x])
-      ([?\s-g] . [esc])))
+      ([?\s-g] . [escape])))
 
   (exwm-enable)
   (exwm/refresh-setup)
