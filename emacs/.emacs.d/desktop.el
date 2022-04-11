@@ -281,7 +281,7 @@
 
           ;; 's-N': Switch to certain workspace with Super (Win) plus a number key (0 - 9)
           ,@(mapcar (lambda (i)
-                      `(,(kbd (format "C-s-%d" i)) .
+                      `(,(kbd (format "M-s-%d" i)) .
                         (lambda ()
                           (interactive)
                           (exwm-workspace-switch-create ,i))))

@@ -124,6 +124,16 @@
       (?v aw-split-window-vert "Split Vert Window")
       (?b aw-split-window-horz "Split Horz Window")
       (?o delete-other-windows "Delete Other Windows")
+      (?0 (lambda() (exwm-workspace-switch 0)))
+      (?1 (lambda() (exwm-workspace-switch 1)))
+      (?2 (lambda() (exwm-workspace-switch 2)))
+      (?3 (lambda() (exwm-workspace-switch 3)))
+      (?4 (lambda() (exwm-workspace-switch 4)))
+      (?5 (lambda() (exwm-workspace-switch 5)))
+      (?6 (lambda() (exwm-workspace-switch 6)))
+      (?7 (lambda() (exwm-workspace-switch 7)))
+      (?8 (lambda() (exwm-workspace-switch 8)))
+      (?9 (lambda() (exwm-workspace-switch 9)))
       (?? aw-show-dispatch-help))
     "List of actions for `aw-dispatch-default'.")
   (ace-window-display-mode 1))
@@ -199,7 +209,7 @@
   :commands textsize-mode
   :init (textsize-mode)
   :config
-  (setq textsize-default-points 14))
+  (setq textsize-default-points 12))
 
 (defun generate-colors-file ()
   "Function to generate my colors file."
@@ -532,7 +542,37 @@
   ;; Configure other variables and modes in the :config section,
   ;; after lazily loading the package.
   :config
+  (defun exwm-all-buffers ()
+    (seq-filter
+     (lambda (buffer)
+       (eq 'exwm-mode (buffer-local-value 'major-mode buffer)))
+     (buffer-list)))
 
+  (defvar exwm-buffer-source
+  `(:name "EXWM"
+          :hidden t
+          :narrow ?x
+          :category buffer
+          :state ,#'consult--buffer-state
+          :items ,(lambda () (mapcar #'buffer-name (exwm-all-buffers)))))
+
+  (add-to-list 'consult-buffer-sources 'exwm-buffer-source 'append)
+
+  (defun consult-buffer-state-no-x ()
+    "Buffer state function that doesn't preview X buffers."
+    (let ((orig-state (consult--buffer-state))
+          (filter (lambda (action cand)
+                    (if (or (eq action 'return)
+                            (let ((buffer (get-buffer cand)))
+                              (and buffer
+                                   (not (eq 'exwm-mode (buffer-local-value 'major-mode buffer))))))
+                        cand
+                      nil))))
+      (lambda (action cand)
+        (funcall orig-state action (funcall filter action cand)))))
+
+  (setq consult--source-buffer
+        (plist-put consult--source-buffer :state #'consult-buffer-state-no-x))
   ;; Optionally configure preview. The default value
   ;; is 'any, such that any key triggers the preview.
   ;; (setq consult-preview-key 'any)
