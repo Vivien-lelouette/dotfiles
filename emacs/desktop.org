@@ -302,15 +302,15 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
             ([?\s-j] . ace-window)
             ([?\s-J] . ace-swap-window)
 
-            ([?\s-^] . enlarge-window)
-            ([?\s-&] . shrink-window)
-            ([?\s-{] . shrink-window-horizontally)
-            ([?\s-}] . enlarge-window-horizontally)
+            ([?\s-}] . enlarge-window)
+            ([?\s-{] . shrink-window)
+            ([?\s-\[] . shrink-window-horizontally)
+            ([?\s-\]] . enlarge-window-horizontally)
             ([?\s-=] . balance-windows)
             ([?\s-+] . zoom)
 
             ([?\s-k] . kill-current-buffer)
-            ([?\s-q] . exwm/kill-current-buffer-and-window)
+            ([?\s-K] . exwm/kill-current-buffer-and-window)
 
             ([?\s-m] . exwm-layout-toggle-fullscreen)
             ([?\s-M] . exwm-floating-toggle-floating)
@@ -332,18 +332,91 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
             ([S-s-return] . vterm)
             ([C-s-return] . utils/gnome-terminal)
 
-            ([?\s-0] . delete-window)
-            ([?\s-1] . delete-other-windows)
-            ([?\s-2] . split-window-below)
-            ([?\s-3] . split-window-right)
+            ([?\s-q] . delete-window)
+            ([?\s-Q] . delete-other-windows)
+            ([?\s-S] . split-window-below)
+            ([?\s-s] . split-window-right)
 
             ;; 's-N': Switch to certain workspace with Super (Win) plus a number key (0 - 9)
             ,@(mapcar (lambda (i)
-                        `(,(kbd (format "M-s-%d" i)) .
+                        `(,(kbd (format "s-w %d" i)) .
                           (lambda ()
                             (interactive)
                             (exwm-workspace-switch-create ,i))))
                       (number-sequence 0 9))
+
+            ,@(mapcar (lambda (i)
+                        `(,(kbd (format "s-%d" i)) .
+                          (lambda ()
+                            (interactive)
+                            (select-window (nth (- ,i 1) (aw-window-list))))))
+                      (number-sequence 1 9))
+
+            ([?\s-0] . (lambda ()
+                         (interactive)
+                         (select-window (nth 9 (aw-window-list)))))
+
+            ([?\s-!] . (lambda ()
+                         (interactive)
+                         (aw-move-window (nth 0 (aw-window-list)))))
+
+            ([?\s-@] . (lambda ()
+                         (interactive)
+                         (aw-move-window (nth 1 (aw-window-list)))))
+
+            ([?\s-#] . (lambda ()
+                         (interactive)
+                         (aw-move-window (nth 2 (aw-window-list)))))
+
+            ([?\s-$] . (lambda ()
+                         (interactive)
+                         (aw-move-window (nth 3 (aw-window-list)))))
+
+            ([?\s-%] . (lambda ()
+                         (interactive)
+                         (aw-move-window (nth 4 (aw-window-list)))))
+
+            ([?\s-^] . (lambda ()
+                         (interactive)
+                         (aw-move-window (nth 5 (aw-window-list)))))
+
+            ([?\s-&] . (lambda ()
+                         (interactive)
+                         (aw-move-window (nth 6 (aw-window-list)))))
+
+            ([?\s-*] . (lambda ()
+                         (interactive)
+                         (aw-move-window (nth 7 (aw-window-list)))))
+
+            ([?\s-\(] . (lambda ()
+                         (interactive)
+                         (aw-move-window (nth 8 (aw-window-list)))))
+
+            ([?\s-\)] . (lambda ()
+                         (interactive)
+                         (aw-move-window (nth 9 (aw-window-list)))))
+
+            ,@(mapcar (lambda (i)
+                        `(,(kbd (format "M-s-%d" i)) .
+                          (lambda ()
+                            (interactive)
+                            (aw-swap-window (nth (- ,i 1) (aw-window-list))))))
+                      (number-sequence 1 9))
+
+            ([M-s-0] . (lambda ()
+                         (interactive)
+                         (aw-swap-window (nth 9 (aw-window-list)))))
+
+            ,@(mapcar (lambda (i)
+                        `(,(kbd (format "C-s-%d" i)) .
+                          (lambda ()
+                            (interactive)
+                            (aw-delete-window (nth (- ,i 1) (aw-window-list))))))
+                      (number-sequence 1 9))
+
+            ([C-s-0] . (lambda ()
+                         (interactive)
+                         (aw-delete-window (nth 9 (aw-window-list)))))
             ))
 
     ;; Send copy/paste easily

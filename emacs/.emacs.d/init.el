@@ -108,34 +108,53 @@
   :config
   (global-set-key (kbd "M-o") 'ace-window)
   (setq
-   aw-keys '(?a ?s ?d ?f ?g ?h ?k ?l ?z ?q ?w ?e ?r ?t ?y ?u ?i ?p)
+   aw-keys '(?1 ?2 ?3 ?4 ?5 ?6 ?7 ?8 ?9 ?0)
    aw-background nil
    aw-dispatch-always t
    aw-display-mode-overlay nil)
   (setq aw-dispatch-alist
-    '((?x aw-delete-window "Delete Window")
-      (?M aw-swap-window "Swap Windows")
-      (?m aw-move-window "Move Window")
-      (?c aw-copy-window "Copy Window")
-      (?j aw-switch-buffer-in-window "Select Buffer")
-      (?n aw-flip-window)
-      (?u aw-switch-buffer-other-window "Switch Buffer Other Window")
-      (?c aw-split-window-fair "Split Fair Window")
-      (?v aw-split-window-vert "Split Vert Window")
-      (?b aw-split-window-horz "Split Horz Window")
-      (?o delete-other-windows "Delete Other Windows")
-      (?0 (lambda() (exwm-workspace-switch 0)))
-      (?1 (lambda() (exwm-workspace-switch 1)))
-      (?2 (lambda() (exwm-workspace-switch 2)))
-      (?3 (lambda() (exwm-workspace-switch 3)))
-      (?4 (lambda() (exwm-workspace-switch 4)))
-      (?5 (lambda() (exwm-workspace-switch 5)))
-      (?6 (lambda() (exwm-workspace-switch 6)))
-      (?7 (lambda() (exwm-workspace-switch 7)))
-      (?8 (lambda() (exwm-workspace-switch 8)))
-      (?9 (lambda() (exwm-workspace-switch 9)))
-      (?? aw-show-dispatch-help)))
-  (ace-window-display-mode 1))
+        '((?x aw-delete-window "Delete Window")
+          (?M aw-swap-window "Swap Windows")
+          (?m aw-move-window "Move Window")
+          (?c aw-copy-window "Copy Window")
+          (?j aw-switch-buffer-in-window "Select Buffer")
+          (?n aw-flip-window)
+          (?u aw-switch-buffer-other-window "Switch Buffer Other Window")
+          (?c aw-split-window-fair "Split Fair Window")
+          (?v aw-split-window-vert "Split Vert Window")
+          (?b aw-split-window-horz "Split Horz Window")
+          (?o delete-other-windows "Delete Other Windows")
+          (?? aw-show-dispatch-help)))
+
+  (define-minor-mode custom/ace-window-display-mode
+    "Minor mode for showing the ace window key in the mode line."
+    :global t
+    (if custom/ace-window-display-mode
+        (progn
+          ;; Update the window parameters
+          (aw-update)
+          ;; Since `mode-line-format' is a buffer-local
+          ;; variable, I set it with `set-default', in order
+          ;; for the change to not just happen in the current
+          ;; buffer.
+          (set-default
+           'mode-line-format
+           `((custom/ace-window-display-mode
+              (:eval (window-parameter (selected-window)
+                                       'ace-window-path)))
+             ,@(default-value 'mode-line-format)))
+          (force-mode-line-update t)
+          ;; Each time a window is created or deleted, Emacs
+          ;; will run the `window-configuration-change-hook' -
+          ;; exactly what I need to update `mode-line-format'.
+          (add-hook 'window-configuration-change-hook 'aw-update))
+      (set-default
+       'mode-line-format
+       (assq-delete-all
+        'custom/ace-window-display-mode
+        (default-value 'mode-line-format)))
+      (remove-hook 'window-configuration-change-hook 'aw-update)))
+  (custom/ace-window-display-mode 1))
 
 (use-package avy
   :config
@@ -280,9 +299,13 @@
   ;;(add-hook 'help-mode-hook #'darken-buffer)
   ;;(add-hook 'helpful-mode-hook #'darken-buffer)
 
+(use-package simple-modeline
+  :config
+  (simple-modeline-mode 1))
+
 (use-package doom-modeline
   :init
-  (doom-modeline-mode 1))
+  (doom-modeline-mode 0))
 
 (use-package olivetti
   :config
@@ -557,21 +580,21 @@
 
   (add-to-list 'consult-buffer-sources 'exwm-buffer-source 'append)
 
-  (defun consult-buffer-state-no-x ()
-    "Buffer state function that doesn't preview X buffers."
-    (let ((orig-state (consult--buffer-state))
-          (filter (lambda (action cand)
-                    (if (or (eq action 'return)
-                            (let ((buffer (get-buffer cand)))
-                              (and buffer
-                                   (not (eq 'exwm-mode (buffer-local-value 'major-mode buffer))))))
-                        cand
-                      nil))))
-      (lambda (action cand)
-        (funcall orig-state action (funcall filter action cand)))))
+  ;;(defun consult-buffer-state-no-x ()
+  ;;  "Buffer state function that doesn't preview X buffers."
+  ;;  (let ((orig-state (consult--buffer-state))
+  ;;        (filter (lambda (action cand)
+  ;;                  (if (or (eq action 'return)
+  ;;                          (let ((buffer (get-buffer cand)))
+  ;;                            (and buffer
+  ;;                                 (not (eq 'exwm-mode (buffer-local-value 'major-mode buffer))))))
+  ;;                      cand
+  ;;                    nil))))
+  ;;    (lambda (action cand)
+  ;;      (funcall orig-state action (funcall filter action cand)))))
 
-  (setq consult--source-buffer
-        (plist-put consult--source-buffer :state #'consult-buffer-state-no-x))
+  ;;(setq consult--source-buffer
+  ;;      (plist-put consult--source-buffer :state #'consult-buffer-state-no-x))
   ;; Optionally configure preview. The default value
   ;; is 'any, such that any key triggers the preview.
   ;; (setq consult-preview-key 'any)
