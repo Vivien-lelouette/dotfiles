@@ -112,7 +112,7 @@
    aw-background nil
    aw-dispatch-always t
    aw-display-mode-overlay nil)
-  (defvar aw-dispatch-alist
+  (setq aw-dispatch-alist
     '((?x aw-delete-window "Delete Window")
       (?M aw-swap-window "Swap Windows")
       (?m aw-move-window "Move Window")
@@ -134,8 +134,7 @@
       (?7 (lambda() (exwm-workspace-switch 7)))
       (?8 (lambda() (exwm-workspace-switch 8)))
       (?9 (lambda() (exwm-workspace-switch 9)))
-      (?? aw-show-dispatch-help))
-    "List of actions for `aw-dispatch-default'.")
+      (?? aw-show-dispatch-help)))
   (ace-window-display-mode 1))
 
 (use-package avy
