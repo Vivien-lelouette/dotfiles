@@ -192,36 +192,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
             (?b aw-split-window-horz "Split Horz Window")
             (?o delete-other-windows "Delete Other Windows")
             (?? aw-show-dispatch-help)))
-
-    (define-minor-mode custom/ace-window-display-mode
-      "Minor mode for showing the ace window key in the mode line."
-      :global t
-      (if custom/ace-window-display-mode
-          (progn
-            ;; Update the window parameters
-            (aw-update)
-            ;; Since `mode-line-format' is a buffer-local
-            ;; variable, I set it with `set-default', in order
-            ;; for the change to not just happen in the current
-            ;; buffer.
-            (set-default
-             'mode-line-format
-             `((custom/ace-window-display-mode
-                (:eval (window-parameter (selected-window)
-                                         'ace-window-path)))
-               ,@(default-value 'mode-line-format)))
-            (force-mode-line-update t)
-            ;; Each time a window is created or deleted, Emacs
-            ;; will run the `window-configuration-change-hook' -
-            ;; exactly what I need to update `mode-line-format'.
-            (add-hook 'window-configuration-change-hook 'aw-update))
-        (set-default
-         'mode-line-format
-         (assq-delete-all
-          'custom/ace-window-display-mode
-          (default-value 'mode-line-format)))
-        (remove-hook 'window-configuration-change-hook 'aw-update)))
-    (custom/ace-window-display-mode 1))
+    (ace-window-display-mode 1))
 #+END_SRC
 
 ** Avy
@@ -293,7 +264,8 @@ As bookmarks are at the center of my workflow, this is a crucial option.
   (tooltip-mode -1)
   (menu-bar-mode -1)
   (setq
-   window-divider-default-places 'bottom-only
+   window-divider-default-places t
+   window-divider-default-right-width 1
    window-divider-default-bottom-width 1)
   (window-divider-mode 1)
 #+END_SRC
@@ -401,18 +373,25 @@ One can use (global-hl-line-mode 1) to highlight the current line.
     ;;(add-hook 'helpful-mode-hook #'darken-buffer)
 #+END_SRC
 
-** Simple modeline
+** Modus theme
 #+BEGIN_SRC emacs-lisp
-      (use-package simple-modeline
-        :config
-        (simple-modeline-mode 1))
+  (use-package modus-themes
+    :init
+    (setq modus-themes-mode-line '(borderless accented))
+    (modus-themes-load-themes))
 #+END_SRC
 
 ** Doom modeline
 #+BEGIN_SRC emacs-lisp
   (use-package doom-modeline
     :init
-    (doom-modeline-mode 0))
+    (doom-modeline-mode 1)
+    :config
+    (setq doom-modeline-height 1)
+    (set-face-attribute 'doom-modeline-bar nil :background (face-background 'mode-line))
+    (set-face-attribute 'doom-modeline-bar-inactive nil :background (face-background 'mode-line-inactive))
+    (set-face-attribute 'mode-line nil :height 100)
+    (set-face-attribute 'mode-line-inactive nil :height 100))
 #+END_SRC
 
 ** Focus
