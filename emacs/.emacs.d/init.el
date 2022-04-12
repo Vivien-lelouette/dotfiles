@@ -293,8 +293,7 @@
   (doom-modeline-mode 1))
 
 (use-package doom-modeline
-  :hook
-  (after-init . custom/doom-modeline-start)
+  :hook (server-after-make-frame . custom/doom-modeline-start)
   :config
   (defun fw/s-truncate (len s &optional ellipsis)
     "Like `s-truncate' but
