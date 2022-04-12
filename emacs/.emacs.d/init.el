@@ -308,7 +308,7 @@
 
   (defun fw/doom-modeline-segment--buffer-info (orig-fn &rest args)
     "`doom-modeline-segment--buffer-info' but truncate for EXWM buffers."
-    (fw/s-truncate (max 15 (- (window-width) 45))
+    (fw/s-truncate (max 15 (- (window-width) 50))
                    (format-mode-line (apply orig-fn args))
                    "..."))
   (advice-add #'doom-modeline-segment--buffer-info :around #'fw/doom-modeline-segment--buffer-info))
@@ -570,37 +570,22 @@
   ;; Configure other variables and modes in the :config section,
   ;; after lazily loading the package.
   :config
-  (defun exwm-all-buffers ()
-    (seq-filter
-     (lambda (buffer)
-       (eq 'exwm-mode (buffer-local-value 'major-mode buffer)))
-     (buffer-list)))
+  (defun consult-buffer-state-no-x ()
+    "Buffer state function that doesn't preview X buffers."
+    (let ((orig-state (consult--buffer-state))
+          (filter (lambda (action cand)
+                    (if (or (eq action 'return)
+                            (let ((buffer (get-buffer cand)))
+                              (and buffer
+                                   (not (eq 'exwm-mode (buffer-local-value 'major-mode buffer))))))
+                        cand
+                      nil))))
+      (lambda (action cand)
+        (funcall orig-state action (funcall filter action cand)))))
 
-  (defvar exwm-buffer-source
-  `(:name "EXWM"
-          :hidden t
-          :narrow ?x
-          :category buffer
-          :state ,#'consult--buffer-state
-          :items ,(lambda () (mapcar #'buffer-name (exwm-all-buffers)))))
+  (setq consult--source-buffer
+        (plist-put consult--source-buffer :state #'consult-buffer-state-no-x))
 
-  (add-to-list 'consult-buffer-sources 'exwm-buffer-source 'append)
-
-  ;;(defun consult-buffer-state-no-x ()
-  ;;  "Buffer state function that doesn't preview X buffers."
-  ;;  (let ((orig-state (consult--buffer-state))
-  ;;        (filter (lambda (action cand)
-  ;;                  (if (or (eq action 'return)
-  ;;                          (let ((buffer (get-buffer cand)))
-  ;;                            (and buffer
-  ;;                                 (not (eq 'exwm-mode (buffer-local-value 'major-mode buffer))))))
-  ;;                      cand
-  ;;                    nil))))
-  ;;    (lambda (action cand)
-  ;;      (funcall orig-state action (funcall filter action cand)))))
-
-  ;;(setq consult--source-buffer
-  ;;      (plist-put consult--source-buffer :state #'consult-buffer-state-no-x))
   ;; Optionally configure preview. The default value
   ;; is 'any, such that any key triggers the preview.
   ;; (setq consult-preview-key 'any)
@@ -621,28 +606,28 @@
   ;; Both < and C-+ work reasonably well.
   (setq consult-narrow-key "<")) ;; (kbd "C-+")
 
-  ;; Optionally make narrowing help available in the minibuffer.
-  ;; You may want to use `embark-prefix-help-command' or which-key instead.
-  ;; (define-key consult-narrow-map (vconcat consult-narrow-key "?") #'consult-narrow-help)
+;; Optionally make narrowing help available in the minibuffer.
+;; You may want to use `embark-prefix-help-command' or which-key instead.
+;; (define-key consult-narrow-map (vconcat consult-narrow-key "?") #'consult-narrow-help)
 
-  ;; By default `consult-project-function' uses `project-root' from project.el.
-  ;; Optionally configure a different project root function.
-  ;; There are multiple reasonable alternatives to chose from.
-  ;;;; 1. project.el (the default)
-  ;; (setq consult-project-function #'consult--default-project--function)
-  ;;;; 2. projectile.el (projectile-project-root)
-  ;; (autoload 'projectile-project-root "projectile")
-  ;; (setq consult-project-function (lambda (_) (projectile-project-root)))
-  ;;;; 3. vc.el (vc-root-dir)
-  ;; (setq consult-project-function (lambda (_) (vc-root-dir)))
-  ;;;; 4. locate-dominating-file
-  ;; (setq consult-project-function (lambda (_) (locate-dominating-file "." ".git")))
-  ;;(setq completion-in-region-function
-  ;;  (lambda (&rest args)
-  ;;    (apply (if vertico-mode
-  ;;               #'consult-completion-in-region
-  ;;             #'completion--in-region)
-  ;;           args))))
+;; By default `consult-project-function' uses `project-root' from project.el.
+;; Optionally configure a different project root function.
+;; There are multiple reasonable alternatives to chose from.
+    ;;;; 1. project.el (the default)
+;; (setq consult-project-function #'consult--default-project--function)
+    ;;;; 2. projectile.el (projectile-project-root)
+;; (autoload 'projectile-project-root "projectile")
+;; (setq consult-project-function (lambda (_) (projectile-project-root)))
+    ;;;; 3. vc.el (vc-root-dir)
+;; (setq consult-project-function (lambda (_) (vc-root-dir)))
+    ;;;; 4. locate-dominating-file
+;; (setq consult-project-function (lambda (_) (locate-dominating-file "." ".git")))
+;;(setq completion-in-region-function
+;;  (lambda (&rest args)
+;;    (apply (if vertico-mode
+;;               #'consult-completion-in-region
+;;             #'completion--in-region)
+;;           args))))
 
 (use-package embark-consult)
 
