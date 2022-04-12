@@ -287,7 +287,23 @@
   (set-face-attribute 'doom-modeline-bar nil :background (face-background 'mode-line))
   (set-face-attribute 'doom-modeline-bar-inactive nil :background (face-background 'mode-line-inactive))
   (set-face-attribute 'mode-line nil :height 100)
-  (set-face-attribute 'mode-line-inactive nil :height 100))
+  (set-face-attribute 'mode-line-inactive nil :height 100)
+  (defun fw/s-truncate (len s &optional ellipsis)
+    "Like `s-truncate' but
+  - return S when LEN is nil
+  - return empty string when len is shorter than ELLIPSIS"
+    (declare (pure t) (side-effect-free t))
+    (let ((ellipsis (or ellipsis "...")))
+      (cond
+       ((null len) s)
+       ((< len (length ellipsis)) "")
+       (t (s-truncate len s ellipsis))))))
+(defun fw/doom-modeline-segment--buffer-info (orig-fn &rest args)
+  "`doom-modeline-segment--buffer-info' but truncate for EXWM buffers."
+  (fw/s-truncate (max 15 (- (window-width) 45))
+   (format-mode-line (apply orig-fn args))
+   "..."))
+(advice-add #'doom-modeline-segment--buffer-info :around #'fw/doom-modeline-segment--buffer-info))
 
 (use-package olivetti
   :config
