@@ -280,6 +280,7 @@
   :init
   (doom-modeline-mode 1)
   :config
+  (column-number-mode 1)
   (setq doom-modeline-height 20)
   (set-face-attribute 'doom-modeline-bar nil :background (face-background 'mode-line))
   (set-face-attribute 'doom-modeline-bar-inactive nil :background (face-background 'mode-line-inactive))
