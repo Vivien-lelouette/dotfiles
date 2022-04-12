@@ -50,11 +50,12 @@
   (interactive)
   (setq exwm-randr-workspace-monitor-plist (build-exwm-monitors))
   (shell/run-in-background "~/.config/polybar/start_polybar.sh")
-  (setup/input))
+  (setup/input)
+  (custom/doom-modeline-start))
 
 (defun exwm/refresh-setup-and-monitors ()
   (interactive)
-  (setup/input)
+  (exwm/refresh-setup)
   (exwm-randr-refresh))
 
 (defun setup/input ()

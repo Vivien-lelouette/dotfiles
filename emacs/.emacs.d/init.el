@@ -173,7 +173,7 @@
      (concat "Hidden Mode Line Mode enabled.  "
              "Use M-x hidden-mode-line-mode to make the mode-line appear."))))
 
-(scroll-bar-mode 0)
+(scroll-bar-mode 1)
 (tool-bar-mode -1)
 (tooltip-mode -1)
 (menu-bar-mode -1)
@@ -211,7 +211,7 @@
     (face-background 'default)
 
     "\nbackground_alt="
-    (face-background 'Info-quoted)
+    (face-background 'mode-line-inactive)
 
     "\nforeground="
     (face-foreground 'default)
@@ -240,12 +240,15 @@
 (use-package theme-magic)
 
 (defun custom/load-theme ()
-    "Load a theme, generate my colors file and refresh my window manager."
-    (interactive)
-    (call-interactively 'load-theme)
-    (generate-colors-file)
-    (theme-magic-from-emacs)
-    (exwm/refresh-setup-and-monitors))
+  "Load a theme, generate my colors file and refresh my window manager."
+  (interactive)
+  (call-interactively 'load-theme)
+  (run-with-timer 0.2 nil (lambda ()
+                            (theme-magic-from-emacs)
+                            (generate-colors-file)
+                            (shell-command "wpg -i .wallpaper ~/.cache/wal/colors.json" nil nil)
+                            (shell-command "wpg -s .wallpaper" nil nil)
+                            (exwm/refresh-setup-and-monitors))))
 
 (use-package doom-themes
   ;;:custom-face
@@ -276,8 +279,9 @@
   (setq modus-themes-mode-line '(borderless accented))
   (modus-themes-load-themes))
 
-(use-package doom-modeline
-  :config
+(defun custom/doom-modeline-start ()
+  (interactive)
+  (doom-modeline-mode 0)
   (setq doom-modeline-height 20
         doom-modeline-major-mode-icon nil
         doom-modeline-major-mode-color-icon nil)
@@ -285,10 +289,17 @@
   (set-face-attribute 'doom-modeline-bar-inactive nil :background (face-background 'mode-line-inactive))
   (set-face-attribute 'mode-line nil :height 100)
   (set-face-attribute 'mode-line-inactive nil :height 100)
+  (column-number-mode 1)
+  (doom-modeline-mode 1))
+
+(use-package doom-modeline
+  :hook
+  (after-init . custom/doom-modeline-start)
+  :config
   (defun fw/s-truncate (len s &optional ellipsis)
     "Like `s-truncate' but
-        - return S when LEN is nil
-        - return empty string when len is shorter than ELLIPSIS"
+          - return S when LEN is nil
+          - return empty string when len is shorter than ELLIPSIS"
     (declare (pure t) (side-effect-free t))
     (let ((ellipsis (or ellipsis "...")))
       (cond
@@ -301,9 +312,7 @@
     (fw/s-truncate (max 15 (- (window-width) 45))
                    (format-mode-line (apply orig-fn args))
                    "..."))
-  (advice-add #'doom-modeline-segment--buffer-info :around #'fw/doom-modeline-segment--buffer-info)
-  (column-number-mode 1)
-  (doom-modeline-mode 1))
+  (advice-add #'doom-modeline-segment--buffer-info :around #'fw/doom-modeline-segment--buffer-info))
 
 (use-package olivetti
   :config
