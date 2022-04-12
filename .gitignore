@@ -31,3 +31,4 @@ emacs/.emacs.d/amx-items
 /kmonad/.config/kmonad/*.kbd
 /kmonad/.config/kmonad/split-keyboard/
 /rofi/.config/rofi/themes/
+/emacs/.emacs.d/tmp/
