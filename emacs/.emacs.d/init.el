@@ -570,21 +570,6 @@
   ;; Configure other variables and modes in the :config section,
   ;; after lazily loading the package.
   :config
-  (defun consult-buffer-state-no-x ()
-    "Buffer state function that doesn't preview X buffers."
-    (let ((orig-state (consult--buffer-state))
-          (filter (lambda (action cand)
-                    (if (or (eq action 'return)
-                            (let ((buffer (get-buffer cand)))
-                              (and buffer
-                                   (not (eq 'exwm-mode (buffer-local-value 'major-mode buffer))))))
-                        cand
-                      nil))))
-      (lambda (action cand)
-        (funcall orig-state action (funcall filter action cand)))))
-
-  (setq consult--source-buffer
-        (plist-put consult--source-buffer :state #'consult-buffer-state-no-x))
 
   ;; Optionally configure preview. The default value
   ;; is 'any, such that any key triggers the preview.
