@@ -1325,9 +1325,8 @@ This requires a Java runtime environment.
            :map eww-mode-map
            ("M-r" . eww/open-in-eaf))
     :config
-    (require 'shrface)) 
-
-  (defun eww/rename-buffer ()
+    (require 'shrface)
+    (defun eww/rename-buffer ()
       "Rename `eww-mode' buffer so sites open in new page.
   URL `http://xahlee.info/emacs/emacs/emacs_eww_web_browser.html'
   Version 2017-11-10"
@@ -1337,10 +1336,10 @@ This requires a Java runtime environment.
               (rename-buffer $title t)
             (rename-buffer "eww" t)))))
 
-  (add-hook 'eww-after-render-hook 'eww/rename-buffer)
-  (add-hook 'eww-after-render-hook #'shrface-mode)
-  (add-hook 'eww-after-render-hook #'mixed-pitch-mode)
-  (add-hook 'eww-after-render-hook #'olivetti-mode)
+    (add-hook 'eww-after-render-hook 'eww/rename-buffer)
+    (add-hook 'eww-after-render-hook #'shrface-mode)
+    (add-hook 'eww-after-render-hook #'mixed-pitch-mode)
+    (add-hook 'eww-after-render-hook #'olivetti-mode))
 #+END_SRC
 
 * Local settings
