@@ -481,10 +481,7 @@ One can use (global-hl-line-mode 1) to highlight the current line.
   (use-package pulsar
     :straight (pulsar :type git :host gitlab :repo "protesilaos/pulsar")
     :config
-    (global-set-key (kbd "C-c SPC") 'pulsar-pulse-line)
     (setq pulse-flag t)
-    (set-face-attribute 'pulsar-cyan nil :background "#81a1c1")
-    (setq pulsar-face 'pulsar-cyan)
     (pulsar-global-mode 1))
 #+END_SRC
 
@@ -732,7 +729,7 @@ One can use (global-hl-line-mode 1) to highlight the current line.
     ;; Configure other variables and modes in the :config section,
     ;; after lazily loading the package.
     :config
-  
+
     ;; Optionally configure preview. The default value
     ;; is 'any, such that any key triggers the preview.
     ;; (setq consult-preview-key 'any)
@@ -787,8 +784,8 @@ One can use (global-hl-line-mode 1) to highlight the current line.
     ;; (setq orderless-style-dispatchers '(+orderless-dispatch)
     ;;       orderless-component-separator #'orderless-escapable-split-on-space)
     (setq completion-styles '(orderless)
-	  completion-category-defaults nil
-	  completion-category-overrides '((file (styles partial-completion)))))
+    completion-category-defaults nil
+    completion-category-overrides '((file (styles partial-completion)))))
 #+END_SRC
 
 ** Marginalia
@@ -796,8 +793,8 @@ One can use (global-hl-line-mode 1) to highlight the current line.
   (use-package marginalia
     ;; Either bind `marginalia-cycle` globally or only in the minibuffer
     :bind (
-	   :map minibuffer-local-map
-	   ("M-A" . marginalia-cycle))
+     :map minibuffer-local-map
+     ("M-A" . marginalia-cycle))
     :init
     (marginalia-mode))
 #+END_SRC
@@ -1040,9 +1037,9 @@ This requires a Java runtime environment.
 
 ** Adoc
 #+BEGIN_SRC emacs-lisp
-(use-package adoc-mode
-  :config
-  (add-to-list 'auto-mode-alist '("\\.adoc\\'" . adoc-mode)))
+  (use-package adoc-mode
+    :config
+    (add-to-list 'auto-mode-alist '("\\.adoc\\'" . adoc-mode)))
 #+END_SRC
 
 ** Restclient
@@ -1089,53 +1086,53 @@ This requires a Java runtime environment.
 * Shells & terminals
 ** Better eshell
 #+begin_src emacs-lisp
-    (use-package aweshell
-          :straight (aweshell :type git :host github :repo "manateelazycat/aweshell"))
+  (use-package aweshell
+    :straight (aweshell :type git :host github :repo "manateelazycat/aweshell"))
 #+end_src
 
 ** Vterm (in case eshell is not enough)
 #+BEGIN_SRC emacs-lisp
-    (defun custom/vterm-auto-copy-mode (buffer description)
-      (with-current-buffer buffer
-        (vterm-copy-mode nil)))
+  (defun custom/vterm-auto-copy-mode (buffer description)
+    (with-current-buffer buffer
+      (vterm-copy-mode nil)))
 
-    (use-package vterm
-      :config
-      (setq
-       vterm-shell "/bin/zsh"
-       vterm-buffer-name-string "vterm: %s")
-      (add-hook 'vterm-exit-functions #'custom/vterm-auto-copy-mode))
+  (use-package vterm
+    :config
+    (setq
+     vterm-shell "/bin/zsh"
+     vterm-buffer-name-string "vterm: %s")
+    (add-hook 'vterm-exit-functions #'custom/vterm-auto-copy-mode))
 
-    (use-package eshell-vterm
-      :config
-      (require 'vterm)
-      (defalias 'eshell/v 'eshell-exec-visual)
-      (eshell-vterm-mode))
+  (use-package eshell-vterm
+    :config
+    (require 'vterm)
+    (defalias 'eshell/v 'eshell-exec-visual)
+    (eshell-vterm-mode))
 #+END_SRC
 
 * Dired
 #+BEGIN_SRC emacs-lisp
-(defun dired-open-file ()
-  "In dired, open the file named on this line."
-  (interactive)
-  (let* ((file (dired-get-filename nil t)))
-    (message "Opening %s..." file)
-    (call-process "xdg-open" nil 0 nil file)
-    (message "Opening %s done" file)))
+  (defun dired-open-file ()
+    "In dired, open the file named on this line."
+    (interactive)
+    (let* ((file (dired-get-filename nil t)))
+      (message "Opening %s..." file)
+      (call-process "xdg-open" nil 0 nil file)
+      (message "Opening %s done" file)))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-(defun dired-open-home-dir ()
-  "Open the home directory in dired"
-  (interactive)
-  (dired "~"))
+  (defun dired-open-home-dir ()
+    "Open the home directory in dired"
+    (interactive)
+    (dired "~"))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-(defun dired-open-current-dir ()
-  "Open the current directory in dired"
-  (interactive)
-  (dired "."))
+  (defun dired-open-current-dir ()
+    "Open the current directory in dired"
+    (interactive)
+    (dired "."))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -1163,9 +1160,9 @@ This requires a Java runtime environment.
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-(use-package dired-hide-dotfiles
-  :hook
-  (dired-mode . dired-hide-dotfiles-mode))
+  (use-package dired-hide-dotfiles
+    :hook
+    (dired-mode . dired-hide-dotfiles-mode))
 #+END_SRC
 
 * Org mode
@@ -1201,8 +1198,7 @@ This requires a Java runtime environment.
        '(org-level-2 ((t (:inherit outline-2 :height 1.8))))
        '(org-level-3 ((t (:inherit outline-3 :height 1.4))))
        '(org-level-4 ((t (:inherit outline-4 :height 1.2))))
-       '(org-level-5 ((t (:inherit outline-5 :height 1.0))))
-       ))
+       '(org-level-5 ((t (:inherit outline-5 :height 1.0))))))
 #+END_SRC
 
 ** Org modern (pimp my org)
@@ -1352,6 +1348,6 @@ Sometimes, settings are specific to one of my computers. Those settings are stor
 
 * Start desktop mode if needed
 #+BEGIN_SRC emacs-lisp
-    (autoload 'exwm-enable "~/.emacs.d/desktop.el")
+  (autoload 'exwm-enable "~/.emacs.d/desktop.el")
 #+END_SRC
  

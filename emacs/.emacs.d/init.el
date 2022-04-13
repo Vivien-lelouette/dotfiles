@@ -364,10 +364,7 @@
 (use-package pulsar
   :straight (pulsar :type git :host gitlab :repo "protesilaos/pulsar")
   :config
-  (global-set-key (kbd "C-c SPC") 'pulsar-pulse-line)
   (setq pulse-flag t)
-  (set-face-attribute 'pulsar-cyan nil :background "#81a1c1")
-  (setq pulsar-face 'pulsar-cyan)
   (pulsar-global-mode 1))
 
 (use-package all-the-icons
@@ -624,14 +621,14 @@
   ;; (setq orderless-style-dispatchers '(+orderless-dispatch)
   ;;       orderless-component-separator #'orderless-escapable-split-on-space)
   (setq completion-styles '(orderless)
-	completion-category-defaults nil
-	completion-category-overrides '((file (styles partial-completion)))))
+  completion-category-defaults nil
+  completion-category-overrides '((file (styles partial-completion)))))
 
 (use-package marginalia
   ;; Either bind `marginalia-cycle` globally or only in the minibuffer
   :bind (
-	 :map minibuffer-local-map
-	 ("M-A" . marginalia-cycle))
+   :map minibuffer-local-map
+   ("M-A" . marginalia-cycle))
   :init
   (marginalia-mode))
 
@@ -858,7 +855,7 @@
   (add-hook 'docker-container-mode 'docker/set-format))
 
 (use-package aweshell
-      :straight (aweshell :type git :host github :repo "manateelazycat/aweshell"))
+  :straight (aweshell :type git :host github :repo "manateelazycat/aweshell"))
 
 (defun custom/vterm-auto-copy-mode (buffer description)
   (with-current-buffer buffer
@@ -952,8 +949,7 @@
      '(org-level-2 ((t (:inherit outline-2 :height 1.8))))
      '(org-level-3 ((t (:inherit outline-3 :height 1.4))))
      '(org-level-4 ((t (:inherit outline-4 :height 1.2))))
-     '(org-level-5 ((t (:inherit outline-5 :height 1.0))))
-     ))
+     '(org-level-5 ((t (:inherit outline-5 :height 1.0))))))
 
 (use-package org-modern
   :config
