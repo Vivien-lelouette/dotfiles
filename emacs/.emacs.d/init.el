@@ -1051,7 +1051,7 @@
              code))
         (shr-ensure-newline)
         (setq end (point))
-        (insert (propertize "#+END_SRC" 'face 'org-block-end-line ) )
+        (insert (propertize "#+END_SRC" 'face 'org-block-end-line ))
         (shr-ensure-newline)
         (insert "\n"))))
 
