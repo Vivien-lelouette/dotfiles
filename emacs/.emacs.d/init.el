@@ -725,10 +725,11 @@
 (use-package forge)
 
 (use-package code-review
-  :config
-  (define-key forge-topic-mode-map (kbd "C-c r") 'code-review-forge-pr-at-point)
-  (define-key code-review-mode-map (kbd "C-c C-n") 'code-review-comment-jump-next)
-  (define-key code-review-mode-map (kbd "C-c C-p") 'code-review-comment-jump-previous))
+  :bind (
+         :map forge-topic-mode-map
+         ("C-c r" . code-review-forge-pr-at-point)
+         ("C-c C-n" . code-review-comment-jump-next)
+         ("C-c C-p" . code-review-comment-jump-previous)))
 
 (use-package yasnippet
   :config
