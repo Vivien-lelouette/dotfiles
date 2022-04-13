@@ -322,10 +322,10 @@
 (use-package hideshow
   :hook
   (prog-mode . hs-minor-mode)
-  :bind
-      :bind (
-             ("C-<tab>" . hs-cycle)
-             ("C-<iso-lefttab>" . hs-global-cycle))
+  :bind (
+         :map prog-mode-map
+         ("C-<tab>" . hs-cycle)
+         ("C-<iso-lefttab>" . hs-global-cycle))
   :config
   (defun hs-cycle (&optional level)
     (interactive "p")
@@ -491,7 +491,9 @@
   (corfu-global-mode))
 
 (use-package embark
-  :bind (("C-c e" . embark-act)))
+  :bind (
+         :map minibuffer-local-map
+         ("C-c e" . embark-act)))
 
 (use-package wgrep)
 
@@ -627,7 +629,7 @@
 
 (use-package marginalia
   ;; Either bind `marginalia-cycle` globally or only in the minibuffer
-  :bind (("M-A" . marginalia-cycle)
+  :bind (
 	 :map minibuffer-local-map
 	 ("M-A" . marginalia-cycle))
   :init
@@ -763,6 +765,7 @@
   :custom
   (lsp-clients-typescript-server-args '("--stdio" "--tsserver-log-file" "/dev/stderr"))
   :bind (
+         :map lsp-mode-map
          ("C-h ." . lsp-describe-thing-at-point)
          ("C-." . lsp-execute-code-action)
          ("M-." . lsp-find-definition)
@@ -896,12 +899,17 @@
 (use-package dired
   :straight (:type built-in)
   :bind (
+         :map dired-mode-map
          ("C-." . dired-hide-dotfiles-mode)
          ("<C-return>" . dired-open-file)
          ("M-p" . dired-up-directory)
          ("M-n" . dired-find-file))
   :hook
-  (dired-mode . dired-hide-details-mode))
+  (dired-mode . dired-hide-details-mode)
+  :config
+  (setq ls-lisp-use-insert-directory-program nil)
+  (require 'ls-lisp)
+  (setq ls-lisp-dirs-first t))
 
 (use-package dired-subtree
   :bind (
@@ -1050,7 +1058,10 @@
 
 (use-package eww
   :straight (:type built-in)
-  :bind (("M-r" . eww/open-in-eaf))
+  :bind (
+         :map eww-mode-map
+         ("M-r" . eww/open-in-eaf)
+         )
   :config
   (require 'shrface)) 
 
