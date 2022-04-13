@@ -768,8 +768,7 @@
          :map lsp-mode-map
          ("C-h ." . lsp-describe-thing-at-point)
          ("C-." . lsp-execute-code-action)
-         ("M-." . lsp-find-definition)
-         )
+         ("M-." . lsp-find-definition))
   :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
          (js-mode . lsp)
          ;; if you want which-key integration
@@ -1060,8 +1059,7 @@
   :straight (:type built-in)
   :bind (
          :map eww-mode-map
-         ("M-r" . eww/open-in-eaf)
-         )
+         ("M-r" . eww/open-in-eaf))
   :config
   (require 'shrface)) 
 
