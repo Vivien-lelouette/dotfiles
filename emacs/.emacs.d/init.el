@@ -199,7 +199,7 @@
   :commands textsize-mode
   :init (textsize-mode)
   :config
-  (setq textsize-default-points 12))
+  (setq textsize-default-points 11))
 
 (defun generate-colors-file ()
   "Function to generate my colors file."
@@ -398,20 +398,20 @@
     :desaturations '(0) ; do not change---may lower the contrast ratio
     :lightens '(0)      ; same
     :colors (modus-themes-with-colors
-              (list fg-main
+              (list blue
+                    fg-main
                     magenta
-                    cyan-alt-other
-                    magenta-alt-other
-                    blue
-                    magenta-alt
+                    green
+                    red-alt
+                    cyan
                     cyan-alt
                     red-alt-other
-                    green
-                    fg-main
+                    magenta-alt
+                    green-alt
                     cyan
-                    yellow
+                    blue-alt-other
                     blue-alt
-                    red-alt
+                    yellow
                     green-alt-other
                     fg-special-warm))))
 
