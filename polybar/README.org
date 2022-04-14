@@ -121,7 +121,7 @@ Actions can be added to any string. See the following: https://github.com/polyba
   bottom = true
   right = true
   width = 650px
-  height = 16
+  height = 14
   offset-x = 100%:-650px
   ;offset-y = 1%
   ;radius = 0.0
