@@ -655,11 +655,11 @@
   (add-to-list 'completion-at-point-functions #'cape-tex)
   (add-to-list 'completion-at-point-functions #'cape-dabbrev)
   (add-to-list 'completion-at-point-functions #'cape-keyword)
-  ;;(add-to-list 'completion-at-point-functions #'cape-sgml)
+  (add-to-list 'completion-at-point-functions #'cape-sgml)
   ;;(add-to-list 'completion-at-point-functions #'cape-rfc1345)
   ;;(add-to-list 'completion-at-point-functions #'cape-abbrev)
   (add-to-list 'completion-at-point-functions #'cape-ispell)
-  ;;(add-to-list 'completion-at-point-functions #'cape-dict)
+  ;;(add-to-list 'comnpletion-at-point-functions #'cape-dict)
   ;;(add-to-list 'completion-at-point-functions #'cape-symbol)
   ;;(add-to-list 'completion-at-point-functions #'cape-line)
 )
@@ -1073,6 +1073,45 @@ Version 2017-11-10"
   (add-hook 'eww-after-render-hook #'shrface-mode)
   (add-hook 'eww-after-render-hook #'mixed-pitch-mode)
   (add-hook 'eww-after-render-hook #'olivetti-mode))
+
+(setq gnus-use-full-window nil)
+
+(when window-system
+  (setq gnus-sum-thread-tree-indent "  ")
+  (setq gnus-sum-thread-tree-root "")
+  (setq gnus-sum-thread-tree-false-root "")
+  (setq gnus-sum-thread-tree-single-indent "")
+  (setq gnus-sum-thread-tree-vertical        "│")
+  (setq gnus-sum-thread-tree-leaf-with-other "├─► ")
+  (setq gnus-sum-thread-tree-single-leaf     "╰─► "))
+(setq gnus-summary-line-format
+      (concat
+       "%0{%U%R%z%}"
+       "%3{│%}" "%1{%d%}" "%3{│%}" ;; date
+       "  "
+       "%4{%-20,20f%}"               ;; name
+       "  "
+       "%3{│%}"
+       " "
+       "%1{%B%}"
+       "%s\n"))
+(setq gnus-summary-display-arrow t)
+
+(use-package bbdb
+  :config
+  (require 'bbdb-autoloads)
+  (setq bbdb-file "~/.bbdb"
+        bbdb-offer-save 'auto
+        bbdb-notice-auto-save-file t
+        bbdb-expand-mail-aliases t
+        bbdb-canonicalize-redundant-nets-p t
+        bbdb-always-add-addresses t
+        bbdb-complete-name-allow-cycling t
+        bbdb-mua-pop-up nil
+        bbdb-mua-auto-update-p 'create
+        bbdb-message-all-addresses t)
+  (bbdb-initialize 'gnus 'message)
+  (bbdb-mua-auto-update-init 'gnus 'message))
 
 (let ((local-settings "~/.emacs.d/local.el"))
     (when (file-exists-p local-settings)
