@@ -1073,6 +1073,10 @@ Version 2017-11-10"
   (add-hook 'eww-after-render-hook #'mixed-pitch-mode)
   (add-hook 'eww-after-render-hook #'olivetti-mode))
 
+(defun utils/window-with-buffer-prefix (prefix)
+  "Returns the first window displaying a buffer starting with prefix"
+  (seq-find (lambda (win) (string-prefix-p prefix (buffer-name (window-buffer win)))) (window-list)))
+
 (setq gnus-use-full-window nil
       gnus-inhibit-images nil)
 
@@ -1082,7 +1086,14 @@ Version 2017-11-10"
              (setq gnus-demon-timestep 60)  ;; each timestep is 60 seconds
              ;; Check for new mail every 1 timestep (1 minute)
              (gnus-demon-add-handler 'gnus-demon-scan-news 1 t)
-             (defun gnus-configure-windows (setting &optional force))
+             (defun gnus-configure-windows (setting &optional force)
+               (pcase setting
+                 ('summary (let ((win (utils/window-with-buffer-prefix "*Summary")))
+                               (if win
+                                   (set-window-buffer win gnus-summary-buffer)
+                                   (set-window-buffer (selected-window) gnus-summary-buffer))
+                               (select-window (get-buffer-window gnus-summary-buffer))))))
+
              ;; Don't crash gnus if disconnected
              (defadvice gnus-demon-scan-news (around gnus-demon-timeout activate)
                "Timeout for Gnus."
@@ -1091,6 +1102,7 @@ Version 2017-11-10"
                  ad-do-it))))
 
 (when window-system
+  (setq )
   (setq gnus-sum-thread-tree-indent "  ")
   (setq gnus-sum-thread-tree-root "")
   (setq gnus-sum-thread-tree-false-root "")
