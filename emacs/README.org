@@ -1360,6 +1360,7 @@ One mail setup could look like this for an outlook 365 account:
 ** Gnus settings
 #+begin_src emacs-lisp
   (setq gnus-use-full-window nil)
+  (defun gnus-configure-windows (setting &optional force))
 #+END_SRC
 
 #+begin_src emacs-lisp

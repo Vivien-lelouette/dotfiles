@@ -1075,6 +1075,7 @@ Version 2017-11-10"
   (add-hook 'eww-after-render-hook #'olivetti-mode))
 
 (setq gnus-use-full-window nil)
+(defun gnus-configure-windows (setting &optional force))
 
 (when window-system
   (setq gnus-sum-thread-tree-indent "  ")
