@@ -1248,7 +1248,6 @@ This requires a Java runtime environment.
   (use-package shr
     :straight (:type built-in)
     :config
-    (setq gnus-inhibit-images nil)
     (setq shr-use-fonts nil)
     (setq shr-use-colors nil)
     (setq shr-max-image-proportion 1)
@@ -1359,7 +1358,9 @@ One mail setup could look like this for an outlook 365 account:
 
 ** Gnus settings
 #+begin_src emacs-lisp
-  (setq gnus-use-full-window nil)
+  (setq gnus-use-full-window nil
+        gnus-inhibit-images nil)
+
   (add-hook 'gnus-startup-hook
             '(lambda ()
                (gnus-demon-init)
@@ -1387,7 +1388,7 @@ One mail setup could look like this for an outlook 365 account:
   (setq gnus-summary-line-format
         (concat
          "%0{%U%R%z%}"
-         "%3{│%}" "%1{%d%}" "%3{│%}" ;; date
+         "%3{│%}" "%1{%-8,8d%}" "%3{│%}" ;; date
          "  "
          "%4{%-20,20f%}"               ;; name
          "  "

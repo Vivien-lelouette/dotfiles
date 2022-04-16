@@ -989,7 +989,6 @@
 (use-package shr
   :straight (:type built-in)
   :config
-  (setq gnus-inhibit-images nil)
   (setq shr-use-fonts nil)
   (setq shr-use-colors nil)
   (setq shr-max-image-proportion 1)
@@ -1074,7 +1073,9 @@ Version 2017-11-10"
   (add-hook 'eww-after-render-hook #'mixed-pitch-mode)
   (add-hook 'eww-after-render-hook #'olivetti-mode))
 
-(setq gnus-use-full-window nil)
+(setq gnus-use-full-window nil
+      gnus-inhibit-images nil)
+
 (add-hook 'gnus-startup-hook
           '(lambda ()
              (gnus-demon-init)
@@ -1100,7 +1101,7 @@ Version 2017-11-10"
 (setq gnus-summary-line-format
       (concat
        "%0{%U%R%z%}"
-       "%3{│%}" "%1{%d%}" "%3{│%}" ;; date
+       "%3{│%}" "%1{%-8,8d%}" "%3{│%}" ;; date
        "  "
        "%4{%-20,20f%}"               ;; name
        "  "
