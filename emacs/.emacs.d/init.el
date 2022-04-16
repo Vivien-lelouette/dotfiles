@@ -1075,7 +1075,19 @@ Version 2017-11-10"
   (add-hook 'eww-after-render-hook #'olivetti-mode))
 
 (setq gnus-use-full-window nil)
-(defun gnus-configure-windows (setting &optional force))
+(add-hook 'gnus-startup-hook
+          '(lambda ()
+             (gnus-demon-init)
+             (setq gnus-demon-timestep 60)  ;; each timestep is 60 seconds
+             ;; Check for new mail every 1 timestep (1 minute)
+             (gnus-demon-add-handler 'gnus-demon-scan-news 1 t)
+             (defun gnus-configure-windows (setting &optional force))
+             ;; Don't crash gnus if disconnected
+             (defadvice gnus-demon-scan-news (around gnus-demon-timeout activate)
+               "Timeout for Gnus."
+               (with-timeout
+                   (120 (message "Gnus timed out."))
+                 ad-do-it))))
 
 (when window-system
   (setq gnus-sum-thread-tree-indent "  ")
