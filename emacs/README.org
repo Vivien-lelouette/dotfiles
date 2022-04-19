@@ -272,6 +272,8 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 
 ** Fonts setting
 #+BEGIN_SRC emacs-lisp
+  (setq-default fill-column 100)
+
   (set-face-attribute 'default nil :font "SauceCodePro NF")
 
   ;; Set the fixed pitch face

@@ -183,6 +183,8 @@
  window-divider-default-bottom-width 1)
 (window-divider-mode 1)
 
+(setq-default fill-column 100)
+
 (set-face-attribute 'default nil :font "SauceCodePro NF")
 
 ;; Set the fixed pitch face
