@@ -1088,35 +1088,6 @@ Version 2017-11-10"
           '(lambda ()
              (gnus-demon-init)
 
-             ;; This indicates to gnus not to use utf8 if no utf-8 characters are in the query.
-             ;; UTF-8 charset does not seem supported by outlook 360
-             (cl-defmethod gnus-search-imap-search-command ((engine gnus-search-imap)
-                                                            (query string))
-               "Create the IMAP search command for QUERY.
-Currently takes into account support for the LITERAL+ capability.
-Other capabilities could be tested here."
-               (with-slots (literal-plus) engine
-                 (when (and literal-plus
-                            (string-match-p "\n" query))
-                   (setq query (split-string query "\n")))
-                 (cond
-                  ((consp query)
-                   ;; We're not really streaming, just need to prevent
-                   ;; `nnimap-send-command' from waiting for a response.
-                   (let* ((nnimap-streaming t)
-                          (call
-                           (nnimap-send-command
-                            "UID SEARCH CHARSET UTF-8 %s"
-                            (pop query))))
-                     (dolist (l query)
-                       (process-send-string (get-buffer-process (current-buffer)) l)
-                       (process-send-string (get-buffer-process (current-buffer))
-                                            (if (nnimap-newlinep nnimap-object)
-                                                "\n"
-                                              "\r\n")))
-                     (nnimap-get-response call)))
-                  (t (nnimap-command "UID SEARCH %s" query)))))
-
              (setq gnus-demon-timestep 60)  ;; each timestep is 60 seconds
              ;; Check for new mail every 1 timestep (1 minute)
              (gnus-demon-add-handler 'gnus-demon-scan-news 1 t)
