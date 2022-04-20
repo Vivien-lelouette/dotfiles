@@ -1476,4 +1476,3 @@ Sometimes, settings are specific to one of my computers. Those settings are stor
       (when (file-exists-p local-settings)
     (load-file local-settings)))
 #+END_SRC
-

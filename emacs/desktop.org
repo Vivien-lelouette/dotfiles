@@ -232,25 +232,45 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
     (kill-current-buffer)
     (delete-window))
 
-  (defun utils/gnome-terminal ()
+  (defun xfce/terminal ()
     (interactive)
     (shell/run-in-background "gnome-terminal"))
 
-  (defun utils/gnome-lock-screen ()
+  (defun xfce/lock-screen ()
     (interactive)
-    (shell/run-in-background "xdg-screensaver lock"))
+    (shell/run-in-background "i3lock -c 000000"))
 
-  (defun utils/gnome-logout ()
+  (defun xfce/logout ()
     (interactive)
-    (shell/run-in-background "gnome-session-quit --force"))
+    (shell/run-in-background "xfce4-session-logout --logout"))
 
-  (defun utils/gnome-shutdown ()
+  (defun xfce/shutdown ()
     (interactive)
     (shell/run-in-background "shutdown -h 0"))
 
-  (defun utils/gnome-reboot ()
+  (defun xfce/reboot ()
     (interactive)
     (shell/run-in-background "reboot"))
+
+  (defun settings/manager ()
+    (interactive)
+    (shell/run-in-background "xfce4-settings-manager"))
+
+  (defun settings/appearance ()
+    (interactive)
+    (shell/run-in-background "xfce4-appearance-settings"))
+
+  (defun settings/display ()
+    (interactive)
+    (shell/run-in-background "xfce4-display-settings"))
+
+  (defun settings/keyboard ()
+    (interactive)
+    (shell/run-in-background "xfce4-keyboard-settings"))
+
+  (defun settings/mouse ()
+    (interactive)
+    (shell/run-in-background "xfce4-mouse-settings"))
 
   (use-package exwm
     :config
@@ -316,10 +336,16 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
             ([?\s-m] . exwm-layout-toggle-fullscreen)
             ([?\s-M] . exwm-floating-toggle-floating)
 
-            ([?\s-l ?\s-l] . utils/gnome-lock-screen)
-            ([?\s-l ?\M-l] . utils/gnome-logout)
-            ([?\s-l ?\M-s] . utils/gnome-shutdown)
-            ([?\s-l ?\M-r] . utils/gnome-reboot)
+            ([?\s-l ?\s-l] . xfce/lock-screen)
+            ([?\s-l ?\M-l] . xfce/logout)
+            ([?\s-l ?\M-s] . xfce/shutdown)
+            ([?\s-l ?\M-r] . xfce/reboot)
+
+            ([?\s-o ?\s-o] . settings/manager)
+            ([?\s-o a] . settings/appearance)
+            ([?\s-o d] . settings/display)
+            ([?\s-o k] . settings/keyboard)
+            ([?\s-o m] . settings/mouse)
 
             ([?\s-a] . app-launcher-run-app)
 
@@ -454,6 +480,9 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
         ([?\M-w] . [?\C-c])
         ([?\C-w] . [?\C-x])
         ([?\s-g] . [escape])))
+
+    (setq exwm-manage-configurations '(((string-match-p "^Xfce4-" exwm-title)
+                                        floating nil)))
 
     (exwm-enable)
     (exwm/refresh-setup)
