@@ -898,6 +898,7 @@ One can use (global-hl-line-mode 1) to highlight the current line.
 ** Aggressive indent
 It is nice but sometimes too aggressive !
 #+begin_src emacs-lisp
+  (electric-indent-mode 0)
   (use-package aggressive-indent
       :config
       (add-to-list 'aggressive-indent-dont-indent-if
@@ -907,6 +908,7 @@ It is nice but sometimes too aggressive !
       (add-to-list 'aggressive-indent-excluded-modes 'yaml-mode)
       (add-to-list 'aggressive-indent-excluded-modes 'eshell-mode)
       (add-to-list 'aggressive-indent-excluded-modes 'comint-mode)
+      (add-to-list 'aggressive-indent-excluded-modes 'authinfo-mode)
       (global-aggressive-indent-mode 1))
 #+end_src
 

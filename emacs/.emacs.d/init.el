@@ -703,6 +703,7 @@
     (?\{ . ?\})))
 (electric-pair-mode 1)
 
+(electric-indent-mode 0)
 (use-package aggressive-indent
     :config
     (add-to-list 'aggressive-indent-dont-indent-if
@@ -712,6 +713,7 @@
     (add-to-list 'aggressive-indent-excluded-modes 'yaml-mode)
     (add-to-list 'aggressive-indent-excluded-modes 'eshell-mode)
     (add-to-list 'aggressive-indent-excluded-modes 'comint-mode)
+    (add-to-list 'aggressive-indent-excluded-modes 'authinfo-mode)
     (global-aggressive-indent-mode 1))
 
 (use-package magit
