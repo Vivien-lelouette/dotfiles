@@ -286,7 +286,10 @@
   (doom-modeline-mode 0)
   (setq doom-modeline-height 20
         doom-modeline-major-mode-icon nil
-        doom-modeline-major-mode-color-icon nil)
+        doom-modeline-major-mode-color-icon nil
+        doom-modeline-gnus t
+        doom-modeline-gnus-timer 1)
+
   (set-face-attribute 'doom-modeline-bar nil :background (face-background 'mode-line))
   (set-face-attribute 'doom-modeline-bar-inactive nil :background (face-background 'mode-line-inactive))
   (set-face-attribute 'mode-line nil :height 100)
@@ -1087,7 +1090,7 @@ Version 2017-11-10"
 (add-hook 'gnus-startup-hook
           '(lambda ()
              (gnus-demon-init)
-
+             (doom-modeline-start-gnus-listener)
              (setq gnus-demon-timestep 60)  ;; each timestep is 60 seconds
              ;; Check for new mail every 1 timestep (1 minute)
              (gnus-demon-add-handler 'gnus-demon-scan-news 1 t)
