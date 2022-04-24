@@ -194,6 +194,10 @@
   (interactive)
   (shell/run-in-background "reboot"))
 
+(defun xfwm4/replace ()
+  (interactive)
+  (shell/run-in-background "xfwm4 --replace"))
+
 (defun settings/manager ()
   (interactive)
   (shell/run-in-background "xfce4-settings-manager"))
@@ -282,6 +286,7 @@
           ([?\s-l ?\M-l] . xfce/logout)
           ([?\s-l ?\M-s] . xfce/shutdown)
           ([?\s-l ?\M-r] . xfce/reboot)
+          ([?\s-l ?\M-w] . xfwm4/replace)
 
           ([?\s-o ?\s-o] . settings/manager)
           ([?\s-o a] . settings/appearance)
@@ -425,6 +430,8 @@
 
   (setq exwm-manage-configurations '(((string-match-p "^Xfce4-" exwm-title)
                                       floating nil)))
+
+  (setq exwm-replace t)
 
   (exwm-enable)
   (exwm/refresh-setup)
