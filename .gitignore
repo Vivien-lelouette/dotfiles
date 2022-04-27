@@ -32,3 +32,5 @@ emacs/.emacs.d/amx-items
 /kmonad/.config/kmonad/split-keyboard/
 /rofi/.config/rofi/themes/
 /emacs/.emacs.d/tmp/
+*.rc
+/xfce4/.config/xfce4/panel/
