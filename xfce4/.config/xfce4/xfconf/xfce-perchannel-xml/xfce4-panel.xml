@@ -21,6 +21,8 @@
         <value type="int" value="4"/>
         <value type="int" value="12"/>
         <value type="int" value="26"/>
+        <value type="int" value="3"/>
+        <value type="int" value="9"/>
       </property>
       <property name="autohide-behavior" type="uint" value="0"/>
       <property name="background-style" type="uint" value="1"/>
@@ -90,6 +92,10 @@
       </property>
     </property>
     <property name="plugin-26" type="string" value="separator">
+      <property name="style" type="uint" value="0"/>
+    </property>
+    <property name="plugin-3" type="string" value="battery"/>
+    <property name="plugin-9" type="string" value="separator">
       <property name="style" type="uint" value="0"/>
     </property>
   </property>
