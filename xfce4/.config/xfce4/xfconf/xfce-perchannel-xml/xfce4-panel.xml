@@ -38,7 +38,7 @@
       </property>
       <property name="span-monitors" type="bool" value="false"/>
       <property name="mode" type="uint" value="0"/>
-      <property name="output-name" type="string" value="DP-2-8"/>
+      <property name="output-name" type="string" value="Primary"/>
     </property>
   </property>
   <property name="plugins" type="empty">

@@ -12,8 +12,8 @@
       <property name="Reflection" type="string" value="0"/>
       <property name="Primary" type="bool" value="false"/>
       <property name="Position" type="empty">
-        <property name="X" type="int" value="3840"/>
-        <property name="Y" type="int" value="0"/>
+        <property name="X" type="int" value="3000"/>
+        <property name="Y" type="int" value="330"/>
       </property>
     </property>
     <property name="DP-1" type="string" value="GBT 32&quot;">
@@ -36,10 +36,10 @@
       <property name="RefreshRate" type="double" value="60.000000"/>
       <property name="Rotation" type="int" value="0"/>
       <property name="Reflection" type="string" value="0"/>
-      <property name="Primary" type="bool" value="false"/>
+      <property name="Primary" type="bool" value="true"/>
       <property name="Position" type="empty">
-        <property name="X" type="int" value="1920"/>
-        <property name="Y" type="int" value="0"/>
+        <property name="X" type="int" value="1080"/>
+        <property name="Y" type="int" value="330"/>
       </property>
     </property>
     <property name="DP-2-1" type="string" value="Philips 24&quot;">
@@ -66,8 +66,8 @@
       <property name="Reflection" type="string" value="0"/>
       <property name="Primary" type="bool" value="false"/>
       <property name="Position" type="empty">
-        <property name="X" type="int" value="3840"/>
-        <property name="Y" type="int" value="0"/>
+        <property name="X" type="int" value="3000"/>
+        <property name="Y" type="int" value="330"/>
       </property>
     </property>
     <property name="DP-1" type="string" value="GBT 32&quot;">
@@ -92,8 +92,8 @@
       <property name="Reflection" type="string" value="0"/>
       <property name="Primary" type="bool" value="false"/>
       <property name="Position" type="empty">
-        <property name="X" type="int" value="1920"/>
-        <property name="Y" type="int" value="0"/>
+        <property name="X" type="int" value="1080"/>
+        <property name="Y" type="int" value="330"/>
       </property>
     </property>
     <property name="DP-2-1" type="string" value="Philips 24&quot;">
