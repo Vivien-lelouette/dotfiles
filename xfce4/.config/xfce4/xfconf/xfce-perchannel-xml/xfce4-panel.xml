@@ -19,8 +19,6 @@
         <value type="int" value="8"/>
         <value type="int" value="13"/>
         <value type="int" value="7"/>
-        <value type="int" value="11"/>
-        <value type="int" value="10"/>
         <value type="int" value="4"/>
         <value type="int" value="12"/>
         <value type="int" value="3"/>
@@ -71,11 +69,7 @@
     <property name="plugin-8" type="string" value="pulseaudio">
       <property name="enable-keyboard-shortcuts" type="bool" value="true"/>
       <property name="show-notifications" type="bool" value="true"/>
-      <property name="mpris-players" type="string" value="chromium.instance12842;chromium.instance14475;chromium.instance14706;chromium.instance69803"/>
-    </property>
-    <property name="plugin-10" type="string" value="notification-plugin"/>
-    <property name="plugin-11" type="string" value="separator">
-      <property name="style" type="uint" value="0"/>
+      <property name="mpris-players" type="string" value="chromium.instance12598;chromium.instance12842;chromium.instance14475;chromium.instance14706;chromium.instance69803"/>
     </property>
     <property name="plugin-12" type="string" value="clock">
       <property name="mode" type="uint" value="2"/>
@@ -83,12 +77,14 @@
     <property name="plugin-13" type="string" value="separator">
       <property name="style" type="uint" value="0"/>
     </property>
-    <property name="plugin-14" type="string" value="actions"/>
+    <property name="plugin-14" type="string" value="actions">
+      <property name="appearance" type="uint" value="1"/>
+    </property>
     <property name="plugin-7" type="string" value="launcher">
       <property name="items" type="array">
         <value type="string" value="16508656872.desktop"/>
       </property>
-      <property name="show-label" type="bool" value="true"/>
+      <property name="show-label" type="bool" value="false"/>
     </property>
     <property name="plugin-2" type="string" value="separator">
       <property name="style" type="uint" value="0"/>
