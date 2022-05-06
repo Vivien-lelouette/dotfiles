@@ -872,7 +872,14 @@
          :map term-mode-map
          ("C-I" . term-char-mode))
   :config
+  (defun term-send-tab ()
+    (interactive)
+    (term-send-raw-string "\t"))
+
   (setq multi-term-program "zsh")
+
+  (add-to-list 'term-bind-key-alist '("<backtab>" . term-send-up))
+  (add-to-list 'term-bind-key-alist '("TAB" . term-send-tab))
   (add-to-list 'term-bind-key-alist '("C-I" . term-line-mode)))
 
 (defun custom/vterm-auto-copy-mode (buffer description)
