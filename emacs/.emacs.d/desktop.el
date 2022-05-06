@@ -303,7 +303,7 @@
           ([?\s-F] . bookmark-bmenu-list)
 
           ([s-return] . eshell)
-          ([S-s-return] . vterm)
+          ([S-s-return] . multi-term)
           ([C-s-return] . utils/gnome-terminal)
 
           ([?\s-q] . delete-window)

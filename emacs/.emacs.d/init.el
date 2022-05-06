@@ -717,6 +717,8 @@
     (add-to-list 'aggressive-indent-excluded-modes 'eshell-mode)
     (add-to-list 'aggressive-indent-excluded-modes 'comint-mode)
     (add-to-list 'aggressive-indent-excluded-modes 'authinfo-mode)
+    (add-to-list 'aggressive-indent-excluded-modes 'term-mode)
+    (add-to-list 'aggressive-indent-excluded-modes 'ansi-term-mode)
     (global-aggressive-indent-mode 1))
 
 (use-package magit
@@ -865,6 +867,14 @@
 (use-package aweshell
   :straight (aweshell :type git :host github :repo "manateelazycat/aweshell"))
 
+(use-package multi-term
+  :bind (
+         :map term-mode-map
+         ("C-I" . term-char-mode))
+  :config
+  (setq multi-term-program "zsh")
+  (add-to-list 'term-bind-key-alist '("C-I" . term-line-mode)))
+
 (defun custom/vterm-auto-copy-mode (buffer description)
   (with-current-buffer buffer
     (vterm-copy-mode nil)))
@@ -872,7 +882,7 @@
 (use-package vterm
   :config
   (setq
-   vterm-shell "/bin/zsh"
+   vterm-shell "zsh"
    vterm-buffer-name-string "vterm: %s")
   (add-hook 'vterm-exit-functions #'custom/vterm-auto-copy-mode))
 
