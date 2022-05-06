@@ -882,23 +882,6 @@
   (add-to-list 'term-bind-key-alist '("TAB" . term-send-tab))
   (add-to-list 'term-bind-key-alist '("s-i" . term-line-mode)))
 
-(defun custom/vterm-auto-copy-mode (buffer description)
-  (with-current-buffer buffer
-    (vterm-copy-mode nil)))
-
-(use-package vterm
-  :config
-  (setq
-   vterm-shell "zsh"
-   vterm-buffer-name-string "vterm: %s")
-  (add-hook 'vterm-exit-functions #'custom/vterm-auto-copy-mode))
-
-(use-package eshell-vterm
-  :config
-  (require 'vterm)
-  (defalias 'eshell/v 'eshell-exec-visual)
-  (eshell-vterm-mode))
-
 (defun dired-open-file ()
   "In dired, open the file named on this line."
   (interactive)
