@@ -870,7 +870,7 @@
 (use-package multi-term
   :bind (
          :map term-mode-map
-         ("C-I" . term-char-mode))
+         ("s-I" . term-char-mode))
   :config
   (defun term-send-tab ()
     (interactive)
@@ -880,7 +880,7 @@
 
   (add-to-list 'term-bind-key-alist '("<backtab>" . term-send-up))
   (add-to-list 'term-bind-key-alist '("TAB" . term-send-tab))
-  (add-to-list 'term-bind-key-alist '("C-I" . term-line-mode)))
+  (add-to-list 'term-bind-key-alist '("s-i" . term-line-mode)))
 
 (defun custom/vterm-auto-copy-mode (buffer description)
   (with-current-buffer buffer
