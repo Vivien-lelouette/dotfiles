@@ -366,6 +366,8 @@
        (setq this-command 'hs-global-show))
       (_ (hs-hide-all)))))
 
+(use-package focus)
+
 (use-package pulsar
   :straight (pulsar :type git :host gitlab :repo "protesilaos/pulsar")
   :config
