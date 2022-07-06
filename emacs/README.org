@@ -646,7 +646,7 @@ One can use (global-hl-line-mode 1) to highlight the current line.
     ;; Recommended: Enable Corfu globally.
     ;; This is recommended since dabbrev can be used globally (M-/).
     :init
-    (corfu-global-mode))
+    (global-corfu-mode))
 #+END_SRC
 
 ** Embark
