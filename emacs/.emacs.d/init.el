@@ -193,9 +193,14 @@
 ;; Set the variable pitch face
 (set-face-attribute 'variable-pitch nil :font "Cantarell" :weight 'regular)
 
+(defun disable-mixed-pitch ()
+  (interactive)
+  (mixed-pitch-mode -1))
+
 (use-package mixed-pitch
   :hook
-  (text-mode . mixed-pitch-mode))
+  (text-mode . mixed-pitch-mode)
+  (yaml-mode . disable-mixed-pitch))
 
 (use-package textsize
   :commands textsize-mode
@@ -822,10 +827,16 @@
         lsp-ui-sideline-show-code-actions t
         lsp-ui-sideline-delay 0.05))
 
+(defun disable-lsp-ltex ()
+  (interactive))
+  ;;(lsp-workspace-shutdown 'lsp--cur-workspace))
+
 (use-package lsp-ltex
-  :hook (text-mode . (lambda ()
-                       (require 'lsp-ltex)
-                       (lsp))))
+  :hook
+  (text-mode . (lambda ()
+                 (require 'lsp-ltex)
+                 (lsp)))
+  (yaml-mode . disable-lsp-ltex))
 
 (use-package dap-mode
   :straight (dap-mode :type git :host github :repo "emacs-lsp/dap-mode"))

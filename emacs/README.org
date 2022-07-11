@@ -282,9 +282,14 @@ As bookmarks are at the center of my workflow, this is a crucial option.
   ;; Set the variable pitch face
   (set-face-attribute 'variable-pitch nil :font "Cantarell" :weight 'regular)
 
+  (defun disable-mixed-pitch ()
+    (interactive)
+    (mixed-pitch-mode -1))
+
   (use-package mixed-pitch
     :hook
-    (text-mode . mixed-pitch-mode))
+    (text-mode . mixed-pitch-mode)
+    (yaml-mode . disable-mixed-pitch))
 
   (use-package textsize
     :commands textsize-mode
@@ -1038,10 +1043,16 @@ It is nice but sometimes too aggressive !
 *** Natural languages server
 This requires a Java runtime environment.
 #+BEGIN_SRC emacs-lisp
+  (defun disable-lsp-ltex ()
+    (interactive))
+    ;;(lsp-workspace-shutdown 'lsp--cur-workspace))
+
   (use-package lsp-ltex
-    :hook (text-mode . (lambda ()
-                         (require 'lsp-ltex)
-                         (lsp))))
+    :hook
+    (text-mode . (lambda ()
+                   (require 'lsp-ltex)
+                   (lsp)))
+    (yaml-mode . disable-lsp-ltex))
 #+END_SRC
 
 *** Dap mode
