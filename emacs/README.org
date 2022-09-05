@@ -36,7 +36,6 @@ sudo make install
 #+END_SRC
 
 * Defaults
-
 ** Sane 2022 file setup
 Reduce the frequency of garbage collection by making it happen on each 50MB of allocated data (the default is on every 0.76MB).
 #+BEGIN_SRC emacs-lisp
@@ -200,7 +199,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
   (use-package avy
     :config
     (require 'bind-key)
-    (bind-key* "C-j" #'avy-goto-char-timer))
+    (bind-key "M-j" #'avy-goto-char-timer))
 #+END_SRC
 
 ** Multiple cursors

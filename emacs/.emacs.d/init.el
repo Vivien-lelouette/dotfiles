@@ -130,7 +130,7 @@
 (use-package avy
   :config
   (require 'bind-key)
-  (bind-key* "C-j" #'avy-goto-char-timer))
+  (bind-key "M-j" #'avy-goto-char-timer))
 
 (use-package multiple-cursors
     :config
