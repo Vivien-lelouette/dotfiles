@@ -258,7 +258,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 
 ** Lighter interface
 #+BEGIN_SRC emacs-lisp
-  (scroll-bar-mode 1)
+  (scroll-bar-mode -1)
   (tool-bar-mode -1)
   (tooltip-mode -1)
   (menu-bar-mode -1)
