@@ -185,28 +185,28 @@
 
 (setq-default fill-column 100)
 
-(set-face-attribute 'default nil :font "SauceCodePro NF")
+  (set-face-attribute 'default nil :font "SauceCodePro NF-12")
 
-;; Set the fixed pitch face
-(set-face-attribute 'fixed-pitch nil :font "SauceCodePro NF")
+  ;; Set the fixed pitch face
+  (set-face-attribute 'fixed-pitch nil :font "SauceCodePro NF-12")
 
-;; Set the variable pitch face
-(set-face-attribute 'variable-pitch nil :font "Cantarell" :weight 'regular)
+  ;; Set the variable pitch face
+  (set-face-attribute 'variable-pitch nil :font "Cantarell-12" :weight 'regular)
 
-(defun disable-mixed-pitch ()
-  (interactive)
-  (mixed-pitch-mode -1))
+  (defun disable-mixed-pitch ()
+    (interactive)
+    (mixed-pitch-mode -1))
 
-(use-package mixed-pitch
-  :hook
-  (text-mode . mixed-pitch-mode)
-  (yaml-mode . disable-mixed-pitch))
+  (use-package mixed-pitch
+    :hook
+    (text-mode . mixed-pitch-mode)
+    (yaml-mode . disable-mixed-pitch))
 
-(use-package textsize
-  :commands textsize-mode
-  :init (textsize-mode)
-  :config
-  (setq textsize-default-points 11))
+;;  (use-package textsize
+;;    :commands textsize-mode
+;;    :init (textsize-mode)
+;;    :config
+;;    (setq textsize-default-points 11))
 
 (defun generate-colors-file ()
   "Function to generate my colors file."
