@@ -150,10 +150,10 @@
                                    (windmove-down))))
 
 (defun exwm/exwm-init-hook ()
-  (exwm/refresh-setup)
+  (exwm/refresh-setup))
   ;; Launch apps that will run in the background
-  (shell/run-in-background "gsettings set org.gnome.gnome-flashback.desktop.icons show-home false")
-  (shell/run-in-background "gsettings set org.gnome.gnome-flashback.desktop.icons show-trash false"))
+  ;;(shell/run-in-background "gsettings set org.gnome.gnome-flashback.desktop.icons show-home false")
+  ;;(shell/run-in-background "gsettings set org.gnome.gnome-flashback.desktop.icons show-trash false"))
 
 (defun exwm/win-title ()
   (replace-regexp-in-string (concat " . " exwm-class-name) "" exwm-title))
