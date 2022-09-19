@@ -870,6 +870,12 @@ One can use (global-hl-line-mode 1) to highlight the current line.
 #+END_SRC
 
 * Coding
+** Nix
+#+BEGIN_SRC emacs-lisp
+  (use-package nix-mode
+    :mode "\\.nix\\'")
+#+END_SRC
+
 ** Flycheck
 #+BEGIN_SRC emacs-lisp
   (use-package flycheck
@@ -1484,7 +1490,6 @@ One mail setup could look like this for an outlook 365 account:
 #+BEGIN_SRC emacs-lisp
   (autoload 'exwm-enable "~/.emacs.d/desktop.el")
 #+END_SRC
- 
 
 * Local settings
 Sometimes, settings are specific to one of my computers. Those settings are stored in a local.el file. This file is not under a version control system.

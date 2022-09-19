@@ -691,6 +691,9 @@
   (global-set-key (kbd "C-h F") #'helpful-function)
   (global-set-key (kbd "C-h C") #'helpful-command))
 
+(use-package nix-mode
+  :mode "\\.nix\\'")
+
 (use-package flycheck
   :init (global-flycheck-mode))
 
