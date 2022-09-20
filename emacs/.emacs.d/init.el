@@ -892,7 +892,7 @@
     (interactive)
     (term-send-raw-string "\t"))
 
-  (setq multi-term-program "zsh")
+  (setq multi-term-program "fish")
 
   (add-to-list 'term-bind-key-alist '("<backtab>" . term-send-up))
   (add-to-list 'term-bind-key-alist '("TAB" . term-send-tab))
