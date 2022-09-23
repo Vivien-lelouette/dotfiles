@@ -27,17 +27,4 @@ To install stow on Ubuntu, use the following command:
 
 #+BEGIN_SRC shell :tangle global/.scripts/init-ubuntu.sh :shebang #!/bin/sh :mkdirp yes
   sudo apt install stow
-#+END_SRC
-
-* Install all prerequisite
-** Ubuntu
-#+BEGIN_SRC shell :tangle global/.scripts/init-ubuntu.sh :mkdirp yes
-  for script in $(find ~/.scripts/*/ -name init-ubuntu.sh) ; do sh $script ; done
-#+END_SRC
-
-* Install all programs 
-
-#+BEGIN_SRC shell :tangle global/.scripts/install-all-tools.sh :shebang #!/bin/sh :mkdirp yes
-  for script in $(find ~/.scripts/*/ -name install.sh) ; do sh $script ; done
-#+END_SRC
-
+#+END_SRC 
