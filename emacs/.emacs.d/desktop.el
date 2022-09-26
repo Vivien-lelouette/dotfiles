@@ -149,6 +149,24 @@
   (run-at-time "0.1 seconds" nil (lambda ()
                                    (windmove-down))))
 
+(defun window/force-tile ()
+  (interactive)
+  (with-current-buffer (window-buffer)
+    (exwm-floating--unset-floating exwm--id)))
+
+(defun window/force-tile-to-other-window ()
+  (interactive)
+  (window/force-tile)
+  (with-current-buffer (window-buffer)
+    (aw-move-window (next-window))))
+
+(defun window/configure-window-by-class ()
+  (interactive)
+  (pcase exwm-class-name
+    ((rx (sequence "Ardour" (zero-or-more (any "ascii")))) (window/force-tile-to-other-window))))
+
+(add-hook 'exwm-manage-finish-hook #'window/configure-window-by-class)
+
 (defun exwm/exwm-init-hook ()
   (exwm/refresh-setup))
   ;; Launch apps that will run in the background
