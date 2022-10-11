@@ -5,6 +5,10 @@
 (defun shell/async-command-no-output (command)
   (call-process-shell-command (concat command " &") nil 0))
 
+(defun apps/chrome-browser ()
+  (interactive)
+  (shell/async-command-no-output "google-chrome-stable"))
+
 (defun car-string-to-number (list-two-elements)
   (append (list (string-to-number (car list-two-elements))) (cdr list-two-elements)))
 
@@ -149,6 +153,15 @@
   (run-at-time "0.1 seconds" nil (lambda ()
                                    (windmove-down))))
 
+(defun window/force-tiled-fullscreen ()
+  "Toggle fullscreen mode."
+  (interactive)
+  (execute-kbd-macro (kbd "<f11>"))
+  (run-with-timer 0.1 nil (lambda () (with-current-buffer (window-buffer)
+                                        (exwm-layout-unset-fullscreen exwm--id))))
+  (pcase exwm-class-name
+    ("Google-chrome" (execute-kbd-macro (kbd "C-l")))))
+
 (defun window/force-tile ()
   (interactive)
   (with-current-buffer (window-buffer)
@@ -163,7 +176,8 @@
 (defun window/configure-window-by-class ()
   (interactive)
   (pcase exwm-class-name
-    ((rx (sequence "Ardour" (zero-or-more (any "ascii")))) (window/force-tile-to-other-window))))
+    ((rx (sequence "Ardour" (zero-or-more (any "ascii")))) (window/force-tile-to-other-window))
+    ("Google-chrome" (window/force-tiled-fullscreen))))
 
 (add-hook 'exwm-manage-finish-hook #'window/configure-window-by-class)
 
@@ -299,6 +313,7 @@
 
           ([?\s-m] . exwm-layout-toggle-fullscreen)
           ([?\s-M] . exwm-floating-toggle-floating)
+          ([?\s-n] . window/force-tiled-fullscreen)
 
           ([?\s-l ?\s-l] . xfce/lock-screen)
           ([?\s-l ?\M-l] . xfce/logout)
@@ -322,12 +337,15 @@
 
           ([s-return] . eshell)
           ([S-s-return] . multi-term)
-          ([C-s-return] . utils/gnome-terminal)
+          ([C-s-return] . utils/x-terminal)
 
           ([?\s-q] . delete-window)
           ([?\s-Q] . delete-other-windows)
           ([?\s-S] . split-window-below)
           ([?\s-s] . split-window-right)
+
+          ;; Applications
+          ([?\s-c] . apps/chrome-browser)
 
           ;; 's-N': Switch to certain workspace with Super (Win) plus a number key (0 - 9)
           ,@(mapcar (lambda (i)

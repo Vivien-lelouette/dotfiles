@@ -49,6 +49,7 @@
 (bind-key* "C-x k" #'kill-current-buffer)
 (bind-key* "C-x K" #'kill-buffer)
 (global-set-key (kbd "C-z") 'delete-frame)
+(delete-selection-mode 1)
 
 (setq bookmark-save-flag 1)
 
@@ -62,7 +63,7 @@
 (setq indent-tabs-mode nil)
 (setq indent-line-function 'insert-tab)
 (setq-default indent-tabs-mode nil)
-(setq-default tab-width 2)
+(setq-default tab-width 4)
 (setq c-basic-offset tab-width
       c-basic-offset tab-width
       c-basic-offset tab-width
@@ -111,7 +112,8 @@
    aw-keys '(?1 ?2 ?3 ?4 ?5 ?6 ?7 ?8 ?9 ?0)
    aw-background nil
    aw-dispatch-always t
-   aw-display-mode-overlay nil)
+   aw-display-mode-overlay nil
+   aw-minibuffer-flag t)
   (setq aw-dispatch-alist
         '((?x aw-delete-window "Delete Window")
           (?M aw-swap-window "Swap Windows")
@@ -471,7 +473,6 @@
     (setq
      vertico-cycle t
      vertico-buffer-display-action '(display-buffer-below-selected (window-height . 10)))
-    (add-hook 'minibuffer-setup-hook 'hidden-mode-line-mode)
     (vertico-mode)
     (vertico-buffer-mode))
 
@@ -780,7 +781,7 @@
   ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
   (setq lsp-keymap-prefix "C-c l")
   :custom
-  (lsp-clients-typescript-server-args '("--stdio" "--tsserver-log-file" "/dev/stderr"))
+  (lsp-clients-typescript-server-args '("--stdio"))
   :bind (
          :map lsp-mode-map
          ("C-h ." . lsp-describe-thing-at-point)
@@ -880,6 +881,12 @@
 
   (add-hook 'docker-container-mode 'docker/set-format))
 
+(use-package docker-tramp)
+
+(use-package csv-mode
+  :config
+  (add-hook 'csv-mode-hook 'csv-guess-set-separator))
+
 (use-package aweshell
   :straight (aweshell :type git :host github :repo "manateelazycat/aweshell"))
 
@@ -892,7 +899,7 @@
     (interactive)
     (term-send-raw-string "\t"))
 
-  (setq multi-term-program "fish")
+  (setq multi-term-program "bash")
 
   (add-to-list 'term-bind-key-alist '("<backtab>" . term-send-up))
   (add-to-list 'term-bind-key-alist '("TAB" . term-send-tab))
@@ -923,13 +930,17 @@
          ("C-." . dired-hide-dotfiles-mode)
          ("<C-return>" . dired-open-file)
          ("M-p" . dired-up-directory)
-         ("M-n" . dired-find-file))
+         ("M-n" . dired-find-file)
+         ("s-i" . dired-toggle-read-only)
+         :map wdired-mode-map
+         ("s-I" . wdired-abort-changes))
   :hook
   (dired-mode . dired-hide-details-mode)
   :config
   (setq ls-lisp-use-insert-directory-program nil)
   (require 'ls-lisp)
-  (setq ls-lisp-dirs-first t))
+  (setq ls-lisp-dirs-first t)
+  (setq wdired-allow-to-change-permissions t))
 
 (use-package dired-subtree
   :bind (

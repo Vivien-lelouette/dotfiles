@@ -16,14 +16,19 @@ Install gnome flashback before running this script
 * Desktop Environment
 ** Shell command runner
 #+begin_src emacs-lisp
-
   (defun shell/run-in-background (command)
     (let ((command-parts (split-string command "[ ]+")))
       (apply #'call-process `(,(car command-parts) nil 0 nil ,@(cdr command-parts)))))
       
   (defun shell/async-command-no-output (command)
     (call-process-shell-command (concat command " &") nil 0))
+#+end_src
 
+** Start applications
+#+begin_src emacs-lisp
+  (defun apps/chrome-browser ()
+    (interactive)
+    (shell/async-command-no-output "google-chrome-stable"))
 #+end_src
 
 ** Monitor management
@@ -123,6 +128,7 @@ We use the [[https://github.com/DamienCassou/desktop-environment][desktop-enviro
       (run-with-timer 0.2 nil (lambda () (exwm-input--fake-key 'C-return))))
     (setq exwm-edit-split  "below"))
 #+end_src
+
 * Window Management
 ** Buffer management
   The next functions are tools to easily switch buffer only switch to next relevant buffer.
@@ -203,6 +209,15 @@ Functions to split and move to the new split.
 
 ** Window rules by class
 #+begin_src emacs-lisp
+  (defun window/force-tiled-fullscreen ()
+    "Toggle fullscreen mode."
+    (interactive)
+    (execute-kbd-macro (kbd "<f11>"))
+    (run-with-timer 0.1 nil (lambda () (with-current-buffer (window-buffer)
+                                          (exwm-layout-unset-fullscreen exwm--id))))
+    (pcase exwm-class-name
+      ("Google-chrome" (execute-kbd-macro (kbd "C-l")))))
+
   (defun window/force-tile ()
     (interactive)
     (with-current-buffer (window-buffer)
@@ -217,7 +232,8 @@ Functions to split and move to the new split.
   (defun window/configure-window-by-class ()
     (interactive)
     (pcase exwm-class-name
-      ((rx (sequence "Ardour" (zero-or-more (any "ascii")))) (window/force-tile-to-other-window))))
+      ((rx (sequence "Ardour" (zero-or-more (any "ascii")))) (window/force-tile-to-other-window))
+      ("Google-chrome" (window/force-tiled-fullscreen))))
 
   (add-hook 'exwm-manage-finish-hook #'window/configure-window-by-class)
 #+END_SRC
@@ -361,6 +377,7 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
 
             ([?\s-m] . exwm-layout-toggle-fullscreen)
             ([?\s-M] . exwm-floating-toggle-floating)
+            ([?\s-n] . window/force-tiled-fullscreen)
 
             ([?\s-l ?\s-l] . xfce/lock-screen)
             ([?\s-l ?\M-l] . xfce/logout)
@@ -384,12 +401,15 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
 
             ([s-return] . eshell)
             ([S-s-return] . multi-term)
-            ([C-s-return] . utils/gnome-terminal)
+            ([C-s-return] . utils/x-terminal)
 
             ([?\s-q] . delete-window)
             ([?\s-Q] . delete-other-windows)
             ([?\s-S] . split-window-below)
             ([?\s-s] . split-window-right)
+
+            ;; Applications
+            ([?\s-c] . apps/chrome-browser)
 
             ;; 's-N': Switch to certain workspace with Super (Win) plus a number key (0 - 9)
             ,@(mapcar (lambda (i)
