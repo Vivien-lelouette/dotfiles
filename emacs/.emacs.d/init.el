@@ -25,6 +25,7 @@
 (setq tab-always-indent 'complete)
 (defalias 'yes-or-no-p 'y-or-n-p)
 (setq xref-prompt-for-identifier nil)
+(setq comint-prompt-read-only t)
 
 (define-key minibuffer-local-completion-map " " nil)
 (define-key minibuffer-local-must-match-map " " nil)
@@ -730,6 +731,7 @@
     (add-to-list 'aggressive-indent-excluded-modes 'authinfo-mode)
     (add-to-list 'aggressive-indent-excluded-modes 'term-mode)
     (add-to-list 'aggressive-indent-excluded-modes 'ansi-term-mode)
+    (add-to-list 'aggressive-indent-excluded-modes 'sql-mode)
     (global-aggressive-indent-mode 1))
 
 (use-package magit
@@ -789,8 +791,9 @@
          ("M-." . lsp-find-definition))
   :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
          (js-mode . lsp)
-         ;; if you want which-key integration
+         (sql-mode . lsp)
          ;;(lsp-mode . (lambda () (add-hook 'before-save-hook #'lsp-format-buffer)))
+         ;; if you want which-key integration
          (lsp-mode . lsp-enable-which-key-integration))
   :commands lsp
   :config
@@ -860,7 +863,8 @@
    'org-babel-load-languages
    '((restclient . t))))
 
-(use-package kubel)
+(if (eq (shell-command "kubectl --help") 0 )
+    (use-package kubel))
 
 (use-package dockerfile-mode)
 
@@ -931,16 +935,17 @@
          ("<C-return>" . dired-open-file)
          ("M-p" . dired-up-directory)
          ("M-n" . dired-find-file)
-         ("s-i" . dired-toggle-read-only)
-         :map wdired-mode-map
-         ("s-I" . wdired-abort-changes))
+         ("s-i" . dired-toggle-read-only))
   :hook
   (dired-mode . dired-hide-details-mode)
   :config
   (setq ls-lisp-use-insert-directory-program nil)
   (require 'ls-lisp)
   (setq ls-lisp-dirs-first t)
-  (setq wdired-allow-to-change-permissions t))
+  (setq wdired-allow-to-change-permissions t)
+  (add-hook 'wdired-mode-hook
+    (lambda ()
+      (define-key wdired-mode-map (kbd "s-I") 'wdired-abort-changes))))
 
 (use-package dired-subtree
   :bind (

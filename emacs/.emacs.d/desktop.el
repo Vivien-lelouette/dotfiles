@@ -73,23 +73,6 @@
                             :fork (:host github
                                         :repo "vivien-lelouette/app-launcher")))
 
-(use-package exwm-edit
-  :bind (
-         :map exwm-edit-mode-map
-         ("C-c <return>" . exwm-edit--finish-and-press-return)
-         ("C-c <C-return>" . exwm-edit--finish-and-press-control-return)
-         )
-  :config
-  (defun exwm-edit--finish-and-press-return ()
-    (interactive)
-    (exwm-edit--finish)
-    (run-with-timer 0.2 nil (lambda () (exwm-input--fake-key 'return))))
-  (defun exwm-edit--finish-and-press-control-return ()
-    (interactive)
-    (exwm-edit--finish)
-    (run-with-timer 0.2 nil (lambda () (exwm-input--fake-key 'C-return))))
-  (setq exwm-edit-split  "below"))
-
 (defcustom my-skippable-buffer-regexp
   (rx bos (or (seq "*" (zero-or-more anything))
               (seq "magit" (zero-or-more anything))
@@ -476,3 +459,22 @@
   (add-hook 'exwm-randr-screen-change-hook 'exwm/refresh-setup)
   (exwm-randr-enable)
   (load-theme 'modus-vivendi t))
+
+(use-package exwm-edit
+  :straight (exwm-edit :type git :host github :repo "agzam/exwm-edit"))
+
+  (setq exwm-edit-split  "below")
+
+  (defun exwm-edit--finish-and-press-return ()
+    (interactive)
+    (exwm-edit--finish)
+    (run-with-timer 0.2 nil (lambda () (exwm-input--fake-key 'return))))
+  (defun exwm-edit--finish-and-press-control-return ()
+    (interactive)
+    (exwm-edit--finish)
+    (run-with-timer 0.2 nil (lambda () (exwm-input--fake-key 'C-return))))
+
+  (add-hook 'exwm-edit-mode-hook
+    (lambda ()
+      (define-key exwm-edit-mode-map (kbd "C-c <return>") 'exwm-edit--finish-and-press-return)
+      (define-key exwm-edit-mode-map (kbd "C-c C-<return>") 'exwm-edit--finish-and-press-control-return)))

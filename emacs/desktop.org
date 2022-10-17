@@ -108,27 +108,6 @@ We use the [[https://github.com/DamienCassou/desktop-environment][desktop-enviro
                                           :repo "vivien-lelouette/app-launcher")))
 #+END_SRC
 
-* Utils
-** EXWM edit
-#+begin_src emacs-lisp
-  (use-package exwm-edit
-    :bind (
-           :map exwm-edit-mode-map
-           ("C-c <return>" . exwm-edit--finish-and-press-return)
-           ("C-c <C-return>" . exwm-edit--finish-and-press-control-return)
-           )
-    :config
-    (defun exwm-edit--finish-and-press-return ()
-      (interactive)
-      (exwm-edit--finish)
-      (run-with-timer 0.2 nil (lambda () (exwm-input--fake-key 'return))))
-    (defun exwm-edit--finish-and-press-control-return ()
-      (interactive)
-      (exwm-edit--finish)
-      (run-with-timer 0.2 nil (lambda () (exwm-input--fake-key 'C-return))))
-    (setq exwm-edit-split  "below"))
-#+end_src
-
 * Window Management
 ** Buffer management
   The next functions are tools to easily switch buffer only switch to next relevant buffer.
@@ -540,6 +519,28 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
     (add-hook 'exwm-randr-screen-change-hook 'exwm/refresh-setup)
     (exwm-randr-enable)
     (load-theme 'modus-vivendi t))
+#+end_src
+
+* EXWM edit
+#+begin_src emacs-lisp
+  (use-package exwm-edit
+    :straight (exwm-edit :type git :host github :repo "agzam/exwm-edit"))
+
+    (setq exwm-edit-split  "below")
+
+    (defun exwm-edit--finish-and-press-return ()
+      (interactive)
+      (exwm-edit--finish)
+      (run-with-timer 0.2 nil (lambda () (exwm-input--fake-key 'return))))
+    (defun exwm-edit--finish-and-press-control-return ()
+      (interactive)
+      (exwm-edit--finish)
+      (run-with-timer 0.2 nil (lambda () (exwm-input--fake-key 'C-return))))
+
+    (add-hook 'exwm-edit-mode-hook
+      (lambda ()
+        (define-key exwm-edit-mode-map (kbd "C-c <return>") 'exwm-edit--finish-and-press-return)
+        (define-key exwm-edit-mode-map (kbd "C-c C-<return>") 'exwm-edit--finish-and-press-control-return)))
 #+end_src
 
 * Helpers

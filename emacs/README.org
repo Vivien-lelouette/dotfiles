@@ -59,6 +59,7 @@ Increase the amount of data which Emacs reads from a process
   (setq tab-always-indent 'complete)
   (defalias 'yes-or-no-p 'y-or-n-p)
   (setq xref-prompt-for-identifier nil)
+  (setq comint-prompt-read-only t)
 #+END_SRC
 
 ** Better minibuffer completion keybind
@@ -930,6 +931,7 @@ It is nice but sometimes too aggressive !
       (add-to-list 'aggressive-indent-excluded-modes 'authinfo-mode)
       (add-to-list 'aggressive-indent-excluded-modes 'term-mode)
       (add-to-list 'aggressive-indent-excluded-modes 'ansi-term-mode)
+      (add-to-list 'aggressive-indent-excluded-modes 'sql-mode)
       (global-aggressive-indent-mode 1))
 #+end_src
 
@@ -1003,8 +1005,9 @@ It is nice but sometimes too aggressive !
            ("M-." . lsp-find-definition))
     :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
            (js-mode . lsp)
-           ;; if you want which-key integration
+           (sql-mode . lsp)
            ;;(lsp-mode . (lambda () (add-hook 'before-save-hook #'lsp-format-buffer)))
+           ;; if you want which-key integration
            (lsp-mode . lsp-enable-which-key-integration))
     :commands lsp
     :config
@@ -1090,7 +1093,8 @@ This requires a Java runtime environment.
 
 ** Kubel
 #+BEGIN_SRC emacs-lisp
-  (use-package kubel)
+  (if (eq (shell-command "kubectl --help") 0 )
+      (use-package kubel))
 #+END_SRC
 
 ** Docker
@@ -1124,7 +1128,6 @@ This requires a Java runtime environment.
     (add-hook 'csv-mode-hook 'csv-guess-set-separator))
 #+END_SRC
 
-
 * Shells & terminals
 ** Better eshell
 #+begin_src emacs-lisp
@@ -1134,20 +1137,20 @@ This requires a Java runtime environment.
 
 ** Better term
 #+begin_src emacs-lisp
-    (use-package multi-term
-      :bind (
-             :map term-mode-map
-             ("s-I" . term-char-mode))
-      :config
-      (defun term-send-tab ()
-        (interactive)
-        (term-send-raw-string "\t"))
+  (use-package multi-term
+    :bind (
+           :map term-mode-map
+           ("s-I" . term-char-mode))
+    :config
+    (defun term-send-tab ()
+      (interactive)
+      (term-send-raw-string "\t"))
 
-      (setq multi-term-program "bash")
+    (setq multi-term-program "bash")
 
-      (add-to-list 'term-bind-key-alist '("<backtab>" . term-send-up))
-      (add-to-list 'term-bind-key-alist '("TAB" . term-send-tab))
-      (add-to-list 'term-bind-key-alist '("s-i" . term-line-mode)))
+    (add-to-list 'term-bind-key-alist '("<backtab>" . term-send-up))
+    (add-to-list 'term-bind-key-alist '("TAB" . term-send-tab))
+    (add-to-list 'term-bind-key-alist '("s-i" . term-line-mode)))
 #+end_src
 
 * Dired
@@ -1184,16 +1187,17 @@ This requires a Java runtime environment.
            ("<C-return>" . dired-open-file)
            ("M-p" . dired-up-directory)
            ("M-n" . dired-find-file)
-           ("s-i" . dired-toggle-read-only)
-           :map wdired-mode-map
-           ("s-I" . wdired-abort-changes))
+           ("s-i" . dired-toggle-read-only))
     :hook
     (dired-mode . dired-hide-details-mode)
     :config
     (setq ls-lisp-use-insert-directory-program nil)
     (require 'ls-lisp)
     (setq ls-lisp-dirs-first t)
-    (setq wdired-allow-to-change-permissions t))
+    (setq wdired-allow-to-change-permissions t)
+    (add-hook 'wdired-mode-hook
+      (lambda ()
+        (define-key wdired-mode-map (kbd "s-I") 'wdired-abort-changes))))
 
   (use-package dired-subtree
     :bind (
