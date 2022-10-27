@@ -1122,7 +1122,8 @@
   (setq eshell-where-to-jump 'begin)
   (setq eshell-review-quick-commands nil)
   (setq eshell-smart-space-goes-to-end t)
-  (add-hook 'eshell-mode-hook (lambda () (setenv "TERM" "xterm-256color"))))
+  (add-hook 'eshell-mode-hook (lambda () (setenv "TERM" "xterm-256color")))
+  (eshell/alias "ll" "ls --group-directories-first --color -l $*"))
 
 (defun eshell/emacs (file)
   (find-file file))
