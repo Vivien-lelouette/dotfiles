@@ -11,6 +11,7 @@ EXWM.desktop
 /emacs/.emacs.d/transient/
 /emacs/.emacs.d/url/
 /emacs/.emacs.d/eshell/
+/emacs/.emacs.d/etc/eshell/aliases
 /emacs/.emacs.d/tramp
 /emacs/.emacs.d/straight/
 emacs/.emacs.d/amx-items
