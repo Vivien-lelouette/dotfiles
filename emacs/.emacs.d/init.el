@@ -109,8 +109,6 @@
 
 (use-package god-mode
   :config
-  (setq god-exempt-major-modes nil)
-  (setq god-exempt-predicates nil)
   (setq god-mode-alist '((nil . "C-") ("z" . "M-") ("Z" . "C-M-")))
 
 (define-key god-local-mode-map (kbd ".") #'repeat)
