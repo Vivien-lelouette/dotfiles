@@ -104,3 +104,7 @@ emacs/.emacs.d/amx-items
 /kde/.config/trashrc
 /kde/.config/xdg-desktop-portal-kderc
 /kde/.config/simple-scan/
+/kde/.config/sqls/
+/kde/.config/kcmfonts
+/kde/.config/gtk-4.0/gtk.css
+/kde/.config/gtk-4.0/colors.css

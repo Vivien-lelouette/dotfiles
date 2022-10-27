@@ -324,6 +324,10 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
     ;; Ctrl+Q will enable the next key to be sent directly
     (define-key exwm-mode-map [?\s-,] 'exwm-input-send-next-key)
 
+    ;; god-mode integration
+    ;; (add-hook 'god-mode-enabled-hook (lambda () (setq exwm-input-line-mode-passthrough t)))
+    ;; (add-hook 'god-mode-disabled-hook (lambda () (setq exwm-input-line-mode-passthrough nil))
+
     ;; Set up global key bindings.  These always work, no matter the input state!
     ;; Keep in mind that changing this list after EXWM initializes has no effect.
     (setq exwm-input-global-keys

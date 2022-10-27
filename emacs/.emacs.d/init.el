@@ -21,6 +21,7 @@
 (setq large-file-warning-threshold 100000000)
 
 (setq read-process-output-max (* 5 (* 1024 1024)))
+(setq process-adaptive-read-buffering nil)
 
 (setq tab-always-indent 'complete)
 (defalias 'yes-or-no-p 'y-or-n-p)
@@ -106,6 +107,24 @@
 
 (require 'iso-transl)
 
+(use-package god-mode
+  :config
+  (setq god-exempt-major-modes nil)
+  (setq god-exempt-predicates nil)
+  (setq god-mode-alist '((nil . "C-") ("z" . "M-") ("Z" . "C-M-")))
+
+(define-key god-local-mode-map (kbd ".") #'repeat)
+  (global-set-key (kbd "<escape>") #'god-mode-all)
+  (define-key god-local-mode-map (kbd "[") #'backward-paragraph)
+  (define-key god-local-mode-map (kbd "]") #'forward-paragraph)
+  (require 'god-mode-isearch)
+  (define-key isearch-mode-map (kbd "<escape>") #'god-mode-isearch-activate)
+  (define-key god-mode-isearch-map (kbd "<escape>") #'god-mode-isearch-disable)
+
+  (defun my-god-mode-update-cursor-type ()
+    (setq cursor-type (if (or god-local-mode buffer-read-only) 'box 'bar)))
+  (add-hook 'post-command-hook #'my-god-mode-update-cursor-type))
+
 (use-package ace-window
   :config
   (global-set-key (kbd "M-o") 'ace-window)
@@ -133,7 +152,7 @@
 (use-package avy
   :config
   (require 'bind-key)
-  (bind-key "M-j" #'avy-goto-char-timer))
+  (bind-key "M-j" #'avy-goto-char))
 
 (use-package multiple-cursors
     :config
@@ -141,7 +160,8 @@
     (global-set-key (kbd "C->") 'mc/mark-next-like-this)
     (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
     (global-set-key (kbd "C-;") 'mc/mark-all-like-this)
-    (global-set-key (kbd "C-S-<mouse-1>") 'mc/add-cursor-on-click))
+    (global-set-key (kbd "C-S-<mouse-1>") 'mc/add-cursor-on-click)
+    (setq mc/black-list-prefer t))
 
 (use-package expand-region
   :config
@@ -292,7 +312,7 @@
 (defun custom/doom-modeline-start ()
   (interactive)
   (doom-modeline-mode 0)
-  (setq doom-modeline-height 20
+  (setq doom-modeline-height 24
         doom-modeline-major-mode-icon nil
         doom-modeline-major-mode-color-icon nil
         doom-modeline-gnus t
@@ -300,8 +320,8 @@
 
   (set-face-attribute 'doom-modeline-bar nil :background (face-background 'mode-line))
   (set-face-attribute 'doom-modeline-bar-inactive nil :background (face-background 'mode-line-inactive))
-  (set-face-attribute 'mode-line nil :height 100)
-  (set-face-attribute 'mode-line-inactive nil :height 100)
+  (set-face-attribute 'mode-line nil :height 90)
+  (set-face-attribute 'mode-line-inactive nil :height 90)
   (column-number-mode 1)
   (doom-modeline-mode 1))
 
@@ -395,7 +415,7 @@
 (defun custom/coding-faces ()
   (interactive)
   (set-face-attribute 'font-lock-keyword-face nil :weight 'ultra-bold)
-  (set-face-attribute 'font-lock-comment-face nil :slant 'italic :weight 'semi-light)
+  (set-face-attribute 'font-lock-comment-face nil :slant 'italic :weight 'normal)
   (set-face-attribute 'font-lock-function-name-face nil :slant 'italic :weight 'semi-bold)
   (set-face-attribute 'font-lock-string-face nil :weight 'normal :slant 'italic))
 
@@ -465,7 +485,31 @@
 
 (use-package zoom
   :custom
-  (zoom-size '(0.618 . 0.618)))
+  (zoom-size '(0.55 . 0.55)))
+
+(use-package dogears
+  :straight (dogears :fetcher github :repo "alphapapa/dogears.el"
+                   :files (:defaults (:exclude "helm-dogears.el")))
+
+  ;; These bindings are optional, of course:
+  :bind (:map global-map
+              ("M-g d" . dogears-go)
+              ("M-g M-b" . dogears-back)
+              ("M-g M-f" . dogears-forward)
+              ("M-g M-d" . dogears-list)
+              ("M-g M-D" . dogears-sidebar))
+  :config
+  (dogears-mode))
+
+(defun window/4k-layout ()
+  (interactive)
+  (delete-other-windows)
+  (split-window-right)
+  (split-window-right)
+  (other-window 1)
+  (split-window)
+  (split-window)
+  (zoom))
 
 (use-package vertico
     :straight (vertico :type git :host github :repo "minad/vertico")
@@ -478,17 +522,20 @@
     (vertico-buffer-mode))
 
 (use-package corfu
+  :straight (corfu :type git :host github :repo "minad/corfu" :files ("*" "extensions/*.el" (:exclude ".git")))
   ;; Optional customizations
   :custom
   (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
-  ;; (corfu-auto t)                 ;; Enable auto completion
+  (corfu-auto t)                 ;; Enable auto completion
+  (corfu-auto-prefix 2)
+  (corfu-auto-delay 0.0)
+  (corfu-echo-documentation 0.25) ;; Disable documentation in the echo area
+  (corfu-quit-at-boundary 'separator)   ;; Never quit at completion boundary
+  (corfu-preselect-first nil)    ;; Disable candidate preselection
+  (corfu-preview-current 'insert)    ;; Disable current candidate preview
   ;; (corfu-separator ?\s)          ;; Orderless field separator
-  ;; (corfu-quit-at-boundary nil)   ;; Never quit at completion boundary
   ;; (corfu-quit-no-match nil)      ;; Never quit, even if there is no match
-  ;; (corfu-preview-current nil)    ;; Disable current candidate preview
-  ;; (corfu-preselect-first nil)    ;; Disable candidate preselection
   ;; (corfu-on-exact-match nil)     ;; Configure handling of exact matches
-  ;; (corfu-echo-documentation nil) ;; Disable documentation in the echo area
   ;; (corfu-scroll-margin 5)        ;; Use scroll margin
 
   ;; You may want to enable Corfu only for certain modes.
@@ -498,8 +545,25 @@
 
   ;; Recommended: Enable Corfu globally.
   ;; This is recommended since dabbrev can be used globally (M-/).
+  :bind (:map corfu-map
+              ("M-SPC" . corfu-insert-separator))
   :init
-  (global-corfu-mode))
+  (global-corfu-mode)
+  (corfu-history-mode)
+  (add-hook 'eshell-mode-hook
+        (lambda ()
+          (setq-local corfu-auto nil)
+          (corfu-mode)))
+
+  (defun corfu-send-shell (&rest _)
+    "Send completion candidate when inside comint/eshell."
+    (cond
+     ((and (derived-mode-p 'eshell-mode) (fboundp 'eshell-send-input))
+      (eshell-send-input))
+     ((and (derived-mode-p 'comint-mode)  (fboundp 'comint-send-input))
+      (comint-send-input))))
+
+  (advice-add #'corfu-insert :after #'corfu-send-shell))
 
 (use-package embark
   :bind (
@@ -676,7 +740,12 @@
   ;;(add-to-list 'comnpletion-at-point-functions #'cape-dict)
   ;;(add-to-list 'completion-at-point-functions #'cape-symbol)
   ;;(add-to-list 'completion-at-point-functions #'cape-line)
-)
+  ;; Silence the pcomplete capf, no errors or messages!
+  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
+
+  ;; Ensure that pcomplete does not write to the buffer
+  ;; and behaves as a pure `completion-at-point-function'.
+  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify))
 
 (use-package savehist
   :init
@@ -696,10 +765,12 @@
 (use-package nix-mode
   :mode "\\.nix\\'")
 
-(use-package flycheck
-  :init (global-flycheck-mode))
+(use-package flymake-eslint)
 
-(use-package consult-flycheck)
+;; (use-package flycheck
+;;   :init (global-flycheck-mode))
+
+;; (use-package consult-flycheck)
 
 (use-package rainbow-mode)
 
@@ -742,7 +813,7 @@
     (interactive)
     (let ((magit-display-buffer-function 'magit-display-buffer-same-window-except-diff-v1))
       (magit-status)))
-  (global-set-key (kbd "C-x G") 'magit/magit-status-no-split))
+  (global-set-key (kbd "C-x C-g") 'magit/magit-status-no-split))
 
 (use-package forge)
 
@@ -761,92 +832,242 @@
 
 (use-package consult-yasnippet)
 
-(use-package nodejs-repl
-  :config
-  (add-hook 'js-mode-hook
-    (lambda ()
-      (define-key js-mode-map (kbd "C-x C-e") 'nodejs-repl-send-last-expression)
-      (define-key js-mode-map (kbd "C-c C-j") 'nodejs-repl-send-line)
-      (define-key js-mode-map (kbd "C-c C-r") 'nodejs-repl-send-region)
-      (define-key js-mode-map (kbd "C-c C-c") 'nodejs-repl-send-buffer)
-      (define-key js-mode-map (kbd "C-c C-l") 'nodejs-repl-load-file)
-      (define-key js-mode-map (kbd "C-c C-z") 'nodejs-repl-switch-to-repl))))
+(use-package nodejs-repl)
 
 (use-package typescript-mode
-  :mode "\\.ts\\'"
+  :mode "\\.ts\\'")
+  ;; :config
+  ;; (add-hook 'typescript-mode-hook #'lsp))
+
+(use-package jest-test-mode 
+  :commands jest-test-mode
+  :hook (typescript-mode js-mode typescript-tsx-mode))
+
+(use-package apheleia
+  :straight (apheleia :host github :repo "raxod502/apheleia")
   :config
-  (add-hook 'typescript-mode-hook #'lsp))
+  (setf (alist-get 'prettier apheleia-formatters)
+        '(npx "eslint" "--fix" file))
+  (add-to-list 'apheleia-mode-alist '(js-mode . prettier))
+  (apheleia-global-mode t))
 
-(use-package lsp-mode
-  :straight (lsp-mode :type git :host github :repo "emacs-lsp/lsp-mode")
-  :init
-  ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
-  (setq lsp-keymap-prefix "C-c l")
-  :custom
-  (lsp-clients-typescript-server-args '("--stdio"))
-  :bind (
-         :map lsp-mode-map
-         ("C-h ." . lsp-describe-thing-at-point)
-         ("C-." . lsp-execute-code-action)
-         ("M-." . lsp-find-definition))
-  :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
-         (js-mode . lsp)
-         (sql-mode . lsp)
-         ;;(lsp-mode . (lambda () (add-hook 'before-save-hook #'lsp-format-buffer)))
-         ;; if you want which-key integration
-         (lsp-mode . lsp-enable-which-key-integration))
-  :commands lsp
+(use-package tree-sitter
+  :ensure t
   :config
-  (with-eval-after-load 'js
-    (define-key js-mode-map (kbd "M-.") nil)
-    )
-  (setq
-   lsp-log-io nil
-   lsp-completion-provide :none
-   lsp-eldoc-render-all nil
-   lsp-eslint-auto-fix-on-save t
-   lsp-auto-guess-root t
-   lsp-log-io nil
-   lsp-restart 'auto-restart
-   lsp-enable-symbol-highlighting t
-   lsp-enable-on-type-formatting nil
-   lsp-signature-auto-activate nil
-   lsp-signature-render-documentation nil
-   lsp-eldoc-hook nil
-   lsp-headerline-breadcrumb-enable nil
-   lsp-semantic-tokens-enable nil
-   lsp-enable-folding nil
-   lsp-enable-snippet nil
-   lsp-idle-delay 0.5)
-  (defun lsp--eslint-before-save (orig-fun)  
-    "Run lsp-eslint-apply-all-fixes and then run the original lsp--before-save."  
-    (when lsp-eslint-auto-fix-on-save (lsp-eslint-fix-all))  
-    (funcall orig-fun))
-  (advice-add 'lsp--before-save :around #'lsp--eslint-before-save))
+  ;; activate tree-sitter on any buffer containing code for which it has a parser available
+  (global-tree-sitter-mode)
+  ;; you can easily see the difference tree-sitter-hl-mode makes for python, ts or tsx
+  ;; by switching on and off
+  (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
 
-(use-package lsp-ui
-  :commands lsp-ui-mode
+(use-package tree-sitter-langs
+  :ensure t
+  :after tree-sitter)
+
+(use-package combobulate
+  :straight (combobulate :type git :host github :repo "mickeynp/combobulate")
+  :hook ((python-mode . combobulate-mode)
+         (js-mode . combobulate-mode)
+         (typescript-mode . combobulate-mode))
+  :load-path "~/.emacs.d/straight/repos/combobulate/combobulate.el"
   :config
-  (setq lsp-ui-doc-enable nil
-        lsp-ui-doc-header t
-        lsp-ui-doc-include-signature t
-        lsp-ui-doc-border (face-foreground 'default)
-        lsp-ui-sideline-show-code-actions t
-        lsp-ui-sideline-delay 0.05))
+  (setq combobulate-flash-node nil))
 
-(defun disable-lsp-ltex ()
-  (interactive))
-  ;;(lsp-workspace-shutdown 'lsp--cur-workspace))
+(use-package eglot
+  :defer t
+  :bind (:map eglot-mode-map
+              ("C-." . eglot-code-actions))
+  :config
+  (defun js/hook ()
+    (interactive)
+    (eglot-ensure)
+    (define-key js-mode-map (kbd "M-.") 'xref-find-definitions)
+    (define-key js-mode-map (kbd "M-?") 'xref-find-references)
+    (define-key js-mode-map (kbd "C-x C-e") 'nodejs-repl-send-last-expression)
+    (define-key js-mode-map (kbd "C-c C-j") 'nodejs-repl-send-line)
+    (define-key js-mode-map (kbd "C-c C-r") 'nodejs-repl-send-region)
+    (define-key js-mode-map (kbd "C-c C-c") 'nodejs-repl-send-buffer)
+    (define-key js-mode-map (kbd "C-c C-l") 'nodejs-repl-load-file)
+    (define-key js-mode-map (kbd "C-c C-z") 'nodejs-repl-switch-to-repl))
 
-(use-package lsp-ltex
-  :hook
-  (text-mode . (lambda ()
-                 (require 'lsp-ltex)
-                 (lsp)))
-  (yaml-mode . disable-lsp-ltex))
+  (defun sql/hook ()
+    (interactive)
+    (eglot-ensure)
+    (define-key sql-mode-map (kbd "C-x C-e") 'eglot/sqls-select-and-execute-command))
 
-(use-package dap-mode
-  :straight (dap-mode :type git :host github :repo "emacs-lsp/dap-mode"))
+  (defun eglot/after-connect ()
+    (interactive)
+    (if (or (derived-mode-p 'js-mode) (derived-mode-p 'typescript-mode))
+                                   (flymake-eslint-enable)))
+
+  (add-hook 'eglot-managed-mode-hook 'eglot/after-connect)
+  (add-hook 'typescript-mode-hook 'js/hook)
+  (add-hook 'js-mode-hook 'js/hook)
+  (add-hook 'sql-mode-hook 'sql/hook)
+  (setq eldoc-echo-area-use-multiline-p nil)
+
+  (delete '((js-mode typescript-mode)
+            "typescript-language-server" "--stdio") eglot-server-programs)
+  (add-to-list 'eglot-server-programs
+               '((js-mode typescript-mode)
+                 "typescript-language-server" "--stdio" "--tsserver-path" "/nix/store/0jshaillr4zq0ml575jjnj1xabmlf3m9-typescript-4.8.4/lib/node_modules/typescript"))
+
+  (defclass eglot-sqls (eglot-lsp-server) () :documentation "SQL's Language Server")
+  (add-to-list 'eglot-server-programs '(sql-mode . (eglot-sqls "sqls")))
+
+  (defun eglot/sqls-select-and-execute-command ()
+    (interactive)
+    (mark-paragraph)
+    (eglot/sqls-execute-command))
+
+  (defun eglot/sqls-execute-command ()
+    (interactive)
+    (let* ((server (eglot-current-server))
+           (command "executeQuery")
+           (arguments (concat "file://" (buffer-file-name)))
+           (beg (eglot--pos-to-lsp-position (if (use-region-p) (region-beginning) (point-min))))
+           (end (eglot--pos-to-lsp-position (if (use-region-p) (region-end) (point-max))))
+           (res (jsonrpc-request server :workspace/executeCommand
+                                 `(:command ,(format "%s" command) :arguments [,arguments]
+                                            :timeout 0.5 :range (:start ,beg :end ,end))))
+           (buffer (get-buffer-create "*sqls*")))
+      (with-current-buffer buffer
+        (read-only-mode 0)
+        (erase-buffer)
+        (eglot--apply-text-edits `[
+                                   (:range
+                                    (:start
+                                     (:line 0 :character 0)
+                                     :end
+                                     (:line 0 :character 0))
+                                    :newText ,res)
+                                   ]
+                                 )
+        (beginning-of-buffer)
+        (replace-regexp "+$" "|")
+        (beginning-of-buffer)
+        (replace-regexp "^+" "|")
+        (read-only-mode 1)
+        (beginning-of-buffer)
+        (org-mode)
+        (org-toggle-pretty-entities)
+        (mixed-pitch-mode -1)
+        (toggle-truncate-lines 1))
+      (display-buffer-below-selected buffer '())
+      ))
+
+  (cl-defmethod eglot-execute-command
+    ((server eglot-sqls) (command (eql executeQuery)) arguments)
+    "For executeQuery."
+    (eglot/sqls-execute-command))
+
+  (cl-defmethod eglot-execute-command
+    ((server eglot-sqls) (_cmd (eql switchDatabase)) arguments)
+    "For switchDatabase."
+    (let* ((res (jsonrpc-request server :workspace/executeCommand
+                                 `(:command "showDatabases" :arguments ,arguments :timeout 0.5)))
+           (menu-items (split-string res "\n"))
+           (menu `("Eglot code actions:" ("dummy" ,@menu-items)))
+           (db (if (listp last-nonmenu-event)
+                   (x-popup-menu last-nonmenu-event menu)
+                 (completing-read "[eglot] Pick an database: "
+                                  menu-items nil t
+                                  nil nil (car menu-items))
+                 ))
+           )
+      (jsonrpc-request server :workspace/executeCommand
+                       `(:command "switchDatabase" :arguments [,db] :timeout 0.5))
+      ))
+
+  (cl-defmethod eglot-execute-command
+    ((server eglot-sqls) (_cmd (eql switchConnections)) arguments)
+    "For switchConnection."
+    (let* ((res (jsonrpc-request server :workspace/executeCommand
+                                 `(:command "showConnections" :arguments ,arguments :timeout 0.5)))
+           (menu-items (split-string res "\n"))
+           (menu `("Eglot code actions:" ("dummy" ,@menu-items)))
+           (conn (if (listp last-nonmenu-event)
+                     (x-popup-menu last-nonmenu-event menu)
+                   (completing-read "[eglot] Pick a connection: "
+                                    menu-items nil t
+                                    nil nil (car menu-items))
+                   ))
+           )
+      (jsonrpc-request server :workspace/executeCommand
+                       `(:command "switchConnections" :arguments [,(nth 0 (split-string conn))] :timeout 0.5))
+      )))
+
+;;(use-package lsp-mode
+;;  :straight (lsp-mode :type git :host github :repo "emacs-lsp/lsp-mode")
+;;  :init
+;;  ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
+;;  (setq lsp-keymap-prefix "C-c l")
+;;  :custom
+;;  (lsp-clients-typescript-server-args '("--stdio"))
+;;  :bind (
+;;         :map lsp-mode-map
+;;         ("C-h ." . lsp-describe-thing-at-point)
+;;         ("C-." . lsp-execute-code-action)
+;;         ("M-." . lsp-find-definition))
+;;  :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
+;;         (js-mode . lsp)
+;;         (sql-mode . lsp)
+;;         (lsp-mode . (lambda () (add-hook 'before-save-hook #'lsp-format-buffer)))
+;;         ;; if you want which-key integration
+;;         (lsp-mode . lsp-enable-which-key-integration)
+;;         )
+;;  :commands lsp
+;;  :config
+;;  (with-eval-after-load 'js
+;;    (define-key js-mode-map (kbd "M-.") nil)
+;;  )
+;;  (setq
+;;   lsp-log-io nil
+;;   lsp-completion-provide :none
+;;   lsp-eldoc-render-all nil
+;;   lsp-eslint-auto-fix-on-save t
+;;   lsp-auto-guess-root t
+;;   lsp-log-io nil
+;;   lsp-restart 'auto-restart
+;;   lsp-enable-symbol-highlighting t
+;;   lsp-enable-on-type-formatting nil
+;;   lsp-signature-auto-activate nil
+;;   lsp-signature-render-documentation nil
+;;   lsp-eldoc-hook nil
+;;   lsp-headerline-breadcrumb-enable nil
+;;   lsp-semantic-tokens-enable nil
+;;   lsp-enable-folding nil
+;;   lsp-enable-snippet nil
+;;   lsp-idle-delay 0.5)
+;;  (defun lsp--eslint-before-save (orig-fun)  
+;;    "Run lsp-eslint-apply-all-fixes and then run the original lsp--before-save."  
+;;    (when lsp-eslint-auto-fix-on-save (lsp-eslint-fix-all))  
+;;    (funcall orig-fun))
+;;  (advice-add 'lsp--before-save :around #'lsp--eslint-before-save))
+
+;; (use-package lsp-ui
+;;   :commands lsp-ui-mode
+;;   :config
+;;   (setq lsp-ui-doc-enable nil
+;;         lsp-ui-doc-header t
+;;         lsp-ui-doc-include-signature t
+;;         lsp-ui-doc-border (face-foreground 'default)
+;;         lsp-ui-sideline-show-code-actions t
+;;         lsp-ui-sideline-delay 0.05))
+
+;; (defun disable-lsp-ltex ()
+;;   (interactive))
+;;   ;;(lsp-workspace-shutdown 'lsp--cur-workspace))
+
+;; (use-package lsp-ltex
+;;   :hook
+;;   (text-mode . (lambda ()
+;;                  (require 'lsp-ltex)
+;;                  (lsp)))
+;;   (yaml-mode . disable-lsp-ltex))
+
+;; (use-package dap-mode
+;;   :straight (dap-mode :type git :host github :repo "emacs-lsp/dap-mode"))
 
 (use-package adoc-mode
   :config
@@ -889,10 +1110,22 @@
 
 (use-package csv-mode
   :config
-  (add-hook 'csv-mode-hook 'csv-guess-set-separator))
+  (add-hook 'csv-mode-hook 'csv-guess-set-separator)
+  (setq csv-separators '("," ";" ":")))
 
 (use-package aweshell
-  :straight (aweshell :type git :host github :repo "manateelazycat/aweshell"))
+  :straight (aweshell :type git :host github :repo "manateelazycat/aweshell")
+  :config
+  (define-key eshell-mode-map (kbd "M-m") 'eshell-bol)
+  (require 'eshell)
+  (require 'em-smart)
+  (setq eshell-where-to-jump 'begin)
+  (setq eshell-review-quick-commands nil)
+  (setq eshell-smart-space-goes-to-end t)
+  (add-hook 'eshell-mode-hook (lambda () (setenv "TERM" "xterm-256color"))))
+
+(defun eshell/emacs (file)
+  (find-file file))
 
 (use-package multi-term
   :bind (

@@ -1,7 +1,0 @@
-[Desktop Entry]
-Exec=/home/vivien/.nixos-configuration/scripts/exwm.sh
-Icon=dialog-scripts
-Name=exwm.sh
-Path=
-Type=Application
-X-KDE-AutostartScript=true
