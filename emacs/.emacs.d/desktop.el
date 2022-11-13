@@ -54,8 +54,7 @@
   (interactive)
   (setq exwm-randr-workspace-monitor-plist (build-exwm-monitors))
   ;;(shell/run-in-background "~/.config/polybar/start_polybar.sh")
-  (setup/input)
-  (custom/doom-modeline-start))
+  (setup/input))
 
 (defun exwm/refresh-setup-and-monitors ()
   (interactive)
@@ -136,14 +135,22 @@
   (run-at-time "0.1 seconds" nil (lambda ()
                                    (windmove-down))))
 
+(defun exwm/force-tiled-fullscreen-when-fullscreen ()
+  (interactive)
+  (with-current-buffer (window-buffer)
+    (exwm-layout-unset-fullscreen exwm--id))
+  (remove-hook 'exwm-input-input-mode-change-hook #'exwm/force-tiled-fullscreen-when-fullscreen))
+
 (defun window/force-tiled-fullscreen ()
   "Toggle fullscreen mode."
   (interactive)
   (execute-kbd-macro (kbd "<f11>"))
-  (run-with-timer 0.1 nil (lambda () (with-current-buffer (window-buffer)
-                                        (exwm-layout-unset-fullscreen exwm--id))))
-  (pcase exwm-class-name
-    ("Google-chrome" (execute-kbd-macro (kbd "C-l")))))
+  (add-hook 'exwm-input-input-mode-change-hook #'exwm/force-tiled-fullscreen-when-fullscreen)
+  (run-with-timer 0.1 nil (lambda ()
+                            (pcase exwm-class-name
+                              ("Google-chrome" (execute-kbd-macro (kbd "C-l"))))))
+  (run-with-timer 2 nil (lambda ()
+                            (remove-hook 'exwm-input-input-mode-change-hook #'exwm/force-tiled-fullscreen-when-fullscreen))))
 
 (defun window/force-tile ()
   (interactive)
@@ -164,6 +171,7 @@
 
 (add-hook 'exwm-manage-finish-hook #'window/configure-window-by-class)
 
+(setq helm-ag-show-status-function (lambda ()))
 (defun exwm/exwm-init-hook ()
   (exwm/refresh-setup))
   ;; Launch apps that will run in the background
@@ -235,6 +243,7 @@
 
 (use-package exwm
   :config
+  (setq x-no-window-manager t)
   (winner-mode 1)
   (setup/input)
 
@@ -314,13 +323,13 @@
           ([?\s-o k] . settings/keyboard)
           ([?\s-o m] . settings/mouse)
 
-          ([?\s-a] . app-launcher-run-app)
+          ([?\s-a] . async-shell-command)
 
-          ([?\s-b] . consult-buffer)
+          ([?\s-b] . switch-to-buffer)
           ([?\s-B] . ibuffer-jump)
 
-          ([?\s-f] . consult-bookmark)
-          ([?\s-F] . bookmark-bmenu-list)
+          ([?\s-f] . bookmark-jump)
+          ([?\s-F] . blist)
 
           ([s-return] . eshell)
           ([S-s-return] . multi-term)
@@ -332,7 +341,8 @@
           ([?\s-s] . split-window-right)
 
           ;; Applications
-          ([?\s-c] . apps/chrome-browser)
+          ([?\s-c] . chrome/do-start-with-url-or-search)
+          ([?\s-C] . apps/chrome-browser)
 
           ;; 's-N': Switch to certain workspace with Super (Win) plus a number key (0 - 9)
           ,@(mapcar (lambda (i)
@@ -461,8 +471,7 @@
   ;; This is for multiscreen support
   (require 'exwm-randr)
   (add-hook 'exwm-randr-screen-change-hook 'exwm/refresh-setup)
-  (exwm-randr-enable)
-  (load-theme 'modus-vivendi t))
+  (exwm-randr-enable))
 
 (use-package exwm-edit
   :straight (exwm-edit :type git :host github :repo "agzam/exwm-edit"))
@@ -482,3 +491,45 @@
     (lambda ()
       (define-key exwm-edit-mode-map (kbd "C-c <return>") 'exwm-edit--finish-and-press-return)
       (define-key exwm-edit-mode-map (kbd "C-c C-<return>") 'exwm-edit--finish-and-press-control-return)))
+
+(defvar chrome/input-history nil)
+(eval-after-load "savehist"
+  '(add-to-list 'savehist-additional-variables 'chrome/input-history))
+
+(defun chrome/do-start-with-url-or-search ()
+  (interactive)
+  (if (string= exwm-class-name "Google-chrome")
+      (let ((split-title (mapcar (lambda (str) (s-replace " - Google Chrome" "" str)) (split-string exwm-title " - http"))))
+        (message (concat "http" (car (last split-title))))
+        (chrome/start-with-url-or-search (completing-read "URL or search " chrome/input-history nil nil (concat "http" (car (last split-title))) 'chrome/input-history)))
+    (chrome/start-with-url-or-search (completing-read "URL or search " chrome/input-history nil nil nil 'chrome/input-history))))
+
+(defun chrome/start-with-url-or-search (input)
+  (interactive)
+  (let ((trimmed-input (string-trim input)))
+    (if (string-match-p " " trimmed-input)
+        (shell/async-command-no-output (concat "google-chrome-stable --new-window '? " input "'"))
+      (shell/async-command-no-output (concat "google-chrome-stable --new-window '" input "'"))))
+  (run-with-timer 0.5 nil (lambda () (window/force-tiled-fullscreen))))
+
+(defun bookmark/chrome-bookmark-handler (record)
+  "Jump to an chrome bookmarked location."
+  (with-current-buffer (window-buffer)
+    (chrome/start-with-url-or-search (bookmark-prop-get record 'location))))
+
+(defun bookmark/chrome-bookmark-make-record ()
+  "Return a bookmark record for the current chrome buffer."
+  (interactive)
+  (let ((split-title (mapcar (lambda (str) (s-replace " - Google Chrome" "" str)) (split-string exwm-title " - http"))))
+    `(,(concat "chrome/" (car split-title))
+      (location . ,(concat "http" (car (last split-title))))
+      (handler . bookmark/chrome-bookmark-handler))))
+
+(defun bookmark/chrome-set-bookmark-handler ()
+  "This tells Emacs which function to use to create bookmarks."
+  (interactive)
+  (if (string= exwm-class-name "Google-chrome")
+      (set (make-local-variable 'bookmark-make-record-function)
+           #'bookmark/chrome-bookmark-make-record)))
+
+(add-hook 'exwm-manage-finish-hook #'bookmark/chrome-set-bookmark-handler)

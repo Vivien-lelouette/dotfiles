@@ -7,9 +7,9 @@ wheel:Vertical;NoModifier=org.kde.switchdesktop
 RightButton;NoModifier=org.kde.contextmenu
 
 [Containments][1]
-ItemGeometries-1920x1080=
-ItemGeometries-3840x2160=Applet-26:0,480,3840,1664,0;
-ItemGeometriesHorizontal=Applet-26:0,480,3840,1664,0;
+ItemGeometries-1920x1080=Applet-26:0,-600,3840,1648,0;
+ItemGeometries-3840x2160=Applet-26:0,0,3840,1648,0;
+ItemGeometriesHorizontal=Applet-26:0,-600,3840,1648,0;
 activityId=3181a59d-524d-4760-bb1c-c35d0ff02099
 formfactor=0
 immutability=1
@@ -119,6 +119,13 @@ plugin=org.kde.plasma.digitalclock
 [Containments][3][Applets][19][Configuration]
 PreloadWeight=42
 
+[Containments][3][Applets][19][Configuration][Appearance]
+dateDisplayFormat=BesideTime
+
+[Containments][3][Applets][19][Configuration][ConfigDialog]
+DialogHeight=2087
+DialogWidth=868
+
 [Containments][3][Applets][28]
 immutability=1
 plugin=org.kde.plasma.appmenu
@@ -139,7 +146,7 @@ plugin=org.kde.plasma.kickoff
 
 [Containments][3][Applets][4][Configuration]
 PreloadWeight=100
-popupHeight=508
+popupHeight=520
 popupWidth=659
 
 [Containments][3][Applets][4][Configuration][General]
@@ -157,7 +164,7 @@ PreloadWeight=100
 SystrayContainmentId=9
 
 [Containments][3][ConfigDialog]
-DialogHeight=74
+DialogHeight=84
 DialogWidth=3840
 
 [Containments][3][Configuration]
@@ -183,7 +190,7 @@ plugin=org.kde.plasma.appmenu
 PreloadWeight=42
 
 [Containments][30][ConfigDialog]
-DialogHeight=74
+DialogHeight=84
 DialogWidth=1920
 
 [Containments][30][Configuration]
@@ -250,7 +257,7 @@ immutability=1
 plugin=org.kde.plasma.volume
 
 [Containments][9][Applets][16][Configuration]
-PreloadWeight=97
+PreloadWeight=100
 
 [Containments][9][Applets][17]
 immutability=1
@@ -271,7 +278,7 @@ immutability=1
 plugin=org.kde.plasma.battery
 
 [Containments][9][Applets][21][Configuration]
-PreloadWeight=42
+PreloadWeight=52
 
 [Containments][9][Applets][22]
 immutability=1
@@ -285,14 +292,14 @@ immutability=1
 plugin=org.kde.plasma.bluetooth
 
 [Containments][9][Applets][23][Configuration]
-PreloadWeight=34
+PreloadWeight=26
 
 [Containments][9][Applets][32]
 immutability=1
 plugin=org.kde.plasma.mediacontroller
 
 [Containments][9][Applets][32][Configuration]
-PreloadWeight=42
+PreloadWeight=26
 
 [Containments][9][ConfigDialog]
 DialogHeight=2091

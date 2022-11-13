@@ -17,13 +17,21 @@
 (use-package gcmh
   :config
   (gcmh-mode 1))
+(add-hook 'after-init-hook
+          #'(lambda ()
+              (setq gc-cons-threshold (* 100 1000 1000))))
+(add-hook 'focus-out-hook 'garbage-collect)
+(run-with-idle-timer 5 t 'garbage-collect)
 
 (setq large-file-warning-threshold 100000000)
 
 (setq read-process-output-max (* 5 (* 1024 1024)))
 (setq process-adaptive-read-buffering nil)
 
-(setq tab-always-indent 'complete)
+(pixel-scroll-precision-mode 1)
+(setq pixel-scroll-precision-use-momentum t)
+
+(setq tab-always-indent t)
 (defalias 'yes-or-no-p 'y-or-n-p)
 (setq xref-prompt-for-identifier nil)
 (setq comint-prompt-read-only t)
@@ -55,12 +63,12 @@
 
 (setq bookmark-save-flag 1)
 
-(setq display-buffer-base-action
-  '((display-buffer-below-selected
-     display-buffer-reuse-window
-     display-buffer-reuse-mode-window
-     display-buffer-same-window
-     display-buffer-in-previous-window)))
+;; (setq display-buffer-base-action
+  ;; '((display-buffer-below-selected
+     ;; display-buffer-reuse-window
+     ;; display-buffer-reuse-mode-window
+     ;; display-buffer-same-window
+     ;; display-buffer-in-previous-window)))
 
 (setq indent-tabs-mode nil)
 (setq indent-line-function 'insert-tab)
@@ -105,14 +113,22 @@
 
 (setq warning-minimum-level :error)
 
+(repeat-mode 1)
+
 (require 'iso-transl)
 
 (use-package god-mode
   :config
   (setq god-mode-alist '((nil . "C-") ("z" . "M-") ("Z" . "C-M-")))
+  (setq god-exempt-predicates '(god-exempt-mode-p))
+  (add-to-list 'god-exempt-major-modes 'magit-mode)
+  (add-to-list 'god-exempt-major-modes 'magit-status-mode)
+  (add-to-list 'god-exempt-major-modes 'magit-diff-mode)
+  (add-to-list 'god-exempt-major-modes 'bookmark-bmenu-mode)
+  (setq god-exempt-major-modes (remove 'compilation-mode god-exempt-major-modes))
 
-(define-key god-local-mode-map (kbd ".") #'repeat)
-  (global-set-key (kbd "<escape>") #'god-mode-all)
+  (define-key god-local-mode-map (kbd ".") #'repeat)
+  ;; (global-set-key (kbd "<escape>") #'god-mode-all)
   (define-key god-local-mode-map (kbd "[") #'backward-paragraph)
   (define-key god-local-mode-map (kbd "]") #'forward-paragraph)
   (require 'god-mode-isearch)
@@ -145,12 +161,29 @@
           (?b aw-split-window-horz "Split Horz Window")
           (?o delete-other-windows "Delete Other Windows")
           (?? aw-show-dispatch-help)))
+  (defun aw-update ()
+    "Update ace-window-path window parameter for all windows.
+
+Ensure all windows are labeled so the user can select a specific
+one, even from the set of windows typically ignored when making a
+window list."
+    (let ((aw-ignore-on)
+          (aw-ignore-current)
+          (ignore-window-parameters t))
+      (avy-traverse
+       (avy-tree (aw-window-list) aw-keys)
+       (lambda (path leaf)
+         (set-window-parameter
+          leaf 'ace-window-path
+          (propertize
+           (concat " " (apply #'string (reverse path)))
+           'face 'aw-mode-line-face))))))
   (ace-window-display-mode 1))
 
 (use-package avy
   :config
   (require 'bind-key)
-  (bind-key "M-j" #'avy-goto-char))
+  (bind-key "M-j" #'avy-goto-char-timer))
 
 (use-package multiple-cursors
     :config
@@ -166,12 +199,11 @@
   (global-set-key (kbd "C-=") 'er/expand-region)
   (global-set-key (kbd "C--") 'er/contract-region))
 
-(use-package undo-fu
+(use-package vundo
   :config
-  (global-unset-key (kbd "C-/"))
+  (setq vundo-glyph-alist vundo-unicode-symbols)
   (global-unset-key (kbd "C-?"))
-  (global-set-key (kbd "C-/")   'undo-fu-only-undo)
-  (global-set-key (kbd "C-?") 'undo-fu-only-redo))
+  (global-set-key (kbd "C-?") 'vundo))
 
 (defvar-local hidden-mode-line-mode nil)
 
@@ -194,6 +226,7 @@
      (concat "Hidden Mode Line Mode enabled.  "
              "Use M-x hidden-mode-line-mode to make the mode-line appear."))))
 
+(global-hl-line-mode 1)
 (scroll-bar-mode -1)
 (tool-bar-mode -1)
 (tooltip-mode -1)
@@ -202,147 +235,32 @@
  window-divider-default-places t
  window-divider-default-right-width 1
  window-divider-default-bottom-width 1)
-(window-divider-mode 1)
+(window-divider-mode -1)
 
 (setq-default fill-column 100)
 
-  (set-face-attribute 'default nil :font "SauceCodePro NF-12")
+(set-face-attribute 'default nil :font "SauceCodePro NF-12")
 
-  ;; Set the fixed pitch face
-  (set-face-attribute 'fixed-pitch nil :font "SauceCodePro NF-12")
+;; Set the fixed pitch face
+(set-face-attribute 'fixed-pitch nil :font "SauceCodePro NF-12")
 
-  ;; Set the variable pitch face
-  (set-face-attribute 'variable-pitch nil :font "Cantarell-12" :weight 'regular)
+;; Set the variable pitch face
+(set-face-attribute 'variable-pitch nil :font "Cantarell-12" :weight 'regular)
 
-  (defun disable-mixed-pitch ()
-    (interactive)
-    (mixed-pitch-mode -1))
-
-  (use-package mixed-pitch
-    :hook
-    (text-mode . mixed-pitch-mode)
-    (yaml-mode . disable-mixed-pitch))
-
-;;  (use-package textsize
-;;    :commands textsize-mode
-;;    :init (textsize-mode)
-;;    :config
-;;    (setq textsize-default-points 11))
-
-(defun generate-colors-file ()
-  "Function to generate my colors file."
+(defun disable-mixed-pitch ()
   (interactive)
-  (delete-file "~/.colors")
-  (append-to-file
-   (concat
-    "background="
-    (face-background 'default)
+  (mixed-pitch-mode -1))
 
-    "\nbackground_alt="
-    (face-background 'mode-line-inactive)
+(use-package mixed-pitch
+  :hook
+  (text-mode . mixed-pitch-mode)
+  (yaml-mode . disable-mixed-pitch))
 
-    "\nforeground="
-    (face-foreground 'default)
-
-    "\nforeground_alt="
-    (face-foreground 'diff-context)
-
-    "\nselected="
-    (face-background 'region)
-
-    "\nhighlight="
-    (face-background 'cursor)
-
-    "\nalert="
-    (face-background 'trailing-whitespace)
-
-    "\n"
-    )
-
-   nil
-
-   "~/.colors"
-   )
-  )
-
-(use-package theme-magic)
-
-(defun custom/load-theme ()
-  "Load a theme, generate my colors file and refresh my window manager."
-  (interactive)
-  (call-interactively 'load-theme)
-  (run-with-timer 0.2 nil (lambda ()
-                            (theme-magic-from-emacs)
-                            (generate-colors-file)
-                            (shell-command "wpg -i .wallpaper ~/.cache/wal/colors.json" nil nil)
-                            (shell-command "wpg -s .wallpaper" nil nil)
-                            (exwm/refresh-setup-and-monitors))))
-
-(use-package doom-themes
-  ;;:custom-face
-  ;; (org-block ((t (:background "#272C36"))))
-  ;; (org-block-begin-line ((t (:background "#272C36"))))
-  ;; (org-block-end-line ((t (:background "#272C36"))))
-  ;; (window-divider ((t (:foreground "#2e3440"))))
-  ;; (window-divider-first-pixel ((t (:foreground "#2e3440"))))
-  ;; (window-divider-last-pixel ((t (:foreground "#2e3440"))))
-  ;; (hl-line ((t (:background "#434C5E"))))
-  ;; :hook (server-after-make-frame . (lambda () (load-theme
-  ;;                                            'doom-nord t)))
+(use-package dracula-theme
   :config
-  (defun doom-themes-hide-modeline ())
-  (doom-themes-org-config))
-
-  ;;(defun darken-buffer ()
-  ;;  (setq buffer-face-mode-face `(:background "#272C36"))
-  ;;  (face-remap-add-relative 'hl-line `(:background "#2e3440"))
-  ;;  (face-remap-add-relative 'fringe `(:background "#272C36"))
-  ;;  (buffer-face-mode 1))
-
-  ;;(add-hook 'help-mode-hook #'darken-buffer)
-  ;;(add-hook 'helpful-mode-hook #'darken-buffer)
-
-(use-package modus-themes
-  :init
-  (setq modus-themes-mode-line '(borderless accented))
-  (modus-themes-load-themes))
-
-(defun custom/doom-modeline-start ()
-  (interactive)
-  (doom-modeline-mode 0)
-  (setq doom-modeline-height 24
-        doom-modeline-major-mode-icon nil
-        doom-modeline-major-mode-color-icon nil
-        doom-modeline-gnus t
-        doom-modeline-gnus-timer 1)
-
-  (set-face-attribute 'doom-modeline-bar nil :background (face-background 'mode-line))
-  (set-face-attribute 'doom-modeline-bar-inactive nil :background (face-background 'mode-line-inactive))
-  (set-face-attribute 'mode-line nil :height 90)
-  (set-face-attribute 'mode-line-inactive nil :height 90)
-  (column-number-mode 1)
-  (doom-modeline-mode 1))
-
-(use-package doom-modeline
-  :hook (server-after-make-frame . custom/doom-modeline-start)
-  :config
-  (defun fw/s-truncate (len s &optional ellipsis)
-    "Like `s-truncate' but
-          - return S when LEN is nil
-          - return empty string when len is shorter than ELLIPSIS"
-    (declare (pure t) (side-effect-free t))
-    (let ((ellipsis (or ellipsis "...")))
-      (cond
-       ((null len) s)
-       ((< len (length ellipsis)) "")
-       (t (s-truncate len s ellipsis)))))
-
-  (defun fw/doom-modeline-segment--buffer-info (orig-fn &rest args)
-    "`doom-modeline-segment--buffer-info' but truncate for EXWM buffers."
-    (fw/s-truncate (max 15 (- (window-width) 50))
-                   (format-mode-line (apply orig-fn args))
-                   "..."))
-  (advice-add #'doom-modeline-segment--buffer-info :around #'fw/doom-modeline-segment--buffer-info))
+  (add-to-list 'custom-theme-load-path "~/.emacs.d/themes")
+  (load-theme 'dracula t)
+  (setq dracula-use-24-bit-colors-on-256-colors-terms t))
 
 (use-package olivetti
   :config
@@ -410,6 +328,7 @@
 (use-package all-the-icons-ibuffer
   :after all-the-icons)
 
+(add-hook 'prog-mode-hook #'subword-mode)
 (defun custom/coding-faces ()
   (interactive)
   (set-face-attribute 'font-lock-keyword-face nil :weight 'ultra-bold)
@@ -454,6 +373,11 @@
 
 (use-package sudo-edit)
 
+(use-package explain-pause-mode
+  :straight (explain-pause-mode :type git :host github :repo "lastquestion/explain-pause-mode")
+  :config
+  (explain-pause-mode))
+
 (use-package which-key
   :init (which-key-mode)
   :diminish which-key-mode
@@ -485,20 +409,6 @@
   :custom
   (zoom-size '(0.55 . 0.55)))
 
-(use-package dogears
-  :straight (dogears :fetcher github :repo "alphapapa/dogears.el"
-                   :files (:defaults (:exclude "helm-dogears.el")))
-
-  ;; These bindings are optional, of course:
-  :bind (:map global-map
-              ("M-g d" . dogears-go)
-              ("M-g M-b" . dogears-back)
-              ("M-g M-f" . dogears-forward)
-              ("M-g M-d" . dogears-list)
-              ("M-g M-D" . dogears-sidebar))
-  :config
-  (dogears-mode))
-
 (defun window/4k-layout ()
   (interactive)
   (delete-other-windows)
@@ -509,241 +419,124 @@
   (split-window)
   (zoom))
 
-(use-package vertico
-    :straight (vertico :type git :host github :repo "minad/vertico")
-    :config
-    (load-file "~/.emacs.d/straight/build/vertico/extensions/vertico-buffer.el")
-    (setq
-     vertico-cycle t
-     vertico-buffer-display-action '(display-buffer-below-selected (window-height . 10)))
-    (vertico-mode)
-    (vertico-buffer-mode))
+(use-package blist
+  :config
+  (setq blist-filter-groups
+        (list
+         (cons "Chrome" #'blist-chrome-p)
+         (cons "Eshell" #'blist-eshell-p)
+         (cons "PDF" #'blist-pdf-p)
+         (cons "Info" #'blist-info-p)
+         (cons "Default" #'blist-default-p)))
 
-(use-package corfu
-  :straight (corfu :type git :host github :repo "minad/corfu" :files ("*" "extensions/*.el" (:exclude ".git")))
-  ;; Optional customizations
-  :custom
-  (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
-  (corfu-auto t)                 ;; Enable auto completion
-  (corfu-auto-prefix 2)
-  (corfu-auto-delay 0.0)
-  (corfu-echo-documentation 0.25) ;; Disable documentation in the echo area
-  (corfu-quit-at-boundary 'separator)   ;; Never quit at completion boundary
-  (corfu-preselect-first nil)    ;; Disable candidate preselection
-  (corfu-preview-current 'insert)    ;; Disable current candidate preview
-  ;; (corfu-separator ?\s)          ;; Orderless field separator
-  ;; (corfu-quit-no-match nil)      ;; Never quit, even if there is no match
-  ;; (corfu-on-exact-match nil)     ;; Configure handling of exact matches
-  ;; (corfu-scroll-margin 5)        ;; Use scroll margin
+  (blist-define-criterion "pdf" "PDF"
+                          (eq (bookmark-get-handler bookmark)
+                              #'pdf-view-bookmark-jump))
 
-  ;; You may want to enable Corfu only for certain modes.
-  ;; :hook ((prog-mode . corfu-mode)
-  ;;        (shell-mode . corfu-mode)
-  ;;        (eshell-mode . corfu-mode))
+  (blist-define-criterion "info" "Info"
+                          (eq (bookmark-get-handler bookmark)
+                              #'Info-bookmark-jump))
 
-  ;; Recommended: Enable Corfu globally.
-  ;; This is recommended since dabbrev can be used globally (M-/).
-  :bind (:map corfu-map
-              ("M-SPC" . corfu-insert-separator))
-  :init
-  (global-corfu-mode)
-  (corfu-history-mode)
-  (add-hook 'eshell-mode-hook
-        (lambda ()
-          (setq-local corfu-auto nil)
-          (corfu-mode)))
+  (blist-define-criterion "elisp" "ELisp"
+                          (string-match-p
+                           "\\.el$"
+                           (bookmark-get-filename bookmark)))
 
-  (defun corfu-send-shell (&rest _)
-    "Send completion candidate when inside comint/eshell."
-    (cond
-     ((and (derived-mode-p 'eshell-mode) (fboundp 'eshell-send-input))
-      (eshell-send-input))
-     ((and (derived-mode-p 'comint-mode)  (fboundp 'comint-send-input))
-      (comint-send-input))))
+  (blist-define-criterion "chrome" "Chrome"
+                          (eq (bookmark-get-handler bookmark)
+                              #'bookmark/chrome-bookmark-handler)))
 
-  (advice-add #'corfu-insert :after #'corfu-send-shell))
+(setq tab-always-indent 'complete)
+(setq completions-format 'one-column)
+(setq completions-header-format nil)
+(setq completion-show-help nil)
+(setq completions-max-height 10)
+(setq completion-auto-select nil)
 
-(use-package embark
-  :bind (
-         :map minibuffer-local-map
-         ("C-c e" . embark-act)))
+(define-key completion-in-region-mode-map (kbd "C-s") 'minibuffer-next-completion)
+(define-key completion-in-region-mode-map (kbd "C-r") 'minibuffer-previous-completion)
+
+(defun my/minibuffer-choose-completion (&optional no-exit no-quit)
+  (interactive)
+  (if (minibufferp)
+      (if (get-buffer-window "*Completions*")
+          (progn (minibuffer-previous-completion)
+                 (let ((minibuffer-completion-auto-choose t))
+                   (minibuffer-next-completion)))
+        (call-interactively 'minibuffer-complete-and-exit))
+    (with-minibuffer-completions-window
+      (let ((completion-use-base-affixes nil))
+        (choose-completion nil no-exit no-quit)))))
+
+(define-key completion-in-region-mode-map (kbd "RET") 'my/minibuffer-choose-completion)
+(add-hook 'completion-list-mode-hook (lambda () (setq truncate-lines t)))
+
+(defun utils/advice-silence-messages (orig-fun &rest args)
+  "Advice function that silences all messages in ORIG-FUN."
+  (let ((inhibit-message t)      ;Don't show the messages in Echo area
+        (message-log-max nil))   ;Don't show the messages in the *Messages* buffer
+    (apply orig-fun args)))
+
+(defun complete/thing-at-point ()
+  (if (minibufferp)
+      (thing-at-point 'line 'no-properties)
+    (with-syntax-table (make-syntax-table (syntax-table)) (modify-syntax-entry ?. "_")  (thing-at-point 'symbol 'no-properties))))
+
+(defun complete/update-in-region ()
+  (let ((current-word (complete/thing-at-point)))
+    (if (and
+         (boundp 'complete/need-completion)
+         complete/need-completion)
+        (while-no-input
+          (redisplay)
+          (unless (memq this-command '(minibuffer-complete-and-exit
+                                       minibuffer-force-complete-and-exit
+                                       completion-at-point
+                                       choose-completion))
+
+            (if (minibufferp)
+                (utils/advice-silence-messages 'minibuffer-completion-help)
+              (if (and current-word
+                       (>= (string-width current-word) 2))
+                  (utils/advice-silence-messages 'completion-help-at-point)
+                (completion-in-region-mode -1)))
+            (setq-local complete/need-completion nil)))))
+  (run-with-timer 0.4 nil #'complete/update-in-region))
+
+(defun complete/buffer-has-changed (&rest _args)
+  (setq-local complete/need-completion t))
+
+(defun complete/start ()
+  (interactive)
+  (define-key minibuffer-mode-map (kbd "C-s") 'minibuffer-next-completion)
+  (define-key minibuffer-mode-map (kbd "C-r") 'minibuffer-previous-completion)
+  (define-key minibuffer-mode-map (kbd "C-f") 'my/minibuffer-choose-completion)
+  (define-key minibuffer-mode-map (kbd "RET") 'my/minibuffer-choose-completion)
+
+  (remove-hook 'after-change-functions #'complete/buffer-has-changed t)
+  (add-hook 'after-change-functions #'complete/buffer-has-changed nil t))
+
+(setq minibuffer-completion-auto-choose nil)
+(run-with-timer 0.4 nil #'complete/update-in-region)
+(add-hook 'minibuffer-setup-hook #'complete/start)
+
+(use-package vcomplete
+  :config
+  (add-hook 'completion-list-mode-hook (lambda () (font-lock-mode -1)))
+  (defun vcomplete--highlight-completion-at-point ())
+  ;; Fix pointer position for consult groups
+  (defun vcomplete--update-minibuffer (&rest _args)
+    "Update the completion list when completing in a minibuffer."
+    (while-no-input
+      (redisplay)
+      (unless (memq this-command vcomplete-no-update-commands)
+        (minibuffer-completion-help)))
+    (vcomplete-next-completion 2)
+    (vcomplete-prev-completion))
+
+  (define-key vcomplete-command-map (kbd "C-<return>") 'vcomplete-choose-completion))
 
 (use-package wgrep)
-
-(use-package consult
-  ;; Replace bindings. Lazily loaded due by `use-package'.
-  :bind (;; C-c bindings (mode-specific-map)
-         ("C-c h" . consult-history)
-         ("C-c m" . consult-mode-command)
-         ("C-c k" . consult-kmacro)
-         ;; C-x bindings (ctl-x-map)
-         ("C-x M-:" . consult-complex-command)     ;; orig. repeat-complex-command
-         ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
-         ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
-         ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
-         ("C-x r b" . consult-bookmark)            ;; orig. bookmark-jump
-         ("C-c b" . consult-bookmark)
-         ("C-x p b" . consult-project-buffer)      ;; orig. project-switch-to-buffer
-         ;; Custom M-# bindings for fast register access
-         ("M-#" . consult-register-load)
-         ("M-'" . consult-register-store)          ;; orig. abbrev-prefix-mark (unrelated)
-         ("C-M-#" . consult-register)
-         ;; Other custom bindings
-         ("M-y" . consult-yank-pop)                ;; orig. yank-pop
-         ("<help> a" . consult-apropos)            ;; orig. apropos-command
-         ;; M-g bindings (goto-map)
-         ("M-g e" . consult-compile-error)
-         ("M-g f" . consult-flycheck)               ;; Alternative: consult-flycheck
-         ("M-g g" . consult-goto-line)             ;; orig. goto-line
-         ("M-g M-g" . consult-goto-line)           ;; orig. goto-line
-         ("M-g o" . consult-outline)               ;; Alternative: consult-org-heading
-         ("M-g m" . consult-mark)
-         ("M-g k" . consult-global-mark)
-         ("M-g i" . consult-imenu)
-         ("M-g I" . consult-imenu-multi)
-         ;; M-s bindings (search-map)
-         ("M-s e" . consult-isearch-history)
-         ("M-s d" . consult-find)
-         ("M-s D" . consult-locate)
-         ("M-s g" . consult-grep)
-         ("M-s G" . consult-git-grep)
-         ("M-s r" . consult-ripgrep)
-         ("M-s l" . consult-line)
-         ("M-s L" . consult-line-multi)
-         ("M-s m" . consult-multi-occur)
-         ("M-s k" . consult-keep-lines)
-         ("M-s u" . consult-focus-lines)
-         ;; Minibuffer history
-         :map minibuffer-local-map
-         ("M-s" . consult-history)                 ;; orig. next-matching-history-element
-         ("M-r" . consult-history))                ;; orig. previous-matching-history-element
-
-  ;; Enable automatic preview at point in the *Completions* buffer. This is
-  ;; relevant when you use the default completion UI.
-  :hook (completion-list-mode . consult-preview-at-point-mode)
-
-  ;; The :init configuration is always executed (Not lazy)
-  :init
-
-  ;; Optionally configure the register formatting. This improves the register
-  ;; preview for `consult-register', `consult-register-load',
-  ;; `consult-register-store' and the Emacs built-ins.
-  (setq register-preview-delay 0.5
-        register-preview-function #'consult-register-format)
-
-  ;; Optionally tweak the register preview window.
-  ;; This adds thin lines, sorting and hides the mode line of the window.
-  (advice-add #'register-preview :override #'consult-register-window)
-
-  ;; Optionally replace `completing-read-multiple' with an enhanced version.
-  (advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
-
-  ;; Use Consult to select xref locations with preview
-  (setq xref-show-xrefs-function #'consult-xref
-        xref-show-definitions-function #'consult-xref)
-
-  ;; Configure other variables and modes in the :config section,
-  ;; after lazily loading the package.
-  :config
-
-  ;; Optionally configure preview. The default value
-  ;; is 'any, such that any key triggers the preview.
-  ;; (setq consult-preview-key 'any)
-  ;; (setq consult-preview-key (kbd "M-."))
-  ;; (setq consult-preview-key (list (kbd "<S-down>") (kbd "<S-up>")))
-  ;; For some commands and buffer sources it is useful to configure the
-  ;; :preview-key on a per-command basis using the `consult-customize' macro.
-  (consult-customize
-   consult-theme
-   :preview-key '(:debounce 0.2 any)
-   consult-ripgrep consult-git-grep consult-grep
-   consult-bookmark consult-recent-file consult-xref
-   consult--source-bookmark consult--source-recent-file
-   consult--source-project-recent-file
-   :preview-key (kbd "M-."))
-
-  ;; Optionally configure the narrowing key.
-  ;; Both < and C-+ work reasonably well.
-  (setq consult-narrow-key "<")) ;; (kbd "C-+")
-
-;; Optionally make narrowing help available in the minibuffer.
-;; You may want to use `embark-prefix-help-command' or which-key instead.
-;; (define-key consult-narrow-map (vconcat consult-narrow-key "?") #'consult-narrow-help)
-
-;; By default `consult-project-function' uses `project-root' from project.el.
-;; Optionally configure a different project root function.
-;; There are multiple reasonable alternatives to chose from.
-    ;;;; 1. project.el (the default)
-;; (setq consult-project-function #'consult--default-project--function)
-    ;;;; 2. projectile.el (projectile-project-root)
-;; (autoload 'projectile-project-root "projectile")
-;; (setq consult-project-function (lambda (_) (projectile-project-root)))
-    ;;;; 3. vc.el (vc-root-dir)
-;; (setq consult-project-function (lambda (_) (vc-root-dir)))
-    ;;;; 4. locate-dominating-file
-;; (setq consult-project-function (lambda (_) (locate-dominating-file "." ".git")))
-;;(setq completion-in-region-function
-;;  (lambda (&rest args)
-;;    (apply (if vertico-mode
-;;               #'consult-completion-in-region
-;;             #'completion--in-region)
-;;           args))))
-
-(use-package embark-consult)
-
-(use-package orderless
-  :init
-  ;; Configure a custom style dispatcher (see the Consult wiki)
-  ;; (setq orderless-style-dispatchers '(+orderless-dispatch)
-  ;;       orderless-component-separator #'orderless-escapable-split-on-space)
-  (setq completion-styles '(orderless)
-  completion-category-defaults nil
-  completion-category-overrides '((file (styles partial-completion)))))
-
-(use-package marginalia
-  ;; Either bind `marginalia-cycle` globally or only in the minibuffer
-  :bind (
-   :map minibuffer-local-map
-   ("M-A" . marginalia-cycle))
-  :init
-  (marginalia-mode))
-
-(use-package cape
-  ;; Bind dedicated completion commands
-  :bind (("C-c p p" . completion-at-point) ;; capf
-   ("C-c p t" . complete-tag)        ;; etags
-   ("C-c p d" . cape-dabbrev)        ;; or dabbrev-completion
-   ("C-c p f" . cape-file)
-   ("C-c p k" . cape-keyword)
-   ("C-c p s" . cape-symbol)
-   ("C-c p a" . cape-abbrev)
-   ("C-c p i" . cape-ispell)
-   ("C-c p l" . cape-line)
-   ("C-c p w" . cape-dict)
-   ("C-c p \\" . cape-tex)
-   ("C-c p _" . cape-tex)
-   ("C-c p ^" . cape-tex)
-   ("C-c p &" . cape-sgml)
-   ("C-c p r" . cape-rfc1345))
-  :init
-  ;; Add `completion-at-point-functions', used by `completion-at-point'.
-  (add-to-list 'completion-at-point-functions #'cape-file)
-  (add-to-list 'completion-at-point-functions #'cape-tex)
-  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-  (add-to-list 'completion-at-point-functions #'cape-keyword)
-  (add-to-list 'completion-at-point-functions #'cape-sgml)
-  ;;(add-to-list 'completion-at-point-functions #'cape-rfc1345)
-  ;;(add-to-list 'completion-at-point-functions #'cape-abbrev)
-  (add-to-list 'completion-at-point-functions #'cape-ispell)
-  ;;(add-to-list 'comnpletion-at-point-functions #'cape-dict)
-  ;;(add-to-list 'completion-at-point-functions #'cape-symbol)
-  ;;(add-to-list 'completion-at-point-functions #'cape-line)
-  ;; Silence the pcomplete capf, no errors or messages!
-  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
-
-  ;; Ensure that pcomplete does not write to the buffer
-  ;; and behaves as a pure `completion-at-point-function'.
-  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify))
 
 (use-package savehist
   :init
@@ -801,6 +594,11 @@
     (add-to-list 'aggressive-indent-excluded-modes 'term-mode)
     (add-to-list 'aggressive-indent-excluded-modes 'ansi-term-mode)
     (add-to-list 'aggressive-indent-excluded-modes 'sql-mode)
+    (add-to-list 'aggressive-indent-excluded-modes 'helm-mode)
+    (add-to-list 'aggressive-indent-excluded-modes 'helm-occur-mode)
+    (add-to-list 'aggressive-indent-excluded-modes 'helm-epa-mode)
+    (add-to-list 'aggressive-indent-excluded-modes 'helm-major-mode)
+    (add-to-list 'aggressive-indent-excluded-modes 'completion-list-mode)
     (global-aggressive-indent-mode 1))
 
 (use-package magit
@@ -811,7 +609,10 @@
     (interactive)
     (let ((magit-display-buffer-function 'magit-display-buffer-same-window-except-diff-v1))
       (magit-status)))
-  (global-set-key (kbd "C-x C-g") 'magit/magit-status-no-split))
+  (global-unset-key (kbd "C-x g"))
+  (global-set-key (kbd "C-x g s") #'magit-status)
+  (global-set-key (kbd "C-x g c") #'magit-clone)
+  (global-set-key (kbd "C-x g g") #'magit/magit-status-no-split))
 
 (use-package forge)
 
@@ -828,8 +629,6 @@
 
 (use-package yasnippet-snippets)
 
-(use-package consult-yasnippet)
-
 (use-package nodejs-repl)
 
 (use-package typescript-mode
@@ -839,7 +638,9 @@
 
 (use-package jest-test-mode 
   :commands jest-test-mode
-  :hook (typescript-mode js-mode typescript-tsx-mode))
+  :hook (typescript-mode js-mode typescript-tsx-mode)
+  :config
+  (setq jest-test-options '()))
 
 (use-package apheleia
   :straight (apheleia :host github :repo "raxod502/apheleia")
@@ -876,6 +677,7 @@
   :bind (:map eglot-mode-map
               ("C-." . eglot-code-actions))
   :config
+
   (defun js/hook ()
     (interactive)
     (eglot-ensure)
@@ -895,6 +697,7 @@
 
   (defun eglot/after-connect ()
     (interactive)
+    (complete/start)
     (if (or (derived-mode-p 'js-mode) (derived-mode-p 'typescript-mode))
                                    (flymake-eslint-enable)))
 
@@ -902,7 +705,10 @@
   (add-hook 'typescript-mode-hook 'js/hook)
   (add-hook 'js-mode-hook 'js/hook)
   (add-hook 'sql-mode-hook 'sql/hook)
-  (setq eldoc-echo-area-use-multiline-p nil)
+  (setq 
+   eglot-events-buffer-size 0
+   eldoc-echo-area-use-multiline-p nil
+   eglot-ignored-server-capabilities '(:documentHighlightProvider))
 
   (delete '((js-mode typescript-mode)
             "typescript-language-server" "--stdio") eglot-server-programs)
@@ -930,7 +736,6 @@
                                             :timeout 0.5 :range (:start ,beg :end ,end))))
            (buffer (get-buffer-create "*sqls*")))
       (with-current-buffer buffer
-        (read-only-mode 0)
         (erase-buffer)
         (eglot--apply-text-edits `[
                                    (:range
@@ -945,12 +750,12 @@
         (replace-regexp "+$" "|")
         (beginning-of-buffer)
         (replace-regexp "^+" "|")
-        (read-only-mode 1)
         (beginning-of-buffer)
         (org-mode)
         (org-toggle-pretty-entities)
         (mixed-pitch-mode -1)
-        (toggle-truncate-lines 1))
+        (toggle-truncate-lines 1)
+        (god-local-mode 1))
       (display-buffer-below-selected buffer '())
       ))
 
@@ -1111,17 +916,49 @@
   (add-hook 'csv-mode-hook 'csv-guess-set-separator)
   (setq csv-separators '("," ";" ":")))
 
+(use-package devdocs
+  :config
+  (global-set-key (kbd "C-h D") #'devdocs-lookup)
+  (add-hook 'js-mode-hook
+        (lambda () (setq-local devdocs-current-docs '("node~16_lts" "jsdoc" "javascript")))))
+
+(use-package hl-prog-extra
+  :commands
+  (hl-prog-extra-mode)
+  :hook
+  (comint-mode . hl-prog-extra-mode)
+  :config
+  (setq hl-prog-extra-list
+        (list
+         '("^\\( \\)*\\(FAIL\\)+" 0 nil '(:weight bold :foreground "black" :background "red3"))
+         '("^\\( \\)*\\(PASS\\)+" 0 nil '(:weight bold :foreground "black" :background "green4"))
+         '("^\\( \\)*\\(○ .*$\\)+" 0 nil '(:weight semi-light))
+         '("^\\( \\)*\\(✕ .*$\\)+" 0 nil '(:weight bold :foreground "red3"))
+         '("^\\( \\)*\\(✓ .*$\\)+" 0 nil '(:weight bold :foreground "green3"))
+         '("^\\( \\)*\\(- \\)\\(.*\\)*$" 0 nil '(:weight bold :foreground "red3"))
+         '("^\\( \\)*\\(+ .*$\\)+" 0 nil '(:weight bold :foreground "green3")))))
+
 (use-package aweshell
   :straight (aweshell :type git :host github :repo "manateelazycat/aweshell")
   :config
-  (define-key eshell-mode-map (kbd "M-m") 'eshell-bol)
+  (define-key eshell-mode-map (kbd "M-m") #'eshell-bol)
   (require 'eshell)
   (require 'em-smart)
-  (setq eshell-where-to-jump 'begin)
-  (setq eshell-review-quick-commands nil)
-  (setq eshell-smart-space-goes-to-end t)
-  (add-hook 'eshell-mode-hook (lambda () (setenv "TERM" "xterm-256color")))
-  (eshell/alias "ll" "ls --group-directories-first --color -l $*"))
+  (setq 
+   eshell-where-to-jump 'begin
+   eshell-banner-message ""
+   eshell-review-quick-commands nil
+   eshell-smart-space-goes-to-end t)
+  ;; (defun eshell/hook ()
+  ;;   (aweshell-sync-dir-buffer-name)
+  ;;   (eshell/alias "ll" "ls --group-directories-first --color -l $*")
+  ;;   (eshell/alias "docker-all-stop" "docker ps -aq | xargs docker stop")
+  ;;   (eshell/alias "da-stop" "docker ps -aq | xargs docker stop"))
+  ;; (add-hook 'eshell-mode-hook #'eshell/hook)
+  (setq eshell-prompt-function
+        (lambda ()
+          (concat (format-time-string "%Y-%m-%d %H:%M" (current-time))
+                  (if (= (user-uid) 0) " # " " $ ")))))
 
 (defun eshell/emacs (file)
   (find-file file))
