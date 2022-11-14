@@ -403,6 +403,10 @@ window list."
               )))
       (display-buffer-below-selected which-key--buffer alist))))
 
+(use-package whole-line-or-region
+  :config
+  (whole-line-or-region-global-mode 1))
+
 (use-package ibuffer-vc)
 
 (use-package zoom
@@ -416,8 +420,25 @@ window list."
   (split-window-right)
   (other-window 1)
   (split-window)
-  (split-window)
   (zoom))
+
+(defun window/toggle-pin ()
+  (interactive)
+  (if (window-parameter (selected-window) 'split-window)
+      (progn 
+        (set-window-parameter nil 'split-window nil)
+        (set-window-dedicated-p (selected-window) nil)
+        (rename-buffer (string-trim-left (buffer-name)))
+        (message "Window unpined"))
+    (progn
+      (set-window-parameter nil 'split-window #'ignore)
+      (set-window-dedicated-p (selected-window) t)
+      (rename-buffer (concat " " (buffer-name)))
+      (message "Window pined"))))
+
+(global-set-key (kbd "C-c w p") #'window/toggle-pin)
+
+(global-set-key (kbd "C-c w l 4") #'window/4k-layout)
 
 (use-package blist
   :config
@@ -452,21 +473,24 @@ window list."
 (setq completion-show-help nil)
 (setq completions-max-height 10)
 (setq completion-auto-select nil)
+(setq completion-show-inline-help nil)
 
 (define-key completion-in-region-mode-map (kbd "C-s") 'minibuffer-next-completion)
 (define-key completion-in-region-mode-map (kbd "C-r") 'minibuffer-previous-completion)
 
 (defun my/minibuffer-choose-completion (&optional no-exit no-quit)
   (interactive)
-  (if (minibufferp)
-      (if (get-buffer-window "*Completions*")
-          (progn (minibuffer-previous-completion)
-                 (let ((minibuffer-completion-auto-choose t))
-                   (minibuffer-next-completion)))
-        (call-interactively 'minibuffer-complete-and-exit))
-    (with-minibuffer-completions-window
-      (let ((completion-use-base-affixes nil))
-        (choose-completion nil no-exit no-quit)))))
+  (let ((inhibit-message t)
+        (message-log-max nil))
+    (if (minibufferp)
+        (if (get-buffer-window "*Completions*")
+            (progn (minibuffer-previous-completion)
+                   (let ((minibuffer-completion-auto-choose t))
+                     (minibuffer-next-completion)))
+          (call-interactively 'minibuffer-force-complete-and-exit))
+      (with-minibuffer-completions-window
+        (let ((completion-use-base-affixes nil))
+          (choose-completion nil no-exit no-quit))))))
 
 (define-key completion-in-region-mode-map (kbd "RET") 'my/minibuffer-choose-completion)
 (add-hook 'completion-list-mode-hook (lambda () (setq truncate-lines t)))
@@ -483,7 +507,9 @@ window list."
     (with-syntax-table (make-syntax-table (syntax-table)) (modify-syntax-entry ?. "_")  (thing-at-point 'symbol 'no-properties))))
 
 (defun complete/update-in-region ()
-  (let ((current-word (complete/thing-at-point)))
+  (let ((current-word (complete/thing-at-point))
+        (inhibit-message t)
+        (message-log-max nil))
     (if (and
          (boundp 'complete/need-completion)
          complete/need-completion)
@@ -495,11 +521,13 @@ window list."
                                        choose-completion))
 
             (if (minibufferp)
-                (utils/advice-silence-messages 'minibuffer-completion-help)
+                (minibuffer-completion-help)
               (if (and current-word
                        (>= (string-width current-word) 2))
-                  (utils/advice-silence-messages 'completion-help-at-point)
+                  (completion-help-at-point)
                 (completion-in-region-mode -1)))
+            (minibuffer-previous-completion)
+            (minibuffer-next-completion)
             (setq-local complete/need-completion nil)))))
   (run-with-timer 0.4 nil #'complete/update-in-region))
 
@@ -508,13 +536,15 @@ window list."
 
 (defun complete/start ()
   (interactive)
-  (define-key minibuffer-mode-map (kbd "C-s") 'minibuffer-next-completion)
-  (define-key minibuffer-mode-map (kbd "C-r") 'minibuffer-previous-completion)
-  (define-key minibuffer-mode-map (kbd "C-f") 'my/minibuffer-choose-completion)
-  (define-key minibuffer-mode-map (kbd "RET") 'my/minibuffer-choose-completion)
-
-  (remove-hook 'after-change-functions #'complete/buffer-has-changed t)
-  (add-hook 'after-change-functions #'complete/buffer-has-changed nil t))
+  (let ((inhibit-message t)
+        (message-log-max nil))
+    (if (minibufferp)
+        (progn (define-key minibuffer-mode-map (kbd "C-s") 'minibuffer-next-completion)
+               (define-key minibuffer-mode-map (kbd "C-r") 'minibuffer-previous-completion)
+               (define-key minibuffer-mode-map (kbd "C-<tab>") 'my/minibuffer-choose-completion)
+               (minibuffer-completion-help)))
+    (remove-hook 'after-change-functions #'complete/buffer-has-changed t)
+    (add-hook 'after-change-functions #'complete/buffer-has-changed nil t)))
 
 (setq minibuffer-completion-auto-choose nil)
 (run-with-timer 0.4 nil #'complete/update-in-region)
@@ -535,6 +565,184 @@ window list."
     (vcomplete-prev-completion))
 
   (define-key vcomplete-command-map (kbd "C-<return>") 'vcomplete-choose-completion))
+
+(use-package embark
+  :bind (
+         :map minibuffer-local-map
+         ("C-c e" . embark-act)))
+
+(use-package consult
+  ;; Replace bindings. Lazily loaded due by `use-package'.
+  :bind (;; C-c bindings (mode-specific-map)
+         ("C-c h" . consult-history)
+         ("C-c m" . consult-mode-command)
+         ("C-c k" . consult-kmacro)
+         ;; C-x bindings (ctl-x-map)
+         ("C-x M-:" . consult-complex-command)     ;; orig. repeat-complex-command
+         ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
+         ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
+         ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
+         ("C-x r b" . consult-bookmark)            ;; orig. bookmark-jump
+         ("C-c b" . consult-bookmark)
+         ("C-x p b" . consult-project-buffer)      ;; orig. project-switch-to-buffer
+         ;; Custom M-# bindings for fast register access
+         ("M-#" . consult-register-load)
+         ("M-'" . consult-register-store)          ;; orig. abbrev-prefix-mark (unrelated)
+         ("C-M-#" . consult-register)
+         ;; Other custom bindings
+         ("M-y" . consult-yank-pop)                ;; orig. yank-pop
+         ("<help> a" . consult-apropos)            ;; orig. apropos-command
+         ;; M-g bindings (goto-map)
+         ("M-g e" . consult-compile-error)
+         ("M-g f" . consult-flycheck)               ;; Alternative: consult-flycheck
+         ("M-g g" . consult-goto-line)             ;; orig. goto-line
+         ("M-g M-g" . consult-goto-line)           ;; orig. goto-line
+         ("M-g o" . consult-outline)               ;; Alternative: consult-org-heading
+         ("M-g m" . consult-mark)
+         ("M-g k" . consult-global-mark)
+         ("M-g i" . consult-imenu)
+         ("M-g I" . consult-imenu-multi)
+         ;; M-s bindings (search-map)
+         ("M-s e" . consult-isearch-history)
+         ("M-s d" . consult-find)
+         ("M-s D" . consult-locate)
+         ("M-s g" . consult-grep)
+         ("M-s G" . consult-git-grep)
+         ("M-s r" . consult-ripgrep)
+         ("M-s l" . consult-line)
+         ("M-s L" . consult-line-multi)
+         ("M-s m" . consult-multi-occur)
+         ("M-s k" . consult-keep-lines)
+         ("M-s u" . consult-focus-lines)
+         ;; Minibuffer history
+         :map minibuffer-local-map
+         ("M-s" . consult-history)                 ;; orig. next-matching-history-element
+         ("M-r" . consult-history))                ;; orig. previous-matching-history-element
+
+  ;; Enable automatic preview at point in the *Completions* buffer. This is
+  ;; relevant when you use the default completion UI.
+  :hook (completion-list-mode . consult-preview-at-point-mode)
+
+  ;; The :init configuration is always executed (Not lazy)
+  :init
+
+  ;; Optionally configure the register formatting. This improves the register
+  ;; preview for `consult-register', `consult-register-load',
+  ;; `consult-register-store' and the Emacs built-ins.
+  (setq register-preview-delay 0.5
+        register-preview-function #'consult-register-format)
+
+  ;; Optionally tweak the register preview window.
+  ;; This adds thin lines, sorting and hides the mode line of the window.
+  (advice-add #'register-preview :override #'consult-register-window)
+
+  ;; Optionally replace `completing-read-multiple' with an enhanced version.
+  ;; (advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
+
+  ;; Use Consult to select xref locations with preview
+  (setq xref-show-xrefs-function #'consult-xref
+        xref-show-definitions-function #'consult-xref)
+
+  ;; Configure other variables and modes in the :config section,
+  ;; after lazily loading the package.
+  :config
+
+  ;; Optionally configure preview. The default value
+  ;; is 'any, such that any key triggers the preview.
+  ;; (setq consult-preview-key 'any)
+  ;; (setq consult-preview-key (kbd "M-."))
+  ;; (setq consult-preview-key (list (kbd "<S-down>") (kbd "<S-up>")))
+  ;; For some commands and buffer sources it is useful to configure the
+  ;; :preview-key on a per-command basis using the `consult-customize' macro.
+  (consult-customize
+   consult-theme
+   :preview-key '(:debounce 0.2 any)
+   consult-ripgrep consult-git-grep consult-grep
+   consult-bookmark consult-recent-file consult-xref
+   consult--source-bookmark consult--source-recent-file
+   consult--source-project-recent-file
+   :preview-key (kbd "M-."))
+
+  ;; Optionally configure the narrowing key.
+  ;; Both < and C-+ work reasonably well.
+  (setq consult-narrow-key "<")) ;; (kbd "C-+")
+
+;; Optionally make narrowing help available in the minibuffer.
+;; You may want to use `embark-prefix-help-command' or which-key instead.
+;; (define-key consult-narrow-map (vconcat consult-narrow-key "?") #'consult-narrow-help)
+
+;; By default `consult-project-function' uses `project-root' from project.el.
+;; Optionally configure a different project root function.
+;; There are multiple reasonable alternatives to chose from.
+    ;;;; 1. project.el (the default)
+;; (setq consult-project-function #'consult--default-project--function)
+    ;;;; 2. projectile.el (projectile-project-root)
+;; (autoload 'projectile-project-root "projectile")
+;; (setq consult-project-function (lambda (_) (projectile-project-root)))
+    ;;;; 3. vc.el (vc-root-dir)
+;; (setq consult-project-function (lambda (_) (vc-root-dir)))
+    ;;;; 4. locate-dominating-file
+;; (setq consult-project-function (lambda (_) (locate-dominating-file "." ".git")))
+;;(setq completion-in-region-function
+;;  (lambda (&rest args)
+;;    (apply (if vertico-mode
+;;               #'consult-completion-in-region
+;;             #'completion--in-region)
+;;           args))))
+
+(use-package embark-consult)
+
+(use-package orderless
+  :init
+  ;; Configure a custom style dispatcher (see the Consult wiki)
+  ;; (setq orderless-style-dispatchers '(+orderless-dispatch)
+  ;;       orderless-component-separator #'orderless-escapable-split-on-space)
+  (setq completion-styles '(orderless)
+  completion-category-defaults nil
+  completion-category-overrides '((file (styles partial-completion)))))
+
+(use-package marginalia
+  ;; Either bind `marginalia-cycle` globally or only in the minibuffer
+  :bind (
+         :map minibuffer-local-map
+         ("M-A" . marginalia-cycle)))
+
+(use-package cape
+  ;; Bind dedicated completion commands
+  :bind (("C-c p p" . completion-at-point) ;; capf
+   ("C-c p t" . complete-tag)        ;; etags
+   ("C-c p d" . cape-dabbrev)        ;; or dabbrev-completion
+   ("C-c p f" . cape-file)
+   ("C-c p k" . cape-keyword)
+   ("C-c p s" . cape-symbol)
+   ("C-c p a" . cape-abbrev)
+   ("C-c p i" . cape-ispell)
+   ("C-c p l" . cape-line)
+   ("C-c p w" . cape-dict)
+   ("C-c p \\" . cape-tex)
+   ("C-c p _" . cape-tex)
+   ("C-c p ^" . cape-tex)
+   ("C-c p &" . cape-sgml)
+   ("C-c p r" . cape-rfc1345))
+  :init
+  ;; Add `completion-at-point-functions', used by `completion-at-point'.
+  (add-to-list 'completion-at-point-functions #'cape-file)
+  (add-to-list 'completion-at-point-functions #'cape-tex)
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  (add-to-list 'completion-at-point-functions #'cape-keyword)
+  (add-to-list 'completion-at-point-functions #'cape-sgml)
+  ;;(add-to-list 'completion-at-point-functions #'cape-rfc1345)
+  ;;(add-to-list 'completion-at-point-functions #'cape-abbrev)
+  (add-to-list 'completion-at-point-functions #'cape-ispell)
+  ;;(add-to-list 'comnpletion-at-point-functions #'cape-dict)
+  ;;(add-to-list 'completion-at-point-functions #'cape-symbol)
+  ;;(add-to-list 'completion-at-point-functions #'cape-line)
+  ;; Silence the pcomplete capf, no errors or messages!
+  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
+
+  ;; Ensure that pcomplete does not write to the buffer
+  ;; and behaves as a pure `completion-at-point-function'.
+  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify))
 
 (use-package wgrep)
 
@@ -721,8 +929,11 @@ window list."
 
   (defun eglot/sqls-select-and-execute-command ()
     (interactive)
-    (mark-paragraph)
-    (eglot/sqls-execute-command))
+    (call-interactively 'sql-beginning-of-statement)
+    (call-interactively 'set-mark-command)
+    (call-interactively 'sql-end-of-statement)
+    (eglot/sqls-execute-command)
+    (deactivate-mark))
 
   (defun eglot/sqls-execute-command ()
     (interactive)

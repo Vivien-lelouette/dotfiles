@@ -323,12 +323,12 @@
           ([?\s-o k] . settings/keyboard)
           ([?\s-o m] . settings/mouse)
 
-          ([?\s-a] . async-shell-command)
+          ([?\s-a] . app-launcher-run-app)
 
-          ([?\s-b] . switch-to-buffer)
+          ([?\s-b] . consult-buffer)
           ([?\s-B] . ibuffer-jump)
 
-          ([?\s-f] . bookmark-jump)
+          ([?\s-f] . consult-bookmark)
           ([?\s-F] . blist)
 
           ([s-return] . eshell)
@@ -344,7 +344,7 @@
           ([?\s-c] . chrome/do-start-with-url-or-search)
           ([?\s-C] . apps/chrome-browser)
 
-          ;; 's-N': Switch to certain workspace with Super (Win) plus a number key (0 - 9)
+           ;; 's-N': Switch to certain workspace with Super (Win) plus a number key (0 - 9)
           ,@(mapcar (lambda (i)
                       `(,(kbd (format "s-w %d" i)) .
                         (lambda ()
