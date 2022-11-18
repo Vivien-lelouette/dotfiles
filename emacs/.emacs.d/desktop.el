@@ -174,18 +174,22 @@
 (setq helm-ag-show-status-function (lambda ()))
 (defun exwm/exwm-init-hook ()
   (exwm/refresh-setup))
-  ;; Launch apps that will run in the background
-  ;;(shell/run-in-background "gsettings set org.gnome.gnome-flashback.desktop.icons show-home false")
-  ;;(shell/run-in-background "gsettings set org.gnome.gnome-flashback.desktop.icons show-trash false"))
+;; Launch apps that will run in the background
+;;(shell/run-in-background "gsettings set org.gnome.gnome-flashback.desktop.icons show-home false")
+;;(shell/run-in-background "gsettings set org.gnome.gnome-flashback.desktop.icons show-trash false"))
 
 (defun exwm/win-title ()
   (replace-regexp-in-string (concat " . " exwm-class-name) "" exwm-title))
 
 (defun exwm/exwm-update-title ()
   (exwm-workspace-rename-buffer
-   (concat exwm-class-name ": "
-           (if (<= (length exwm-title) 100) exwm-title
-             (concat (substring exwm-title 0 99) "...")))))
+   (concat
+    (if (window-parameter (selected-window) 'split-window)
+        " "
+      "")
+    exwm-class-name ": "
+    (if (<= (length exwm-title) 100) exwm-title
+      (concat (substring exwm-title 0 99) "...")))))
 
 
 (defun exwm/exwm-set-fringe ()
@@ -344,7 +348,7 @@
           ([?\s-c] . chrome/do-start-with-url-or-search)
           ([?\s-C] . apps/chrome-browser)
 
-           ;; 's-N': Switch to certain workspace with Super (Win) plus a number key (0 - 9)
+          ;; 's-N': Switch to certain workspace with Super (Win) plus a number key (0 - 9)
           ,@(mapcar (lambda (i)
                       `(,(kbd (format "s-w %d" i)) .
                         (lambda ()
@@ -396,12 +400,12 @@
                        (aw-move-window (nth 7 (aw-window-list)))))
 
           ([?\s-\(] . (lambda ()
-                       (interactive)
-                       (aw-move-window (nth 8 (aw-window-list)))))
+                        (interactive)
+                        (aw-move-window (nth 8 (aw-window-list)))))
 
           ([?\s-\)] . (lambda ()
-                       (interactive)
-                       (aw-move-window (nth 9 (aw-window-list)))))
+                        (interactive)
+                        (aw-move-window (nth 9 (aw-window-list)))))
 
           ,@(mapcar (lambda (i)
                       `(,(kbd (format "M-s-%d" i)) .
@@ -428,38 +432,38 @@
 
   ;; Send copy/paste easily
   (setq exwm-input-simulation-keys
-    '(
-      ([?\M-b] . [C-left])
-      ([?\M-f] . [C-right])
-      ([?\C-b] . [left])
-      ([?\C-f] . [right])
-      ([?\C-p] . [up])
-      ([?\C-n] . [down])
-      ([?\C-a] . [home])
-      ([?\C-e] . [end])
+        '(
+          ([?\M-b] . [C-left])
+          ([?\M-f] . [C-right])
+          ([?\C-b] . [left])
+          ([?\C-f] . [right])
+          ([?\C-p] . [up])
+          ([?\C-n] . [down])
+          ([?\C-a] . [home])
+          ([?\C-e] . [end])
 
-      ([?\M-B] . [C-\S-left])
-      ([?\M-F] . [C-\S-right])
-      ([?\C-\S-b] . [S-left])
-      ([?\C-\S-f] . [S-right])
-      ([?\C-\S-p] . [S-up])
-      ([?\C-\S-n] . [S-down])
-      ([?\C-\S-a] . [S-home])
-      ([?\C-\S-e] . [S-end])
+          ([?\M-B] . [C-\S-left])
+          ([?\M-F] . [C-\S-right])
+          ([?\C-\S-b] . [S-left])
+          ([?\C-\S-f] . [S-right])
+          ([?\C-\S-p] . [S-up])
+          ([?\C-\S-n] . [S-down])
+          ([?\C-\S-a] . [S-home])
+          ([?\C-\S-e] . [S-end])
 
-      ([?\C-s] . [?\C-f])
-      ([?\C-x ?\C-s] . [?\C-s])
-      ([?\M-v] . [prior])
-      ([?\C-v] . [next])
+          ([?\C-s] . [?\C-f])
+          ([?\C-x ?\C-s] . [?\C-s])
+          ([?\M-v] . [prior])
+          ([?\C-v] . [next])
 
-      ([?\M-d] . [C-delete])
-      ([?\C-d] . [delete])
-      ([?\C-k] . [S-end ?\C-x])
+          ([?\M-d] . [C-delete])
+          ([?\C-d] . [delete])
+          ([?\C-k] . [S-end ?\C-x])
 
-      ([?\C-y] . [?\C-v])
-      ([?\M-w] . [?\C-c])
-      ([?\C-w] . [?\C-x])
-      ([?\s-g] . [escape])))
+          ([?\C-y] . [?\C-v])
+          ([?\M-w] . [?\C-c])
+          ([?\C-w] . [?\C-x])
+          ([?\s-g] . [escape])))
 
   (setq exwm-manage-configurations '(((string-match-p "^Xfce4-" exwm-title)
                                       floating nil)))

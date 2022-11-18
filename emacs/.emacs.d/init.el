@@ -14,14 +14,9 @@
 (straight-use-package 'use-package)
 (setq straight-use-package-by-default t)
 
-(use-package gcmh
-  :config
-  (gcmh-mode 1))
 (add-hook 'after-init-hook
           #'(lambda ()
               (setq gc-cons-threshold (* 100 1000 1000))))
-(add-hook 'focus-out-hook 'garbage-collect)
-(run-with-idle-timer 5 t 'garbage-collect)
 
 (setq large-file-warning-threshold 100000000)
 
@@ -62,13 +57,6 @@
 (delete-selection-mode 1)
 
 (setq bookmark-save-flag 1)
-
-;; (setq display-buffer-base-action
-  ;; '((display-buffer-below-selected
-     ;; display-buffer-reuse-window
-     ;; display-buffer-reuse-mode-window
-     ;; display-buffer-same-window
-     ;; display-buffer-in-previous-window)))
 
 (setq indent-tabs-mode nil)
 (setq indent-line-function 'insert-tab)
@@ -205,28 +193,6 @@ window list."
   (global-unset-key (kbd "C-?"))
   (global-set-key (kbd "C-?") 'vundo))
 
-(defvar-local hidden-mode-line-mode nil)
-
-(define-minor-mode hidden-mode-line-mode
-  "Minor mode to hide the mode-line in the current buffer."
-  :init-value nil
-  :global t
-  :variable hidden-mode-line-mode
-  :group 'editing-basics
-  (if hidden-mode-line-mode
-      (setq hide-mode-line mode-line-format
-            mode-line-format nil)
-    (setq mode-line-format hide-mode-line
-          hide-mode-line nil))
-  (force-mode-line-update)
-  (when (and (called-interactively-p 'interactive)
-             hidden-mode-line-mode)
-    (run-with-idle-timer
-     0 nil 'message
-     (concat "Hidden Mode Line Mode enabled.  "
-             "Use M-x hidden-mode-line-mode to make the mode-line appear."))))
-
-(global-hl-line-mode 1)
 (scroll-bar-mode -1)
 (tool-bar-mode -1)
 (tooltip-mode -1)
@@ -239,13 +205,13 @@ window list."
 
 (setq-default fill-column 100)
 
-(set-face-attribute 'default nil :font "SauceCodePro NF-12")
+(set-face-attribute 'default nil :font "SauceCodePro NF-11")
 
 ;; Set the fixed pitch face
-(set-face-attribute 'fixed-pitch nil :font "SauceCodePro NF-12")
+(set-face-attribute 'fixed-pitch nil :font "SauceCodePro NF-11")
 
 ;; Set the variable pitch face
-(set-face-attribute 'variable-pitch nil :font "Cantarell-12" :weight 'regular)
+(set-face-attribute 'variable-pitch nil :font "Cantarell-11" :weight 'regular)
 
 (defun disable-mixed-pitch ()
   (interactive)
@@ -310,8 +276,6 @@ window list."
        (setq this-command 'hs-global-show))
       (_ (hs-hide-all)))))
 
-(use-package focus)
-
 (use-package pulsar
   :straight (pulsar :type git :host gitlab :repo "protesilaos/pulsar")
   :config
@@ -339,30 +303,12 @@ window list."
 (add-hook 'prog-mode-hook #'custom/coding-faces)
 
 (use-package prism
+  :straight (prism :type git :host github :repo "alphapapa/prism.el")
   :defer t
   :config
-  (setq prism-num-faces 16)
-
-  (prism-set-colors
-    :desaturations '(0) ; do not change---may lower the contrast ratio
-    :lightens '(0)      ; same
-    :colors (modus-themes-with-colors
-              (list blue
-                    fg-main
-                    magenta
-                    green
-                    red-alt
-                    cyan
-                    cyan-alt
-                    red-alt-other
-                    magenta-alt
-                    green-alt
-                    cyan
-                    blue-alt-other
-                    blue-alt
-                    yellow
-                    green-alt-other
-                    fg-special-warm))))
+  (setq prism-num-faces 8
+        prism-desaturations '(0 1 2)
+        prism-lightens '(0 1 2)))
 
 (use-package ediff
     :straight (:type built-in)
@@ -528,8 +474,7 @@ window list."
                 (completion-in-region-mode -1)))
             (minibuffer-previous-completion)
             (minibuffer-next-completion)
-            (setq-local complete/need-completion nil)))))
-  (run-with-timer 0.4 nil #'complete/update-in-region))
+            (setq-local complete/need-completion nil))))))
 
 (defun complete/buffer-has-changed (&rest _args)
   (setq-local complete/need-completion t))
@@ -542,12 +487,14 @@ window list."
         (progn (define-key minibuffer-mode-map (kbd "C-s") 'minibuffer-next-completion)
                (define-key minibuffer-mode-map (kbd "C-r") 'minibuffer-previous-completion)
                (define-key minibuffer-mode-map (kbd "C-<tab>") 'my/minibuffer-choose-completion)
+               (define-key minibuffer-mode-map (kbd "C-<return>") 'minibuffer-complete-and-exit)
+               (define-key minibuffer-mode-map (kbd "<return>") (lambda () (interactive) (my/minibuffer-choose-completion) (minibuffer-complete-and-exit)))
                (minibuffer-completion-help)))
     (remove-hook 'after-change-functions #'complete/buffer-has-changed t)
     (add-hook 'after-change-functions #'complete/buffer-has-changed nil t)))
 
 (setq minibuffer-completion-auto-choose nil)
-(run-with-timer 0.4 nil #'complete/update-in-region)
+(run-with-idle-timer 0.2 t #'complete/update-in-region)
 (add-hook 'minibuffer-setup-hook #'complete/start)
 
 (use-package vcomplete
@@ -766,20 +713,6 @@ window list."
 
 (use-package flymake-eslint)
 
-;; (use-package flycheck
-;;   :init (global-flycheck-mode))
-
-;; (use-package consult-flycheck)
-
-(use-package rainbow-mode)
-
-(use-package rainbow-delimiters
-  :hook (prog-mode . rainbow-delimiters-mode))
-
-(use-package highlight-parentheses
-  :config
-  (global-highlight-parentheses-mode 1))
-
 (setq electric-pair-pairs
   '(
     (?\' . ?\')
@@ -841,14 +774,10 @@ window list."
 
 (use-package typescript-mode
   :mode "\\.ts\\'")
-  ;; :config
-  ;; (add-hook 'typescript-mode-hook #'lsp))
 
 (use-package jest-test-mode 
   :commands jest-test-mode
-  :hook (typescript-mode js-mode typescript-tsx-mode)
-  :config
-  (setq jest-test-options '()))
+  :hook (typescript-mode js-mode typescript-tsx-mode))
 
 (use-package apheleia
   :straight (apheleia :host github :repo "raxod502/apheleia")
@@ -882,6 +811,7 @@ window list."
 
 (use-package eglot
   :defer t
+  :straight (:type built-in)
   :bind (:map eglot-mode-map
               ("C-." . eglot-code-actions))
   :config
@@ -1011,77 +941,9 @@ window list."
                        `(:command "switchConnections" :arguments [,(nth 0 (split-string conn))] :timeout 0.5))
       )))
 
-;;(use-package lsp-mode
-;;  :straight (lsp-mode :type git :host github :repo "emacs-lsp/lsp-mode")
-;;  :init
-;;  ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
-;;  (setq lsp-keymap-prefix "C-c l")
-;;  :custom
-;;  (lsp-clients-typescript-server-args '("--stdio"))
-;;  :bind (
-;;         :map lsp-mode-map
-;;         ("C-h ." . lsp-describe-thing-at-point)
-;;         ("C-." . lsp-execute-code-action)
-;;         ("M-." . lsp-find-definition))
-;;  :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
-;;         (js-mode . lsp)
-;;         (sql-mode . lsp)
-;;         (lsp-mode . (lambda () (add-hook 'before-save-hook #'lsp-format-buffer)))
-;;         ;; if you want which-key integration
-;;         (lsp-mode . lsp-enable-which-key-integration)
-;;         )
-;;  :commands lsp
-;;  :config
-;;  (with-eval-after-load 'js
-;;    (define-key js-mode-map (kbd "M-.") nil)
-;;  )
-;;  (setq
-;;   lsp-log-io nil
-;;   lsp-completion-provide :none
-;;   lsp-eldoc-render-all nil
-;;   lsp-eslint-auto-fix-on-save t
-;;   lsp-auto-guess-root t
-;;   lsp-log-io nil
-;;   lsp-restart 'auto-restart
-;;   lsp-enable-symbol-highlighting t
-;;   lsp-enable-on-type-formatting nil
-;;   lsp-signature-auto-activate nil
-;;   lsp-signature-render-documentation nil
-;;   lsp-eldoc-hook nil
-;;   lsp-headerline-breadcrumb-enable nil
-;;   lsp-semantic-tokens-enable nil
-;;   lsp-enable-folding nil
-;;   lsp-enable-snippet nil
-;;   lsp-idle-delay 0.5)
-;;  (defun lsp--eslint-before-save (orig-fun)  
-;;    "Run lsp-eslint-apply-all-fixes and then run the original lsp--before-save."  
-;;    (when lsp-eslint-auto-fix-on-save (lsp-eslint-fix-all))  
-;;    (funcall orig-fun))
-;;  (advice-add 'lsp--before-save :around #'lsp--eslint-before-save))
+(use-package realgud)
 
-;; (use-package lsp-ui
-;;   :commands lsp-ui-mode
-;;   :config
-;;   (setq lsp-ui-doc-enable nil
-;;         lsp-ui-doc-header t
-;;         lsp-ui-doc-include-signature t
-;;         lsp-ui-doc-border (face-foreground 'default)
-;;         lsp-ui-sideline-show-code-actions t
-;;         lsp-ui-sideline-delay 0.05))
-
-;; (defun disable-lsp-ltex ()
-;;   (interactive))
-;;   ;;(lsp-workspace-shutdown 'lsp--cur-workspace))
-
-;; (use-package lsp-ltex
-;;   :hook
-;;   (text-mode . (lambda ()
-;;                  (require 'lsp-ltex)
-;;                  (lsp)))
-;;   (yaml-mode . disable-lsp-ltex))
-
-;; (use-package dap-mode
-;;   :straight (dap-mode :type git :host github :repo "emacs-lsp/dap-mode"))
+(use-package realgud-trepan-ni)
 
 (use-package adoc-mode
   :config
@@ -1120,8 +982,6 @@ window list."
 
   (add-hook 'docker-container-mode 'docker/set-format))
 
-(use-package docker-tramp)
-
 (use-package csv-mode
   :config
   (add-hook 'csv-mode-hook 'csv-guess-set-separator)
@@ -1132,22 +992,6 @@ window list."
   (global-set-key (kbd "C-h D") #'devdocs-lookup)
   (add-hook 'js-mode-hook
         (lambda () (setq-local devdocs-current-docs '("node~16_lts" "jsdoc" "javascript")))))
-
-(use-package hl-prog-extra
-  :commands
-  (hl-prog-extra-mode)
-  :hook
-  (comint-mode . hl-prog-extra-mode)
-  :config
-  (setq hl-prog-extra-list
-        (list
-         '("^\\( \\)*\\(FAIL\\)+" 0 nil '(:weight bold :foreground "black" :background "red3"))
-         '("^\\( \\)*\\(PASS\\)+" 0 nil '(:weight bold :foreground "black" :background "green4"))
-         '("^\\( \\)*\\(○ .*$\\)+" 0 nil '(:weight semi-light))
-         '("^\\( \\)*\\(✕ .*$\\)+" 0 nil '(:weight bold :foreground "red3"))
-         '("^\\( \\)*\\(✓ .*$\\)+" 0 nil '(:weight bold :foreground "green3"))
-         '("^\\( \\)*\\(- \\)\\(.*\\)*$" 0 nil '(:weight bold :foreground "red3"))
-         '("^\\( \\)*\\(+ .*$\\)+" 0 nil '(:weight bold :foreground "green3")))))
 
 (use-package aweshell
   :straight (aweshell :type git :host github :repo "manateelazycat/aweshell")
@@ -1160,12 +1004,13 @@ window list."
    eshell-banner-message ""
    eshell-review-quick-commands nil
    eshell-smart-space-goes-to-end t)
-  ;; (defun eshell/hook ()
-  ;;   (aweshell-sync-dir-buffer-name)
+   (defun eshell/hook ()
+     (aweshell-sync-dir-buffer-name)
+     (complete/start))
   ;;   (eshell/alias "ll" "ls --group-directories-first --color -l $*")
   ;;   (eshell/alias "docker-all-stop" "docker ps -aq | xargs docker stop")
   ;;   (eshell/alias "da-stop" "docker ps -aq | xargs docker stop"))
-  ;; (add-hook 'eshell-mode-hook #'eshell/hook)
+  (add-hook 'eshell-mode-hook #'eshell/hook)
   (setq eshell-prompt-function
         (lambda ()
           (concat (format-time-string "%Y-%m-%d %H:%M" (current-time))
@@ -1243,33 +1088,33 @@ window list."
   (setq org-confirm-babel-evaluate nil)
   (defun org/org-babel-tangle-config ()
     (when (or (string-equal (buffer-file-name)
-      (expand-file-name "~/dotfiles/README.org"))
-    (string-equal (buffer-file-name)
-      (expand-file-name "~/dotfiles/qutebrowser/README.org"))
-    (string-equal (buffer-file-name)
-      (expand-file-name "~/dotfiles/emacs/README.org"))
-    (string-equal (buffer-file-name)
-      (expand-file-name "~/dotfiles/emacs/desktop.org"))
-    (string-equal (buffer-file-name)
-      (expand-file-name "~/dotfiles/herbstluftwm/README.org"))
-    (string-equal (buffer-file-name)
-      (expand-file-name "~/dotfiles/rofi/README.org"))
-    (string-equal (buffer-file-name)
-      (expand-file-name "~/dotfiles/polybar/README.org"))
-    (string-equal (buffer-file-name)
-      (expand-file-name "~/dotfiles/kmonad/README.org"))
-    (string-equal (buffer-file-name)
-      (expand-file-name "~/dotfiles/emacs/local.org")))
-  ;; Dynamic scoping to the rescue
-  (let ((org-confirm-babel-evaluate nil))
-    (org-babel-tangle))))
-    (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'org/org-babel-tangle-config)))
-    (custom-set-faces
-     '(org-level-1 ((t (:inherit outline-1 :height 2.5))))
-     '(org-level-2 ((t (:inherit outline-2 :height 1.8))))
-     '(org-level-3 ((t (:inherit outline-3 :height 1.4))))
-     '(org-level-4 ((t (:inherit outline-4 :height 1.2))))
-     '(org-level-5 ((t (:inherit outline-5 :height 1.0))))))
+                            (expand-file-name "~/.dotfiles/README.org"))
+              (string-equal (buffer-file-name)
+                            (expand-file-name "~/.dotfiles/qutebrowser/README.org"))
+              (string-equal (buffer-file-name)
+                            (expand-file-name "~/.dotfiles/emacs/README.org"))
+              (string-equal (buffer-file-name)
+                            (expand-file-name "~/.dotfiles/emacs/desktop.org"))
+              (string-equal (buffer-file-name)
+                            (expand-file-name "~/.dotfiles/herbstluftwm/README.org"))
+              (string-equal (buffer-file-name)
+                            (expand-file-name "~/.dotfiles/rofi/README.org"))
+              (string-equal (buffer-file-name)
+                            (expand-file-name "~/.dotfiles/polybar/README.org"))
+              (string-equal (buffer-file-name)
+                            (expand-file-name "~/.dotfiles/kmonad/README.org"))
+              (string-equal (buffer-file-name)
+                            (expand-file-name "~/.dotfiles/emacs/local.org")))
+      ;; Dynamic scoping to the rescue
+      (let ((org-confirm-babel-evaluate nil))
+        (org-babel-tangle))))
+  (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'org/org-babel-tangle-config)))
+  (custom-set-faces
+   '(org-level-1 ((t (:inherit outline-1 :height 2.5))))
+   '(org-level-2 ((t (:inherit outline-2 :height 1.8))))
+   '(org-level-3 ((t (:inherit outline-3 :height 1.4))))
+   '(org-level-4 ((t (:inherit outline-4 :height 1.2))))
+   '(org-level-5 ((t (:inherit outline-5 :height 1.0))))))
 
 (use-package org-modern
   :config
@@ -1298,12 +1143,6 @@ window list."
   ;; Enable org-modern-mode
   (add-hook 'org-mode-hook #'org-modern-mode)
   (add-hook 'org-agenda-finalize-hook #'org-modern-agenda))
-
-(use-package org-jira
-  :straight (org-jira :type git :host github :repo "ahungry/org-jira"
-                      :fork (:host github
-                                   :repo "Vivien-lelouette/org-jira"))
-  :after org)
 
 (use-package shr
   :straight (:type built-in)
