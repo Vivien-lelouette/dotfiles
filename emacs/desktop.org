@@ -1,17 +1,5 @@
 #+title Destkop with exwm configuration
 #+PROPERTY: header-args:emacs-lisp :tangle .emacs.d/desktop.el :mkdirp yes
-* Installation
-** EXWM gnome flashback
-Install gnome flashback before running this script
-
-#+BEGIN_SRC shell :tangle .scripts/emacs/exwm/gnome-flashback-setup.sh :shebang #!/usr/bin/env bash :mkdirp yes
-  mkdir -p ~/Tools
-  cd ~/Tools
-  git clone https://github.com/WJCFerguson/exwm-gnome-flashback
-
-  cd exwm-gnome-flashback
-  sudo make install
-#+END_SRC
 
 * Desktop Environment
 ** Shell command runner

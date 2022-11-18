@@ -373,11 +373,13 @@ window list."
   (if (window-parameter (selected-window) 'split-window)
       (progn 
         (set-window-parameter nil 'split-window nil)
+        (setq-local window-size-fixed nil)
         (set-window-dedicated-p (selected-window) nil)
         (rename-buffer (string-trim-left (buffer-name)))
         (message "Window unpined"))
     (progn
       (set-window-parameter nil 'split-window #'ignore)
+        (setq-local window-size-fixed 'width)
       (set-window-dedicated-p (selected-window) t)
       (rename-buffer (concat " " (buffer-name)))
       (message "Window pined"))))
@@ -421,10 +423,7 @@ window list."
 (setq completion-auto-select nil)
 (setq completion-show-inline-help nil)
 
-(define-key completion-in-region-mode-map (kbd "C-s") 'minibuffer-next-completion)
-(define-key completion-in-region-mode-map (kbd "C-r") 'minibuffer-previous-completion)
-
-(defun my/minibuffer-choose-completion (&optional no-exit no-quit)
+(defun my/minibuffer-choose-completion (&optional repeat-key no-exit no-quit)
   (interactive)
   (let ((inhibit-message t)
         (message-log-max nil))
@@ -434,11 +433,34 @@ window list."
                    (let ((minibuffer-completion-auto-choose t))
                      (minibuffer-next-completion)))
           (call-interactively 'minibuffer-force-complete-and-exit))
-      (with-minibuffer-completions-window
-        (let ((completion-use-base-affixes nil))
-          (choose-completion nil no-exit no-quit))))))
+      (if (get-buffer-window "*Completions*")
+          (with-minibuffer-completions-window
+            (let ((completion-use-base-affixes nil))
+              (choose-completion nil no-exit no-quit)))
+        (progn 
+          (completion-in-region-mode -1)
+          (if (not (null repeat-key))
+              (execute-kbd-macro (kbd repeat-key))))))))
 
-(define-key completion-in-region-mode-map (kbd "RET") 'my/minibuffer-choose-completion)
+(define-key completion-in-region-mode-map (kbd "C-s") (lambda ()
+                                                        (interactive)
+                                                        (if (get-buffer-window "*Completions*")
+                                                            (minibuffer-next-completion)
+                                                          (progn 
+                                                            (completion-in-region-mode -1)
+                                                            (call-interactively 'isearch-forward)))))
+
+(define-key completion-in-region-mode-map (kbd "C-r") (lambda ()
+                                                        (interactive)
+                                                        (if (get-buffer-window "*Completions*")
+                                                            (minibuffer-previous-completion)
+                                                          (progn
+                                                            (completion-in-region-mode -1)
+                                                            (call-interactively 'isearch-backward)))))
+
+(define-key completion-in-region-mode-map (kbd "RET") (lambda () (interactive) (my/minibuffer-choose-completion "RET")))
+(define-key completion-in-region-mode-map (kbd "M-RET") (lambda () (interactive) (completion-in-region-mode -1) (execute-kbd-macro (kbd "RET"))))
+
 (add-hook 'completion-list-mode-hook (lambda () (setq truncate-lines t)))
 
 (defun utils/advice-silence-messages (orig-fun &rest args)
@@ -487,7 +509,9 @@ window list."
         (progn (define-key minibuffer-mode-map (kbd "C-s") 'minibuffer-next-completion)
                (define-key minibuffer-mode-map (kbd "C-r") 'minibuffer-previous-completion)
                (define-key minibuffer-mode-map (kbd "C-<tab>") 'my/minibuffer-choose-completion)
+               (define-key minibuffer-mode-map (kbd "M-<tab>") 'my/minibuffer-choose-completion)
                (define-key minibuffer-mode-map (kbd "C-<return>") 'minibuffer-complete-and-exit)
+               (define-key minibuffer-mode-map (kbd "M-<return>") 'minibuffer-complete-and-exit)
                (define-key minibuffer-mode-map (kbd "<return>") (lambda () (interactive) (my/minibuffer-choose-completion) (minibuffer-complete-and-exit)))
                (minibuffer-completion-help)))
     (remove-hook 'after-change-functions #'complete/buffer-has-changed t)
@@ -744,7 +768,7 @@ window list."
 
 (use-package magit
   :config
-  (setq transient-display-buffer-action 'display-buffer-below-selected)
+  (setq transient-display-buffer-action '(display-buffer-below-selected))
   (defun magit/magit-status-no-split ()
     "Don't split window."
     (interactive)
