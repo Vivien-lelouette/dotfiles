@@ -764,11 +764,24 @@ window list."
          ("C-c C-n" . code-review-comment-jump-next)
          ("C-c C-p" . code-review-comment-jump-previous)))
 
-(use-package yasnippet
-  :config
-  (yas-global-mode 1))
+(use-package tempel
+  :bind (("C-<tab>" . tempel-complete))
+  :init
+  ;; Setup completion at point
+  (defun tempel-setup-capf ()
+    ;; Add the Tempel Capf to `completion-at-point-functions'.
+    ;; `tempel-expand' only triggers on exact matches. Alternatively use
+    ;; `tempel-complete' if you want to see all matches, but then you
+    ;; should also configure `tempel-trigger-prefix', such that Tempel
+    ;; does not trigger too often when you don't expect it. NOTE: We add
+    ;; `tempel-expand' *before* the main programming mode Capf, such
+    ;; that it will be tried first.
+    (setq-local completion-at-point-functions
+                (cons #'tempel-expand
+                      completion-at-point-functions)))
 
-(use-package yasnippet-snippets)
+  (add-hook 'prog-mode-hook 'tempel-setup-capf)
+  (add-hook 'text-mode-hook 'tempel-setup-capf))
 
 (use-package nodejs-repl)
 
@@ -836,6 +849,7 @@ window list."
   (defun eglot/after-connect ()
     (interactive)
     (complete/start)
+    (setq-local completion-at-point-functions (list (cape-super-capf #'tempel-complete #'eglot-completion-at-point) t))
     (if (or (derived-mode-p 'js-mode) (derived-mode-p 'typescript-mode))
                                    (flymake-eslint-enable)))
 
