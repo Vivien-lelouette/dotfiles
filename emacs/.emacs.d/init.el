@@ -846,142 +846,78 @@ window list."
   :config
   (setq combobulate-flash-node nil))
 
-(use-package eglot
-  :defer t
-  :straight (:type built-in)
-  :bind (:map eglot-mode-map
-              ("C-." . eglot-code-actions))
+(use-package lsp-mode
+  :straight (lsp-mode :type git :host github :repo "emacs-lsp/lsp-mode")
+  :init
+  ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
+  (setq lsp-keymap-prefix "C-c l")
+  :custom
+  (lsp-clients-typescript-server-args '("--stdio"))
+  :bind (
+         :map lsp-mode-map
+         ("C-h ." . lsp-describe-thing-at-point)
+         ("C-." . lsp-execute-code-action)
+         ("M-." . lsp-find-definition))
+  :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
+         (js-mode . lsp)
+         (sql-mode . lsp)
+         (lsp-mode . (lambda ()
+                       (complete/start)
+                       (make-local-variable 'completion-at-point-functions)
+                       (setq-local completion-at-point-functions
+                                   (list
+                                    (cape-super-capf #'tempel-complete #'lsp-completion-at-point)
+                                    t))))
+         ;; if you want which-key integration
+         (lsp-mode . lsp-enable-which-key-integration)
+         )
+  :commands lsp
   :config
+  (with-eval-after-load 'js
+    (define-key js-mode-map (kbd "M-.") nil)
+    )
+  (setq
+   lsp-log-io nil
+   lsp-completion-enable nil
+   lsp-completion-provide :none
+   lsp-enable-symbol-highlighting nil
+   lsp-eldoc-render-all nil
+   lsp-auto-guess-root t
+   lsp-log-io nil
+   lsp-restart 'auto-restart
+   lsp-enable-on-type-formatting nil
+   lsp-eslint-auto-fix-on-save nil
+   lsp-signature-auto-activate t
+   lsp-signature-render-documentation t
+   lsp-headerline-breadcrumb-enable nil
+   lsp-semantic-tokens-enable nil
+   lsp-enable-folding nil
+   lsp-enable-snippet t
+   lsp-idle-delay 0.2))
 
-  (defun js/hook ()
-    (interactive)
-    (eglot-ensure)
-    (define-key js-mode-map (kbd "M-.") 'xref-find-definitions)
-    (define-key js-mode-map (kbd "M-?") 'xref-find-references)
-    (define-key js-mode-map (kbd "C-x C-e") 'nodejs-repl-send-last-expression)
-    (define-key js-mode-map (kbd "C-c C-j") 'nodejs-repl-send-line)
-    (define-key js-mode-map (kbd "C-c C-r") 'nodejs-repl-send-region)
-    (define-key js-mode-map (kbd "C-c C-c") 'nodejs-repl-send-buffer)
-    (define-key js-mode-map (kbd "C-c C-l") 'nodejs-repl-load-file)
-    (define-key js-mode-map (kbd "C-c C-z") 'nodejs-repl-switch-to-repl))
+;; (use-package lsp-ui
+;;   :commands lsp-ui-mode
+;;   :config
+;;   (setq lsp-ui-doc-enable nil
+;;         lsp-ui-doc-header t
+;;         lsp-ui-doc-include-signature t
+;;         lsp-ui-doc-border (face-foreground 'default)
+;;         lsp-ui-sideline-show-code-actions t
+;;         lsp-ui-sideline-delay 0.05))
 
-  (defun sql/hook ()
-    (interactive)
-    (eglot-ensure)
-    (define-key sql-mode-map (kbd "C-x C-e") 'eglot/sqls-select-and-execute-command))
+(defun disable-lsp-ltex ()
+  (interactive))
+  ;;(lsp-workspace-shutdown 'lsp--cur-workspace))
 
-  (defun eglot/after-connect ()
-    (interactive)
-    (complete/start)
-    (setq-local completion-at-point-functions (list (cape-super-capf #'tempel-complete #'eglot-completion-at-point) t))
-    (if (or (derived-mode-p 'js-mode) (derived-mode-p 'typescript-mode))
-                                   (flymake-eslint-enable)))
+(use-package lsp-ltex
+  :hook
+  (text-mode . (lambda ()
+                 (require 'lsp-ltex)
+                 (lsp)))
+  (yaml-mode . disable-lsp-ltex))
 
-  (add-hook 'eglot-managed-mode-hook 'eglot/after-connect)
-  (add-hook 'typescript-mode-hook 'js/hook)
-  (add-hook 'js-mode-hook 'js/hook)
-  (add-hook 'sql-mode-hook 'sql/hook)
-  (setq 
-   eglot-events-buffer-size 0
-   eldoc-echo-area-use-multiline-p nil
-   eglot-ignored-server-capabilities '(:documentHighlightProvider))
-
-  (delete '((js-mode typescript-mode)
-            "typescript-language-server" "--stdio") eglot-server-programs)
-  (add-to-list 'eglot-server-programs
-               '((js-mode typescript-mode)
-                 "typescript-language-server" "--stdio" "--tsserver-path" "/nix/store/0jshaillr4zq0ml575jjnj1xabmlf3m9-typescript-4.8.4/lib/node_modules/typescript"))
-
-  (defclass eglot-sqls (eglot-lsp-server) () :documentation "SQL's Language Server")
-  (add-to-list 'eglot-server-programs '(sql-mode . (eglot-sqls "sqls")))
-
-  (defun eglot/sqls-select-and-execute-command ()
-    (interactive)
-    (call-interactively 'sql-beginning-of-statement)
-    (call-interactively 'set-mark-command)
-    (call-interactively 'sql-end-of-statement)
-    (eglot/sqls-execute-command)
-    (deactivate-mark))
-
-  (defun eglot/sqls-execute-command ()
-    (interactive)
-    (let* ((server (eglot-current-server))
-           (command "executeQuery")
-           (arguments (concat "file://" (buffer-file-name)))
-           (beg (eglot--pos-to-lsp-position (if (use-region-p) (region-beginning) (point-min))))
-           (end (eglot--pos-to-lsp-position (if (use-region-p) (region-end) (point-max))))
-           (res (jsonrpc-request server :workspace/executeCommand
-                                 `(:command ,(format "%s" command) :arguments [,arguments]
-                                            :timeout 0.5 :range (:start ,beg :end ,end))))
-           (buffer (get-buffer-create "*sqls*")))
-      (with-current-buffer buffer
-        (erase-buffer)
-        (eglot--apply-text-edits `[
-                                   (:range
-                                    (:start
-                                     (:line 0 :character 0)
-                                     :end
-                                     (:line 0 :character 0))
-                                    :newText ,res)
-                                   ]
-                                 )
-        (beginning-of-buffer)
-        (replace-regexp "+$" "|")
-        (beginning-of-buffer)
-        (replace-regexp "^+" "|")
-        (beginning-of-buffer)
-        (org-mode)
-        (org-toggle-pretty-entities)
-        (mixed-pitch-mode -1)
-        (toggle-truncate-lines 1)
-        (god-local-mode 1))
-      (display-buffer-below-selected buffer '())
-      ))
-
-  (cl-defmethod eglot-execute-command
-    ((server eglot-sqls) (command (eql executeQuery)) arguments)
-    "For executeQuery."
-    (eglot/sqls-execute-command))
-
-  (cl-defmethod eglot-execute-command
-    ((server eglot-sqls) (_cmd (eql switchDatabase)) arguments)
-    "For switchDatabase."
-    (let* ((res (jsonrpc-request server :workspace/executeCommand
-                                 `(:command "showDatabases" :arguments ,arguments :timeout 0.5)))
-           (menu-items (split-string res "\n"))
-           (menu `("Eglot code actions:" ("dummy" ,@menu-items)))
-           (db (if (listp last-nonmenu-event)
-                   (x-popup-menu last-nonmenu-event menu)
-                 (completing-read "[eglot] Pick an database: "
-                                  menu-items nil t
-                                  nil nil (car menu-items))
-                 ))
-           )
-      (jsonrpc-request server :workspace/executeCommand
-                       `(:command "switchDatabase" :arguments [,db] :timeout 0.5))
-      ))
-
-  (cl-defmethod eglot-execute-command
-    ((server eglot-sqls) (_cmd (eql switchConnections)) arguments)
-    "For switchConnection."
-    (let* ((res (jsonrpc-request server :workspace/executeCommand
-                                 `(:command "showConnections" :arguments ,arguments :timeout 0.5)))
-           (menu-items (split-string res "\n"))
-           (menu `("Eglot code actions:" ("dummy" ,@menu-items)))
-           (conn (if (listp last-nonmenu-event)
-                     (x-popup-menu last-nonmenu-event menu)
-                   (completing-read "[eglot] Pick a connection: "
-                                    menu-items nil t
-                                    nil nil (car menu-items))
-                   ))
-           )
-      (jsonrpc-request server :workspace/executeCommand
-                       `(:command "switchConnections" :arguments [,(nth 0 (split-string conn))] :timeout 0.5))
-      )))
-
-(use-package realgud)
-
-(use-package realgud-trepan-ni)
+(use-package dap-mode
+  :straight (dap-mode :type git :host github :repo "emacs-lsp/dap-mode"))
 
 (use-package adoc-mode
   :config
