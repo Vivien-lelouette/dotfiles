@@ -245,6 +245,10 @@
   (interactive)
   (shell/run-in-background "xfce4-mouse-settings"))
 
+(defun warpd/hint ()
+  (interactive)
+  (shell/run-in-background "warpd --oneshot --foreground --hint"))
+
 (use-package exwm
   :config
   (setq x-no-window-manager t)
@@ -285,6 +289,9 @@
   ;; Keep in mind that changing this list after EXWM initializes has no effect.
   (setq exwm-input-global-keys
         `(
+          ;; mouse jump
+          ([?\s-\;] . warpd/hint)
+
           ;; refresh setup
           ([?\s-r] . exwm-reset)
           ([?\s-R] . exwm/refresh-setup-and-monitors)

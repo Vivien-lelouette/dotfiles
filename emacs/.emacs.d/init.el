@@ -174,13 +174,19 @@ window list."
   (bind-key "M-j" #'avy-goto-char-timer))
 
 (use-package multiple-cursors
-    :config
-    (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
-    (global-set-key (kbd "C->") 'mc/mark-next-like-this)
-    (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
-    (global-set-key (kbd "C-;") 'mc/mark-all-like-this)
-    (global-set-key (kbd "C-S-<mouse-1>") 'mc/add-cursor-on-click)
-    (setq mc/black-list-prefer t))
+  :config
+  (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
+  (global-set-key (kbd "C->") 'mc/mark-next-like-this)
+  (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
+  (global-set-key (kbd "C-;") 'mc/mark-all-like-this)
+  (global-set-key (kbd "C-S-<mouse-1>") 'mc/add-cursor-on-click)
+  (setq mc/black-list-prefer t)
+  (add-hook 'after-init-hook
+            #'(lambda ()
+                (defface mc/cursor-bar-face
+                  `((t (:height 1 :inherit cursor)))
+                  "The face used for fake cursors if the cursor-type is bar"
+                  :group 'multiple-cursors))))
 
 (use-package expand-region
   :config
@@ -807,6 +813,10 @@ window list."
   (add-hook 'prog-mode-hook 'tempel-setup-capf)
   (add-hook 'text-mode-hook 'tempel-setup-capf))
 
+(defun eshell/jwt-decode (jwt)
+  (interactive "sJWT: ")
+  (shell-command-to-string (concat "PATH=~/.npm-packages/bin:$PATH NODE_PATH=~/.npm-packages/lib/node_modules node -e \"const jwt = require('jsonwebtoken'); console.log(jwt.decode('" jwt "', { complete: true }))\"")))
+
 (use-package nodejs-repl)
 
 (use-package typescript-mode
@@ -848,6 +858,7 @@ window list."
 
 (use-package lsp-mode
   :straight (lsp-mode :type git :host github :repo "emacs-lsp/lsp-mode")
+  :defer t
   :init
   ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
   (setq lsp-keymap-prefix "C-c l")
@@ -888,33 +899,65 @@ window list."
    lsp-enable-on-type-formatting nil
    lsp-eslint-auto-fix-on-save nil
    lsp-signature-auto-activate t
-   lsp-signature-render-documentation t
+   lsp-signature-render-documentation nil
    lsp-headerline-breadcrumb-enable nil
    lsp-semantic-tokens-enable nil
    lsp-enable-folding nil
-   lsp-enable-snippet t
-   lsp-idle-delay 0.2))
+   lsp-enable-snippet nil
+   lsp-idle-delay 0.2)
 
-;; (use-package lsp-ui
-;;   :commands lsp-ui-mode
-;;   :config
-;;   (setq lsp-ui-doc-enable nil
-;;         lsp-ui-doc-header t
-;;         lsp-ui-doc-include-signature t
-;;         lsp-ui-doc-border (face-foreground 'default)
-;;         lsp-ui-sideline-show-code-actions t
-;;         lsp-ui-sideline-delay 0.05))
+  (defun lsp/sqls-select-and-execute-command ()
+    (interactive)
+    (call-interactively 'sql-beginning-of-statement)
+    (call-interactively 'set-mark-command)
+    (call-interactively 'sql-end-of-statement)
+    (run-with-timer 1 nil (lambda () 
+                              (execute-kbd-macro "Execute Query")
+                              (call-interactively 'minibuffer-force-complete-and-exit)))
+    (call-interactively 'lsp-execute-code-action)
+    (deactivate-mark))
+
+    (defun lsp-sqls--show-results (result)
+      (with-current-buffer (get-buffer-create "*sqls results*")
+        (with-help-window (buffer-name)
+          (erase-buffer)
+          (insert result)
+          (beginning-of-buffer)
+          (replace-regexp "+$" "|")
+          (beginning-of-buffer)
+          (replace-regexp "^+" "|")
+          (beginning-of-buffer)
+          (org-mode)
+          (org-toggle-pretty-entities)
+          (mixed-pitch-mode -1)
+          (toggle-truncate-lines 1)
+          (god-local-mode 1)
+          (read-only-mode -1))))
+
+    (define-key sql-mode-map (kbd "C-x C-e") 'lsp/sqls-select-and-execute-command))
+
+  ;; (use-package lsp-ui
+  ;;   :commands lsp-ui-mode
+  ;;   :config
+  ;;   (setq lsp-ui-doc-enable nil
+  ;;         lsp-ui-doc-header t
+  ;;         lsp-ui-doc-include-signature t
+  ;;         lsp-ui-doc-border (face-foreground 'default)
+  ;;         lsp-ui-sideline-show-code-actions t
+  ;;         lsp-ui-sideline-delay 0.05))
 
 (defun disable-lsp-ltex ()
   (interactive))
   ;;(lsp-workspace-shutdown 'lsp--cur-workspace))
 
 (use-package lsp-ltex
-  :hook
-  (text-mode . (lambda ()
-                 (require 'lsp-ltex)
-                 (lsp)))
-  (yaml-mode . disable-lsp-ltex))
+  :config
+  (setq lsp-ltex-completion-enabled t))
+  ;;:hook
+  ;;(text-mode . (lambda ()
+  ;;               (require 'lsp-ltex)
+  ;;               (lsp)))
+  ;;(yaml-mode . disable-lsp-ltex))
 
 (use-package dap-mode
   :straight (dap-mode :type git :host github :repo "emacs-lsp/dap-mode"))
@@ -1102,7 +1145,7 @@ window list."
 
    ;; Org styling, hide markup etc.
    org-hide-emphasis-markers t
-   org-pretty-entities t
+   org-pretty-entities nil
    org-ellipsis "…"
 
    ;; Agenda styling
@@ -1115,8 +1158,9 @@ window list."
    "⭠ now ─────────────────────────────────────────────────")
 
   ;; Enable org-modern-mode
-  (add-hook 'org-mode-hook #'org-modern-mode)
-  (add-hook 'org-agenda-finalize-hook #'org-modern-agenda))
+  ;; (add-hook 'org-mode-hook #'org-modern-mode)
+  ;; (add-hook 'org-agenda-finalize-hook #'org-modern-agenda)
+  )
 
 (use-package shr
   :straight (:type built-in)
@@ -1204,6 +1248,52 @@ Version 2017-11-10"
   (add-hook 'eww-after-render-hook #'shrface-mode)
   (add-hook 'eww-after-render-hook #'mixed-pitch-mode)
   (add-hook 'eww-after-render-hook #'olivetti-mode))
+
+(when (executable-find "mu")
+  (use-package mu4e
+    :straight nil
+    :ensure nil
+    :config
+    (setq mu4e-mu-binary (executable-find "mu"))
+    (setq mu4e-maildir "~/.maildir")
+    (setq mu4e-update-interval (* 1 60))
+    ;; use mu4e for e-mail in emacs
+    (setq mail-user-agent 'mu4e-user-agent)
+
+    (setq mu4e-drafts-folder "/[Gmail].Drafts")
+    (setq mu4e-sent-folder   "/[Gmail].Sent Mail")
+    (setq mu4e-trash-folder  "/[Gmail].Trash")
+
+    ;; don't save message to Sent Messages, Gmail/IMAP takes care of this
+    (setq mu4e-sent-messages-behavior 'delete)
+
+    ;; (See the documentation for `mu4e-sent-messages-behavior' if you have
+    ;; additional non-Gmail addresses and want assign them different
+    ;; behavior.)
+
+    ;; setup some handy shortcuts
+    ;; you can quickly switch to your Inbox -- press ``ji''
+    ;; then, when you want archive some messages, move them to
+    ;; the 'All Mail' folder by pressing ``ma''.
+
+    (setq mu4e-maildir-shortcuts
+          '( (:maildir "/INBOX"              :key ?i)
+             (:maildir "/[Gmail].Sent Mail"  :key ?s)
+             (:maildir "/[Gmail].Trash"      :key ?t)
+             (:maildir "/[Gmail].All Mail"   :key ?a)))
+
+    ;; allow for updating mail using 'U' in the main view:
+    (setq mu4e-get-mail-command "offlineimap")
+
+    ;; alternatively, for emacs-24 you can use:
+    ;;(setq message-send-mail-function 'smtpmail-send-it
+    ;;     smtpmail-stream-type 'starttls
+    ;;     smtpmail-default-smtp-server "smtp.gmail.com"
+    ;;     smtpmail-smtp-server "smtp.gmail.com"
+    ;;     smtpmail-smtp-service 587)
+
+    ;; don't keep message buffers around
+    (setq message-kill-buffer-on-exit t)))
 
 (defun utils/window-with-buffer-prefix (prefix)
   "Returns the first window displaying a buffer starting with prefix"
