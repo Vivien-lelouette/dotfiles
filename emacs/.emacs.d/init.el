@@ -240,7 +240,21 @@ window list."
                 `((menu-bar menu-item (propertize "𝝺    " 'face 'tab-bar)
                             tab-bar-menu-bar :help "Menu Bar")))
 
+              (defun tab-bar-tab-name-format-default (tab i)
+                (let ((current-p (eq (car tab) 'current-tab)))
+                  (propertize
+                   (concat (if tab-bar-tab-hints (format "%d:  " i) "")
+                           (alist-get 'name tab)
+                           (or (and tab-bar-close-button-show
+                                    (not (eq tab-bar-close-button-show
+                                             (if current-p 'non-selected 'selected)))
+                                    tab-bar-close-button)
+                               ""))
+                   'face (funcall tab-bar-tab-face-function tab))))
+
               (set-face-attribute 'tab-bar nil :background "#282a36" :foreground "#b6b6b2" :underline nil :box '(:line-width (10 . 2) :color "#282a36") :height 120 :weight 'bold)
+              (set-face-attribute 'tab-bar-tab-inactive nil :background "#282a36" :foreground "#b6b6b" :box nil :height 120 :weight 'light)
+              (set-face-attribute 'tab-bar-tab nil :background "#282a36" :foreground "#ff79bf" :box nil :height 120 :weight 'bold)
 
               (setq tab-bar-format '(tab-bar-format-menu-bar
                                      tab-bar-format-tabs
@@ -248,13 +262,15 @@ window list."
                                      tab-bar-format-align-right
                                      tab-bar-format-global)
                     tab-bar-tab-name-truncated-max 50
-                    tab-bar-close-button-show nil)
+                    tab-bar-close-button-show nil
+                    tab-bar-tab-hints t)
+
               (setq global-mode-string '("      " display-time-string "    " battery-mode-line-string))
               (setq battery-mode-line-format
-                (cond ((eq battery-status-function #'battery-linux-proc-acpi)
-                       "%b%p%%,%d°C")
-                      (battery-status-function
-                       "%b%p%%")))))
+                    (cond ((eq battery-status-function #'battery-linux-proc-acpi)
+                           "%b%p%%,%d°C")
+                          (battery-status-function
+                           "%b%p%%")))))
 
 (use-package time
   :commands world-clock
@@ -913,7 +929,9 @@ window list."
          ("C-." . lsp-execute-code-action)
          ("M-." . lsp-find-definition))
   :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
-         (js-mode . lsp)
+         (js-mode . (lambda () 
+                      (lsp)
+                      (flymake-eslint-enable)))
          (sql-mode . lsp)
          (lsp-mode . (lambda ()
                        (complete/start)

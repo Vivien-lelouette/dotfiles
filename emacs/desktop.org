@@ -45,24 +45,18 @@ Workspace 1 & 2 will be allocated to the most left monitor, the 3 & 4 to the one
                     (xrandr-active-monitors)
                     'sort-from-car))))
 
-  (defun build-workspace-monitor (monitor current_workspace max_workspace)
-    (if (> current_workspace max_workspace)
-        '()
-      (append (list current_workspace monitor) (build-workspace-monitor monitor (+ current_workspace 1) max_workspace))))
-
-  (defun build-exwm-monitors-aux (current_workspace monitor-list)
-    (cond
-     ((equal (length monitor-list) 1)
-      (list 9 (car monitor-list) 0 (car monitor-list))
-      )
-     ((equal (length monitor-list) 2)
-      (append (build-workspace-monitor (car monitor-list) current_workspace 8) (build-exwm-monitors-aux (+ current_workspace 2) (cdr monitor-list)))
-      )
-     (t
-      (append (build-workspace-monitor (car monitor-list) current_workspace (+ current_workspace 1)) (build-exwm-monitors-aux (+ current_workspace 2) (cdr monitor-list))))))
-
   (defun build-exwm-monitors ()
-    (build-exwm-monitors-aux 1 (order-monitors)))
+    (setq 
+     index 0
+     exwm-monitor-workspaces (list ))
+
+    (let ((monitors (order-monitors)))
+      (while (< index (length monitors))
+        (progn
+          (setq index (1+ index))
+          (add-to-list 'exwm-monitor-workspaces index t)
+          (add-to-list 'exwm-monitor-workspaces (nth (1- index) monitors) t))))
+    exwm-monitor-workspaces)
 
   ;; This defines a function to refresh the workspaces position and xrandr
   (defun exwm/refresh-setup ()
@@ -410,11 +404,26 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
 
             ;; 's-N': Switch to certain workspace with Super (Win) plus a number key (0 - 9)
             ,@(mapcar (lambda (i)
-                        `(,(kbd (format "s-w %d" i)) .
+                        `(,(kbd (format "s-w s %d" i)) .
                           (lambda ()
                             (interactive)
                             (exwm-workspace-switch-create ,i))))
                       (number-sequence 0 9))
+
+            ,@(mapcar (lambda (i)
+                        `(,(kbd (format "s-w %d" i)) .
+                          (lambda ()
+                            (interactive)
+                            (tab-bar-select-tab ,i))))
+                      (number-sequence 0 9))
+
+            ([?\s-w ?\s-w] . tab-bar-new-tab)
+            ([?\s-w ?\s-W] . tab-bar-duplicate-tab)
+            ([?\s-w ?\s-k] . tab-bar-close-tab)
+
+            ([?\s-w ?\s-n] . tab-bar-switch-to-next-tab)
+            ([?\s-w ?\s-p] . tab-bar-switch-to-prev-tab)
+
 
             ,@(mapcar (lambda (i)
                         `(,(kbd (format "s-%d" i)) .
