@@ -99,6 +99,9 @@
       hack-indent-offset tab-width
       standard-indent tab-width)
 
+(setq display-line-numbers-type 'relative)
+;; (global-display-line-numbers-mode 1)
+
 (setq warning-minimum-level :error)
 
 (repeat-mode 1)
@@ -227,6 +230,42 @@ window list."
   :hook
   (text-mode . mixed-pitch-mode)
   (yaml-mode . disable-mixed-pitch))
+
+(tab-bar-mode 1)
+
+(add-hook 'after-init-hook
+          #'(lambda ()
+              (defun tab-bar-format-menu-bar ()
+                "Produce the Menu button for the tab bar that shows the menu bar."
+                `((menu-bar menu-item (propertize "𝝺    " 'face 'tab-bar)
+                            tab-bar-menu-bar :help "Menu Bar")))
+
+              (set-face-attribute 'tab-bar nil :background "#282a36" :foreground "#b6b6b2" :underline nil :box '(:line-width (10 . 2) :color "#282a36") :height 120 :weight 'bold)
+
+              (setq tab-bar-format '(tab-bar-format-menu-bar
+                                     tab-bar-format-tabs
+                                     tab-bar-separator
+                                     tab-bar-format-align-right
+                                     tab-bar-format-global)
+                    tab-bar-tab-name-truncated-max 50
+                    tab-bar-close-button-show nil)
+              (setq global-mode-string '("      " display-time-string "    " battery-mode-line-string))
+              (setq battery-mode-line-format
+                (cond ((eq battery-status-function #'battery-linux-proc-acpi)
+                       "%b%p%%,%d°C")
+                      (battery-status-function
+                       "%b%p%%")))))
+
+(use-package time
+  :commands world-clock
+  :config
+  (setq display-time-format "%d-%m-%Y %H:%M")
+  (setq display-time-interval 60)
+  (setq display-time-mail-directory nil)
+  (setq display-time-default-load-average nil)
+  :hook
+  (after-init . display-time-mode)
+  (after-init . display-battery-mode))
 
 (use-package dracula-theme
   :config
@@ -420,6 +459,10 @@ window list."
   (blist-define-criterion "chrome" "Chrome"
                           (eq (bookmark-get-handler bookmark)
                               #'bookmark/chrome-bookmark-handler)))
+
+(use-package lemon
+  :straight (lemon ::type git :repo "https://codeberg.org/emacs-weirdware/lemon.git")
+  :config (lemon-mode 0))
 
 (setq tab-always-indent 'complete)
 (setq completions-format 'one-column)

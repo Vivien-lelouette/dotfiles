@@ -201,49 +201,53 @@
   (kill-current-buffer)
   (delete-window))
 
-(defun xfce/terminal ()
+(defun kde/lock-screen ()
   (interactive)
-  (shell/run-in-background "gnome-terminal"))
+  (shell/run-in-background "loginctl lock-session"))
 
-(defun xfce/lock-screen ()
+(defun kde/logout ()
   (interactive)
-  (shell/run-in-background "i3lock -c 000000"))
+  (shell/run-in-background "loginctl terminate-session"))
 
-(defun xfce/logout ()
-  (interactive)
-  (shell/run-in-background "xfce4-session-logout --logout"))
-
-(defun xfce/shutdown ()
+(defun kde/shutdown ()
   (interactive)
   (shell/run-in-background "shutdown -h 0"))
 
-(defun xfce/reboot ()
+(defun kde/reboot ()
   (interactive)
   (shell/run-in-background "reboot"))
 
-(defun xfwm4/replace ()
+(defun kwin/replace ()
   (interactive)
-  (shell/run-in-background "xfwm4 --replace"))
+  (shell/run-in-background "kwin_x11 --replace"))
 
 (defun settings/manager ()
   (interactive)
-  (shell/run-in-background "xfce4-settings-manager"))
+  (shell/run-in-background "systemsettings5"))
 
 (defun settings/appearance ()
   (interactive)
-  (shell/run-in-background "xfce4-appearance-settings"))
+  (shell/run-in-background "systemsettings5 kcm_lookandfeel"))
 
 (defun settings/display ()
   (interactive)
-  (shell/run-in-background "xfce4-display-settings"))
+  (shell/run-in-background "systemsettings5 kcm_kscreen"))
 
 (defun settings/keyboard ()
   (interactive)
-  (shell/run-in-background "xfce4-keyboard-settings"))
+  (shell/run-in-background "systemsettings5 kcm_keyboard"))
 
 (defun settings/mouse ()
   (interactive)
-  (shell/run-in-background "xfce4-mouse-settings"))
+  (shell/run-in-background "systemsettings5 kcm_mouse"))
+
+(defun settings/network ()
+  (interactive)
+  (shell/run-in-background "systemsettings5 kcm_networkmanagement"))
+
+(defun settings/sound ()
+  (interactive)
+  (shell/run-in-background "systemsettings5 kcm_pulseaudio"))
 
 (defun warpd/hint ()
   (interactive)
@@ -322,17 +326,19 @@
           ([?\s-M] . exwm-floating-toggle-floating)
           ([?\s-n] . window/force-tiled-fullscreen)
 
-          ([?\s-l ?\s-l] . xfce/lock-screen)
-          ([?\s-l ?\M-l] . xfce/logout)
-          ([?\s-l ?\M-s] . xfce/shutdown)
-          ([?\s-l ?\M-r] . xfce/reboot)
-          ([?\s-l ?\M-w] . xfwm4/replace)
+          ([?\s-p ?\s-l] . kde/lock-screen)
+          ([?\s-p ?\M-l] . kde/logout)
+          ([?\s-p ?\M-s] . kde/shutdown)
+          ([?\s-p ?\M-r] . kde/reboot)
+          ([?\s-p ?\M-w] . kwin/replace)
 
           ([?\s-o ?\s-o] . settings/manager)
           ([?\s-o a] . settings/appearance)
           ([?\s-o d] . settings/display)
           ([?\s-o k] . settings/keyboard)
           ([?\s-o m] . settings/mouse)
+          ([?\s-o n] . settings/network)
+          ([?\s-o s] . settings/sound)
 
           ([?\s-a] . app-launcher-run-app)
 
@@ -482,7 +488,9 @@
   ;; This is for multiscreen support
   (require 'exwm-randr)
   (add-hook 'exwm-randr-screen-change-hook 'exwm/refresh-setup)
-  (exwm-randr-enable))
+  (exwm-randr-enable)
+  (require 'exwm-systemtray)
+  (exwm-systemtray-enable))
 
 (use-package exwm-edit
   :straight (exwm-edit :type git :host github :repo "agzam/exwm-edit"))
