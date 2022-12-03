@@ -46,7 +46,6 @@
 ;; This defines a function to refresh the workspaces position and xrandr
 (defun exwm/refresh-setup ()
   (interactive)
-  (setq exwm-randr-workspace-monitor-plist (build-exwm-monitors))
   ;;(shell/run-in-background "~/.config/polybar/start_polybar.sh")
   (setup/input))
 
@@ -57,9 +56,7 @@
 
 (defun setup/input ()
   (interactive)
-  (start-process-shell-command "trackball" nil "bash ~/.scripts/trackball-setup.sh")
-  ;; Rebind CapsLock to Esc
-  (start-process-shell-command "qwerty" nil "setxkbmap -layout us -option 'compose:rctrl'"))
+  (start-process-shell-command "trackball" nil "bash ~/.scripts/trackball-setup.sh"))
 
 (use-package app-launcher
   :straight '(app-launcher :host github :repo "SebastienWae/app-launcher"
@@ -327,12 +324,12 @@
           ([?\s-p ?\M-w] . kwin/replace)
 
           ([?\s-o ?\s-o] . settings/manager)
-          ([?\s-o a] . settings/appearance)
-          ([?\s-o d] . settings/display)
-          ([?\s-o k] . settings/keyboard)
-          ([?\s-o m] . settings/mouse)
-          ([?\s-o n] . settings/network)
-          ([?\s-o s] . settings/sound)
+          ([?\s-o ?\s-a] . settings/appearance)
+          ([?\s-o ?\s-d] . settings/display)
+          ([?\s-o ?\s-k] . settings/keyboard)
+          ([?\s-o ?\s-m] . settings/mouse)
+          ([?\s-o ?\s-n] . settings/network)
+          ([?\s-o ?\s-s] . settings/sound)
 
           ([?\s-a] . app-launcher-run-app)
 
