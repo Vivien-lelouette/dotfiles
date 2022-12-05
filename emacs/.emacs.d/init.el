@@ -591,9 +591,17 @@ window list."
     (remove-hook 'after-change-functions #'complete/buffer-has-changed t)
     (add-hook 'after-change-functions #'complete/buffer-has-changed nil t)))
 
-(setq minibuffer-completion-auto-choose nil)
-(run-with-idle-timer 0.2 t #'complete/update-in-region)
-(add-hook 'minibuffer-setup-hook #'complete/start)
+(defun complete/setup ()
+  (setq minibuffer-completion-auto-choose nil)
+  (setq complete/timer (run-with-idle-timer 0.2 t #'complete/update-in-region))
+  (add-hook 'minibuffer-setup-hook #'complete/start)
+  (marginalia-mode -1))
+
+(defun complete/teardown ()
+  (setq minibuffer-completion-auto-choose t)
+  (cancel-timer complete/timer)
+  (remove-hook 'minibuffer-setup-hook #'complete/start)
+  (marginalia-mode 1))
 
 (use-package vcomplete
   :config
@@ -610,6 +618,60 @@ window list."
     (vcomplete-prev-completion))
 
   (define-key vcomplete-command-map (kbd "C-<return>") 'vcomplete-choose-completion))
+
+(use-package vertico
+    :straight (vertico :type git :host github :repo "minad/vertico")
+    :config
+    (load-file "~/.emacs.d/straight/build/vertico/extensions/vertico-buffer.el")
+    (setq
+     vertico-cycle t
+     vertico-buffer-display-action '(display-buffer-below-selected (window-height . 10)))
+    (vertico-mode)
+    (vertico-buffer-mode))
+
+(use-package corfu
+  :straight (corfu :type git :host github :repo "minad/corfu" :files ("*" "extensions/*.el" (:exclude ".git")))
+  ;; Optional customizations
+  :custom
+  (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
+  (corfu-auto t)                 ;; Enable auto completion
+  (corfu-auto-prefix 2)
+  (corfu-auto-delay 0.0)
+  (corfu-echo-documentation 0.25) ;; Disable documentation in the echo area
+  (corfu-quit-at-boundary 'separator)   ;; Never quit at completion boundary
+  (corfu-preselect-first nil)    ;; Disable candidate preselection
+  (corfu-preview-current 'insert)    ;; Disable current candidate preview
+  ;; (corfu-separator ?\s)          ;; Orderless field separator
+  ;; (corfu-quit-no-match nil)      ;; Never quit, even if there is no match
+  ;; (corfu-on-exact-match nil)     ;; Configure handling of exact matches
+  ;; (corfu-scroll-margin 5)        ;; Use scroll margin
+
+  ;; You may want to enable Corfu only for certain modes.
+  ;; :hook ((prog-mode . corfu-mode)
+  ;;        (shell-mode . corfu-mode)
+  ;;        (eshell-mode . corfu-mode))
+
+  ;; Recommended: Enable Corfu globally.
+  ;; This is recommended since dabbrev can be used globally (M-/).
+  :bind (:map corfu-map
+              ("M-SPC" . corfu-insert-separator))
+  :init
+  (global-corfu-mode)
+  (corfu-history-mode)
+  (add-hook 'eshell-mode-hook
+        (lambda ()
+          (setq-local corfu-auto nil)
+          (corfu-mode)))
+
+  (defun corfu-send-shell (&rest _)
+    "Send completion candidate when inside comint/eshell."
+    (cond
+     ((and (derived-mode-p 'eshell-mode) (fboundp 'eshell-send-input))
+      (eshell-send-input))
+     ((and (derived-mode-p 'comint-mode)  (fboundp 'comint-send-input))
+      (comint-send-input))))
+
+  (advice-add #'corfu-insert :after #'corfu-send-shell))
 
 (use-package embark
   :bind (
@@ -750,7 +812,9 @@ window list."
   ;; Either bind `marginalia-cycle` globally or only in the minibuffer
   :bind (
          :map minibuffer-local-map
-         ("M-A" . marginalia-cycle)))
+         ("M-A" . marginalia-cycle))
+  :config
+  (marginalia-mode 1))
 
 (use-package cape
   ;; Bind dedicated completion commands
