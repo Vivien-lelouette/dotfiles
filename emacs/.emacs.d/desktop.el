@@ -374,7 +374,8 @@
 
           ([?\s-w ?\s-n] . tab-bar-switch-to-next-tab)
           ([?\s-w ?\s-p] . tab-bar-switch-to-prev-tab)
-
+          ([s-tab] . tab-bar-switch-to-next-tab)
+          ([s-iso-lefttab] . tab-bar-switch-to-prev-tab)
 
           ,@(mapcar (lambda (i)
                       `(,(kbd (format "s-%d" i)) .

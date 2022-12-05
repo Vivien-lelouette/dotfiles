@@ -264,15 +264,22 @@ window list."
         tab-bar-tab-hints t
         tab-bar-border 1)
 
-  (setq global-mode-string '("   " display-time-string "    " battery-mode-line-string))
-  (setq battery-mode-line-format
-        (cond ((eq battery-status-function #'battery-linux-proc-acpi)
-               "%b%p%%,%d°C  ")
-              (battery-status-function
-               "%b%p%%  ")))
+  (setq global-mode-string '("" display-time-string battery-mode-line-string))
 
   (display-time-mode 1)
-  (display-battery-mode 1)
+  (setq display-time-format "   %d-%m-%Y %H:%M  ")
+
+  (when (and battery-status-function
+             (not (string-match-p "N/A"
+                                  (battery-format "%B"
+                                                  (funcall battery-status-function)))))
+    (display-battery-mode 1))
+  (setq battery-mode-line-format
+        (cond ((eq battery-status-function #'battery-linux-proc-acpi)
+               "    %b%p%%,%d°C  ")
+              (battery-status-function
+               "    %b%p%%  ")))
+
   (tab-bar-mode 1))
 
 (add-hook 'after-init-hook #'tab/setup)
@@ -280,7 +287,6 @@ window list."
 (use-package time
   :commands world-clock
   :config
-  (setq display-time-format "%d-%m-%Y %H:%M  ")
   (setq display-time-interval 60)
   (setq display-time-mail-directory nil)
   (setq display-time-default-load-average nil))
