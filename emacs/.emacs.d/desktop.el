@@ -46,6 +46,7 @@
 ;; This defines a function to refresh the workspaces position and xrandr
 (defun exwm/refresh-setup ()
   (interactive)
+  (setq exwm-randr-workspace-monitor-plist (build-exwm-monitors))
   ;;(shell/run-in-background "~/.config/polybar/start_polybar.sh")
   (setup/input))
 
