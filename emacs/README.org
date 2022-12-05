@@ -346,6 +346,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (set-face-attribute 'tab-bar-tab-inactive nil :background "#1e1f29" :foreground "#b6b6b" :box nil :height 120 :weight 'normal)
     (set-face-attribute 'tab-bar-tab nil :background "#1e1f29" :foreground "#ff79bf" :box nil :height 120 :weight 'normal)
 
+    (setq tab/space-between-status-element "    ")
     (setq tab-bar-format '(tab-bar-format-menu-bar
                            tab-bar-format-tabs
                            tab-bar-separator
@@ -360,10 +361,10 @@ As bookmarks are at the center of my workflow, this is a crucial option.
           tab-bar-tab-hints t
           tab-bar-border 1)
 
-    (setq global-mode-string '(display-time-string battery-mode-line-string))
+    (setq global-mode-string '("" display-time-string battery-mode-line-string))
 
     (display-time-mode 1)
-    (setq display-time-format "   %d-%m-%Y %H:%M  ")
+    (setq display-time-format (concat tab/space-between-status-element "%d-%m-%Y %H:%M  "))
 
     (when (and battery-status-function
                (not (string-match-p "N/A"
@@ -372,9 +373,9 @@ As bookmarks are at the center of my workflow, this is a crucial option.
       (display-battery-mode 1))
     (setq battery-mode-line-format
           (cond ((eq battery-status-function #'battery-linux-proc-acpi)
-                 "    %b%p%%,%d°C  ")
+                 (concat tab/space-between-status-element "%b%p%%,%d°C  "))
                 (battery-status-function
-                 "    %b%p%%  ")))
+                 (concat tab/space-between-status-element "%b%p%%  "))))
 
     (tab-bar-mode 1))
 
