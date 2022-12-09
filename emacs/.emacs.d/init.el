@@ -228,6 +228,8 @@ window list."
   (text-mode . mixed-pitch-mode)
   (yaml-mode . disable-mixed-pitch))
 
+(setq tab/space-between-status-element "    ")
+
 (defun tab-bar-format-menu-bar ()
   "Produce the Menu button for the tab bar that shows the menu bar."
   `((menu-bar menu-item (propertize "𝝺    " 'face 'tab-bar)
@@ -250,7 +252,6 @@ window list."
   (set-face-attribute 'tab-bar-tab-inactive nil :background "#1e1f29" :foreground "#b6b6b" :box nil :height 120 :weight 'normal)
   (set-face-attribute 'tab-bar-tab nil :background "#1e1f29" :foreground "#ff79bf" :box nil :height 120 :weight 'normal)
 
-  (setq tab/space-between-status-element "    ")
   (setq tab-bar-format '(tab-bar-format-menu-bar
                          tab-bar-format-tabs
                          tab-bar-separator
@@ -625,7 +626,7 @@ window list."
     (load-file "~/.emacs.d/straight/build/vertico/extensions/vertico-buffer.el")
     (setq
      vertico-cycle t
-     vertico-buffer-display-action '(display-buffer-below-selected (window-height . 10)))
+     vertico-buffer-display-action '(display-buffer-below-selected (window-height . 13)))
     (vertico-mode)
     (vertico-buffer-mode))
 
@@ -1037,7 +1038,9 @@ window list."
 
                        (define-key sql-mode-map (kbd "C-x C-e") 'lsp/sqls-select-and-execute-command)))
          (lsp-mode . (lambda ()
-                       (complete/start)
+                       (defun lsp-modeline--code-actions-icon (face)
+                         "Build the icon for modeline code actions using FACE."
+                         (propertize tab/space-between-status-element 'face face))
                        (make-local-variable 'completion-at-point-functions)
                        (setq-local completion-at-point-functions
                                    (list
@@ -1050,9 +1053,6 @@ window list."
   (with-eval-after-load 'js
     (define-key js-mode-map (kbd "M-.") nil)
     )
-  (defun lsp-modeline--code-actions-icon (face)
-    "Build the icon for modeline code actions using FACE."
-      (propertize "" 'face face))
   (setq
    lsp-log-io nil
    lsp-completion-enable nil
@@ -1391,6 +1391,7 @@ Version 2017-11-10"
     :straight nil
     :ensure nil
     :config
+    (setq mu4e-hide-index-messages t)
     (setq mu4e-mu-binary (executable-find "mu"))
     (setq mu4e-maildir "~/.maildir")
     (setq mu4e-update-interval (* 1 60))
@@ -1430,7 +1431,33 @@ Version 2017-11-10"
     ;;     smtpmail-smtp-service 587)
 
     ;; don't keep message buffers around
-    (setq message-kill-buffer-on-exit t)))
+    (setq message-kill-buffer-on-exit t))
+
+  (use-package mu4e-alert
+    :config
+    (setq mu4e-alert-interesting-mail-query
+          (concat
+           "flag:unread"
+           " AND maildir:"
+           "\"/INBOX\""))
+
+    (defun mu4e-alert-default-mode-line-formatter (mail-count)
+      "Default formatter used to get the string to be displayed in the mode-line.
+MAIL-COUNT is the count of mails for which the string is to displayed."
+      (when (not (zerop mail-count))
+        (if (zerop mail-count)
+            " "
+          (format (concat tab/space-between-status-element "%d   ") mail-count))))
+
+    (defun mu4e-alert-enable-mode-line-display ()
+      "Enable display of unread emails in mode-line."
+      (interactive)
+      (add-to-list 'global-mode-string '(:eval mu4e-alert-mode-line))
+      (add-hook 'mu4e-index-updated-hook #'mu4e-alert-update-mail-count-modeline)
+      (add-hook 'mu4e-message-changed-hook #'mu4e-alert-update-mail-count-modeline)
+      (advice-add #'mu4e-context-switch :around #'mu4e-alert--context-switch)
+      (mu4e-alert-update-mail-count-modeline))
+    (mu4e-alert-enable-mode-line-display)))
 
 (defun utils/window-with-buffer-prefix (prefix)
   "Returns the first window displaying a buffer starting with prefix"
