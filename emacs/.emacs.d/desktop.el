@@ -158,8 +158,7 @@
 (defun window/configure-window-by-class ()
   (interactive)
   (pcase exwm-class-name
-    ((rx (sequence "Ardour" (zero-or-more (any "ascii")))) (window/force-tile-to-other-window))
-    ("Google-chrome" (window/force-tiled-fullscreen))))
+    ((rx (sequence "Ardour" (zero-or-more (any "ascii")))) (window/force-tile-to-other-window))))
 
 (add-hook 'exwm-manage-finish-hook #'window/configure-window-by-class)
 

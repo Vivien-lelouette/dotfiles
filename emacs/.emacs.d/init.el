@@ -281,7 +281,7 @@ window list."
                (concat tab/space-between-status-element "%b%p%%,%d°C  "))
               (battery-status-function
                (concat tab/space-between-status-element "%b%p%%  "))))
-
+  (mu4e-alert-enable-mode-line-display)
   (tab-bar-mode 1))
 
 (add-hook 'after-init-hook #'tab/setup)
@@ -393,7 +393,7 @@ window list."
 (use-package explain-pause-mode
   :straight (explain-pause-mode :type git :host github :repo "lastquestion/explain-pause-mode")
   :config
-  (explain-pause-mode))
+  (explain-pause-mode -1))
 
 (use-package which-key
   :init (which-key-mode)
@@ -637,7 +637,7 @@ window list."
   (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
   (corfu-auto t)                 ;; Enable auto completion
   (corfu-auto-prefix 2)
-  (corfu-auto-delay 0.0)
+  (corfu-auto-delay 0.5)
   (corfu-echo-documentation 0.25) ;; Disable documentation in the echo area
   (corfu-quit-at-boundary 'separator)   ;; Never quit at completion boundary
   (corfu-preselect-first nil)    ;; Disable candidate preselection
@@ -671,6 +671,10 @@ window list."
       (eshell-send-input))
      ((and (derived-mode-p 'comint-mode)  (fboundp 'comint-send-input))
       (comint-send-input))))
+
+  (set-face-attribute 'corfu-default nil :background nil :foreground nil :underline nil :box nil :weight 'normal :inherit 'tab-bar)
+  (set-face-attribute 'corfu-current nil :background nil :foreground nil :inherit 'vertico-current)
+  (set-face-attribute 'corfu-border nil :background nil :foreground nil :inherit 'corfu-default)
 
   (advice-add #'corfu-insert :after #'corfu-send-shell))
 
@@ -807,7 +811,11 @@ window list."
   ;;       orderless-component-separator #'orderless-escapable-split-on-space)
   (setq completion-styles '(orderless)
   completion-category-defaults nil
-  completion-category-overrides '((file (styles partial-completion)))))
+  completion-category-overrides '((file (styles partial-completion))))
+  (set-face-attribute 'orderless-match-face-0 nil :foreground "#ff79bf")
+  (set-face-attribute 'orderless-match-face-1 nil :foreground "#63b4f6")
+  (set-face-attribute 'orderless-match-face-2 nil :foreground "#f0ab57")
+  (set-face-attribute 'orderless-match-face-3 nil :foreground "#a691f9"))
 
 (use-package marginalia
   ;; Either bind `marginalia-cycle` globally or only in the minibuffer
@@ -884,7 +892,7 @@ window list."
     (?\{ . ?\})))
 (electric-pair-mode 1)
 
-(electric-indent-mode 0)
+(electric-indent-mode 1)
 (use-package aggressive-indent
     :config
     (add-to-list 'aggressive-indent-dont-indent-if
@@ -903,7 +911,7 @@ window list."
     (add-to-list 'aggressive-indent-excluded-modes 'helm-epa-mode)
     (add-to-list 'aggressive-indent-excluded-modes 'helm-major-mode)
     (add-to-list 'aggressive-indent-excluded-modes 'completion-list-mode)
-    (global-aggressive-indent-mode 1))
+    (global-aggressive-indent-mode 0))
 
 (use-package magit
   :config
@@ -945,6 +953,8 @@ window list."
 
   (add-hook 'prog-mode-hook 'tempel-setup-capf)
   (add-hook 'text-mode-hook 'tempel-setup-capf))
+
+(use-package insert-shebang)
 
 (defun eshell/jwt-decode (jwt)
   (interactive "sJWT: ")
@@ -1097,7 +1107,10 @@ window list."
   ;;(yaml-mode . disable-lsp-ltex))
 
 (use-package dap-mode
-  :straight (dap-mode :type git :host github :repo "emacs-lsp/dap-mode"))
+  :straight (dap-mode :type git :host github :repo "emacs-lsp/dap-mode")
+  :config
+  (require 'dap-node)
+  (dap-node-setup))
 
 (use-package adoc-mode
   :config
@@ -1147,6 +1160,46 @@ window list."
   (add-hook 'js-mode-hook
         (lambda () (setq-local devdocs-current-docs '("node~16_lts" "jsdoc" "javascript")))))
 
+;; (use-package xterm-color
+;;   :config
+;;   (setq comint-output-filter-functions
+;;         (remove 'ansi-color-process-output comint-output-filter-functions))
+
+;;   (add-hook 'shell-mode-hook
+;;             (lambda ()
+;;               ;; Disable font-locking in this buffer to improve performance
+;;               (font-lock-mode -1)
+;;               ;; Prevent font-locking from being re-enabled in this buffer
+;;               (make-local-variable 'font-lock-function)
+;;               (setq font-lock-function (lambda (_) nil))
+;;               (add-hook 'comint-preoutput-filter-functions 'xterm-color-filter nil t)))
+
+;;   (add-hook 'eat-mode-hook
+;;             (lambda ()
+;;               ;; Disable font-locking in this buffer to improve performance
+;;               (font-lock-mode -1)
+;;               ;; Prevent font-locking from being re-enabled in this buffer
+;;               (make-local-variable 'font-lock-function)
+;;               (setq font-lock-function (lambda (_) nil))
+;;               (add-hook 'comint-preoutput-filter-functions 'xterm-color-filter nil t)))
+
+;;   (require 'eshell) ; or use with-eval-after-load
+
+;;   (add-hook 'eshell-before-prompt-hook
+;;             (lambda ()
+;;               (setq xterm-color-preserve-properties t)))
+
+;;   (add-to-list 'eshell-preoutput-filter-functions 'xterm-color-filter)
+;;   (setq eshell-output-filter-functions (remove 'eshell-handle-ansi-color eshell-output-filter-functions))
+;;   (setenv "TERM" "xterm-256color")
+
+;;   (setq compilation-environment '("TERM=xterm-256color"))
+
+;;   (defun my/advice-compilation-filter (f proc string)
+;;     (funcall f proc (xterm-color-filter string)))
+
+;;   (advice-add 'compilation-filter :around #'my/advice-compilation-filter))
+
 (use-package aweshell
   :straight (aweshell :type git :host github :repo "manateelazycat/aweshell")
   :config
@@ -1158,17 +1211,29 @@ window list."
    eshell-banner-message ""
    eshell-review-quick-commands nil
    eshell-smart-space-goes-to-end t)
-   (defun eshell/hook ()
-     (aweshell-sync-dir-buffer-name)
-     (complete/start))
-  ;;   (eshell/alias "ll" "ls --group-directories-first --color -l $*")
-  ;;   (eshell/alias "docker-all-stop" "docker ps -aq | xargs docker stop")
-  ;;   (eshell/alias "da-stop" "docker ps -aq | xargs docker stop"))
-  (add-hook 'eshell-mode-hook #'eshell/hook)
-  (setq eshell-prompt-function
-        (lambda ()
-          (concat (format-time-string "%Y-%m-%d %H:%M" (current-time))
-                  (if (= (user-uid) 0) " # " " $ ")))))
+  (defun eshell/hook ()
+    (aweshell-sync-dir-buffer-name)
+    (setq eshell-prompt-function
+          (lambda ()
+            (concat (format-time-string " %Y-%m-%d %H:%M" (current-time))
+                    (if (= (user-uid) 0) " # " " $ "))))
+    (setq eshell-highlight-prompt t)
+    (set-face-attribute 'eshell-prompt nil :background nil :foreground nil :weight 'ultra-bold :box '(:line-width (10 . 1) :color "#282a36") :inverse-video t :inherit 'minibuffer-prompt))
+  (add-hook 'eshell-load-hook #'eshell/hook)
+  (add-hook 'eshell-mode-hook #'eshell/hook))
+
+(use-package eat
+  :straight (eat :type git
+                 :repo "https://codeberg.org/akib/emacs-eat"
+                 :files ("*.el" ("term" "term/*.el") "*.texi"
+                         "*.ti" ("terminfo/e" "terminfo/e/*")
+                         ("terminfo/65" "terminfo/65/*")
+                         ("integration" "integration/*")
+                         (:exclude ".dir-locals.el" "*-tests.el")))
+  :config
+  (setq eat-term-terminfo-directory (concat (getenv "HOME") "/.emacs.d/straight/build/eat/terminfo"))
+  (add-hook 'eshell-load-hook #'eat-eshell-mode)
+  (add-hook 'eshell-load-hook #'eat-eshell-visual-command-mode))
 
 (defun eshell/emacs (file)
   (find-file file))
