@@ -272,12 +272,11 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (setq mc/black-list-prefer t))
 #+END_SRC
 
-** Expand region
+** Easy mark
 #+BEGIN_SRC emacs-lisp
-  (use-package expand-region
+  (use-package easy-kill
     :config
-    (global-set-key (kbd "C-=") 'er/expand-region)
-    (global-set-key (kbd "C--") 'er/contract-region))
+    (global-set-key (kbd "C-=") 'easy-mark))
 #+END_SRC
 
 ** vundu

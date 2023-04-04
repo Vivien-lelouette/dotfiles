@@ -190,10 +190,9 @@ window list."
   (global-set-key (kbd "C-S-<mouse-1>") 'mc/add-cursor-on-click)
   (setq mc/black-list-prefer t))
 
-(use-package expand-region
+(use-package easy-kill
   :config
-  (global-set-key (kbd "C-=") 'er/expand-region)
-  (global-set-key (kbd "C--") 'er/contract-region))
+  (global-set-key (kbd "C-=") 'easy-mark))
 
 (use-package vundo
   :config
