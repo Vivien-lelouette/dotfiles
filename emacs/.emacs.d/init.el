@@ -11,7 +11,7 @@
   (goto-char (point-max))
   (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
-
+  
 (straight-use-package 'use-package)
 (setq straight-use-package-by-default t)
 (setq native-comp-deferred-compilation-deny-list nil)
@@ -441,11 +441,17 @@ window list."
 (defun window/4k-streaming-layout ()
   (interactive)
   (tab-bar-new-tab)
+
   (split-window-right)
-  (other-window 1)
   (split-window)
+  (other-window 2)
+
+  (split-window)
+
   (window-resize (get-buffer-window) 1 t t t)
-  (window-resize (get-buffer-window) 20 nil t t))
+  (window-resize (get-buffer-window) 20 nil t t)
+
+  (select-window (get-mru-window t t t)))
 
 (defun window/4k-layout ()
   (interactive)
@@ -456,18 +462,26 @@ window list."
   (split-window)
   (zoom))
 
+(defun window/unlock-size ()
+  (interactive)
+  (setq-local window-size-fixed nil))
+
+(defun window/lock-size ()
+  (interactive)
+  (setq-local window-size-fixed t))
+
 (defun window/toggle-pin ()
   (interactive)
   (if (window-parameter (selected-window) 'split-window)
       (progn 
+        (window/unlock-size)
         (set-window-parameter nil 'split-window nil)
-        (setq-local window-size-fixed nil)
         (set-window-dedicated-p (selected-window) nil)
         (rename-buffer (string-trim-left (buffer-name)))
         (message "Window unpined"))
     (progn
-      (set-window-parameter nil 'split-window #'ignore)
       (setq-local window-size-fixed 'width)
+      (set-window-parameter nil 'split-window #'ignore)
       (set-window-dedicated-p (selected-window) t)
       (rename-buffer (concat " " (buffer-name)))
       (message "Window pined"))))
