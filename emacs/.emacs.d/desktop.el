@@ -560,11 +560,25 @@
 
 (add-hook 'exwm-manage-finish-hook #'bookmark/chrome-set-bookmark-handler)
 
+(defun stream/pointer-start ()
+  (interactive)
+  (shell/async-command-no-output "find-cursor -c#ff3300 --repeat 0 --follow --distance 0 --line-width 16 --size 16"))
+
+(defun stream/pointer-stop ()
+  (interactive)
+  (shell/async-command-no-output "pkill find-cursor"))
+
 (defun stream/start ()
   (interactive)
   (window/4k-streaming-layout)
-  (shell/async-command-no-output " vlc --no-video-deco --no-embedded-video --screen-fps=30 --screen-top=20 --screen-left=3840 --screen-width=1920 --screen-height=1080 screen://")
+  (stream/pointer-start)
+  (shell/async-command-no-output "vlc --no-video-deco --no-embedded-video --screen-fps=30 --screen-top=20 --screen-left=3840 --screen-width=1920 --screen-height=1080 screen://")
   (aw-move-window
    (nth 0
         (aw-window-list)))
   (run-with-timer 0.5 nil (lambda () (with-current-buffer (window-buffer) (exwm-layout-toggle-fullscreen exwm--id) (select-window (get-mru-window t t t))))))
+
+(defun stream/stop ()
+  (interactive)
+  (stream/pointer-stop)
+  (shell/async-command-no-output "pkill vlc"))
