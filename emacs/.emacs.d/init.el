@@ -430,6 +430,15 @@ window list."
   :custom
   (zoom-size '(0.55 . 0.55)))
 
+(defun window/4k-streaming-layout ()
+  (interactive)
+  (tab-bar-new-tab)
+  (split-window-right)
+  (other-window 1)
+  (split-window)
+  (window-resize (get-buffer-window) 1 t t t)
+  (window-resize (get-buffer-window) 20 nil t t))
+
 (defun window/4k-layout ()
   (interactive)
   (delete-other-windows)
@@ -450,7 +459,7 @@ window list."
         (message "Window unpined"))
     (progn
       (set-window-parameter nil 'split-window #'ignore)
-        (setq-local window-size-fixed 'width)
+      (setq-local window-size-fixed 'width)
       (set-window-dedicated-p (selected-window) t)
       (rename-buffer (concat " " (buffer-name)))
       (message "Window pined"))))
@@ -1014,6 +1023,9 @@ window list."
          ("M-." . lsp-find-definition))
   :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
          (js-mode . (lambda () 
+                      (lsp)
+                      (flymake-eslint-enable)))
+         (typescript-ts-mode . (lambda () 
                       (lsp)
                       (flymake-eslint-enable)))
          (sql-mode . (lambda () 

@@ -559,3 +559,12 @@
            #'bookmark/chrome-bookmark-make-record)))
 
 (add-hook 'exwm-manage-finish-hook #'bookmark/chrome-set-bookmark-handler)
+
+(defun stream/start ()
+  (interactive)
+  (window/4k-streaming-layout)
+  (shell/async-command-no-output " vlc --no-video-deco --no-embedded-video --screen-fps=30 --screen-top=20 --screen-left=3840 --screen-width=1920 --screen-height=1080 screen://")
+  (aw-move-window
+   (nth 0
+        (aw-window-list)))
+  (run-with-timer 0.5 nil (lambda () (with-current-buffer (window-buffer) (exwm-layout-toggle-fullscreen exwm--id) (select-window (get-mru-window t t t))))))
