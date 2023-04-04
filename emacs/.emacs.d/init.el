@@ -1,18 +1,20 @@
+(setq straight-repository-branch "develop")
 (defvar bootstrap-version)
 (let ((bootstrap-file
-       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-      (bootstrap-version 5))
+   (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+  (bootstrap-version 5))
   (unless (file-exists-p bootstrap-file)
     (with-current-buffer
-        (url-retrieve-synchronously
-         "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
-         'silent 'inhibit-cookies)
-      (goto-char (point-max))
-      (eval-print-last-sexp)))
+	(url-retrieve-synchronously
+	 "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+	 'silent 'inhibit-cookies)
+  (goto-char (point-max))
+  (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
 
 (straight-use-package 'use-package)
 (setq straight-use-package-by-default t)
+(setq native-comp-deferred-compilation-deny-list nil)
 
 (add-hook 'after-init-hook
           #'(lambda ()
@@ -242,6 +244,12 @@ window list."
              (alist-get 'name tab))
      'face (funcall tab-bar-tab-face-function tab))))
 
+(setq tab-bar-format '(tab-bar-format-menu-bar
+                       tab-bar-format-tabs
+                       tab-bar-separator
+                       tab-bar-format-align-right
+                       tab-bar-format-global))
+
 (defun tab/setup ()
   (interactive)
   (tab-bar-mode -1)
@@ -258,7 +266,7 @@ window list."
                          tab-bar-format-align-right
                          tab-bar-format-global)
 
-        tab-bar-tab-name-format-function #'tab/tab-bar-tab-name-format
+  (setq tab-bar-tab-name-format-function #'tab/tab-bar-tab-name-format
 
         tab-bar-fixed-width-max nil
 
@@ -782,7 +790,7 @@ window list."
    consult-bookmark consult-recent-file consult-xref
    consult--source-bookmark consult--source-recent-file
    consult--source-project-recent-file
-   :preview-key (kbd "M-."))
+   :preview-key "M-.")
 
   ;; Optionally configure the narrowing key.
   ;; Both < and C-+ work reasonably well.

@@ -569,6 +569,15 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
         (define-key exwm-edit-mode-map (kbd "C-c C-<return>") 'exwm-edit--finish-and-press-control-return)))
 #+end_src
 
+* Menu items
+#+BEGIN_SRC emacs-lisp
+  (defvar system-bar-menu (make-sparse-keymap "System"))
+  (define-key global-map [menu-bar my-menu] (cons "System" system-bar-menu))
+
+  (define-key system-bar-menu [shutdown]
+              '(menu-item "Shutdown" kde/shutdown :help "Shutdown the computer"))
+#+END_SRC
+
 * Bookmark handlers
 ** Chrome
 This requires the following Chrome extention: https://chrome.google.com/webstore/detail/url-in-title/ignpacbgnbnkaiooknalneoeladjnfgb?hl=en.

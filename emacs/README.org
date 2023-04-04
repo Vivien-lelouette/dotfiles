@@ -16,23 +16,25 @@ sudo make install
 
 * Straight setup
  #+BEGIN_SRC emacs-lisp
-  (defvar bootstrap-version)
-  (let ((bootstrap-file
-         (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-        (bootstrap-version 5))
-    (unless (file-exists-p bootstrap-file)
-      (with-current-buffer
-          (url-retrieve-synchronously
-           "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
-           'silent 'inhibit-cookies)
-        (goto-char (point-max))
-        (eval-print-last-sexp)))
-    (load bootstrap-file nil 'nomessage))
+   (setq straight-repository-branch "develop")
+   (defvar bootstrap-version)
+   (let ((bootstrap-file
+	  (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+	 (bootstrap-version 5))
+     (unless (file-exists-p bootstrap-file)
+       (with-current-buffer
+	   (url-retrieve-synchronously
+	    "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+	    'silent 'inhibit-cookies)
+	 (goto-char (point-max))
+	 (eval-print-last-sexp)))
+     (load bootstrap-file nil 'nomessage))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
   (straight-use-package 'use-package)
   (setq straight-use-package-by-default t)
+  (setq native-comp-deferred-compilation-deny-list nil)
 #+END_SRC
 
 * Defaults
@@ -338,6 +340,12 @@ As bookmarks are at the center of my workflow, this is a crucial option.
                (alist-get 'name tab))
        'face (funcall tab-bar-tab-face-function tab))))
 
+  (setq tab-bar-format '(tab-bar-format-menu-bar
+                         tab-bar-format-tabs
+                         tab-bar-separator
+                         tab-bar-format-align-right
+                         tab-bar-format-global))
+
   (defun tab/setup ()
     (interactive)
     (tab-bar-mode -1)
@@ -354,7 +362,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
                            tab-bar-format-align-right
                            tab-bar-format-global)
 
-          tab-bar-tab-name-format-function #'tab/tab-bar-tab-name-format
+    (setq tab-bar-tab-name-format-function #'tab/tab-bar-tab-name-format
 
           tab-bar-fixed-width-max nil
 
@@ -951,7 +959,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
      consult-bookmark consult-recent-file consult-xref
      consult--source-bookmark consult--source-recent-file
      consult--source-project-recent-file
-     :preview-key (kbd "M-."))
+     :preview-key "M-.")
 
     ;; Optionally configure the narrowing key.
     ;; Both < and C-+ work reasonably well.

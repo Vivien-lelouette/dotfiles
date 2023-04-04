@@ -518,6 +518,12 @@
       (define-key exwm-edit-mode-map (kbd "C-c <return>") 'exwm-edit--finish-and-press-return)
       (define-key exwm-edit-mode-map (kbd "C-c C-<return>") 'exwm-edit--finish-and-press-control-return)))
 
+(defvar system-bar-menu (make-sparse-keymap "System"))
+(define-key global-map [menu-bar my-menu] (cons "System" system-bar-menu))
+
+(define-key system-bar-menu [shutdown]
+            '(menu-item "Shutdown" kde/shutdown :help "Shutdown the computer"))
+
 (defvar chrome/input-history nil)
 (eval-after-load "savehist"
   '(add-to-list 'savehist-additional-variables 'chrome/input-history))
