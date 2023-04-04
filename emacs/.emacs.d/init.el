@@ -11,7 +11,7 @@
   (goto-char (point-max))
   (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
-  
+
 (straight-use-package 'use-package)
 (setq straight-use-package-by-default t)
 (setq native-comp-deferred-compilation-deny-list nil)
@@ -260,16 +260,8 @@ window list."
   (set-face-attribute 'tab-bar-tab-inactive nil :background "#1e1f29" :foreground "#b6b6b" :box nil :height 120 :weight 'normal)
   (set-face-attribute 'tab-bar-tab nil :background "#1e1f29" :foreground "#ff79bf" :box nil :height 120 :weight 'normal)
 
-  (setq tab-bar-format '(tab-bar-format-menu-bar
-                         tab-bar-format-tabs
-                         tab-bar-separator
-                         tab-bar-format-align-right
-                         tab-bar-format-global)
-
   (setq tab-bar-tab-name-format-function #'tab/tab-bar-tab-name-format
-
         tab-bar-fixed-width-max nil
-
         tab-bar-close-button-show nil
         tab-bar-tab-hints t
         tab-bar-border 1)
@@ -436,7 +428,7 @@ window list."
 
 (use-package zoom
   :custom
-  (zoom-size '(0.55 . 0.55)))
+  (zoom-size '(0.47 . 0.55)))
 
 (defun window/4k-streaming-layout ()
   (interactive)
