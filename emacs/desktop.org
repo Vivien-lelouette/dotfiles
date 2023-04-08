@@ -81,10 +81,8 @@ We use the [[https://github.com/DamienCassou/desktop-environment][desktop-enviro
 #+end_src
 ** Application runner
 #+BEGIN_SRC emacs-lisp
-  (use-package app-launcher
-    :straight '(app-launcher :host github :repo "SebastienWae/app-launcher"
-                              :fork (:host github
-                                          :repo "vivien-lelouette/app-launcher")))
+  (elpaca (app-launcher :host github :repo "vivien-lelouette/app-launcher"))
+
 #+END_SRC
 
 * Window Management
@@ -530,27 +528,30 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
             ([?\C-y] . [?\C-v])
             ([?\M-w] . [?\C-c])
             ([?\C-w] . [?\C-x])
-            ([?\s-g] . [escape])))
+            ([?\s-g] . [escape]))))
 
-    (setq exwm-manage-configurations '(((string-match-p "^Xfce4-" exwm-title)
-                                        floating nil)))
+  (elpaca-wait)
 
-    (setq exwm-replace t)
+  (setq exwm-manage-configurations '(((string-match-p "^Xfce4-" exwm-title)
+                                      floating nil)))
 
-    (exwm-enable)
-    (exwm/refresh-setup)
-    ;; This is for multiscreen support
-    (require 'exwm-randr)
-    (add-hook 'exwm-randr-screen-change-hook 'exwm/refresh-setup)
-    (exwm-randr-enable)
-    (require 'exwm-systemtray)
-    (exwm-systemtray-enable))
+  (setq exwm-replace t)
+
+  (exwm-enable)
+  ;; This is for multiscreen support
+  (require 'exwm-randr)
+  (add-hook 'exwm-randr-screen-change-hook 'exwm/refresh-setup)
+  (exwm-randr-enable)
+  (require 'exwm-systemtray)
+  (exwm-systemtray-enable)
+  (add-hook 'elpaca-after-init-hook
+            #'(lambda ()
+                (exwm/refresh-setup)))
 #+end_src
 
 * EXWM edit
 #+begin_src emacs-lisp
-  (use-package exwm-edit
-    :straight (exwm-edit :type git :host github :repo "agzam/exwm-edit"))
+  (use-package exwm-edit)
 
     (setq exwm-edit-split  "below")
 

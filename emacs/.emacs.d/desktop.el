@@ -59,10 +59,7 @@
   (interactive)
   (start-process-shell-command "trackball" nil "bash ~/.scripts/trackball-setup.sh"))
 
-(use-package app-launcher
-  :straight '(app-launcher :host github :repo "SebastienWae/app-launcher"
-                            :fork (:host github
-                                        :repo "vivien-lelouette/app-launcher")))
+(elpaca (app-launcher :host github :repo "vivien-lelouette/app-launcher"))
 
 (defcustom my-skippable-buffer-regexp
   (rx bos (or (seq "*" (zero-or-more anything))
@@ -483,24 +480,27 @@
           ([?\C-y] . [?\C-v])
           ([?\M-w] . [?\C-c])
           ([?\C-w] . [?\C-x])
-          ([?\s-g] . [escape])))
+          ([?\s-g] . [escape]))))
 
-  (setq exwm-manage-configurations '(((string-match-p "^Xfce4-" exwm-title)
-                                      floating nil)))
+(elpaca-wait)
 
-  (setq exwm-replace t)
+(setq exwm-manage-configurations '(((string-match-p "^Xfce4-" exwm-title)
+                                    floating nil)))
 
-  (exwm-enable)
-  (exwm/refresh-setup)
-  ;; This is for multiscreen support
-  (require 'exwm-randr)
-  (add-hook 'exwm-randr-screen-change-hook 'exwm/refresh-setup)
-  (exwm-randr-enable)
-  (require 'exwm-systemtray)
-  (exwm-systemtray-enable))
+(setq exwm-replace t)
 
-(use-package exwm-edit
-  :straight (exwm-edit :type git :host github :repo "agzam/exwm-edit"))
+(exwm-enable)
+;; This is for multiscreen support
+(require 'exwm-randr)
+(add-hook 'exwm-randr-screen-change-hook 'exwm/refresh-setup)
+(exwm-randr-enable)
+(require 'exwm-systemtray)
+(exwm-systemtray-enable)
+(add-hook 'elpaca-after-init-hook
+          #'(lambda ()
+              (exwm/refresh-setup)))
+
+(use-package exwm-edit)
 
   (setq exwm-edit-split  "below")
 

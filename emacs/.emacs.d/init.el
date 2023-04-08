@@ -1,22 +1,53 @@
-(setq straight-repository-branch "develop")
-(defvar bootstrap-version)
-(let ((bootstrap-file
-   (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-  (bootstrap-version 5))
-  (unless (file-exists-p bootstrap-file)
-    (with-current-buffer
-	(url-retrieve-synchronously
-	 "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
-	 'silent 'inhibit-cookies)
-  (goto-char (point-max))
-  (eval-print-last-sexp)))
-  (load bootstrap-file nil 'nomessage))
+(setq package-enable-at-startup nil)
+(defvar elpaca-installer-version 0.3)
+(defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
+(defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
+(defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
+(defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
+                              :ref nil
+                              :files (:defaults (:exclude "extensions"))
+                              :build (:not elpaca--activate-package)))
+(let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
+       (build (expand-file-name "elpaca/" elpaca-builds-directory))
+       (order (cdr elpaca-order))
+       (default-directory repo))
+  (add-to-list 'load-path (if (file-exists-p build) build repo))
+  (unless (file-exists-p repo)
+    (make-directory repo t)
+    (condition-case-unless-debug err
+        (if-let ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
+                 ((zerop (call-process "git" nil buffer t "clone"
+                                       (plist-get order :repo) repo)))
+                 ((zerop (call-process "git" nil buffer t "checkout"
+                                       (or (plist-get order :ref) "--"))))
+                 (emacs (concat invocation-directory invocation-name))
+                 ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
+                                       "--eval" "(byte-recompile-directory \".\" 0 'force)")))
+                 ((require 'elpaca))
+                 ((elpaca-generate-autoloads "elpaca" repo)))
+            (kill-buffer buffer)
+          (error "%s" (with-current-buffer buffer (buffer-string))))
+      ((error) (warn "%s" err) (delete-directory repo 'recursive))))
+  (unless (require 'elpaca-autoloads nil t)
+    (require 'elpaca)
+    (elpaca-generate-autoloads "elpaca" repo)
+    (load "./elpaca-autoloads")))
+(add-hook 'after-init-hook #'elpaca-process-queues)
+(elpaca `(,@elpaca-order))
 
-(straight-use-package 'use-package)
-(setq straight-use-package-by-default t)
-(setq native-comp-deferred-compilation-deny-list nil)
+;; Install use-package support
+(elpaca elpaca-use-package
+        ;; Enable :elpaca use-package keyword.
+        (elpaca-use-package-mode)
+        ;; Assume :elpaca t unless otherwise specified.
+        (setq elpaca-use-package-by-default t))
 
-(add-hook 'after-init-hook
+;; Block until current queue processed.
+(elpaca-wait)
+
+;; (setq native-comp-deferred-compilation-deny-list nil)
+
+(add-hook 'elpaca-after-init-hook
           #'(lambda ()
               (setq gc-cons-threshold (* 100 1000 1000))))
 
@@ -109,6 +140,138 @@
 (repeat-mode 1)
 
 (require 'iso-transl)
+
+(use-package org
+  :config
+  (setq org-confirm-babel-evaluate nil)
+  (defun org/org-babel-tangle-config ()
+    (when (or (string-equal (buffer-file-name)
+                            (expand-file-name "~/.dotfiles/README.org"))
+              (string-equal (buffer-file-name)
+                            (expand-file-name "~/.dotfiles/qutebrowser/README.org"))
+              (string-equal (buffer-file-name)
+                            (expand-file-name "~/.dotfiles/emacs/README.org"))
+              (string-equal (buffer-file-name)
+                            (expand-file-name "~/.dotfiles/emacs/desktop.org"))
+              (string-equal (buffer-file-name)
+                            (expand-file-name "~/.dotfiles/herbstluftwm/README.org"))
+              (string-equal (buffer-file-name)
+                            (expand-file-name "~/.dotfiles/rofi/README.org"))
+              (string-equal (buffer-file-name)
+                            (expand-file-name "~/.dotfiles/polybar/README.org"))
+              (string-equal (buffer-file-name)
+                            (expand-file-name "~/.dotfiles/kmonad/README.org"))
+              (string-equal (buffer-file-name)
+                            (expand-file-name "~/.dotfiles/emacs/local.org")))
+      ;; Dynamic scoping to the rescue
+      (let ((org-confirm-babel-evaluate nil))
+        (org-babel-tangle))))
+  (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'org/org-babel-tangle-config)))
+  (custom-set-faces
+   '(org-level-1 ((t (:inherit outline-1 :height 2.5))))
+   '(org-level-2 ((t (:inherit outline-2 :height 1.8))))
+   '(org-level-3 ((t (:inherit outline-3 :height 1.4))))
+   '(org-level-4 ((t (:inherit outline-4 :height 1.2))))
+   '(org-level-5 ((t (:inherit outline-5 :height 1.0))))))
+
+  (elpaca-wait)
+
+(use-package org-modern
+  :config
+  (setq
+   ;; Edit settings
+   org-auto-align-tags nil
+   org-tags-column 0
+   org-catch-invisible-edits 'show-and-error
+   org-special-ctrl-a/e t
+   org-insert-heading-respect-content t
+
+   ;; Org styling, hide markup etc.
+   org-hide-emphasis-markers t
+   org-pretty-entities nil
+   org-ellipsis "…"
+
+   ;; Agenda styling
+   org-agenda-block-separator ?─
+   org-agenda-time-grid
+   '((daily today require-timed)
+     (800 1000 1200 1400 1600 1800 2000)
+     " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
+   org-agenda-current-time-string
+   "⭠ now ─────────────────────────────────────────────────")
+
+  ;; Enable org-modern-mode
+  ;; (add-hook 'org-mode-hook #'org-modern-mode)
+  ;; (add-hook 'org-agenda-finalize-hook #'org-modern-agenda)
+  )
+
+(use-package time
+  :elpaca nil
+  :commands world-clock
+  :config
+  (setq display-time-interval 60)
+  (setq display-time-mail-directory nil)
+  (setq display-time-default-load-average nil))
+
+(elpaca-wait)
+
+(setq tab/space-between-status-element "    ")
+
+(defun tab-bar-format-menu-bar ()
+  "Produce the Menu button for the tab bar that shows the menu bar."
+  `((menu-bar menu-item (propertize "𝝺    " 'face 'tab-bar)
+              tab-bar-menu-bar :help "Menu Bar")))
+
+(defun tab/tab-bar-tab-name-format (tab i)
+  (let ((current-p (eq (car tab) 'current-tab)))
+    (propertize
+     (concat (if (and tab-bar-tab-hints (> (length (tab-bar-tabs)) 1)) (format "%d:  " i) "")
+             (alist-get 'name tab))
+     'face (funcall tab-bar-tab-face-function tab))))
+
+(setq tab-bar-format '(tab-bar-format-menu-bar
+                       tab-bar-format-tabs
+                       tab-bar-separator
+                       tab-bar-format-align-right
+                       tab-bar-format-global))
+
+(defun tab/setup ()
+  (interactive)
+  (tab-bar-mode -1)
+  (display-time-mode -1)
+  (display-battery-mode -1)
+
+  (set-face-attribute 'tab-bar nil :background "#1e1f29" :foreground "#b6b6b2" :underline nil :box '(:line-width (10 . 1) :color "#1e1f29") :height 120 :weight 'bold)
+  (set-face-attribute 'tab-bar-tab-inactive nil :background "#1e1f29" :foreground "#b6b6b" :box nil :height 120 :weight 'normal)
+  (set-face-attribute 'tab-bar-tab nil :background "#1e1f29" :foreground "#ff79bf" :box nil :height 120 :weight 'normal)
+
+  (setq tab-bar-tab-name-format-function #'tab/tab-bar-tab-name-format
+        tab-bar-fixed-width-max nil
+        tab-bar-close-button-show nil
+        tab-bar-tab-hints t
+        tab-bar-border 1)
+
+  (setq global-mode-string '("" display-time-string battery-mode-line-string))
+
+  (display-time-mode 1)
+  (setq display-time-format (concat tab/space-between-status-element "%d-%m-%Y %H:%M  "))
+
+  (when (and battery-status-function
+             (not (string-match-p "N/A"
+                                  (battery-format "%B"
+                                                  (funcall battery-status-function)))))
+    (display-battery-mode 1))
+  (setq battery-mode-line-format
+        (cond ((eq battery-status-function #'battery-linux-proc-acpi)
+               (concat tab/space-between-status-element "%b%p%%,%d°C  "))
+              (battery-status-function
+               (concat tab/space-between-status-element "%b%p%%  "))))
+  (mu4e-alert-enable-mode-line-display)
+  (tab-bar-mode 1))
+
+(add-hook 'elpaca-after-init-hook #'tab/setup)
+
+(autoload 'exwm-enable "~/.emacs.d/desktop.el")
 
 (use-package god-mode
   :config
@@ -229,69 +392,6 @@ window list."
   (text-mode . mixed-pitch-mode)
   (yaml-mode . disable-mixed-pitch))
 
-(setq tab/space-between-status-element "    ")
-
-(defun tab-bar-format-menu-bar ()
-  "Produce the Menu button for the tab bar that shows the menu bar."
-  `((menu-bar menu-item (propertize "𝝺    " 'face 'tab-bar)
-              tab-bar-menu-bar :help "Menu Bar")))
-
-(defun tab/tab-bar-tab-name-format (tab i)
-  (let ((current-p (eq (car tab) 'current-tab)))
-    (propertize
-     (concat (if (and tab-bar-tab-hints (> (length (tab-bar-tabs)) 1)) (format "%d:  " i) "")
-             (alist-get 'name tab))
-     'face (funcall tab-bar-tab-face-function tab))))
-
-(setq tab-bar-format '(tab-bar-format-menu-bar
-                       tab-bar-format-tabs
-                       tab-bar-separator
-                       tab-bar-format-align-right
-                       tab-bar-format-global))
-
-(defun tab/setup ()
-  (interactive)
-  (tab-bar-mode -1)
-  (display-time-mode -1)
-  (display-battery-mode -1)
-
-  (set-face-attribute 'tab-bar nil :background "#1e1f29" :foreground "#b6b6b2" :underline nil :box '(:line-width (10 . 1) :color "#1e1f29") :height 120 :weight 'bold)
-  (set-face-attribute 'tab-bar-tab-inactive nil :background "#1e1f29" :foreground "#b6b6b" :box nil :height 120 :weight 'normal)
-  (set-face-attribute 'tab-bar-tab nil :background "#1e1f29" :foreground "#ff79bf" :box nil :height 120 :weight 'normal)
-
-  (setq tab-bar-tab-name-format-function #'tab/tab-bar-tab-name-format
-        tab-bar-fixed-width-max nil
-        tab-bar-close-button-show nil
-        tab-bar-tab-hints t
-        tab-bar-border 1)
-
-  (setq global-mode-string '("" display-time-string battery-mode-line-string))
-
-  (display-time-mode 1)
-  (setq display-time-format (concat tab/space-between-status-element "%d-%m-%Y %H:%M  "))
-
-  (when (and battery-status-function
-             (not (string-match-p "N/A"
-                                  (battery-format "%B"
-                                                  (funcall battery-status-function)))))
-    (display-battery-mode 1))
-  (setq battery-mode-line-format
-        (cond ((eq battery-status-function #'battery-linux-proc-acpi)
-               (concat tab/space-between-status-element "%b%p%%,%d°C  "))
-              (battery-status-function
-               (concat tab/space-between-status-element "%b%p%%  "))))
-  (mu4e-alert-enable-mode-line-display)
-  (tab-bar-mode 1))
-
-(add-hook 'after-init-hook #'tab/setup)
-
-(use-package time
-  :commands world-clock
-  :config
-  (setq display-time-interval 60)
-  (setq display-time-mail-directory nil)
-  (setq display-time-default-load-average nil))
-
 (use-package dracula-theme
   :config
   (add-to-list 'custom-theme-load-path "~/.emacs.d/themes")
@@ -305,6 +405,7 @@ window list."
         olivetti-body-width 120))
 
 (use-package hideshow
+  :elpaca nil
   :hook
   (prog-mode . hs-minor-mode)
   :bind (
@@ -346,12 +447,6 @@ window list."
        (setq this-command 'hs-global-show))
       (_ (hs-hide-all)))))
 
-(use-package pulsar
-  :straight (pulsar :type git :host gitlab :repo "protesilaos/pulsar")
-  :config
-  (setq pulse-flag t)
-  (pulsar-global-mode 1))
-
 (use-package all-the-icons
   :if (display-graphic-p))
 
@@ -372,27 +467,14 @@ window list."
 
 (add-hook 'prog-mode-hook #'custom/coding-faces)
 
-(use-package prism
-  :straight (prism :type git :host github :repo "alphapapa/prism.el")
-  :defer t
-  :config
-  (setq prism-num-faces 8
-        prism-desaturations '(0 1 2)
-        prism-lightens '(0 1 2)))
-
 (use-package ediff
-    :straight (:type built-in)
+    :elpaca nil
     :custom
     ((ediff-window-setup-function 'ediff-setup-windows-plain)
      (ediff-diff-options "-w")
      (ediff-split-window-function 'split-window-horizontally)))
 
 (use-package sudo-edit)
-
-(use-package explain-pause-mode
-  :straight (explain-pause-mode :type git :host github :repo "lastquestion/explain-pause-mode")
-  :config
-  (explain-pause-mode -1))
 
 (use-package which-key
   :init (which-key-mode)
@@ -507,10 +589,6 @@ window list."
   (blist-define-criterion "chrome" "Chrome"
                           (eq (bookmark-get-handler bookmark)
                               #'bookmark/chrome-bookmark-handler)))
-
-(use-package lemon
-  :straight (lemon ::type git :repo "https://codeberg.org/emacs-weirdware/lemon.git")
-  :config (lemon-mode 0))
 
 (setq tab-always-indent 'complete)
 (setq completions-format 'one-column)
@@ -643,9 +721,7 @@ window list."
   (define-key vcomplete-command-map (kbd "C-<return>") 'vcomplete-choose-completion))
 
 (use-package vertico
-    :straight (vertico :type git :host github :repo "minad/vertico")
     :config
-    (load-file "~/.emacs.d/straight/build/vertico/extensions/vertico-buffer.el")
     (setq
      vertico-cycle t
      vertico-buffer-display-action '(display-buffer-below-selected (window-height . 13)))
@@ -653,7 +729,6 @@ window list."
     (vertico-buffer-mode))
 
 (use-package corfu
-  :straight (corfu :type git :host github :repo "minad/corfu" :files ("*" "extensions/*.el" (:exclude ".git")))
   ;; Optional customizations
   :custom
   (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
@@ -887,6 +962,7 @@ window list."
 (use-package wgrep)
 
 (use-package savehist
+  :elpaca nil
   :init
   (savehist-mode))
 
@@ -992,7 +1068,6 @@ window list."
   :hook (typescript-mode js-mode typescript-tsx-mode))
 
 (use-package apheleia
-  :straight (apheleia :host github :repo "raxod502/apheleia")
   :config
   (setf (alist-get 'prettier apheleia-formatters)
         '(npx "eslint" "--fix" file))
@@ -1013,16 +1088,14 @@ window list."
   :after tree-sitter)
 
 (use-package combobulate
-  :straight (combobulate :type git :host github :repo "mickeynp/combobulate")
+  :elpaca nil
   :hook ((python-mode . combobulate-mode)
          (js-mode . combobulate-mode)
          (typescript-mode . combobulate-mode))
-  :load-path "~/.emacs.d/straight/repos/combobulate/combobulate.el"
   :config
   (setq combobulate-flash-node nil))
 
 (use-package lsp-mode
-  :straight (lsp-mode :type git :host github :repo "emacs-lsp/lsp-mode")
   :defer t
   :init
   ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
@@ -1041,37 +1114,6 @@ window list."
          (typescript-ts-mode . (lambda () 
                       (lsp)
                       (flymake-eslint-enable)))
-         (sql-mode . (lambda () 
-                       (lsp)
-                       (defun lsp/sqls-select-and-execute-command ()
-                         (interactive)
-                         (call-interactively 'sql-beginning-of-statement)
-                         (call-interactively 'set-mark-command)
-                         (call-interactively 'sql-end-of-statement)
-                         (run-with-timer 1 nil (lambda () 
-                                                 (execute-kbd-macro "Execute Query")
-                                                 (call-interactively 'minibuffer-force-complete-and-exit)))
-                         (call-interactively 'lsp-execute-code-action)
-                         (deactivate-mark))
-
-                       (defun lsp-sqls--show-results (result)
-                         (with-current-buffer (get-buffer-create "*sqls results*")
-                           (with-help-window (buffer-name)
-                             (erase-buffer)
-                             (insert result)
-                             (beginning-of-buffer)
-                             (replace-regexp "+$" "|")
-                             (beginning-of-buffer)
-                             (replace-regexp "^+" "|")
-                             (beginning-of-buffer)
-                             (org-mode)
-                             (org-toggle-pretty-entities)
-                             (mixed-pitch-mode -1)
-                             (toggle-truncate-lines 1)
-                             (god-local-mode 1)
-                             (read-only-mode -1))))
-
-                       (define-key sql-mode-map (kbd "C-x C-e") 'lsp/sqls-select-and-execute-command)))
          (lsp-mode . (lambda ()
                        (defun lsp-modeline--code-actions-icon (face)
                          "Build the icon for modeline code actions using FACE."
@@ -1132,7 +1174,6 @@ window list."
   ;;(yaml-mode . disable-lsp-ltex))
 
 (use-package dap-mode
-  :straight (dap-mode :type git :host github :repo "emacs-lsp/dap-mode")
   :config
   (require 'dap-node)
   (dap-node-setup))
@@ -1185,6 +1226,15 @@ window list."
   (add-hook 'js-mode-hook
         (lambda () (setq-local devdocs-current-docs '("node~16_lts" "jsdoc" "javascript")))))
 
+(use-package ejc-sql
+  :config
+  (setq
+   ejc-result-table-impl 'orgtbl-mode
+   ejc-set-column-width-limit 30)
+  (add-hook 'sql-mode-hook
+            (lambda ()
+              (ejc-sql-mode t))))
+
 ;; (use-package xterm-color
 ;;   :config
 ;;   (setq comint-output-filter-functions
@@ -1226,7 +1276,7 @@ window list."
 ;;   (advice-add 'compilation-filter :around #'my/advice-compilation-filter))
 
 (use-package aweshell
-  :straight (aweshell :type git :host github :repo "manateelazycat/aweshell")
+  :elpaca (aweshell :host github :repo "manateelazycat/aweshell")
   :config
   (define-key eshell-mode-map (kbd "M-m") #'eshell-bol)
   (require 'eshell)
@@ -1248,15 +1298,8 @@ window list."
   (add-hook 'eshell-mode-hook #'eshell/hook))
 
 (use-package eat
-  :straight (eat :type git
-                 :repo "https://codeberg.org/akib/emacs-eat"
-                 :files ("*.el" ("term" "term/*.el") "*.texi"
-                         "*.ti" ("terminfo/e" "terminfo/e/*")
-                         ("terminfo/65" "terminfo/65/*")
-                         ("integration" "integration/*")
-                         (:exclude ".dir-locals.el" "*-tests.el")))
   :config
-  (setq eat-term-terminfo-directory (concat (getenv "HOME") "/.emacs.d/straight/build/eat/terminfo"))
+  ;; (setq eat-term-terminfo-directory (concat (getenv "HOME") "/.emacs.d/straight/build/eat/terminfo"))
   (add-hook 'eshell-load-hook #'eat-eshell-mode)
   (add-hook 'eshell-load-hook #'eat-eshell-visual-command-mode))
 
@@ -1297,7 +1340,7 @@ window list."
   (dired "."))
 
 (use-package dired
-  :straight (:type built-in)
+  :elpaca nil
   :bind (
          :map dired-mode-map
          ("C-." . dired-hide-dotfiles-mode)
@@ -1327,70 +1370,8 @@ window list."
   :hook
   (dired-mode . dired-hide-dotfiles-mode))
 
-(use-package org
-  :config
-  (setq org-confirm-babel-evaluate nil)
-  (defun org/org-babel-tangle-config ()
-    (when (or (string-equal (buffer-file-name)
-                            (expand-file-name "~/.dotfiles/README.org"))
-              (string-equal (buffer-file-name)
-                            (expand-file-name "~/.dotfiles/qutebrowser/README.org"))
-              (string-equal (buffer-file-name)
-                            (expand-file-name "~/.dotfiles/emacs/README.org"))
-              (string-equal (buffer-file-name)
-                            (expand-file-name "~/.dotfiles/emacs/desktop.org"))
-              (string-equal (buffer-file-name)
-                            (expand-file-name "~/.dotfiles/herbstluftwm/README.org"))
-              (string-equal (buffer-file-name)
-                            (expand-file-name "~/.dotfiles/rofi/README.org"))
-              (string-equal (buffer-file-name)
-                            (expand-file-name "~/.dotfiles/polybar/README.org"))
-              (string-equal (buffer-file-name)
-                            (expand-file-name "~/.dotfiles/kmonad/README.org"))
-              (string-equal (buffer-file-name)
-                            (expand-file-name "~/.dotfiles/emacs/local.org")))
-      ;; Dynamic scoping to the rescue
-      (let ((org-confirm-babel-evaluate nil))
-        (org-babel-tangle))))
-  (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'org/org-babel-tangle-config)))
-  (custom-set-faces
-   '(org-level-1 ((t (:inherit outline-1 :height 2.5))))
-   '(org-level-2 ((t (:inherit outline-2 :height 1.8))))
-   '(org-level-3 ((t (:inherit outline-3 :height 1.4))))
-   '(org-level-4 ((t (:inherit outline-4 :height 1.2))))
-   '(org-level-5 ((t (:inherit outline-5 :height 1.0))))))
-
-(use-package org-modern
-  :config
-  (setq
-   ;; Edit settings
-   org-auto-align-tags nil
-   org-tags-column 0
-   org-catch-invisible-edits 'show-and-error
-   org-special-ctrl-a/e t
-   org-insert-heading-respect-content t
-
-   ;; Org styling, hide markup etc.
-   org-hide-emphasis-markers t
-   org-pretty-entities nil
-   org-ellipsis "…"
-
-   ;; Agenda styling
-   org-agenda-block-separator ?─
-   org-agenda-time-grid
-   '((daily today require-timed)
-     (800 1000 1200 1400 1600 1800 2000)
-     " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
-   org-agenda-current-time-string
-   "⭠ now ─────────────────────────────────────────────────")
-
-  ;; Enable org-modern-mode
-  ;; (add-hook 'org-mode-hook #'org-modern-mode)
-  ;; (add-hook 'org-agenda-finalize-hook #'org-modern-agenda)
-  )
-
 (use-package shr
-  :straight (:type built-in)
+  :elpaca nil
   :config
   (setq shr-use-fonts nil)
   (setq shr-use-colors nil)
@@ -1455,7 +1436,7 @@ window list."
         (insert "\n"))))
 
 (use-package eww
-  :straight (:type built-in)
+  :elpaca nil
   :bind (
          :map eww-mode-map
          ("M-r" . eww/open-in-eaf))
@@ -1478,7 +1459,7 @@ Version 2017-11-10"
 
 (when (executable-find "mu")
   (use-package mu4e
-    :straight nil
+    :elpaca nil
     :ensure nil
     :config
     (setq mu4e-hide-index-messages t)
@@ -1616,8 +1597,8 @@ MAIL-COUNT is the count of mails for which the string is to displayed."
   (bbdb-initialize 'gnus 'message)
   (bbdb-mua-auto-update-init 'gnus 'message))
 
-(autoload 'exwm-enable "~/.emacs.d/desktop.el")
-
-(let ((local-settings "~/.emacs.d/local.el"))
-    (when (file-exists-p local-settings)
-  (load-file local-settings)))
+(add-hook 'elpaca-after-init-hook
+          #'(lambda ()
+              (let ((local-settings "~/.emacs.d/local.el"))
+                (when (file-exists-p local-settings)
+                  (load-file local-settings)))))
