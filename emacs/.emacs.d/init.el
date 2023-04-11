@@ -969,7 +969,7 @@ window list."
 (use-package helpful
   :config
   (setq counsel-describe-function-function #'helpful-callable)
-  (setq counsel-describe-variable-function #'helpful-variable)
+  (setq counsel-describe-variable-funtion #'helpful-variable)
   (global-set-key (kbd "C-h f") #'helpful-callable)
   (global-set-key (kbd "C-h v") #'helpful-variable)
   (global-set-key (kbd "C-h k") #'helpful-key)
@@ -980,7 +980,8 @@ window list."
 (use-package nix-mode
   :mode "\\.nix\\'")
 
-(use-package flymake-eslint)
+(use-package flycheck
+  :init (global-flycheck-mode))
 
 (setq electric-pair-pairs
   '(
@@ -1109,11 +1110,9 @@ window list."
          ("M-." . lsp-find-definition))
   :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
          (js-mode . (lambda () 
-                      (lsp)
-                      (flymake-eslint-enable)))
+                      (lsp)))
          (typescript-ts-mode . (lambda () 
-                      (lsp)
-                      (flymake-eslint-enable)))
+                      (lsp)))
          (lsp-mode . (lambda ()
                        (defun lsp-modeline--code-actions-icon (face)
                          "Build the icon for modeline code actions using FACE."
@@ -1230,10 +1229,14 @@ window list."
   :config
   (setq
    ejc-result-table-impl 'orgtbl-mode
-   ejc-set-column-width-limit 30)
+   ejc-set-column-width-limit nil
+   ejc-set-use-unicode t)
   (add-hook 'sql-mode-hook
             (lambda ()
-              (ejc-sql-mode t))))
+              (ejc-sql-mode t)))
+  (add-hook 'ejc-sql-minor-mode-hook
+      (lambda ()
+        (ejc-eldoc-setup))))
 
 ;; (use-package xterm-color
 ;;   :config

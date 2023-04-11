@@ -1157,7 +1157,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
   (use-package helpful
     :config
     (setq counsel-describe-function-function #'helpful-callable)
-    (setq counsel-describe-variable-function #'helpful-variable)
+    (setq counsel-describe-variable-funtion #'helpful-variable)
     (global-set-key (kbd "C-h f") #'helpful-callable)
     (global-set-key (kbd "C-h v") #'helpful-variable)
     (global-set-key (kbd "C-h k") #'helpful-key)
@@ -1173,10 +1173,12 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     :mode "\\.nix\\'")
 #+END_SRC
 
-** Flymake
+** Flycheck
 #+BEGIN_SRC emacs-lisp
-  (use-package flymake-eslint)
+  (use-package flycheck
+    :init (global-flycheck-mode))
 #+END_SRC
+
 
 ** Electric pair
 #+BEGIN_SRC emacs-lisp
@@ -1356,9 +1358,7 @@ It is nice but sometimes too aggressive !
     (defun eglot/after-connect ()
       (interactive)
       (complete/start)
-      (setq-local completion-at-point-functions (list (cape-super-capf #'tempel-complete #'eglot-completion-at-point) t))
-      (if (or (derived-mode-p 'js-mode) (derived-mode-p 'typescript-mode))
-                                     (flymake-eslint-enable)))
+      (setq-local completion-at-point-functions (list (cape-super-capf #'tempel-complete #'eglot-completion-at-point) t)))
 
     (add-hook 'eglot-managed-mode-hook 'eglot/after-connect)
     (add-hook 'typescript-mode-hook 'js/hook)
@@ -1510,11 +1510,9 @@ It is nice but sometimes too aggressive !
            ("M-." . lsp-find-definition))
     :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
            (js-mode . (lambda () 
-                        (lsp)
-                        (flymake-eslint-enable)))
+                        (lsp)))
            (typescript-ts-mode . (lambda () 
-                        (lsp)
-                        (flymake-eslint-enable)))
+                        (lsp)))
            (lsp-mode . (lambda ()
                          (defun lsp-modeline--code-actions-icon (face)
                            "Build the icon for modeline code actions using FACE."
@@ -1659,10 +1657,14 @@ This requires a Java runtime environment.
     :config
     (setq
      ejc-result-table-impl 'orgtbl-mode
-     ejc-set-column-width-limit 30)
+     ejc-set-column-width-limit nil
+     ejc-set-use-unicode t)
     (add-hook 'sql-mode-hook
               (lambda ()
-                (ejc-sql-mode t))))
+                (ejc-sql-mode t)))
+    (add-hook 'ejc-sql-minor-mode-hook
+        (lambda ()
+          (ejc-eldoc-setup))))
 #+end_src
 
 * Shells & terminals
