@@ -890,8 +890,28 @@ As bookmarks are at the center of my workflow, this is a crucial option.
       (vertico-buffer-mode))
 #+END_SRC
 
-** Corfu
+** Company
 #+BEGIN_SRC emacs-lisp
+  (use-package company
+    :hook ((emacs-lisp-mode . (lambda () (setq-local company-backends '(company-elisp)))))
+    :bind (:map company-active-map
+                ("<tab>" . company-complete-selection))
+          (:map company-mode-map
+                ("<tab>" . company-indent-or-complete-common))
+    :config
+    (setq company-require-match nil
+          company-minimum-prefix-length 2
+          company-idle-delay 0.0
+          company-selection-wrap-around t
+          company-tooltip-limit 15)
+    (global-company-mode))
+
+  (use-package company-box
+    :hook (company-mode . company-box-mode))
+#+END_SRC
+
+
+** Corfu
   (use-package corfu
     ;; Optional customizations
     :custom
@@ -938,7 +958,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (set-face-attribute 'corfu-border nil :background nil :foreground nil :inherit 'corfu-default)
     
     (advice-add #'corfu-insert :after #'corfu-send-shell))
-#+END_SRC
 
 ** Embark
 #+BEGIN_SRC emacs-lisp
@@ -1663,8 +1682,13 @@ This requires a Java runtime environment.
               (lambda ()
                 (ejc-sql-mode t)))
     (add-hook 'ejc-sql-minor-mode-hook
-        (lambda ()
-          (ejc-eldoc-setup))))
+              (lambda ()
+                (ejc-eldoc-setup)))
+    (require 'ejc-company)
+    (push 'ejc-company-backend company-backends)
+    (add-hook 'ejc-sql-minor-mode-hook
+              (lambda ()
+                (company-mode t))))
 #+end_src
 
 * Shells & terminals

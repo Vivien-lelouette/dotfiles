@@ -728,52 +728,22 @@ window list."
     (vertico-mode)
     (vertico-buffer-mode))
 
-(use-package corfu
-  ;; Optional customizations
-  :custom
-  (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
-  (corfu-auto t)                 ;; Enable auto completion
-  (corfu-auto-prefix 2)
-  (corfu-auto-delay 0.5)
-  (corfu-echo-documentation 0.25) ;; Disable documentation in the echo area
-  (corfu-quit-at-boundary 'separator)   ;; Never quit at completion boundary
-  (corfu-preselect-first nil)    ;; Disable candidate preselection
-  (corfu-preview-current 'insert)    ;; Disable current candidate preview
-  ;; (corfu-separator ?\s)          ;; Orderless field separator
-  ;; (corfu-quit-no-match nil)      ;; Never quit, even if there is no match
-  ;; (corfu-on-exact-match nil)     ;; Configure handling of exact matches
-  ;; (corfu-scroll-margin 5)        ;; Use scroll margin
+(use-package company
+  :hook ((emacs-lisp-mode . (lambda () (setq-local company-backends '(company-elisp)))))
+  :bind (:map company-active-map
+              ("<tab>" . company-complete-selection))
+        (:map company-mode-map
+              ("<tab>" . company-indent-or-complete-common))
+  :config
+  (setq company-require-match nil
+        company-minimum-prefix-length 2
+        company-idle-delay 0.0
+        company-selection-wrap-around t
+        company-tooltip-limit 15)
+  (global-company-mode))
 
-  ;; You may want to enable Corfu only for certain modes.
-  ;; :hook ((prog-mode . corfu-mode)
-  ;;        (shell-mode . corfu-mode)
-  ;;        (eshell-mode . corfu-mode))
-
-  ;; Recommended: Enable Corfu globally.
-  ;; This is recommended since dabbrev can be used globally (M-/).
-  :bind (:map corfu-map
-              ("M-SPC" . corfu-insert-separator))
-  :init
-  (global-corfu-mode)
-  (corfu-history-mode)
-  (add-hook 'eshell-mode-hook
-        (lambda ()
-          (setq-local corfu-auto nil)
-          (corfu-mode)))
-
-  (defun corfu-send-shell (&rest _)
-    "Send completion candidate when inside comint/eshell."
-    (cond
-     ((and (derived-mode-p 'eshell-mode) (fboundp 'eshell-send-input))
-      (eshell-send-input))
-     ((and (derived-mode-p 'comint-mode)  (fboundp 'comint-send-input))
-      (comint-send-input))))
-
-  (set-face-attribute 'corfu-default nil :background nil :foreground nil :underline nil :box nil :weight 'normal :inherit 'tab-bar)
-  (set-face-attribute 'corfu-current nil :background nil :foreground nil :inherit 'vertico-current)
-  (set-face-attribute 'corfu-border nil :background nil :foreground nil :inherit 'corfu-default)
-
-  (advice-add #'corfu-insert :after #'corfu-send-shell))
+(use-package company-box
+  :hook (company-mode . company-box-mode))
 
 (use-package embark
   :bind (
@@ -1235,8 +1205,13 @@ window list."
             (lambda ()
               (ejc-sql-mode t)))
   (add-hook 'ejc-sql-minor-mode-hook
-      (lambda ()
-        (ejc-eldoc-setup))))
+            (lambda ()
+              (ejc-eldoc-setup)))
+  (require 'ejc-company)
+  (push 'ejc-company-backend company-backends)
+  (add-hook 'ejc-sql-minor-mode-hook
+            (lambda ()
+              (company-mode t))))
 
 ;; (use-package xterm-color
 ;;   :config
