@@ -47,7 +47,7 @@
 (defun exwm/refresh-setup ()
   (interactive)
   (setq exwm-randr-workspace-monitor-plist (build-exwm-monitors))
-  ;;(shell/run-in-background "~/.config/polybar/start_polybar.sh")
+  (tab/setup)
   (setup/input))
 
 (defun exwm/refresh-setup-and-monitors ()
@@ -337,7 +337,7 @@
           ([?\s-F] . blist)
 
           ([s-return] . eshell)
-          ([S-s-return] . multi-term)
+          ([S-s-return] . eat)
           ([C-s-return] . utils/x-terminal)
 
           ([?\s-q] . delete-window)
@@ -518,11 +518,29 @@
       (define-key exwm-edit-mode-map (kbd "C-c <return>") 'exwm-edit--finish-and-press-return)
       (define-key exwm-edit-mode-map (kbd "C-c C-<return>") 'exwm-edit--finish-and-press-control-return)))
 
-(defvar system-bar-menu (make-sparse-keymap "System"))
-(define-key global-map [menu-bar my-menu] (cons "System" system-bar-menu))
+(defvar emacs-header-bar-menu (make-sparse-keymap "-- Emacs menu --"))
+(define-key global-map [menu-bar emacs-header-menu] (cons "-- Emacs menu --" emacs-header-bar-menu))
 
+(defvar system-bar-menu (make-sparse-keymap "System"))
+(define-key global-map [menu-bar system-menu] (cons "System" system-bar-menu))
 (define-key system-bar-menu [shutdown]
             '(menu-item "Shutdown" kde/shutdown :help "Shutdown the computer"))
+(define-key system-bar-menu [reboot]
+            '(menu-item "Reboot" kde/reboot :help "Reboot the computer"))
+(define-key system-bar-menu [logout]
+            '(menu-item "Logout" kde/logout :help "Logout user"))
+
+(defvar application-bar-menu (make-sparse-keymap "Applications"))
+(define-key global-map [menu-bar application-menu] (cons "Applications" application-bar-menu))
+
+(defvar system-bar-menu (make-sparse-keymap "System"))
+(define-key global-map [menu-bar system-menu] (cons "System" system-bar-menu))
+(define-key system-bar-menu [shutdown]
+            '(menu-item "Shutdown" kde/shutdown :help "Shutdown the computer"))
+(define-key system-bar-menu [reboot]
+            '(menu-item "Reboot" kde/reboot :help "Reboot the computer"))
+(define-key system-bar-menu [logout]
+            '(menu-item "Logout" kde/logout :help "Logout user"))
 
 (defvar chrome/input-history nil)
 (eval-after-load "savehist"

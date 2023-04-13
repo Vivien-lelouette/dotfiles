@@ -133,7 +133,7 @@
       standard-indent tab-width)
 
 (setq display-line-numbers-type 'relative)
-;; (global-display-line-numbers-mode 1)
+(global-display-line-numbers-mode 1)
 
 (setq warning-minimum-level :error)
 
@@ -363,15 +363,18 @@ window list."
   (global-unset-key (kbd "C-?"))
   (global-set-key (kbd "C-?") 'vundo))
 
-(scroll-bar-mode -1)
+(scroll-bar-mode 1)
 (tool-bar-mode -1)
 (tooltip-mode -1)
 (menu-bar-mode -1)
 (setq
  window-divider-default-places t
- window-divider-default-right-width 1
- window-divider-default-bottom-width 1)
-(window-divider-mode -1)
+ window-divider-default-right-width 6
+ window-divider-default-bottom-width 6)
+(window-divider-mode 1)
+(set-face-attribute 'window-divider nil :foreground "#282a36" :background "#282a36")
+(set-face-attribute 'window-divider-last-pixel nil :foreground "#282a36" :background "#282a36")
+(set-face-attribute 'window-divider-first-pixel nil :foreground "#282a36" :background "#282a36")
 
 (setq-default fill-column 100)
 
@@ -729,11 +732,13 @@ window list."
     (vertico-buffer-mode))
 
 (use-package company
-  :hook ((emacs-lisp-mode . (lambda () (setq-local company-backends '(company-elisp)))))
+  :hook (emacs-lisp-mode . (lambda () (setq-local company-backends '(company-elisp))))
   :bind (:map company-active-map
               ("<tab>" . company-complete-selection))
-        (:map company-mode-map
-              ("<tab>" . company-indent-or-complete-common))
+  (:map company-active-map
+        ("<return>" . nil)
+        ("RET" . nil)
+        ("M-<return>" . company-complete-selection))
   :config
   (setq company-require-match nil
         company-minimum-prefix-length 2
@@ -743,7 +748,9 @@ window list."
   (global-company-mode))
 
 (use-package company-box
-  :hook (company-mode . company-box-mode))
+  :hook (company-mode . company-box-mode)
+  :config
+  (setq company-box-scrollbar nil))
 
 (use-package embark
   :bind (
@@ -1102,7 +1109,7 @@ window list."
   (setq
    lsp-log-io nil
    lsp-completion-enable nil
-   lsp-completion-provide :none
+   lsp-completion-provide :capf
    lsp-enable-symbol-highlighting nil
    lsp-eldoc-render-all nil
    lsp-auto-guess-root t
@@ -1115,9 +1122,8 @@ window list."
    lsp-headerline-breadcrumb-enable nil
    lsp-semantic-tokens-enable nil
    lsp-enable-folding nil
-   lsp-enable-snippet nil
-
-   lsp-idle-delay 0.2))
+   lsp-enable-snippet t
+   lsp-idle-delay 0.0))
 
 ;; (use-package lsp-ui
 ;;   :commands lsp-ui-mode
@@ -1213,30 +1219,30 @@ window list."
             (lambda ()
               (company-mode t))))
 
-;; (use-package xterm-color
-;;   :config
-;;   (setq comint-output-filter-functions
-;;         (remove 'ansi-color-process-output comint-output-filter-functions))
+(use-package xterm-color
+  :config
+  (setq comint-output-filter-functions
+        (remove 'ansi-color-process-output comint-output-filter-functions))
 
-;;   (add-hook 'shell-mode-hook
-;;             (lambda ()
-;;               ;; Disable font-locking in this buffer to improve performance
-;;               (font-lock-mode -1)
-;;               ;; Prevent font-locking from being re-enabled in this buffer
-;;               (make-local-variable 'font-lock-function)
-;;               (setq font-lock-function (lambda (_) nil))
-;;               (add-hook 'comint-preoutput-filter-functions 'xterm-color-filter nil t)))
+  (add-hook 'shell-mode-hook
+            (lambda ()
+              ;; Disable font-locking in this buffer to improve performance
+              (font-lock-mode -1)
+              ;; Prevent font-locking from being re-enabled in this buffer
+              (make-local-variable 'font-lock-function)
+              (setq font-lock-function (lambda (_) nil))
+              (add-hook 'comint-preoutput-filter-functions 'xterm-color-filter nil t)))
 
-;;   (add-hook 'eat-mode-hook
-;;             (lambda ()
-;;               ;; Disable font-locking in this buffer to improve performance
-;;               (font-lock-mode -1)
-;;               ;; Prevent font-locking from being re-enabled in this buffer
-;;               (make-local-variable 'font-lock-function)
-;;               (setq font-lock-function (lambda (_) nil))
-;;               (add-hook 'comint-preoutput-filter-functions 'xterm-color-filter nil t)))
+  (add-hook 'eat-mode-hook
+            (lambda ()
+              ;; Disable font-locking in this buffer to improve performance
+              (font-lock-mode -1)
+              ;; Prevent font-locking from being re-enabled in this buffer
+              (make-local-variable 'font-lock-function)
+              (setq font-lock-function (lambda (_) nil))
+              (add-hook 'comint-preoutput-filter-functions 'xterm-color-filter nil t))))
 
-;;   (require 'eshell) ; or use with-eval-after-load
+;; (require 'eshell) ; or use with-eval-after-load
 
 ;;   (add-hook 'eshell-before-prompt-hook
 ;;             (lambda ()
@@ -1244,6 +1250,7 @@ window list."
 
 ;;   (add-to-list 'eshell-preoutput-filter-functions 'xterm-color-filter)
 ;;   (setq eshell-output-filter-functions (remove 'eshell-handle-ansi-color eshell-output-filter-functions))
+
 ;;   (setenv "TERM" "xterm-256color")
 
 ;;   (setq compilation-environment '("TERM=xterm-256color"))
@@ -1253,27 +1260,33 @@ window list."
 
 ;;   (advice-add 'compilation-filter :around #'my/advice-compilation-filter))
 
-(use-package aweshell
-  :elpaca (aweshell :host github :repo "manateelazycat/aweshell")
-  :config
+(custom-set-faces
+ `(ansi-color-black ((t (:foreground "#282a36"))))
+ `(ansi-color-red ((t (:foreground "#ff5555"))))
+ `(ansi-color-green ((t (:foreground "#50fa7b"))))
+ `(ansi-color-yellow ((t (:foreground "#f1fa8c"))))
+ `(ansi-color-blue ((t (:foreground "#bd93f9"))))
+ `(ansi-color-magenta ((t (:foreground "#ff79c6"))))
+ `(ansi-color-cyan ((t (:foreground "#8be9fd"))))
+ `(ansi-color-gray ((t (:foreground "#f8f8f2")))))
+
+(setq eshell-banner-message "")
+
+(defun eshell/hook ()
   (define-key eshell-mode-map (kbd "M-m") #'eshell-bol)
   (require 'eshell)
   (require 'em-smart)
   (setq 
    eshell-where-to-jump 'begin
-   eshell-banner-message ""
    eshell-review-quick-commands nil
    eshell-smart-space-goes-to-end t)
-  (defun eshell/hook ()
-    (aweshell-sync-dir-buffer-name)
-    (setq eshell-prompt-function
-          (lambda ()
-            (concat (format-time-string " %Y-%m-%d %H:%M" (current-time))
-                    (if (= (user-uid) 0) " # " " $ "))))
-    (setq eshell-highlight-prompt t)
-    (set-face-attribute 'eshell-prompt nil :background nil :foreground nil :weight 'ultra-bold :box '(:line-width (10 . 1) :color "#282a36") :inverse-video t :inherit 'minibuffer-prompt))
-  (add-hook 'eshell-load-hook #'eshell/hook)
-  (add-hook 'eshell-mode-hook #'eshell/hook))
+  eshell-prompt-function
+  (lambda ()
+    (concat (format-time-string " %Y-%m-%d %H:%M" (current-time))
+            (if (= (user-uid) 0) " # " " $ ")))
+  eshell-highlight-prompt t
+  (set-face-attribute 'eshell-prompt nil :background nil :foreground nil :weight 'ultra-bold :box '(:line-width (10 . 1) :color "#282a36") :inverse-video t :inherit 'minibuffer-prompt))
+(add-hook 'eshell-mode-hook #'eshell/hook)
 
 (use-package eat
   :config
