@@ -369,12 +369,12 @@ window list."
 (menu-bar-mode -1)
 (setq
  window-divider-default-places t
- window-divider-default-right-width 6
- window-divider-default-bottom-width 6)
+ window-divider-default-right-width 22
+ window-divider-default-bottom-width 0)
 (window-divider-mode 1)
 (set-face-attribute 'window-divider nil :foreground "#282a36" :background "#282a36")
-(set-face-attribute 'window-divider-last-pixel nil :foreground "#282a36" :background "#282a36")
-(set-face-attribute 'window-divider-first-pixel nil :foreground "#282a36" :background "#282a36")
+(set-face-attribute 'window-divider-last-pixel nil :foreground "#373844" :background "#373844")
+(set-face-attribute 'window-divider-first-pixel nil :foreground "#373844" :background "#373844")
 
 (setq-default fill-column 100)
 
@@ -593,135 +593,13 @@ window list."
                           (eq (bookmark-get-handler bookmark)
                               #'bookmark/chrome-bookmark-handler)))
 
-(setq tab-always-indent 'complete)
-(setq completions-format 'one-column)
-(setq completions-header-format nil)
-(setq completion-show-help nil)
-(setq completions-max-height 10)
-(setq completion-auto-select nil)
-(setq completion-show-inline-help nil)
-
-(defun my/minibuffer-choose-completion (&optional repeat-key no-exit no-quit)
-  (interactive)
-  (let ((inhibit-message t)
-        (message-log-max nil))
-    (if (minibufferp)
-        (if (get-buffer-window "*Completions*")
-            (progn (minibuffer-previous-completion)
-                   (let ((minibuffer-completion-auto-choose t))
-                     (minibuffer-next-completion)))
-          (call-interactively 'minibuffer-force-complete-and-exit))
-      (if (get-buffer-window "*Completions*")
-          (with-minibuffer-completions-window
-            (let ((completion-use-base-affixes nil))
-              (choose-completion nil no-exit no-quit)))
-        (progn 
-          (completion-in-region-mode -1)
-          (if (not (null repeat-key))
-              (execute-kbd-macro (kbd repeat-key))))))))
-
-(define-key completion-in-region-mode-map (kbd "C-s") (lambda ()
-                                                        (interactive)
-                                                        (if (get-buffer-window "*Completions*")
-                                                            (minibuffer-next-completion)
-                                                          (progn 
-                                                            (completion-in-region-mode -1)
-                                                            (call-interactively 'isearch-forward)))))
-
-(define-key completion-in-region-mode-map (kbd "C-r") (lambda ()
-                                                        (interactive)
-                                                        (if (get-buffer-window "*Completions*")
-                                                            (minibuffer-previous-completion)
-                                                          (progn
-                                                            (completion-in-region-mode -1)
-                                                            (call-interactively 'isearch-backward)))))
-
-(define-key completion-in-region-mode-map (kbd "RET") (lambda () (interactive) (my/minibuffer-choose-completion "RET")))
-(define-key completion-in-region-mode-map (kbd "M-RET") (lambda () (interactive) (completion-in-region-mode -1) (execute-kbd-macro (kbd "RET"))))
-
-(add-hook 'completion-list-mode-hook (lambda () (setq truncate-lines t)))
-
-(defun utils/advice-silence-messages (orig-fun &rest args)
-  "Advice function that silences all messages in ORIG-FUN."
-  (let ((inhibit-message t)      ;Don't show the messages in Echo area
-        (message-log-max nil))   ;Don't show the messages in the *Messages* buffer
-    (apply orig-fun args)))
-
-(defun complete/thing-at-point ()
-  (if (minibufferp)
-      (thing-at-point 'line 'no-properties)
-    (with-syntax-table (make-syntax-table (syntax-table)) (modify-syntax-entry ?. "_")  (thing-at-point 'symbol 'no-properties))))
-
-(defun complete/update-in-region ()
-  (let ((current-word (complete/thing-at-point))
-        (inhibit-message t)
-        (message-log-max nil))
-    (if (and
-         (boundp 'complete/need-completion)
-         complete/need-completion)
-        (while-no-input
-          (redisplay)
-          (unless (memq this-command '(minibuffer-complete-and-exit
-                                       minibuffer-force-complete-and-exit
-                                       completion-at-point
-                                       choose-completion))
-
-            (if (minibufferp)
-                (minibuffer-completion-help)
-              (if (and current-word
-                       (>= (string-width current-word) 2))
-                  (completion-help-at-point)
-                (completion-in-region-mode -1)))
-            (minibuffer-previous-completion)
-            (minibuffer-next-completion)
-            (setq-local complete/need-completion nil))))))
-
-(defun complete/buffer-has-changed (&rest _args)
-  (setq-local complete/need-completion t))
-
-(defun complete/start ()
-  (interactive)
-  (let ((inhibit-message t)
-        (message-log-max nil))
-    (if (minibufferp)
-        (progn (define-key minibuffer-mode-map (kbd "C-s") 'minibuffer-next-completion)
-               (define-key minibuffer-mode-map (kbd "C-r") 'minibuffer-previous-completion)
-               (define-key minibuffer-mode-map (kbd "C-<tab>") 'my/minibuffer-choose-completion)
-               (define-key minibuffer-mode-map (kbd "M-<tab>") 'my/minibuffer-choose-completion)
-               (define-key minibuffer-mode-map (kbd "C-<return>") 'minibuffer-complete-and-exit)
-               (define-key minibuffer-mode-map (kbd "M-<return>") 'minibuffer-complete-and-exit)
-               (define-key minibuffer-mode-map (kbd "<return>") (lambda () (interactive) (my/minibuffer-choose-completion) (minibuffer-complete-and-exit)))
-               (minibuffer-completion-help)))
-    (remove-hook 'after-change-functions #'complete/buffer-has-changed t)
-    (add-hook 'after-change-functions #'complete/buffer-has-changed nil t)))
-
-(defun complete/setup ()
-  (setq minibuffer-completion-auto-choose nil)
-  (setq complete/timer (run-with-idle-timer 0.2 t #'complete/update-in-region))
-  (add-hook 'minibuffer-setup-hook #'complete/start)
-  (marginalia-mode -1))
-
-(defun complete/teardown ()
-  (setq minibuffer-completion-auto-choose t)
-  (cancel-timer complete/timer)
-  (remove-hook 'minibuffer-setup-hook #'complete/start)
-  (marginalia-mode 1))
-
-(use-package vcomplete
-  :config
-  (add-hook 'completion-list-mode-hook (lambda () (font-lock-mode -1)))
-  (defun vcomplete--highlight-completion-at-point ())
-  ;; Fix pointer position for consult groups
-  (defun vcomplete--update-minibuffer (&rest _args)
-    "Update the completion list when completing in a minibuffer."
-    (while-no-input
-      (redisplay)
-      (unless (memq this-command vcomplete-no-update-commands)
-        (minibuffer-completion-help)))
-    (vcomplete-next-completion 2)
-    (vcomplete-prev-completion))
-
-  (define-key vcomplete-command-map (kbd "C-<return>") 'vcomplete-choose-completion))
+(setq tab-always-indent 'complete
+      completions-format 'one-column
+      completions-header-format nil
+      completion-show-help nil
+      completions-max-height 10
+      completion-auto-select nil
+      completion-show-inline-help nil)
 
 (use-package vertico
     :config
@@ -741,7 +619,7 @@ window list."
         ("M-<return>" . company-complete-selection))
   :config
   (setq company-require-match nil
-        company-minimum-prefix-length 2
+        company-minimum-prefix-length 1
         company-idle-delay 0.0
         company-selection-wrap-around t
         company-tooltip-limit 15)
@@ -899,43 +777,6 @@ window list."
   :config
   (marginalia-mode 1))
 
-(use-package cape
-  ;; Bind dedicated completion commands
-  :bind (("C-c p p" . completion-at-point) ;; capf
-   ("C-c p t" . complete-tag)        ;; etags
-   ("C-c p d" . cape-dabbrev)        ;; or dabbrev-completion
-   ("C-c p f" . cape-file)
-   ("C-c p k" . cape-keyword)
-   ("C-c p s" . cape-symbol)
-   ("C-c p a" . cape-abbrev)
-   ("C-c p i" . cape-ispell)
-   ("C-c p l" . cape-line)
-   ("C-c p w" . cape-dict)
-   ("C-c p \\" . cape-tex)
-   ("C-c p _" . cape-tex)
-   ("C-c p ^" . cape-tex)
-   ("C-c p &" . cape-sgml)
-   ("C-c p r" . cape-rfc1345))
-  :init
-  ;; Add `completion-at-point-functions', used by `completion-at-point'.
-  (add-to-list 'completion-at-point-functions #'cape-file)
-  (add-to-list 'completion-at-point-functions #'cape-tex)
-  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-  (add-to-list 'completion-at-point-functions #'cape-keyword)
-  (add-to-list 'completion-at-point-functions #'cape-sgml)
-  ;;(add-to-list 'completion-at-point-functions #'cape-rfc1345)
-  ;;(add-to-list 'completion-at-point-functions #'cape-abbrev)
-  (add-to-list 'completion-at-point-functions #'cape-ispell)
-  ;;(add-to-list 'comnpletion-at-point-functions #'cape-dict)
-  ;;(add-to-list 'completion-at-point-functions #'cape-symbol)
-  ;;(add-to-list 'completion-at-point-functions #'cape-line)
-  ;; Silence the pcomplete capf, no errors or messages!
-  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
-
-  ;; Ensure that pcomplete does not write to the buffer
-  ;; and behaves as a pure `completion-at-point-function'.
-  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify))
-
 (use-package wgrep)
 
 (use-package savehist
@@ -969,25 +810,6 @@ window list."
 (electric-pair-mode 1)
 
 (electric-indent-mode 1)
-(use-package aggressive-indent
-    :config
-    (add-to-list 'aggressive-indent-dont-indent-if
-                 '(and (eq (char-before) ?\s) (looking-at-p "$")))
-    (add-to-list 'aggressive-indent-dont-indent-if
-                 '(minibufferp))
-    (add-to-list 'aggressive-indent-excluded-modes 'yaml-mode)
-    (add-to-list 'aggressive-indent-excluded-modes 'eshell-mode)
-    (add-to-list 'aggressive-indent-excluded-modes 'comint-mode)
-    (add-to-list 'aggressive-indent-excluded-modes 'authinfo-mode)
-    (add-to-list 'aggressive-indent-excluded-modes 'term-mode)
-    (add-to-list 'aggressive-indent-excluded-modes 'ansi-term-mode)
-    (add-to-list 'aggressive-indent-excluded-modes 'sql-mode)
-    (add-to-list 'aggressive-indent-excluded-modes 'helm-mode)
-    (add-to-list 'aggressive-indent-excluded-modes 'helm-occur-mode)
-    (add-to-list 'aggressive-indent-excluded-modes 'helm-epa-mode)
-    (add-to-list 'aggressive-indent-excluded-modes 'helm-major-mode)
-    (add-to-list 'aggressive-indent-excluded-modes 'completion-list-mode)
-    (global-aggressive-indent-mode 0))
 
 (use-package magit
   :config
@@ -1108,8 +930,6 @@ window list."
     )
   (setq
    lsp-log-io nil
-   lsp-completion-enable nil
-   lsp-completion-provide :capf
    lsp-enable-symbol-highlighting nil
    lsp-eldoc-render-all nil
    lsp-auto-guess-root t
@@ -1124,16 +944,6 @@ window list."
    lsp-enable-folding nil
    lsp-enable-snippet t
    lsp-idle-delay 0.0))
-
-;; (use-package lsp-ui
-;;   :commands lsp-ui-mode
-;;   :config
-;;   (setq lsp-ui-doc-enable nil
-;;         lsp-ui-doc-header t
-;;         lsp-ui-doc-include-signature t
-;;         lsp-ui-doc-border (face-foreground 'default)
-;;         lsp-ui-sideline-show-code-actions t
-;;         lsp-ui-sideline-delay 0.05))
 
 (defun disable-lsp-ltex ()
   (interactive))
