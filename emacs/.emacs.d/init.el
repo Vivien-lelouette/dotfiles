@@ -326,7 +326,6 @@
                (concat tab/space-between-status-element "%b%p%%,%d°C  "))
               (battery-status-function
                (concat tab/space-between-status-element "%b%p%%  "))))
-  (mu4e-alert-enable-mode-line-display)
   (tab-bar-mode 1))
 
 (add-hook 'elpaca-after-init-hook #'tab/setup)
