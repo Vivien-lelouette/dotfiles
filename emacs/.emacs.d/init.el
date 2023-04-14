@@ -758,16 +758,9 @@ window list."
 
 (use-package orderless
   :init
-  ;; Configure a custom style dispatcher (see the Consult wiki)
-  ;; (setq orderless-style-dispatchers '(+orderless-dispatch)
-  ;;       orderless-component-separator #'orderless-escapable-split-on-space)
   (setq completion-styles '(orderless)
   completion-category-defaults nil
-  completion-category-overrides '((file (styles partial-completion))))
-  (set-face-attribute 'orderless-match-face-0 nil :foreground "#ff79bf")
-  (set-face-attribute 'orderless-match-face-1 nil :foreground "#63b4f6")
-  (set-face-attribute 'orderless-match-face-2 nil :foreground "#f0ab57")
-  (set-face-attribute 'orderless-match-face-3 nil :foreground "#a691f9"))
+  completion-category-overrides '((file (styles partial-completion)))))
 
 (use-package wgrep)
 
@@ -887,10 +880,85 @@ window list."
   :config
   (setq combobulate-flash-node nil))
 
-(use-package eldoc-box
-  :hook ((prog-mode . eldoc-box-hover-at-point-mode))
-  :config
-  (eldoc-box-hover-at-point-mode 1))
+(require 'eldoc)
+(require 'posframe)
+
+(defgroup eldoc-posframe nil
+  "Display eldoc in tooltips using posframe.el."
+  :prefix "eldoc-posframe-"
+  :group 'eldoc)
+
+(defvar eldoc-posframe-buffer "*eldoc-posframe-buffer*"
+  "The posframe buffer name use by eldoc-posframe.")
+
+(defvar eldoc-posframe-hide-posframe-hooks
+  '(pre-command-hook post-command-hook focus-out-hook)
+  "The hooks which should trigger automatic removal of the posframe.")
+
+(defun eldoc-posframe-hide-posframe ()
+  "Hide messages currently being shown if any."
+  (posframe-hide eldoc-posframe-buffer)
+  (dolist (hook eldoc-posframe-hide-posframe-hooks)
+    (remove-hook hook #'eldoc-posframe-hide-posframe t)))
+
+(defun eldoc-posframe-show-posframe (format-string &rest args)
+  "Display FORMAT-STRING and ARGS, using posframe.el library."
+  (eldoc-posframe-hide-posframe)
+  (when format-string
+    (posframe-show
+     eldoc-posframe-buffer
+     :string (apply 'format format-string args)
+     :background-color (face-background 'eldoc-posframe-background-face nil t)
+     :internal-border-width 8
+     :posframe-width 80
+     :posframe-height 120
+     :poshandler 'posframe-poshandler-window-top-right-corner)
+    (dolist (hook eldoc-posframe-hide-posframe-hooks)
+      (add-hook hook #'eldoc-posframe-hide-posframe nil t))))
+
+(defface eldoc-posframe-background-face
+  '((t :inherit highlight))
+  "The background color of the eldoc-posframe frame.
+Only the `background' is used in this face."
+  :group 'eldoc-posframe)
+
+(defun eldoc-posframe-enable ()
+  "Enable `eldoc-posframe-mode' minor mode."
+  (eldoc-posframe-mode 1))
+
+(defun eldoc-posframe-disable ()
+  "Disable `eldoc-posframe-mode' minor mode."
+  (eldoc-posframe-mode 0))
+
+(defun global-eldoc-posframe-enable ()
+  "Globally enable `eldoc-posframe-mode' minor mode."
+  (global-eldoc-posframe-mode 1))
+
+(defun global-eldoc-posframe-disable ()
+  "Globally disable `eldoc-posframe-mode' minor mode."
+  (global-eldoc-posframe-mode 0))
+
+;;;###autoload
+(define-minor-mode eldoc-posframe-mode
+  "A minor mode to show eldoc in a posframe."
+  :require 'eldoc-posframe-mode
+  :group 'eldoc-posframe
+  :init-value t
+  :lighter " ElDocPosframe"
+
+  (if eldoc-posframe-mode
+      (progn
+        (setq eldoc-message-function #'eldoc-posframe-show-posframe)
+        (eldoc-mode 1))
+    (setq eldoc-message-function #'eldoc-minibuffer-message)))
+
+;;;###autoload
+(define-globalized-minor-mode global-eldoc-posframe-mode eldoc-posframe-mode eldoc-posframe-enable
+  :group 'eldoc-posframe
+  :init-value t)
+
+(provide 'eldoc-posframe)
+(global-eldoc-posframe-mode 1)
 
 (use-package lsp-mode
   :defer t
@@ -913,11 +981,7 @@ window list."
                        (defun lsp-modeline--code-actions-icon (face)
                          "Build the icon for modeline code actions using FACE."
                          (propertize tab/space-between-status-element 'face face))
-                       (make-local-variable 'completion-at-point-functions)
-                       (setq-local completion-at-point-functions
-                                   (list
-                                    (cape-super-capf #'tempel-complete #'lsp-completion-at-point)
-                                    t))))
+                       (make-local-variable 'completion-at-point-functions)))
          ;; if you want which-key integration
          (lsp-mode . lsp-enable-which-key-integration))
   :commands lsp
@@ -944,7 +1008,7 @@ window list."
    lsp-idle-delay 0.0)
 
   (defvar lsp/signature-posframe-params
-    (list :poshandler #'posframe-poshandler-point-1
+    (list :poshandler #'posframe-poshandler-window-top-right-corner
           :height 10
           :width 60
           :border-width 8
@@ -972,17 +1036,17 @@ window list."
   (set-face-attribute 'lsp-signature-posframe nil :inherit 'hl-line))
 
 (defun disable-lsp-ltex ()
-  (interactive))
-  ;;(lsp-workspace-shutdown 'lsp--cur-workspace))
+  (interactive)
+  (lsp-workspace-shutdown 'lsp--cur-workspace))
 
 (use-package lsp-ltex
   :config
-  (setq lsp-ltex-completion-enabled t))
-  ;;:hook
-  ;;(text-mode . (lambda ()
-  ;;               (require 'lsp-ltex)
-  ;;               (lsp)))
-  ;;(yaml-mode . disable-lsp-ltex))
+  (setq lsp-ltex-completion-enabled t)
+  :hook
+  (text-mode . (lambda ()
+                 (require 'lsp-ltex)
+                 (lsp)))
+  (yaml-mode . disable-lsp-ltex))
 
 (use-package dap-mode
   :config
@@ -1413,24 +1477,9 @@ MAIL-COUNT is the count of mails for which the string is to displayed."
        "%s\n"))
 (setq gnus-summary-display-arrow t)
 
-(use-package bbdb
-  :config
-  (require 'bbdb-autoloads)
-  (setq bbdb-file "~/.bbdb"
-        bbdb-offer-save 'auto
-        bbdb-notice-auto-save-file t
-        bbdb-expand-mail-aliases t
-        bbdb-canonicalize-redundant-nets-p t
-        bbdb-always-add-addresses t
-        bbdb-complete-name-allow-cycling t
-        bbdb-mua-pop-up nil
-        bbdb-mua-auto-update-p 'create
-        bbdb-message-all-addresses t)
-  (bbdb-initialize 'gnus 'message)
-  (bbdb-mua-auto-update-init 'gnus 'message))
-
 (add-hook 'elpaca-after-init-hook
           #'(lambda ()
+              (theme/dracula)
               (let ((local-settings "~/.emacs.d/local.el"))
                 (when (file-exists-p local-settings)
                   (load-file local-settings)))))

@@ -494,12 +494,9 @@
 (require 'exwm-randr)
 (add-hook 'exwm-randr-screen-change-hook 'exwm/refresh-setup)
 (exwm-randr-enable)
-(require 'exwm-systemtray)
-(exwm-systemtray-enable)
 (add-hook 'elpaca-after-init-hook
           #'(lambda ()
-              (exwm/refresh-setup)
-              (theme/dracula)))
+              (exwm/refresh-setup)))
 
 (use-package exwm-edit)
 
