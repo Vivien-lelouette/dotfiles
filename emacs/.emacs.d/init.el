@@ -134,6 +134,7 @@
 
 (setq display-line-numbers-type 'relative)
 (global-display-line-numbers-mode 1)
+(global-hl-line-mode 1)
 
 (setq warning-minimum-level :error)
 
@@ -593,7 +594,7 @@ window list."
                           (eq (bookmark-get-handler bookmark)
                               #'bookmark/chrome-bookmark-handler)))
 
-(setq tab-always-indent 'complete
+(setq tab-always-indent t
       completions-format 'one-column
       completions-header-format nil
       completion-show-help nil
@@ -1098,6 +1099,11 @@ window list."
   eshell-highlight-prompt t
   (set-face-attribute 'eshell-prompt nil :background nil :foreground nil :weight 'ultra-bold :box '(:line-width (10 . 1) :color "#282a36") :inverse-video t :inherit 'minibuffer-prompt))
 (add-hook 'eshell-mode-hook #'eshell/hook)
+
+(use-package eshell
+  :elpaca nil
+  :bind (:map eshell-mode-map
+              ("<tab>" . company-complete)))
 
 (use-package eat
   :config

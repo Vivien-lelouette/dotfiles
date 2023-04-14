@@ -189,10 +189,11 @@ As bookmarks are at the center of my workflow, this is a crucial option.
         standard-indent tab-width)
 #+END_SRC
 
-** Line number
+** Lines style
 #+begin_src emacs-lisp
   (setq display-line-numbers-type 'relative)
   (global-display-line-numbers-mode 1)
+  (global-hl-line-mode 1)
 #+end_src
 
 ** Log level
@@ -748,7 +749,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 * Search & completion
 ** Built-in setup
 #+begin_src emacs-lisp
-  (setq tab-always-indent 'complete
+  (setq tab-always-indent t
         completions-format 'one-column
         completions-header-format nil
         completion-show-help nil
@@ -1363,6 +1364,11 @@ This requires a Java runtime environment.
     eshell-highlight-prompt t
     (set-face-attribute 'eshell-prompt nil :background nil :foreground nil :weight 'ultra-bold :box '(:line-width (10 . 1) :color "#282a36") :inverse-video t :inherit 'minibuffer-prompt))
   (add-hook 'eshell-mode-hook #'eshell/hook)
+
+  (use-package eshell
+    :elpaca nil
+    :bind (:map eshell-mode-map
+                ("<tab>" . company-complete)))
 #+end_src
 
 *** Eat
