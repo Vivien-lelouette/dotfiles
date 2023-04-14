@@ -761,6 +761,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 #+BEGIN_SRC emacs-lisp
   (use-package vertico
       :config
+      (load-file "~/.emacs.d/elpaca/repos/vertico/extensions/vertico-buffer.el")
       (setq
        vertico-cycle t
        vertico-buffer-display-action '(display-buffer-below-selected (window-height . 13)))

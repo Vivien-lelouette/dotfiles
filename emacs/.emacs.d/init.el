@@ -603,6 +603,7 @@ window list."
 
 (use-package vertico
     :config
+    (load-file "~/.emacs.d/elpaca/repos/vertico/extensions/vertico-buffer.el")
     (setq
      vertico-cycle t
      vertico-buffer-display-action '(display-buffer-below-selected (window-height . 13)))
