@@ -1,6 +1,6 @@
 (defun shell/run-in-background (command)
   (let ((command-parts (split-string command "[ ]+")))
-    (apply #'call-process `(,(car command-parts) nil 0 nil ,@(cdr command-parts)))))
+    (apply #'all-process `(,(car command-parts) nil 0 nil ,@(cdr command-parts)))))
 
 (defun shell/async-command-no-output (command)
   (call-process-shell-command (concat command " &") nil 0))
@@ -498,7 +498,8 @@
 (exwm-systemtray-enable)
 (add-hook 'elpaca-after-init-hook
           #'(lambda ()
-              (exwm/refresh-setup)))
+              (exwm/refresh-setup)
+              (theme/dracula)))
 
 (use-package exwm-edit)
 

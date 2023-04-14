@@ -142,6 +142,65 @@
 
 (require 'iso-transl)
 
+(scroll-bar-mode 1)
+(tool-bar-mode -1)
+(tooltip-mode -1)
+(menu-bar-mode -1)
+(setq
+ window-divider-default-places t
+ window-divider-default-right-width 32
+ window-divider-default-bottom-width 10)
+(window-divider-mode 1)
+
+(setq-default fill-column 100)
+
+(set-face-attribute 'default nil :font "SauceCodePro NF-11")
+
+;; Set the fixed pitch face
+(set-face-attribute 'fixed-pitch nil :font "SauceCodePro NF-11")
+
+;; Set the variable pitch face
+(set-face-attribute 'variable-pitch nil :font "Cantarell-11" :weight 'regular)
+
+(defun disable-mixed-pitch ()
+  (interactive)
+  (mixed-pitch-mode -1))
+
+(use-package mixed-pitch
+  :hook
+  (text-mode . mixed-pitch-mode)
+  (yaml-mode . disable-mixed-pitch))
+
+(use-package dracula-theme
+  :config
+  (add-to-list 'custom-theme-load-path "~/.emacs.d/themes")
+  (add-to-list 'default-frame-alist '(background-color . "#232530"))
+
+  (defun theme/dracula ()
+    (interactive)
+    (load-theme 'dracula t)
+    (setq dracula-use-24-bit-colors-on-256-colors-terms t)
+
+    (set-background-color "#232530")
+
+    (set-face-attribute 'mode-line-inactive nil :box (face-background 'mode-line-inactive))
+
+    (set-face-attribute 'window-divider nil :foreground "#282a36" :background "#282a36")
+    (set-face-attribute 'window-divider-last-pixel nil :foreground "#282a36" :background "#282a36")
+    (set-face-attribute 'window-divider-first-pixel nil :foreground "#282a36" :background "#282a36")
+
+    (with-current-buffer " *Echo Area 0*" (face-remap-add-relative 'default '(:background "#282a36")))
+    (with-current-buffer " *Echo Area 0*" (face-remap-add-relative 'fringe '(:background "#282a36")))
+
+    (set-face-attribute 'fringe nil :foreground (face-foreground 'default) :background (face-background 'default))
+    (fringe-mode '(24 . 8))
+
+    (set-face-attribute 'line-number nil :background (face-background 'default))
+    (set-face-attribute 'line-number-current-line nil :foreground (face-foreground 'default) :background (face-background 'hl-line))))
+
+(elpaca-wait)
+(theme/dracula)
+
 (use-package org
   :config
   (setq org-confirm-babel-evaluate nil)
@@ -364,44 +423,6 @@ window list."
   (global-unset-key (kbd "C-?"))
   (global-set-key (kbd "C-?") 'vundo))
 
-(scroll-bar-mode 1)
-(tool-bar-mode -1)
-(tooltip-mode -1)
-(menu-bar-mode -1)
-(setq
- window-divider-default-places t
- window-divider-default-right-width 22
- window-divider-default-bottom-width 0)
-(window-divider-mode 1)
-(set-face-attribute 'window-divider nil :foreground "#282a36" :background "#282a36")
-(set-face-attribute 'window-divider-last-pixel nil :foreground "#373844" :background "#373844")
-(set-face-attribute 'window-divider-first-pixel nil :foreground "#373844" :background "#373844")
-
-(setq-default fill-column 100)
-
-(set-face-attribute 'default nil :font "SauceCodePro NF-11")
-
-;; Set the fixed pitch face
-(set-face-attribute 'fixed-pitch nil :font "SauceCodePro NF-11")
-
-;; Set the variable pitch face
-(set-face-attribute 'variable-pitch nil :font "Cantarell-11" :weight 'regular)
-
-(defun disable-mixed-pitch ()
-  (interactive)
-  (mixed-pitch-mode -1))
-
-(use-package mixed-pitch
-  :hook
-  (text-mode . mixed-pitch-mode)
-  (yaml-mode . disable-mixed-pitch))
-
-(use-package dracula-theme
-  :config
-  (add-to-list 'custom-theme-load-path "~/.emacs.d/themes")
-  (load-theme 'dracula t)
-  (setq dracula-use-24-bit-colors-on-256-colors-terms t))
-
 (use-package olivetti
   :config
   (setq olivetti-margin-width 120
@@ -597,19 +618,43 @@ window list."
 (setq tab-always-indent t
       completions-format 'one-column
       completions-header-format nil
-      completion-show-help nil
-      completions-max-height 10
-      completion-auto-select nil
-      completion-show-inline-help nil)
+      completion-show-help t
+      completion-show-inline-help t
+      completions-max-height nil
+      completion-auto-select nil)
 
 (use-package vertico
-    :config
-    (load-file "~/.emacs.d/elpaca/repos/vertico/extensions/vertico-buffer.el")
-    (setq
-     vertico-cycle t
-     vertico-buffer-display-action '(display-buffer-below-selected (window-height . 13)))
-    (vertico-mode)
-    (vertico-buffer-mode))
+  :config
+  (load-file "~/.emacs.d/elpaca/repos/vertico/extensions/vertico-multiform.el")
+  (setq vertico-cycle t)
+  (vertico-mode))
+
+(use-package vertico-posframe
+  :config
+  (defun vertico/reset-position ()
+    (interactive)
+    (setq vertico/position nil))
+
+  (advice-add 'vertico-posframe--minibuffer-exit-hook :after #'vertico/reset-position)
+
+  (defun vertico/posframe-poshandler-point (info)
+    (let ((position (if vertico/position vertico/position (posframe-poshandler-point-1 info))))
+      (setq vertico/position position)
+      vertico/position))
+
+  (defun theme/vertico ()
+    (interactive)
+    (setq vertico-posframe-poshandler 'vertico/posframe-poshandler-point
+          vertico-posframe-border-width 8
+          vertico-posframe-min-width 120)
+
+    (set-face-attribute 'vertico-posframe nil :inherit 'hl-line)
+    (set-face-attribute 'vertico-posframe-border nil :background nil)
+    (set-face-attribute 'vertico-current nil :inherit 'match))
+
+  (advice-add 'theme/dracula :after #'theme/vertico)
+
+  (vertico-posframe-mode 1))
 
 (use-package company
   :hook (emacs-lisp-mode . (lambda () (setq-local company-backends '(company-elisp))))
@@ -630,7 +675,13 @@ window list."
 (use-package company-box
   :hook (company-mode . company-box-mode)
   :config
-  (setq company-box-scrollbar nil))
+  (defun theme/company ()
+    (interactive)
+    (setq company-box-scrollbar nil)
+
+    (set-face-attribute 'company-tooltip nil :inherit 'hl-line))
+
+  (advice-add 'theme/dracula :after #'theme/company))
 
 (use-package embark
   :bind (
@@ -638,7 +689,6 @@ window list."
          ("C-c e" . embark-act)))
 
 (use-package consult
-  ;; Replace bindings. Lazily loaded due by `use-package'.
   :bind (;; C-c bindings (mode-specific-map)
          ("C-c h" . consult-history)
          ("C-c m" . consult-mode-command)
@@ -684,42 +734,16 @@ window list."
          :map minibuffer-local-map
          ("M-s" . consult-history)                 ;; orig. next-matching-history-element
          ("M-r" . consult-history))                ;; orig. previous-matching-history-element
-
-  ;; Enable automatic preview at point in the *Completions* buffer. This is
-  ;; relevant when you use the default completion UI.
   :hook (completion-list-mode . consult-preview-at-point-mode)
-
-  ;; The :init configuration is always executed (Not lazy)
   :init
-
-  ;; Optionally configure the register formatting. This improves the register
-  ;; preview for `consult-register', `consult-register-load',
-  ;; `consult-register-store' and the Emacs built-ins.
   (setq register-preview-delay 0.5
         register-preview-function #'consult-register-format)
 
-  ;; Optionally tweak the register preview window.
-  ;; This adds thin lines, sorting and hides the mode line of the window.
   (advice-add #'register-preview :override #'consult-register-window)
 
-  ;; Optionally replace `completing-read-multiple' with an enhanced version.
-  ;; (advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
-
-  ;; Use Consult to select xref locations with preview
   (setq xref-show-xrefs-function #'consult-xref
         xref-show-definitions-function #'consult-xref)
-
-  ;; Configure other variables and modes in the :config section,
-  ;; after lazily loading the package.
   :config
-
-  ;; Optionally configure preview. The default value
-  ;; is 'any, such that any key triggers the preview.
-  ;; (setq consult-preview-key 'any)
-  ;; (setq consult-preview-key (kbd "M-."))
-  ;; (setq consult-preview-key (list (kbd "<S-down>") (kbd "<S-up>")))
-  ;; For some commands and buffer sources it is useful to configure the
-  ;; :preview-key on a per-command basis using the `consult-customize' macro.
   (consult-customize
    consult-theme
    :preview-key '(:debounce 0.2 any)
@@ -728,33 +752,7 @@ window list."
    consult--source-bookmark consult--source-recent-file
    consult--source-project-recent-file
    :preview-key "M-.")
-
-  ;; Optionally configure the narrowing key.
-  ;; Both < and C-+ work reasonably well.
-  (setq consult-narrow-key "<")) ;; (kbd "C-+")
-
-;; Optionally make narrowing help available in the minibuffer.
-;; You may want to use `embark-prefix-help-command' or which-key instead.
-;; (define-key consult-narrow-map (vconcat consult-narrow-key "?") #'consult-narrow-help)
-
-;; By default `consult-project-function' uses `project-root' from project.el.
-;; Optionally configure a different project root function.
-;; There are multiple reasonable alternatives to chose from.
-    ;;;; 1. project.el (the default)
-;; (setq consult-project-function #'consult--default-project--function)
-    ;;;; 2. projectile.el (projectile-project-root)
-;; (autoload 'projectile-project-root "projectile")
-;; (setq consult-project-function (lambda (_) (projectile-project-root)))
-    ;;;; 3. vc.el (vc-root-dir)
-;; (setq consult-project-function (lambda (_) (vc-root-dir)))
-    ;;;; 4. locate-dominating-file
-;; (setq consult-project-function (lambda (_) (locate-dominating-file "." ".git")))
-;;(setq completion-in-region-function
-;;  (lambda (&rest args)
-;;    (apply (if vertico-mode
-;;               #'consult-completion-in-region
-;;             #'completion--in-region)
-;;           args))))
+  (setq consult-narrow-key "<"))
 
 (use-package embark-consult)
 
@@ -770,14 +768,6 @@ window list."
   (set-face-attribute 'orderless-match-face-1 nil :foreground "#63b4f6")
   (set-face-attribute 'orderless-match-face-2 nil :foreground "#f0ab57")
   (set-face-attribute 'orderless-match-face-3 nil :foreground "#a691f9"))
-
-(use-package marginalia
-  ;; Either bind `marginalia-cycle` globally or only in the minibuffer
-  :bind (
-         :map minibuffer-local-map
-         ("M-A" . marginalia-cycle))
-  :config
-  (marginalia-mode 1))
 
 (use-package wgrep)
 
@@ -897,6 +887,11 @@ window list."
   :config
   (setq combobulate-flash-node nil))
 
+(use-package eldoc-box
+  :hook ((prog-mode . eldoc-box-hover-at-point-mode))
+  :config
+  (eldoc-box-hover-at-point-mode 1))
+
 (use-package lsp-mode
   :defer t
   :init
@@ -913,7 +908,7 @@ window list."
          (js-mode . (lambda () 
                       (lsp)))
          (typescript-ts-mode . (lambda () 
-                      (lsp)))
+                                 (lsp)))
          (lsp-mode . (lambda ()
                        (defun lsp-modeline--code-actions-icon (face)
                          "Build the icon for modeline code actions using FACE."
@@ -933,19 +928,48 @@ window list."
   (setq
    lsp-log-io nil
    lsp-enable-symbol-highlighting nil
-   lsp-eldoc-render-all nil
+   lsp-eldoc-render-all t
    lsp-auto-guess-root t
    lsp-log-io nil
    lsp-restart 'auto-restart
    lsp-enable-on-type-formatting nil
    lsp-eslint-auto-fix-on-save nil
    lsp-signature-auto-activate t
-   lsp-signature-render-documentation nil
+   lsp-signature-render-documentation t
+   lsp-signature-function 'lsp/signature-posframe
    lsp-headerline-breadcrumb-enable nil
    lsp-semantic-tokens-enable nil
    lsp-enable-folding nil
    lsp-enable-snippet t
-   lsp-idle-delay 0.0))
+   lsp-idle-delay 0.0)
+
+  (defvar lsp/signature-posframe-params
+    (list :poshandler #'posframe-poshandler-point-1
+          :height 10
+          :width 60
+          :border-width 8
+          :min-width 60)
+    "Params for signature and `posframe-show'.")
+
+  (defun lsp/signature-posframe (str)
+    "Use posframe to show the STR signatureHelp string."
+    (if str
+        (apply #'posframe-show
+               (with-current-buffer (get-buffer-create " *lsp-signature*")
+                 (erase-buffer)
+                 (insert str)
+                 (visual-line-mode 1)
+                 (lsp--setup-page-break-mode-if-present)
+                 (current-buffer))
+               (append
+                lsp/signature-posframe-params
+                (list :position (point)
+                      :background-color (face-attribute 'lsp-signature-posframe :background nil t)
+                      :foreground-color (face-attribute 'lsp-signature-posframe :foreground nil t)
+                      :border-color (face-attribute 'lsp-signature-posframe :background nil t))))
+      (posframe-hide " *lsp-signature*")))
+
+  (set-face-attribute 'lsp-signature-posframe nil :inherit 'hl-line))
 
 (defun disable-lsp-ltex ()
   (interactive))
