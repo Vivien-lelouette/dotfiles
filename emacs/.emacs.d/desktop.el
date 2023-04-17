@@ -61,6 +61,24 @@
 
 (elpaca (app-launcher :host github :repo "vivien-lelouette/app-launcher"))
 
+(with-eval-after-load 'posframe
+  (defun exwm-deparent (frame)
+    (let ((frame-par (frame-parameter frame 'parent-frame)))
+      (if frame-par
+          (let ((parent-pos (frame-position frame-par))
+                (frame-pos (frame-position frame)))
+            (set-frame-parameter frame 'parent-frame nil)
+            (set-frame-position
+             frame
+             (if (> (car parent-pos) (car frame-pos))
+                    (+ (car parent-pos) (car frame-pos))
+                    (car frame-pos))
+             (if (> (cdr parent-pos) (cdr frame-pos))
+                    (+ (cdr parent-pos) (cdr frame-pos))
+                    (cdr frame-pos))))))
+    frame)
+  (advice-add 'posframe-show :filter-return #'exwm-deparent))
+
 (defcustom my-skippable-buffer-regexp
   (rx bos (or (seq "*" (zero-or-more anything))
               (seq "magit" (zero-or-more anything))

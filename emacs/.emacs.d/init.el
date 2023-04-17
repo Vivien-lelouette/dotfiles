@@ -148,8 +148,8 @@
 (menu-bar-mode -1)
 (setq
  window-divider-default-places t
- window-divider-default-right-width 32
- window-divider-default-bottom-width 10)
+ window-divider-default-right-width 22
+ window-divider-default-bottom-width 22)
 (window-divider-mode 1)
 
 (setq-default fill-column 100)
@@ -171,35 +171,143 @@
   (text-mode . mixed-pitch-mode)
   (yaml-mode . disable-mixed-pitch))
 
-(use-package dracula-theme
+(load-file "~/.emacs.d/custom_packages/dracula-theme.el")
+(load-theme 'dracula t)
+
+(fringe-mode '(24 . 8))
+
+(setq tab-always-indent t
+      completions-format 'one-column
+      completions-header-format nil
+      completion-show-help t
+      completion-show-inline-help t
+      completions-max-height nil
+      completion-auto-select nil)
+
+(use-package vertico
   :config
-  (add-to-list 'custom-theme-load-path "~/.emacs.d/themes")
-  (add-to-list 'default-frame-alist '(background-color . "#232530"))
+  (load-file "~/.emacs.d/elpaca/repos/vertico/extensions/vertico-multiform.el")
+  (setq vertico-cycle t)
+  (vertico-mode))
 
-  (defun theme/dracula ()
+(use-package vertico-posframe
+  :config
+  (defun vertico/reset-position ()
     (interactive)
-    (load-theme 'dracula t)
-    (setq dracula-use-24-bit-colors-on-256-colors-terms t)
+    (setq vertico/position nil))
+  (vertico/reset-position)
+  (advice-add 'vertico-posframe--minibuffer-exit-hook :after #'vertico/reset-position)
 
-    (set-background-color "#232530")
+  (defun vertico/posframe-poshandler-point (info)
+    (let ((position (if vertico/position vertico/position (posframe-poshandler-point-1 info))))
+      (setq vertico/position position)
+      vertico/position))
 
-    (set-face-attribute 'mode-line-inactive nil :box (face-background 'mode-line-inactive))
+  (setq vertico-posframe-poshandler 'vertico/posframe-poshandler-point
+        vertico-posframe-border-width 8
+        vertico-posframe-min-width 120)
 
-    (set-face-attribute 'window-divider nil :foreground "#282a36" :background "#282a36")
-    (set-face-attribute 'window-divider-last-pixel nil :foreground "#282a36" :background "#282a36")
-    (set-face-attribute 'window-divider-first-pixel nil :foreground "#282a36" :background "#282a36")
+  (vertico-posframe-mode 1))
 
-    (with-current-buffer " *Echo Area 0*" (face-remap-add-relative 'default '(:background "#282a36")))
-    (with-current-buffer " *Echo Area 0*" (face-remap-add-relative 'fringe '(:background "#282a36")))
+(use-package company
+  :hook (emacs-lisp-mode . (lambda () (setq-local company-backends '(company-elisp))))
+  :bind (:map company-active-map
+              ("<tab>" . company-complete-selection))
+  (:map company-active-map
+        ("<return>" . nil)
+        ("RET" . nil)
+        ("M-<return>" . company-complete-selection))
+  :config
+  (setq company-require-match nil
+        company-minimum-prefix-length 1
+        company-idle-delay 0.0
+        company-selection-wrap-around t
+        company-tooltip-limit 15)
+  (global-company-mode))
 
-    (set-face-attribute 'fringe nil :foreground (face-foreground 'default) :background (face-background 'default))
-    (fringe-mode '(24 . 8))
+(use-package company-box
+  :hook (company-mode . company-box-mode)
+  :config
+  (setq company-box-scrollbar nil))
 
-    (set-face-attribute 'line-number nil :background (face-background 'default))
-    (set-face-attribute 'line-number-current-line nil :foreground (face-foreground 'default) :background (face-background 'hl-line))))
+(use-package embark
+  :bind (
+         :map minibuffer-local-map
+         ("C-c e" . embark-act)))
 
-(elpaca-wait)
-(theme/dracula)
+(use-package consult
+  :bind (;; C-c bindings (mode-specific-map)
+         ("C-c h" . consult-history)
+         ("C-c m" . consult-mode-command)
+         ("C-c k" . consult-kmacro)
+         ;; C-x bindings (ctl-x-map)
+         ("C-x M-:" . consult-complex-command)     ;; orig. repeat-complex-command
+         ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
+         ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
+         ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
+         ("C-x r b" . consult-bookmark)            ;; orig. bookmark-jump
+         ("C-c b" . consult-bookmark)
+         ("C-x p b" . consult-project-buffer)      ;; orig. project-switch-to-buffer
+         ;; Custom M-# bindings for fast register access
+         ("M-#" . consult-register-load)
+         ("M-'" . consult-register-store)          ;; orig. abbrev-prefix-mark (unrelated)
+         ("C-M-#" . consult-register)
+         ;; Other custom bindings
+         ("M-y" . consult-yank-pop)                ;; orig. yank-pop
+         ("<help> a" . consult-apropos)            ;; orig. apropos-command
+         ;; M-g bindings (goto-map)
+         ("M-g e" . consult-compile-error)
+         ("M-g f" . consult-flycheck)               ;; Alternative: consult-flycheck
+         ("M-g g" . consult-goto-line)             ;; orig. goto-line
+         ("M-g M-g" . consult-goto-line)           ;; orig. goto-line
+         ("M-g o" . consult-outline)               ;; Alternative: consult-org-heading
+         ("M-g m" . consult-mark)
+         ("M-g k" . consult-global-mark)
+         ("M-g i" . consult-imenu)
+         ("M-g I" . consult-imenu-multi)
+         ;; M-s bindings (search-map)
+         ("M-s e" . consult-isearch-history)
+         ("M-s d" . consult-find)
+         ("M-s D" . consult-locate)
+         ("M-s g" . consult-grep)
+         ("M-s G" . consult-git-grep)
+         ("M-s r" . consult-ripgrep)
+         ("M-s l" . consult-line)
+         ("M-s L" . consult-line-multi)
+         ("M-s m" . consult-multi-occur)
+         ("M-s k" . consult-keep-lines)
+         ("M-s u" . consult-focus-lines)
+         ;; Minibuffer history
+         :map minibuffer-local-map
+         ("M-s" . consult-history)                 ;; orig. next-matching-history-element
+         ("M-r" . consult-history))                ;; orig. previous-matching-history-element
+  :hook (completion-list-mode . consult-preview-at-point-mode)
+  :init
+  (setq register-preview-delay 0.5
+        register-preview-function #'consult-register-format)
+
+  (advice-add #'register-preview :override #'consult-register-window)
+
+  (setq xref-show-xrefs-function #'consult-xref
+        xref-show-definitions-function #'consult-xref)
+  :config
+  (consult-customize
+   consult-theme
+   :preview-key '(:debounce 0.2 any)
+   consult-ripgrep consult-git-grep consult-grep
+   consult-bookmark consult-recent-file consult-xref
+   consult--source-bookmark consult--source-recent-file
+   consult--source-project-recent-file
+   :preview-key "M-.")
+  (setq consult-narrow-key "<"))
+
+(use-package embark-consult)
+
+(use-package orderless
+  :init
+  (setq completion-styles '(orderless)
+  completion-category-defaults nil
+  completion-category-overrides '((file (styles partial-completion)))))
 
 (use-package org
   :config
@@ -233,8 +341,6 @@
    '(org-level-3 ((t (:inherit outline-3 :height 1.4))))
    '(org-level-4 ((t (:inherit outline-4 :height 1.2))))
    '(org-level-5 ((t (:inherit outline-5 :height 1.0))))))
-
-  (elpaca-wait)
 
 (use-package org-modern
   :config
@@ -279,56 +385,52 @@
 
 (defun tab-bar-format-menu-bar ()
   "Produce the Menu button for the tab bar that shows the menu bar."
-  `((menu-bar menu-item (propertize "𝝺    " 'face 'tab-bar)
+  `((menu-bar menu-item (propertize "   𝝺    " 'face 'tab-bar)
               tab-bar-menu-bar :help "Menu Bar")))
 
 (defun tab/tab-bar-tab-name-format (tab i)
   (let ((current-p (eq (car tab) 'current-tab)))
     (propertize
-     (concat (if (and tab-bar-tab-hints (> (length (tab-bar-tabs)) 1)) (format "%d:  " i) "")
+     (concat "   " (if (and tab-bar-tab-hints (> (length (tab-bar-tabs)) 1)) (format "%d:  " i) "")
              (alist-get 'name tab))
      'face (funcall tab-bar-tab-face-function tab))))
 
-(setq tab-bar-format '(tab-bar-format-menu-bar
-                       tab-bar-format-tabs
-                       tab-bar-separator
-                       tab-bar-format-align-right
-                       tab-bar-format-global))
+  (setq tab-bar-format '(tab-bar-format-menu-bar
+                         tab-bar-format-tabs
+                         tab-bar-separator
+                         tab-bar-format-align-right
+                         tab-bar-format-global))
 
-(defun tab/setup ()
-  (interactive)
-  (tab-bar-mode -1)
-  (display-time-mode -1)
-  (display-battery-mode -1)
+  (defun tab/setup ()
+    (interactive)
+    (tab-bar-mode -1)
+    (display-time-mode -1)
+    (display-battery-mode -1)
 
-  (set-face-attribute 'tab-bar nil :background "#1e1f29" :foreground "#b6b6b2" :underline nil :box '(:line-width (10 . 1) :color "#1e1f29") :height 120 :weight 'bold)
-  (set-face-attribute 'tab-bar-tab-inactive nil :background "#1e1f29" :foreground "#b6b6b" :box nil :height 120 :weight 'normal)
-  (set-face-attribute 'tab-bar-tab nil :background "#1e1f29" :foreground "#ff79bf" :box nil :height 120 :weight 'normal)
+    (setq tab-bar-tab-name-format-function #'tab/tab-bar-tab-name-format
+          tab-bar-fixed-width-max nil
+          tab-bar-close-button-show nil
+          tab-bar-tab-hints t
+          tab-bar-border 1)
 
-  (setq tab-bar-tab-name-format-function #'tab/tab-bar-tab-name-format
-        tab-bar-fixed-width-max nil
-        tab-bar-close-button-show nil
-        tab-bar-tab-hints t
-        tab-bar-border 1)
+    (setq global-mode-string '("" display-time-string battery-mode-line-string "   "))
 
-  (setq global-mode-string '("" display-time-string battery-mode-line-string))
+    (display-time-mode 1)
+    (setq display-time-format (concat tab/space-between-status-element "%d-%m-%Y %H:%M  "))
 
-  (display-time-mode 1)
-  (setq display-time-format (concat tab/space-between-status-element "%d-%m-%Y %H:%M  "))
+    (when (and battery-status-function
+               (not (string-match-p "N/A"
+                                    (battery-format "%B"
+                                                    (funcall battery-status-function)))))
+      (display-battery-mode 1))
+    (setq battery-mode-line-format
+          (cond ((eq battery-status-function #'battery-linux-proc-acpi)
+                 (concat tab/space-between-status-element "%b%p%%,%d°C  "))
+                (battery-status-function
+                 (concat tab/space-between-status-element "%b%p%%  "))))
+    (tab-bar-mode 1))
 
-  (when (and battery-status-function
-             (not (string-match-p "N/A"
-                                  (battery-format "%B"
-                                                  (funcall battery-status-function)))))
-    (display-battery-mode 1))
-  (setq battery-mode-line-format
-        (cond ((eq battery-status-function #'battery-linux-proc-acpi)
-               (concat tab/space-between-status-element "%b%p%%,%d°C  "))
-              (battery-status-function
-               (concat tab/space-between-status-element "%b%p%%  "))))
-  (tab-bar-mode 1))
-
-(add-hook 'elpaca-after-init-hook #'tab/setup)
+  (add-hook 'elpaca-after-init-hook #'tab/setup)
 
 (autoload 'exwm-enable "~/.emacs.d/desktop.el")
 
@@ -503,27 +605,12 @@ window list."
 (use-package which-key
   :init (which-key-mode)
   :diminish which-key-mode
-  :config
-  (setq which-key-idle-delay 1
-        which-key-popup-type 'side-window)
-  ;; TODO Pretty damn ugly, must understand the correct way to customize
-  (defun which-key--side-window-max-dimensions ()
-    (cons
-     ;; height
-     5
-     ;; width
-     (window-width)))
+   (setq which-key-min-display-lines 30))
 
-  (defun which-key--show-buffer-side-window (act-popup-dim)
-    "Show which-key buffer when popup type is side-window."
-    (when (and which-key-preserve-window-configuration
-               (not which-key--saved-window-configuration))
-      (setq which-key--saved-window-configuration (current-window-configuration)))
-    (let* ((height (car act-popup-dim))
-           (alist
-            `((window-height . 6)
-              )))
-      (display-buffer-below-selected which-key--buffer alist))))
+(use-package which-key-posframe
+  :config
+  (setq which-key-posframe-poshandler 'posframe-poshandler-point-window-center)
+  (which-key-posframe-mode))
 
 (use-package whole-line-or-region
   :config
@@ -613,153 +700,6 @@ window list."
   (blist-define-criterion "chrome" "Chrome"
                           (eq (bookmark-get-handler bookmark)
                               #'bookmark/chrome-bookmark-handler)))
-
-(setq tab-always-indent t
-      completions-format 'one-column
-      completions-header-format nil
-      completion-show-help t
-      completion-show-inline-help t
-      completions-max-height nil
-      completion-auto-select nil)
-
-(use-package vertico
-  :config
-  (load-file "~/.emacs.d/elpaca/repos/vertico/extensions/vertico-multiform.el")
-  (setq vertico-cycle t)
-  (vertico-mode))
-
-(use-package vertico-posframe
-  :config
-  (defun vertico/reset-position ()
-    (interactive)
-    (setq vertico/position nil))
-
-  (advice-add 'vertico-posframe--minibuffer-exit-hook :after #'vertico/reset-position)
-
-  (defun vertico/posframe-poshandler-point (info)
-    (let ((position (if vertico/position vertico/position (posframe-poshandler-point-1 info))))
-      (setq vertico/position position)
-      vertico/position))
-
-  (defun theme/vertico ()
-    (interactive)
-    (setq vertico-posframe-poshandler 'vertico/posframe-poshandler-point
-          vertico-posframe-border-width 8
-          vertico-posframe-min-width 120)
-
-    (set-face-attribute 'vertico-posframe nil :inherit 'hl-line)
-    (set-face-attribute 'vertico-posframe-border nil :background nil)
-    (set-face-attribute 'vertico-current nil :inherit 'match))
-
-  (advice-add 'theme/dracula :after #'theme/vertico)
-
-  (vertico-posframe-mode 1))
-
-(use-package company
-  :hook (emacs-lisp-mode . (lambda () (setq-local company-backends '(company-elisp))))
-  :bind (:map company-active-map
-              ("<tab>" . company-complete-selection))
-  (:map company-active-map
-        ("<return>" . nil)
-        ("RET" . nil)
-        ("M-<return>" . company-complete-selection))
-  :config
-  (setq company-require-match nil
-        company-minimum-prefix-length 1
-        company-idle-delay 0.0
-        company-selection-wrap-around t
-        company-tooltip-limit 15)
-  (global-company-mode))
-
-(use-package company-box
-  :hook (company-mode . company-box-mode)
-  :config
-  (defun theme/company ()
-    (interactive)
-    (setq company-box-scrollbar nil)
-
-    (set-face-attribute 'company-tooltip nil :inherit 'hl-line))
-
-  (advice-add 'theme/dracula :after #'theme/company))
-
-(use-package embark
-  :bind (
-         :map minibuffer-local-map
-         ("C-c e" . embark-act)))
-
-(use-package consult
-  :bind (;; C-c bindings (mode-specific-map)
-         ("C-c h" . consult-history)
-         ("C-c m" . consult-mode-command)
-         ("C-c k" . consult-kmacro)
-         ;; C-x bindings (ctl-x-map)
-         ("C-x M-:" . consult-complex-command)     ;; orig. repeat-complex-command
-         ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
-         ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
-         ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
-         ("C-x r b" . consult-bookmark)            ;; orig. bookmark-jump
-         ("C-c b" . consult-bookmark)
-         ("C-x p b" . consult-project-buffer)      ;; orig. project-switch-to-buffer
-         ;; Custom M-# bindings for fast register access
-         ("M-#" . consult-register-load)
-         ("M-'" . consult-register-store)          ;; orig. abbrev-prefix-mark (unrelated)
-         ("C-M-#" . consult-register)
-         ;; Other custom bindings
-         ("M-y" . consult-yank-pop)                ;; orig. yank-pop
-         ("<help> a" . consult-apropos)            ;; orig. apropos-command
-         ;; M-g bindings (goto-map)
-         ("M-g e" . consult-compile-error)
-         ("M-g f" . consult-flycheck)               ;; Alternative: consult-flycheck
-         ("M-g g" . consult-goto-line)             ;; orig. goto-line
-         ("M-g M-g" . consult-goto-line)           ;; orig. goto-line
-         ("M-g o" . consult-outline)               ;; Alternative: consult-org-heading
-         ("M-g m" . consult-mark)
-         ("M-g k" . consult-global-mark)
-         ("M-g i" . consult-imenu)
-         ("M-g I" . consult-imenu-multi)
-         ;; M-s bindings (search-map)
-         ("M-s e" . consult-isearch-history)
-         ("M-s d" . consult-find)
-         ("M-s D" . consult-locate)
-         ("M-s g" . consult-grep)
-         ("M-s G" . consult-git-grep)
-         ("M-s r" . consult-ripgrep)
-         ("M-s l" . consult-line)
-         ("M-s L" . consult-line-multi)
-         ("M-s m" . consult-multi-occur)
-         ("M-s k" . consult-keep-lines)
-         ("M-s u" . consult-focus-lines)
-         ;; Minibuffer history
-         :map minibuffer-local-map
-         ("M-s" . consult-history)                 ;; orig. next-matching-history-element
-         ("M-r" . consult-history))                ;; orig. previous-matching-history-element
-  :hook (completion-list-mode . consult-preview-at-point-mode)
-  :init
-  (setq register-preview-delay 0.5
-        register-preview-function #'consult-register-format)
-
-  (advice-add #'register-preview :override #'consult-register-window)
-
-  (setq xref-show-xrefs-function #'consult-xref
-        xref-show-definitions-function #'consult-xref)
-  :config
-  (consult-customize
-   consult-theme
-   :preview-key '(:debounce 0.2 any)
-   consult-ripgrep consult-git-grep consult-grep
-   consult-bookmark consult-recent-file consult-xref
-   consult--source-bookmark consult--source-recent-file
-   consult--source-project-recent-file
-   :preview-key "M-.")
-  (setq consult-narrow-key "<"))
-
-(use-package embark-consult)
-
-(use-package orderless
-  :init
-  (setq completion-styles '(orderless)
-  completion-category-defaults nil
-  completion-category-overrides '((file (styles partial-completion)))))
 
 (use-package wgrep)
 
@@ -911,6 +851,7 @@ window list."
      :internal-border-width 8
      :posframe-width 80
      :posframe-height 120
+     :parent-frame nil
      :poshandler 'posframe-poshandler-window-top-right-corner)
     (dolist (hook eldoc-posframe-hide-posframe-hooks)
       (add-hook hook #'eldoc-posframe-hide-posframe nil t))))
@@ -1011,7 +952,8 @@ Only the `background' is used in this face."
           :height 10
           :width 60
           :border-width 8
-          :min-width 60)
+          :min-width 60
+          :parent-frame nil)
     "Params for signature and `posframe-show'.")
 
   (defun lsp/signature-posframe (str)
@@ -1478,7 +1420,6 @@ MAIL-COUNT is the count of mails for which the string is to displayed."
 
 (add-hook 'elpaca-after-init-hook
           #'(lambda ()
-              (theme/dracula)
               (let ((local-settings "~/.emacs.d/local.el"))
                 (when (file-exists-p local-settings)
                   (load-file local-settings)))))

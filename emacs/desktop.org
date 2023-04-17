@@ -86,6 +86,27 @@ We use the [[https://github.com/DamienCassou/desktop-environment][desktop-enviro
 #+END_SRC
 
 * Window Management
+** Posframe setup for exwm compatibility
+#+BEGIN_SRC emacs-lisp
+  (with-eval-after-load 'posframe
+    (defun exwm-deparent (frame)
+      (let ((frame-par (frame-parameter frame 'parent-frame)))
+        (if frame-par
+            (let ((parent-pos (frame-position frame-par))
+                  (frame-pos (frame-position frame)))
+              (set-frame-parameter frame 'parent-frame nil)
+              (set-frame-position
+               frame
+               (if (> (car parent-pos) (car frame-pos))
+                      (+ (car parent-pos) (car frame-pos))
+                      (car frame-pos))
+               (if (> (cdr parent-pos) (cdr frame-pos))
+                      (+ (cdr parent-pos) (cdr frame-pos))
+                      (cdr frame-pos))))))
+      frame)
+    (advice-add 'posframe-show :filter-return #'exwm-deparent))
+#+END_SRC
+
 ** Buffer management
   The next functions are tools to easily switch buffer only switch to next relevant buffer.
 
