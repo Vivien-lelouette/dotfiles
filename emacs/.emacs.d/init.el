@@ -199,8 +199,11 @@
 
 (defun theme/minibuffer-echo-area ()
   (interactive)
-  (dolist (buf '(" *Minibuf-0*" " *Minibuf-1*"
-                 " *Echo Area 0*" " *Echo Area 1*"))
+  (dolist (buf '( " *Minibuf-1*"))
+    (with-current-buffer (get-buffer-create buf)
+      (face-remap-add-relative 'default :background "#44475a")
+      (face-remap-add-relative 'fringe :background "#44475a")))
+  (dolist (buf '(" *Minibuf-0*" " *Echo Area 0*" " *Echo Area 1*"))
     (with-current-buffer (get-buffer-create buf)
       (when (= (buffer-size) 0)
         (insert " "))
@@ -654,15 +657,13 @@ window list."
 (use-package sudo-edit)
 
 (use-package which-key
-  :init (which-key-mode)
-  :diminish which-key-mode
-   (setq which-key-min-display-lines 30)
-   (which-key-mode 1))
+  :config
+  (setq which-key-min-display-lines 30)
+  (which-key-mode 1))
 
 (use-package which-key-posframe
   :config
-  (setq which-key-posframe-poshandler 'posframe-poshandler-point-window-center)
-  (which-key-posframe-mode))
+  (which-key-posframe-mode 1))
 
 (use-package whole-line-or-region
   :config
