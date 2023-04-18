@@ -92,6 +92,7 @@ read it before opening a new issue about your will.")
                 (dracula-purple       "#bd93f9" "#af87ff" "brightmagenta") ; official purple
                 (dracula-red          "#ff5555" "#ff8787" "red")         ; official red
                 (dracula-yellow       "#f1fa8c" "#ffff87" "yellow")      ; official yellow
+                (dracula-gtk-scrollbar "#a1a1a2" "unspecified" "unspecified")
                 ;; Other colors
                 (bg2                  "#373844" "#121212" "brightblack")
                 (bg3                  "#565761" "#444444" "brightblack")
@@ -108,7 +109,7 @@ read it before opening a new issue about your will.")
                (error :foreground ,dracula-red)
                (ffap :foreground ,fg4)
                (fringe :background ,dracula-bg :foreground ,fg4)
-               (header-line :inherit 'mode-line)
+               (header-line :inherit 'mode-line :background ,dracula-bg-alternate :box ,dracula-bg-alternate)
                (window-divider :foreground ,dracula-bg-alternate :background ,dracula-bg-alternate)
                (window-divider-first-pixel :foreground ,dracula-bg-alternate :background ,dracula-bg-alternate)
                (window-divider-last-pixel :foreground ,dracula-bg-alternate :background ,dracula-bg-alternate)
@@ -182,8 +183,8 @@ read it before opening a new issue about your will.")
                                        :foreground ,dracula-pink)
                (company-preview-search :inherit company-preview
                                        :foreground ,dracula-green)
-               (company-scrollbar-bg :background ,dracula-comment)
-               (company-scrollbar-fg :foreground ,dark-blue)
+               (company-tooltip-scrollbar-track :inherit tooltip)
+               (company-tooltip-scrollbar-thumb :foreground ,dracula-gtk-scrollbar :background ,dracula-gtk-scrollbar)
                (company-tooltip :inherit tooltip)
                (company-tooltip-search :foreground ,dracula-green
                                        :underline t)

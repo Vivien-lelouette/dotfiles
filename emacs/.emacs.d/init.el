@@ -143,14 +143,32 @@
 (require 'iso-transl)
 
 (scroll-bar-mode 1)
-(tool-bar-mode -1)
-(tooltip-mode -1)
-(menu-bar-mode -1)
-(setq
- window-divider-default-places t
- window-divider-default-right-width 22
- window-divider-default-bottom-width 22)
-(window-divider-mode 1)
+  (tool-bar-mode -1)
+  (tooltip-mode -1)
+  (menu-bar-mode -1)
+  (setq window-divider-default-right-width 22
+        window-divider-default-bottom-width 22)
+  (setq-default header-line-format "")
+
+  (window-divider-mode 1)
+  (defun theme/minibuffer-echo-area ())
+
+  (defun window/set-header-gap (window)
+    (with-selected-window window
+      (if (window-in-direction 'above)
+          (set-window-parameter window 'header-line-format "")
+        (set-window-parameter window 'header-line-format 'none))))
+
+  (defun window/set-all-header-gaps ()
+    (interactive)
+    (dolist (frame (frame-list))
+      (theme/minibuffer-echo-area)
+      (with-selected-frame frame
+        (dolist (window (window-list))
+          (window/set-header-gap window)))))
+
+(add-hook 'window-configuration-change-hook #'window/set-all-header-gaps)
+(add-hook 'window-state-change-hook #'window/set-all-header-gaps)
 
 (setq-default fill-column 100)
 
@@ -176,6 +194,32 @@
 
 (fringe-mode '(24 . 8))
 
+(defun theme/minibuffer-echo-area ()
+  (interactive)
+  (dolist (buf '(" *Minibuf-0*" " *Minibuf-1*"
+                 " *Echo Area 0*" " *Echo Area 1*"))
+    (with-current-buffer (get-buffer-create buf)
+      (when (= (buffer-size) 0)
+        (insert " "))
+      ;; Don't allow users to kill these buffers, as it destroys the hack
+      (add-hook 'kill-buffer-query-functions #'ignore nil 'local)
+      (set-window-scroll-bars (minibuffer-window) nil nil)
+      (face-remap-add-relative 'default :background "#282a36")
+      (face-remap-add-relative 'fringe :background "#282a36"))))
+
+(use-package doom-modeline
+  :config
+  (setq doom-modeline-battery nil
+        doom-modeline-time nil
+        doom-modeline-workspace-name nil
+        doom-modeline-height 22
+        doom-modeline-bar-width 0
+        doom-modeline-window-width-limit nil
+        doom-modeline-icon nil)
+  (remove-hook 'display-time-mode-hook #'doom-modeline-override-time-modeline)
+  (remove-hook 'doom-modeline-mode-hook #'doom-modeline-override-time-modeline)
+  (doom-modeline-mode 1))
+
 (setq tab-always-indent t
       completions-format 'one-column
       completions-header-format nil
@@ -183,6 +227,9 @@
       completion-show-inline-help t
       completions-max-height nil
       completion-auto-select nil)
+
+(setq-default isearch-lazy-count t
+              isearch-allow-motion t)
 
 (use-package vertico
   :config
@@ -220,15 +267,15 @@
   :config
   (setq company-require-match nil
         company-minimum-prefix-length 1
-        company-idle-delay 0.0
+        company-idle-delay 0.1
         company-selection-wrap-around t
         company-tooltip-limit 15)
   (global-company-mode))
 
-(use-package company-box
-  :hook (company-mode . company-box-mode)
+(use-package company-posframe
+  :hook (company-mode . company-posframe-mode)
   :config
-  (setq company-box-scrollbar nil))
+  (setq company-posframe-quickhelp-delay nil))
 
 (use-package embark
   :bind (
@@ -428,6 +475,7 @@
                  (concat tab/space-between-status-element "%b%p%%,%d°C  "))
                 (battery-status-function
                  (concat tab/space-between-status-element "%b%p%%  "))))
+    (setq global-mode-string '("" display-time-string battery-mode-line-string "   "))
     (tab-bar-mode 1))
 
   (add-hook 'elpaca-after-init-hook #'tab/setup)
@@ -605,7 +653,8 @@ window list."
 (use-package which-key
   :init (which-key-mode)
   :diminish which-key-mode
-   (setq which-key-min-display-lines 30))
+   (setq which-key-min-display-lines 30)
+   (which-key-mode 1))
 
 (use-package which-key-posframe
   :config
@@ -852,6 +901,7 @@ window list."
      :posframe-width 80
      :posframe-height 120
      :parent-frame nil
+     :parent-frame-poshandler 'posframe-parent-frame-poshandler-xwininfo
      :poshandler 'posframe-poshandler-window-top-right-corner)
     (dolist (hook eldoc-posframe-hide-posframe-hooks)
       (add-hook hook #'eldoc-posframe-hide-posframe nil t))))

@@ -48,6 +48,8 @@
   (interactive)
   (setq exwm-randr-workspace-monitor-plist (build-exwm-monitors))
   (tab/setup)
+  (theme/minibuffer-echo-area)
+  (window/set-all-header-gaps)
   (setup/input))
 
 (defun exwm/refresh-setup-and-monitors ()
@@ -62,22 +64,33 @@
 (elpaca (app-launcher :host github :repo "vivien-lelouette/app-launcher"))
 
 (with-eval-after-load 'posframe
+  (defun exwm/posframe-window-top-right (frame)
+    (let* ((frame-pos (window-absolute-pixel-edges))
+           (width (frame-outer-width frame))
+           (x (+ (- (car frame-pos) width (window-right-divider-width)) (window-pixel-width)))
+           (y (car (cdr frame-pos))))
+      (set-frame-parameter frame 'parent-frame nil)
+      (set-frame-parameter frame 'left x)
+      (set-frame-parameter frame 'top y)))
+
+  (defun exwm/posframe-point-below (frame)
+    (let* ((cursor-pos (window-absolute-pixel-position))
+           (x (car cursor-pos))
+           (y (+ (cdr cursor-pos) (line-pixel-height))))
+      (set-frame-parameter frame 'parent-frame nil)
+      (set-frame-parameter frame 'left x)
+      (set-frame-parameter frame 'top y)))
+
   (defun exwm-deparent (frame)
-    (let ((frame-par (frame-parameter frame 'parent-frame)))
-      (if frame-par
-          (let ((parent-pos (frame-position frame-par))
-                (frame-pos (frame-position frame)))
-            (set-frame-parameter frame 'parent-frame nil)
-            (set-frame-position
-             frame
-             (if (> (car parent-pos) (car frame-pos))
-                    (+ (car parent-pos) (car frame-pos))
-                    (car frame-pos))
-             (if (> (cdr parent-pos) (cdr frame-pos))
-                    (+ (cdr parent-pos) (cdr frame-pos))
-                    (cdr frame-pos))))))
+    (if (frame-parameter frame 'parent-frame)
+        (if (string= (car (frame-parameter frame 'posframe-buffer)) " *company-posframe-buffer*")
+            (exwm/posframe-point-below frame)
+          (exwm/posframe-window-top-right frame)))
     frame)
+
   (advice-add 'posframe-show :filter-return #'exwm-deparent))
+
+
 
 (defcustom my-skippable-buffer-regexp
   (rx bos (or (seq "*" (zero-or-more anything))
