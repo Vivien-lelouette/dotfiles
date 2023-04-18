@@ -190,8 +190,7 @@
 
 (use-package mixed-pitch
   :hook
-  (text-mode . mixed-pitch-mode)
-  (yaml-mode . disable-mixed-pitch))
+  (org-mode . mixed-pitch-mode))
 
 (load-file "~/.emacs.d/custom_packages/dracula-theme.el")
 (load-theme 'dracula t)

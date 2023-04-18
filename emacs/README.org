@@ -250,8 +250,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 
   (use-package mixed-pitch
     :hook
-    (text-mode . mixed-pitch-mode)
-    (yaml-mode . disable-mixed-pitch))
+    (org-mode . mixed-pitch-mode))
 #+END_SRC
 
 * Dracula theme
