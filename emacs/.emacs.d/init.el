@@ -278,10 +278,12 @@
         company-tooltip-limit 15)
   (global-company-mode))
 
-(use-package company-posframe
-  :hook (mixed-pitch-mode . company-posframe-mode)
+(use-package company-box
+  :hook (company-mode . company-box-mode)
   :config
-  (setq company-posframe-quickhelp-delay nil))
+  (setq
+   company-box-scrollbar nil
+   company-box-doc-enable nil))
 
 (use-package embark
   :bind (

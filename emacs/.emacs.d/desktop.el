@@ -83,9 +83,7 @@
 
   (defun exwm-deparent (frame)
     (if (frame-parameter frame 'parent-frame)
-        (if (string= (car (frame-parameter frame 'posframe-buffer)) " *company-posframe-buffer*")
-            (exwm/posframe-point-below frame)
-          (exwm/posframe-window-top-right frame)))
+          (exwm/posframe-window-top-right frame))
     frame)
 
   (advice-add 'posframe-show :filter-return #'exwm-deparent))
