@@ -166,7 +166,7 @@
                             (pcase exwm-class-name
                               ("Google-chrome" (execute-kbd-macro (kbd "C-l"))))))
   (run-with-timer 2 nil (lambda ()
-                            (remove-hook 'exwm-input-input-mode-change-hook #'exwm/force-tiled-fullscreen-when-fullscreen))))
+                          (remove-hook 'exwm-input-input-mode-change-hook #'exwm/force-tiled-fullscreen-when-fullscreen))))
 
 (defun window/force-tile ()
   (interactive)
@@ -182,8 +182,16 @@
 (defun window/configure-window-by-class ()
   (interactive)
   (pcase exwm-class-name
-    ((rx (sequence "Ardour" (zero-or-more (any "ascii")))) (window/force-tile-to-other-window))))
+    ((rx (sequence "Ardour" (zero-or-more (any "ascii")))) (window/force-tile-to-other-window))
+    ("Google-chrome" (run-with-timer 0.1 nil (lambda () (execute-kbd-macro (kbd "<f11>")))))))
 
+(defun window/force-chrome-tiled ()
+  (interactive)
+  (pcase exwm-class-name
+    ("Google-chrome" (with-current-buffer (window-buffer)
+                       (exwm-layout-unset-fullscreen exwm--id)))))
+
+(add-hook 'exwm-input-input-mode-change-hook #'window/force-chrome-tiled)
 (add-hook 'exwm-manage-finish-hook #'window/configure-window-by-class)
 
 (setq helm-ag-show-status-function (lambda ()))
@@ -584,8 +592,7 @@
   (let ((trimmed-input (string-trim input)))
     (if (string-match-p " " trimmed-input)
         (shell/async-command-no-output (concat "google-chrome-stable --new-window '? " input "'"))
-      (shell/async-command-no-output (concat "google-chrome-stable --new-window '" input "'"))))
-  (run-with-timer 0.5 nil (lambda () (window/force-tiled-fullscreen))))
+      (shell/async-command-no-output (concat "google-chrome-stable --new-window '" input "'")))))
 
 (defun bookmark/chrome-bookmark-handler (record)
   "Jump to an chrome bookmarked location."
