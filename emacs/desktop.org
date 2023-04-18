@@ -95,7 +95,7 @@ We use the [[https://github.com/DamienCassou/desktop-environment][desktop-enviro
       (let* ((frame-pos (window-absolute-pixel-edges))
              (width (frame-outer-width frame))
              (x (+ (- (car frame-pos) width (window-right-divider-width)) (window-pixel-width)))
-             (y (car (cdr frame-pos))))
+             (y (+ (car (cdr frame-pos)) (window-header-line-height))))
         (set-frame-parameter frame 'parent-frame nil)
         (set-frame-parameter frame 'left x)
         (set-frame-parameter frame 'top y)))
@@ -117,11 +117,6 @@ We use the [[https://github.com/DamienCassou/desktop-environment][desktop-enviro
 
     (advice-add 'posframe-show :filter-return #'exwm-deparent))
 #+END_SRC
-
-** Header line gap
-#+BEGIN_SRC emacs-lisp
-#+END_SRC
-(add-hook 'exwm-manage-finish-hook #'window/set-all-header-gaps)
 
 ** Buffer management
   The next functions are tools to easily switch buffer only switch to next relevant buffer.

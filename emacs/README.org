@@ -216,16 +216,20 @@ As bookmarks are at the center of my workflow, this is a crucial option.
           (set-window-parameter window 'header-line-format "")
         (set-window-parameter window 'header-line-format 'none))))
 
+  (defun window/set-current-header-gap ()
+    (interactive)
+    (window/set-header-gap (selected-window)))
+
   (defun window/set-all-header-gaps ()
     (interactive)
+    (theme/minibuffer-echo-area)
     (dolist (frame (frame-list))
-      (theme/minibuffer-echo-area)
       (with-selected-frame frame
         (dolist (window (window-list))
           (window/set-header-gap window)))))
 
-(add-hook 'window-configuration-change-hook #'window/set-all-header-gaps)
-(add-hook 'window-state-change-hook #'window/set-all-header-gaps)
+
+  (add-hook 'window-configuration-change-hook #'window/set-all-header-gaps)
 #+END_SRC
 
 ** Fonts setting
@@ -343,13 +347,13 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     :config
     (setq company-require-match nil
           company-minimum-prefix-length 1
-          company-idle-delay 0.1
+          company-idle-delay 0.0
           company-selection-wrap-around t
           company-tooltip-limit 15)
     (global-company-mode))
 
   (use-package company-posframe
-    :hook (company-mode . company-posframe-mode)
+    :hook (mixed-pitch-mode . company-posframe-mode)
     :config
     (setq company-posframe-quickhelp-delay nil))
 #+END_SRC

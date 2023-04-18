@@ -143,32 +143,36 @@
 (require 'iso-transl)
 
 (scroll-bar-mode 1)
-  (tool-bar-mode -1)
-  (tooltip-mode -1)
-  (menu-bar-mode -1)
-  (setq window-divider-default-right-width 22
-        window-divider-default-bottom-width 22)
-  (setq-default header-line-format "")
+(tool-bar-mode -1)
+(tooltip-mode -1)
+(menu-bar-mode -1)
+(setq window-divider-default-right-width 22
+      window-divider-default-bottom-width 22)
+(setq-default header-line-format "")
 
-  (window-divider-mode 1)
-  (defun theme/minibuffer-echo-area ())
+(window-divider-mode 1)
+(defun theme/minibuffer-echo-area ())
 
-  (defun window/set-header-gap (window)
-    (with-selected-window window
-      (if (window-in-direction 'above)
-          (set-window-parameter window 'header-line-format "")
-        (set-window-parameter window 'header-line-format 'none))))
+(defun window/set-header-gap (window)
+  (with-selected-window window
+    (if (window-in-direction 'above)
+        (set-window-parameter window 'header-line-format "")
+      (set-window-parameter window 'header-line-format 'none))))
 
-  (defun window/set-all-header-gaps ()
-    (interactive)
-    (dolist (frame (frame-list))
-      (theme/minibuffer-echo-area)
-      (with-selected-frame frame
-        (dolist (window (window-list))
-          (window/set-header-gap window)))))
+(defun window/set-current-header-gap ()
+  (interactive)
+  (window/set-header-gap (selected-window)))
+
+(defun window/set-all-header-gaps ()
+  (interactive)
+  (theme/minibuffer-echo-area)
+  (dolist (frame (frame-list))
+    (with-selected-frame frame
+      (dolist (window (window-list))
+        (window/set-header-gap window)))))
+
 
 (add-hook 'window-configuration-change-hook #'window/set-all-header-gaps)
-(add-hook 'window-state-change-hook #'window/set-all-header-gaps)
 
 (setq-default fill-column 100)
 
@@ -267,13 +271,13 @@
   :config
   (setq company-require-match nil
         company-minimum-prefix-length 1
-        company-idle-delay 0.1
+        company-idle-delay 0.0
         company-selection-wrap-around t
         company-tooltip-limit 15)
   (global-company-mode))
 
 (use-package company-posframe
-  :hook (company-mode . company-posframe-mode)
+  :hook (mixed-pitch-mode . company-posframe-mode)
   :config
   (setq company-posframe-quickhelp-delay nil))
 

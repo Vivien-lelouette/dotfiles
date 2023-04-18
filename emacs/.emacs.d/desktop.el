@@ -68,7 +68,7 @@
     (let* ((frame-pos (window-absolute-pixel-edges))
            (width (frame-outer-width frame))
            (x (+ (- (car frame-pos) width (window-right-divider-width)) (window-pixel-width)))
-           (y (car (cdr frame-pos))))
+           (y (+ (car (cdr frame-pos)) (window-header-line-height))))
       (set-frame-parameter frame 'parent-frame nil)
       (set-frame-parameter frame 'left x)
       (set-frame-parameter frame 'top y)))
@@ -89,8 +89,6 @@
     frame)
 
   (advice-add 'posframe-show :filter-return #'exwm-deparent))
-
-
 
 (defcustom my-skippable-buffer-regexp
   (rx bos (or (seq "*" (zero-or-more anything))
