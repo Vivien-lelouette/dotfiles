@@ -541,53 +541,55 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 
   (defun tab-bar-format-menu-bar ()
     "Produce the Menu button for the tab bar that shows the menu bar."
-    `((menu-bar menu-item (propertize "   𝝺    " 'face 'tab-bar)
+    `((menu-bar menu-item (propertize (concat tab/space-between-status-element "𝝺" tab/space-between-status-element) 'face 'tab-bar)
                 tab-bar-menu-bar :help "Menu Bar")))
 
   (defun tab/tab-bar-tab-name-format (tab i)
     (let ((current-p (eq (car tab) 'current-tab)))
       (propertize
-       (concat "   " (if (and tab-bar-tab-hints (> (length (tab-bar-tabs)) 1)) (format "%d:  " i) "")
-               (alist-get 'name tab))
+       (concat tab/space-between-status-element (if (and tab-bar-tab-hints (> (length (tab-bar-tabs)) 1)) (format "%d: " i))
+               (alist-get 'name tab)
+               tab/space-between-status-element)
        'face (funcall tab-bar-tab-face-function tab))))
 
-    (setq tab-bar-format '(tab-bar-format-menu-bar
-                           tab-bar-format-tabs
-                           tab-bar-separator
-                           tab-bar-format-align-right
-                           tab-bar-format-global))
+  (setq tab-bar-format '(tab-bar-format-menu-bar
+                         tab-bar-format-tabs
+                         tab-bar-separator
+                         tab-bar-format-align-right
+                         tab-bar-format-global))
 
-    (defun tab/setup ()
-      (interactive)
-      (tab-bar-mode -1)
-      (display-time-mode -1)
-      (display-battery-mode -1)
+  (defun tab/setup ()
+    (interactive)
+    (tab-bar-mode -1)
+    (display-time-mode -1)
+    (display-battery-mode -1)
 
-      (setq tab-bar-tab-name-format-function #'tab/tab-bar-tab-name-format
-            tab-bar-fixed-width-max nil
-            tab-bar-close-button-show nil
-            tab-bar-tab-hints t
-            tab-bar-border 1)
+    (setq tab-bar-tab-name-format-function #'tab/tab-bar-tab-name-format
+          tab-bar-fixed-width-max nil
+          tab-bar-close-button-show nil
+          tab-bar-tab-hints t
+          tab-bar-border 1
+          tab-bar-auto-width nil)
 
-      (setq global-mode-string '("" display-time-string battery-mode-line-string "   "))
+    (setq global-mode-string '("" display-time-string battery-mode-line-string tab/space-between-status-element))
 
-      (display-time-mode 1)
-      (setq display-time-format (concat tab/space-between-status-element "%d-%m-%Y %H:%M  "))
+    (display-time-mode 1)
+    (setq display-time-format (concat tab/space-between-status-element "     %d-%m-%Y %H:%M"))
 
-      (when (and battery-status-function
-                 (not (string-match-p "N/A"
-                                      (battery-format "%B"
-                                                      (funcall battery-status-function)))))
-        (display-battery-mode 1))
-      (setq battery-mode-line-format
-            (cond ((eq battery-status-function #'battery-linux-proc-acpi)
-                   (concat tab/space-between-status-element "%b%p%%,%d°C  "))
-                  (battery-status-function
-                   (concat tab/space-between-status-element "%b%p%%  "))))
-      (setq global-mode-string '("" display-time-string battery-mode-line-string "   "))
-      (tab-bar-mode 1))
+    (when (and battery-status-function
+               (not (string-match-p "N/A"
+                                    (battery-format "%B"
+                                                    (funcall battery-status-function)))))
+      (display-battery-mode 1))
+    (setq battery-mode-line-format
+          (cond ((eq battery-status-function #'battery-linux-proc-acpi)
+                 (concat tab/space-between-status-element "   %b%p%%,%d°C"))
+                (battery-status-function
+                 (concat tab/space-between-status-element "   %b%p%%"))))
+    (setq global-mode-string '("" display-time-string battery-mode-line-string tab/space-between-status-element))
+    (tab-bar-mode 1))
 
-    (add-hook 'elpaca-after-init-hook #'tab/setup)
+  (add-hook 'elpaca-after-init-hook #'tab/setup)
 #+END_SRC
 
 * Start desktop mode if needed
