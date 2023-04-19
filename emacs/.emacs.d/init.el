@@ -221,7 +221,8 @@
         doom-modeline-height 22
         doom-modeline-bar-width 0
         doom-modeline-window-width-limit nil
-        doom-modeline-icon nil)
+        doom-modeline-icon nil
+        doom-modeline-unicode-fallback nil)
   (remove-hook 'display-time-mode-hook #'doom-modeline-override-time-modeline)
   (remove-hook 'doom-modeline-mode-hook #'doom-modeline-override-time-modeline)
   (doom-modeline-mode 1))
@@ -422,9 +423,9 @@
    "⭠ now ─────────────────────────────────────────────────")
 
   ;; Enable org-modern-mode
-  ;; (add-hook 'org-mode-hook #'org-modern-mode)
-  ;; (add-hook 'org-agenda-finalize-hook #'org-modern-agenda)
-  )
+  (add-hook 'org-mode-hook #'org-modern-mode)
+  (add-hook 'orgtbl-mode #'org-modern-mode)
+  (add-hook 'org-agenda-finalize-hook #'org-modern-agenda))
 
 (use-package time
   :elpaca nil
@@ -812,6 +813,10 @@ window list."
          ("C-c C-n" . code-review-comment-jump-next)
          ("C-c C-p" . code-review-comment-jump-previous)))
 
+(use-package transient-posframe
+  :config
+  (transient-posframe-mode))
+
 (use-package tempel
   :bind (("C-<tab>" . tempel-complete))
   :init
@@ -1176,13 +1181,13 @@ Only the `background' is used in this face."
   (setq 
    eshell-where-to-jump 'begin
    eshell-review-quick-commands nil
-   eshell-smart-space-goes-to-end t)
-  eshell-prompt-function
-  (lambda ()
-    (concat (format-time-string " %Y-%m-%d %H:%M" (current-time))
-            (if (= (user-uid) 0) " # " " $ ")))
-  eshell-highlight-prompt t
-  (set-face-attribute 'eshell-prompt nil :background nil :foreground nil :weight 'ultra-bold :box '(:line-width (10 . 1) :color "#282a36") :inverse-video t :inherit 'minibuffer-prompt))
+   eshell-smart-space-goes-to-end t
+   eshell-prompt-function
+   (lambda ()
+     (concat (format-time-string " %Y-%m-%d %H:%M" (current-time))
+             (if (= (user-uid) 0) " # " " $ ")))
+   eshell-highlight-prompt t)
+  (set-face-attribute 'eshell-prompt nil :weight 'ultra-bold :inherit 'minibuffer-prompt))
 (add-hook 'eshell-mode-hook #'eshell/hook)
 
 (use-package eshell

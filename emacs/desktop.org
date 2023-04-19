@@ -108,9 +108,27 @@ We use the [[https://github.com/DamienCassou/desktop-environment][desktop-enviro
         (set-frame-parameter frame 'left x)
         (set-frame-parameter frame 'top y)))
 
+    (defun exwm/posframe-window-bottom (frame)
+      (with-selected-frame (frame-parameter frame 'parent-frame)
+        (let* ((frame-pos (window-absolute-pixel-edges))
+               (window-height (window-pixel-height))
+               (window-width (- (window-pixel-width) (window-right-divider-width) 2)))
+          (fit-frame-to-buffer frame)
+          (set-frame-width frame window-width nil t)
+          (let* ((height (window-pixel-height (frame-selected-window frame)))
+                 (x (car frame-pos))
+                 (y (+ (- (car (cdr frame-pos)) height (window-mode-line-height)) window-height)))
+            (set-frame-parameter frame 'parent-frame nil)
+            (set-frame-parameter frame 'left x)
+            (set-frame-parameter frame 'top y)))))
+
     (defun exwm-deparent (frame)
       (if (frame-parameter frame 'parent-frame)
-            (exwm/posframe-window-top-right frame))
+          (with-selected-frame frame
+            (let ((posframe-buffer-name (buffer-name (current-buffer))))
+              (if (string= posframe-buffer-name " *transient*")
+                  (exwm/posframe-window-bottom frame)
+                (exwm/posframe-window-top-right frame)))))
       frame)
 
     (advice-add 'posframe-show :filter-return #'exwm-deparent))
@@ -227,7 +245,7 @@ Functions to split and move to the new split.
     (interactive)
     (pcase exwm-class-name
       ((rx (sequence "Ardour" (zero-or-more (any "ascii")))) (window/force-tile-to-other-window))
-      ("Google-chrome" (run-with-timer 0.1 nil (lambda () (execute-kbd-macro (kbd "<f11>")))))))
+      ("Google-chrome" (run-with-timer 0.2 nil (lambda () (execute-kbd-macro (kbd "<f11>")))))))
 
   (defun window/force-chrome-tiled ()
     (interactive)

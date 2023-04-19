@@ -172,6 +172,10 @@ read it before opening a new issue about your will.")
                (vertico-posframe :inherit tooltip)
                (vertico-posframe-border :background nil)
                (vertico-current :inherit 'match)
+               ;; transient
+               (transient-posframe :inherit tooltip)
+               (transient-posframe-border :background nil)
+
                ;; auto-complete
                (ac-completion-face :underline t :foreground ,dracula-pink)
                ;; bookmarks
