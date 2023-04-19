@@ -814,7 +814,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 #+BEGIN_SRC emacs-lisp
   (use-package which-key
     :config
-    (setq which-key-min-display-lines 30)
+    (setq which-key-min-display-lines 20)
     (which-key-mode 1))
 
   (use-package which-key-posframe

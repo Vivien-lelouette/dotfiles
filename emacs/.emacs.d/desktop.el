@@ -99,7 +99,9 @@
     (if (frame-parameter frame 'parent-frame)
         (with-selected-frame frame
           (let ((posframe-buffer-name (buffer-name (current-buffer))))
-            (if (string= posframe-buffer-name " *transient*")
+            (if (or
+                 (string= posframe-buffer-name " *transient*")
+                 (string= posframe-buffer-name " *which-key*"))
                 (exwm/posframe-window-bottom frame)
               (exwm/posframe-window-top-right frame)))))
     frame)

@@ -663,7 +663,7 @@ window list."
 
 (use-package which-key
   :config
-  (setq which-key-min-display-lines 30)
+  (setq which-key-min-display-lines 20)
   (which-key-mode 1))
 
 (use-package which-key-posframe
