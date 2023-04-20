@@ -144,6 +144,22 @@ We use the [[https://github.com/DamienCassou/desktop-environment][desktop-enviro
                 (exwm/posframe-window-top-right frame)))))
       frame)
 
+    (defun exwm-deparent (frame)
+      (let ((parent-frame (frame-parameter frame 'parent-frame)))
+        (set-frame-parameter frame 'parent-frame nil)
+        (if parent-frame
+            (let* ((parent-frame-pos (frame-position parent-frame))
+                   (parent-frame-pos-x (car parent-frame-pos))
+                   (parent-frame-pos-y (cdr parent-frame-pos))
+                   (frame-pos (frame-position frame))
+                   (frame-pos-x (car frame-pos))
+                   (frame-pos-y (cdr frame-pos))
+                   (absolute-x (if (< frame-pos-x parent-frame-pos-x) (+ parent-frame-pos-x frame-pos-x) frame-pos-x))
+                   (absolute-y (if (< frame-pos-y parent-frame-pos-y) (+ parent-frame-pos-y frame-pos-y) frame-pos-y)))
+              (set-frame-parameter frame 'left absolute-x)
+              (set-frame-parameter frame 'top absolute-y))))
+      frame)
+
     (advice-add 'posframe-show :filter-return #'exwm-deparent))
 #+END_SRC
 

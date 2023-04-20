@@ -213,6 +213,9 @@
       (face-remap-add-relative 'default :background "#282a36")
       (face-remap-add-relative 'fringe :background "#282a36"))))
 
+(use-package all-the-icons
+  :if (display-graphic-p))
+
 (use-package doom-modeline
   :config
   (defun my-doom-modeline--font-height ()
@@ -229,7 +232,7 @@
         doom-modeline-icon t
         doom-modeline-unicode-fallback nil)
 
-   (setq all-the-icons-scale-factor 0.9)
+   (setq all-the-icons-scale-factor 0.95)
 
   (remove-hook 'display-time-mode-hook #'doom-modeline-override-time-modeline)
   (remove-hook 'doom-modeline-mode-hook #'doom-modeline-override-time-modeline)
@@ -449,7 +452,7 @@
 
 (defun tab-bar-format-menu-bar ()
   "Produce the Menu button for the tab bar that shows the menu bar."
-  `((menu-bar menu-item (propertize (concat tab/space-between-status-element "𝝺" tab/space-between-status-element) 'face 'tab-bar)
+  `((menu-bar menu-item (propertize (concat tab/space-between-status-element (all-the-icons-fileicon "emacs" :v-adjust -0.15 :height 1.2) tab/space-between-status-element))
               tab-bar-menu-bar :help "Menu Bar")))
 
 (defun tab/tab-bar-tab-face-default (tab)
@@ -470,6 +473,34 @@
                        tab-bar-format-global)
       tab-bar-tab-face-function 'tab/tab-bar-tab-face-default)
 
+(defun battery-update ()
+  "Update battery status information in the mode line."
+  (let* ((data (and battery-status-function (funcall battery-status-function)))
+         (percentage (car (read-from-string (cdr (assq ?p data)))))
+         (status (cdr (assoc ?L data)))
+         (charging? (or (string-equal "AC" status)
+                        (string-equal "on-line" status)))
+         (res (and battery-mode-line-format
+                   (or (not (numberp percentage))
+                       (<= percentage battery-mode-line-limit))
+                   (cond (charging? (concat "    " (all-the-icons-alltheicon "battery-charging" :v-adjust 0 :height 1.3) "  " (battery-format battery-mode-line-format data)))
+                         ((< percentage 5) (concat "    " (all-the-icons-faicon "battery-empty" :v-adjust 0.05) "  " (battery-format battery-mode-line-format data)))
+                         ((< percentage 25) (concat "    " (all-the-icons-faicon "battery-quarter" :v-adjust 0.05) "  " (battery-format battery-mode-line-format data)))
+                         ((< percentage 50) (concat "    " (all-the-icons-faicon "battery-half" :v-adjust 0.05) "  " (battery-format battery-mode-line-format data)))
+                         ((< percentage 95) (concat "    " (all-the-icons-faicon "battery-three-quarters" :v-adjust 0.05) "  " (battery-format battery-mode-line-format data)))
+                         (t (concat "  " (all-the-icons-faicon "battery-full" :v-adjust 0.05) "  " (battery-format battery-mode-line-format data))))))
+         (len (length res)))
+    (unless (zerop len)
+      (cond ((not (numberp percentage)))
+            ((< percentage battery-load-critical)
+             (add-face-text-property 0 len 'battery-load-critical t res))
+            ((< percentage battery-load-low)
+             (add-face-text-property 0 len 'battery-load-low t res)))
+      (put-text-property 0 len 'help-echo "Battery status information" res))
+    (setq battery-mode-line-string (or res ""))
+    (run-hook-with-args 'battery-update-functions data))
+  (force-mode-line-update t))
+
 (defun tab/setup ()
   (interactive)
   (display-time-mode -1)
@@ -482,21 +513,21 @@
         tab-bar-border 1
         tab-bar-auto-width nil)
 
-  (setq global-mode-string '("" display-time-string battery-mode-line-string tab/space-between-status-element))
+  (setq global-mode-string '("" display-time-string tab/space-between-status-element battery-mode-line-string tab/space-between-status-element))
 
+  (setq display-time-format (concat tab/space-between-status-element "  " (all-the-icons-faicon "clock-o" :v-adjust 0.03) "   %d-%m-%Y %H:%M"))
   (display-time-mode 1)
-  (setq display-time-format (concat tab/space-between-status-element "     %d-%m-%Y %H:%M"))
+
+  (setq battery-mode-line-format
+        (cond ((eq battery-status-function #'battery-linux-proc-acpi) "%b%p%%,%d°C")
+              (battery-status-function "%b%p%%")))
 
   (when (and battery-status-function
              (not (string-match-p "N/A"
                                   (battery-format "%B"
                                                   (funcall battery-status-function)))))
     (display-battery-mode 1))
-  (setq battery-mode-line-format
-        (cond ((eq battery-status-function #'battery-linux-proc-acpi)
-               (concat tab/space-between-status-element "   %b%p%%,%d°C"))
-              (battery-status-function
-               (concat tab/space-between-status-element "   %b%p%%"))))
+
   (setq global-mode-string '("" display-time-string battery-mode-line-string tab/space-between-status-element)))
 
 (tab-bar-mode 1)
@@ -595,6 +626,45 @@ window list."
   (global-unset-key (kbd "C-?"))
   (global-set-key (kbd "C-?") 'vundo))
 
+(defun posframe/poshandler-window-bottom-center (info)
+  "Posframe's position handler.
+
+  This poshandler function let bottom edge center of posframe align
+  to bottom edge center of window.
+
+  The structure of INFO can be found in docstring of
+  `posframe-show'."
+  (let* ((window-left (plist-get info :parent-window-left))
+         (window-top (plist-get info :parent-window-top))
+         (window-width (plist-get info :parent-window-width))
+         (window-height (plist-get info :parent-window-height))
+         (posframe-width (plist-get info :posframe-width))
+         (posframe-height (plist-get info :posframe-height))
+         (mode-line-height (plist-get info :mode-line-height)))
+    (cons (max 0 (+ window-left (/ (- window-width posframe-width (window-right-divider-width)) 2)))
+          (+ window-top window-height
+             (- 0 mode-line-height posframe-height)))))
+
+(defun posframe/poshandler-window-top-or-bottom-right-corner (info)
+  "Posframe's position handler.
+
+    This poshandler function let top right corner of posframe align to
+    top left right of window.
+
+    The structure of INFO can be found in docstring of
+    `posframe-show'."
+  (let* ((window-left (plist-get info :parent-window-left))
+         (window-top (plist-get info :parent-window-top))
+         (window-width (plist-get info :parent-window-width))
+         (window-height (plist-get info :parent-window-height))
+         (posframe-width (plist-get info :posframe-width))
+         (posframe-height (plist-get info :posframe-height))
+         (x (+ window-left window-width (- 0 posframe-width (window-right-divider-width))))
+         (top-y (+ window-top (window-header-line-height))))
+    (if (> (cdr (window-absolute-pixel-position)) (+ top-y posframe-height))
+        (cons x top-y)
+      (cons x (- (+ top-y window-height) posframe-height (window-mode-line-height))))))
+
 (use-package olivetti
   :config
   (setq olivetti-margin-width 120
@@ -680,7 +750,7 @@ window list."
 
 (use-package which-key-posframe
   :config
-  (setq which-key-posframe-poshandler 'posframe-poshandler-window-bottom-left-corner)
+  (setq which-key-posframe-poshandler 'posframe/poshandler-window-bottom-center)
   (which-key-posframe-mode 1))
 
 (use-package whole-line-or-region
@@ -808,7 +878,6 @@ window list."
 
 (use-package magit
   :config
-  (setq transient-display-buffer-action '(display-buffer-below-selected))
   (defun magit/magit-status-no-split ()
     "Don't split window."
     (interactive)
@@ -830,7 +899,9 @@ window list."
 
 (use-package transient-posframe
   :config
-  (setq transient-posframe-poshandler 'posframe-poshandler-window-bottom-left-corner)
+  (setq transient-posframe-min-height 1
+        transient-posframe-min-width 1
+        transient-posframe-poshandler 'posframe/poshandler-window-bottom-center)
   (transient-posframe-mode))
 
 (use-package tempel
@@ -929,7 +1000,7 @@ window list."
      :posframe-height 120
      :parent-frame nil
      :parent-frame-poshandler 'posframe-parent-frame-poshandler-xwininfo
-     :poshandler 'posframe-poshandler-window-top-right-corner)
+     :poshandler 'posframe/poshandler-window-top-or-bottom-right-corner)
     (dolist (hook eldoc-posframe-hide-posframe-hooks)
       (add-hook hook #'eldoc-posframe-hide-posframe nil t))))
 
@@ -1025,7 +1096,7 @@ Only the `background' is used in this face."
    lsp-idle-delay 0.0)
 
   (defvar lsp/signature-posframe-params
-    (list :poshandler #'posframe-poshandler-window-top-right-corner
+    (list :poshandler #'posframe/poshandler-window-top-or-bottom-right-corner
           :height 10
           :width 60
           :border-width 8
