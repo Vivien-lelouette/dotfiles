@@ -215,14 +215,22 @@
 
 (use-package doom-modeline
   :config
+  (defun my-doom-modeline--font-height ()
+    "Calculate the actual char height of the mode-line."
+    (- (frame-char-height) 10))
+  (advice-add #'doom-modeline--font-height :override #'my-doom-modeline--font-height)
   (setq doom-modeline-battery nil
         doom-modeline-time nil
         doom-modeline-workspace-name nil
-        doom-modeline-height 22
-        doom-modeline-bar-width 0
+        doom-modeline-bar-width 1
         doom-modeline-window-width-limit nil
-        doom-modeline-icon nil
+        doom-modeline-height 22
+        doom-modeline-major-mode-icon nil
+        doom-modeline-icon t
         doom-modeline-unicode-fallback nil)
+
+   (setq all-the-icons-scale-factor 0.9)
+
   (remove-hook 'display-time-mode-hook #'doom-modeline-override-time-modeline)
   (remove-hook 'doom-modeline-mode-hook #'doom-modeline-override-time-modeline)
   (doom-modeline-mode 1))
@@ -444,6 +452,9 @@
   `((menu-bar menu-item (propertize (concat tab/space-between-status-element "𝝺" tab/space-between-status-element) 'face 'tab-bar)
               tab-bar-menu-bar :help "Menu Bar")))
 
+(defun tab/tab-bar-tab-face-default (tab)
+  (if (and (> (length (tab-bar-tabs)) 1) (eq (car tab) 'current-tab)) 'tab-bar-tab 'tab-bar-tab-inactive))
+
 (defun tab/tab-bar-tab-name-format (tab i)
   (let ((current-p (eq (car tab) 'current-tab)))
     (propertize
@@ -456,11 +467,11 @@
                        tab-bar-format-tabs
                        tab-bar-separator
                        tab-bar-format-align-right
-                       tab-bar-format-global))
+                       tab-bar-format-global)
+      tab-bar-tab-face-function 'tab/tab-bar-tab-face-default)
 
 (defun tab/setup ()
   (interactive)
-  (tab-bar-mode -1)
   (display-time-mode -1)
   (display-battery-mode -1)
 
@@ -486,8 +497,9 @@
                (concat tab/space-between-status-element "   %b%p%%,%d°C"))
               (battery-status-function
                (concat tab/space-between-status-element "   %b%p%%"))))
-  (setq global-mode-string '("" display-time-string battery-mode-line-string tab/space-between-status-element))
-  (tab-bar-mode 1))
+  (setq global-mode-string '("" display-time-string battery-mode-line-string tab/space-between-status-element)))
+
+(tab-bar-mode 1)
 
 (add-hook 'elpaca-after-init-hook #'tab/setup)
 
@@ -668,6 +680,7 @@ window list."
 
 (use-package which-key-posframe
   :config
+  (setq which-key-posframe-poshandler 'posframe-poshandler-window-bottom-left-corner)
   (which-key-posframe-mode 1))
 
 (use-package whole-line-or-region
@@ -817,6 +830,7 @@ window list."
 
 (use-package transient-posframe
   :config
+  (setq transient-posframe-poshandler 'posframe-poshandler-window-bottom-left-corner)
   (transient-posframe-mode))
 
 (use-package tempel

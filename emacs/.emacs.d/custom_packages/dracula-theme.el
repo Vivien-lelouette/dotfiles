@@ -141,6 +141,9 @@ read it before opening a new issue about your will.")
                 ,@(if dracula-alternate-mode-line-and-minibuffer
                       (list :foreground dracula-comment :box dracula-bg)
                     (list :foreground fg4 :box dracula-bg)))
+               ;; Doom-modeline
+               (doom-modeline-bar :inherit mode-line)
+               (doom-modeline-bar-inactive :inherit mode-line-inactive)
                (read-multiple-choice-face :inherit completions-first-difference)
                (region :inherit match :extend t)
                (shadow :foreground ,dracula-comment)

@@ -95,6 +95,17 @@
           (set-frame-parameter frame 'left x)
           (set-frame-parameter frame 'top y)))))
 
+  (defun exwm/posframe-full-width (frame)
+    (with-selected-frame (frame-parameter frame 'parent-frame)
+      (let* ((frame-pos (window-absolute-pixel-edges))
+             (window-height (window-pixel-height))
+             (window-width (- (window-pixel-width) (window-right-divider-width) 2)))
+        (fit-frame-to-buffer frame)
+        (set-frame-width frame window-width nil t)
+        (let* ((height (window-pixel-height (frame-selected-window frame)))
+               (y (+ (- (car (cdr frame-pos)) height (window-mode-line-height)) window-height)))
+          (set-frame-parameter frame 'top y)))))
+
   (defun exwm-deparent (frame)
     (if (frame-parameter frame 'parent-frame)
         (with-selected-frame frame
@@ -102,7 +113,7 @@
             (if (or
                  (string= posframe-buffer-name " *transient*")
                  (string= posframe-buffer-name " *which-key*"))
-                (exwm/posframe-window-bottom frame)
+                (exwm/posframe-full-width frame)
               (exwm/posframe-window-top-right frame)))))
     frame)
 
