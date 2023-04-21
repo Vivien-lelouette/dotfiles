@@ -283,7 +283,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     :if (display-graphic-p))
 #+END_SRC
 
-* Doom mode-line
+* COMMENT Doom mode-line
 #+BEGIN_SRC emacs-lisp
   (use-package doom-modeline
     :config
@@ -301,10 +301,30 @@ As bookmarks are at the center of my workflow, this is a crucial option.
           doom-modeline-icon t
           doom-modeline-unicode-fallback nil)
 
-     (setq all-the-icons-scale-factor 0.95)
+    (setq all-the-icons-scale-factor 0.95)
 
     (remove-hook 'display-time-mode-hook #'doom-modeline-override-time-modeline)
     (remove-hook 'doom-modeline-mode-hook #'doom-modeline-override-time-modeline)
+
+    (defun utils/s-truncate (len s &optional ellipsis)
+      "Like `s-truncate' but
+  - return S when LEN is nil
+  - return empty string when len is shorter than ELLIPSIS"
+      (declare (pure t) (side-effect-free t))
+      (let ((ellipsis (or ellipsis "...")))
+        (cond
+         ((null len) s)
+         ((< len (length ellipsis)) "")
+         (t (s-truncate len s ellipsis)))))
+
+    (defun doom-modeline/segment--buffer-info (orig-fn &rest args)
+      "`doom-modeline-segment--buffer-info' but truncate."
+      (utils/s-truncate (max 10 (- (window-width) 45))
+       (format-mode-line (apply orig-fn args))
+       "..."))
+  
+    (advice-add #'doom-modeline-segment--buffer-info :around #'doom-modeline/segment--buffer-info)
+
     (doom-modeline-mode 1))
 #+END_SRC
 

@@ -216,28 +216,6 @@
 (use-package all-the-icons
   :if (display-graphic-p))
 
-(use-package doom-modeline
-  :config
-  (defun my-doom-modeline--font-height ()
-    "Calculate the actual char height of the mode-line."
-    (- (frame-char-height) 10))
-  (advice-add #'doom-modeline--font-height :override #'my-doom-modeline--font-height)
-  (setq doom-modeline-battery nil
-        doom-modeline-time nil
-        doom-modeline-workspace-name nil
-        doom-modeline-bar-width 1
-        doom-modeline-window-width-limit nil
-        doom-modeline-height 22
-        doom-modeline-major-mode-icon nil
-        doom-modeline-icon t
-        doom-modeline-unicode-fallback nil)
-
-   (setq all-the-icons-scale-factor 0.95)
-
-  (remove-hook 'display-time-mode-hook #'doom-modeline-override-time-modeline)
-  (remove-hook 'doom-modeline-mode-hook #'doom-modeline-override-time-modeline)
-  (doom-modeline-mode 1))
-
 (setq tab-always-indent t
       completions-format 'one-column
       completions-header-format nil
