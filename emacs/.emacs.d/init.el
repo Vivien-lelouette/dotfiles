@@ -499,11 +499,11 @@
   (display-battery-mode -1)
 
   (setq tab-bar-tab-name-format-function #'tab/tab-bar-tab-name-format
-        tab-bar-fixed-width-max nil
         tab-bar-close-button-show nil
         tab-bar-tab-hints t
         tab-bar-border 1
-        tab-bar-auto-width nil)
+        tab-bar-auto-width-max nil
+        tab-bar-auto-width t)
 
   (setq global-mode-string '("" display-time-string tab/space-between-status-element battery-mode-line-string tab/space-between-status-element))
 
