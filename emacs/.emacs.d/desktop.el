@@ -196,21 +196,19 @@
 ;;(shell/run-in-background "gsettings set org.gnome.gnome-flashback.desktop.icons show-trash false"))
 
 (defun exwm/win-title ()
-  (replace-regexp-in-string (concat " . " exwm-class-name) "" exwm-title))
+  (if exwm-title
+      exwm-title
+    ""))
 
 (defun exwm/exwm-title-by-class (title class prefix)
-  (if (string= class "Google-chrome")
-      (concat prefix "Chrome: " (replace-regexp-in-string " - https://.*" "" (replace-regexp-in-string " - http://.*" "" title)))
-  (concat prefix (s-capitalized-words class) ": " title)))
+  (cond
+   ((string= class "Google-chrome") (concat prefix "Chrome: " (replace-regexp-in-string " . Google Chrome" " " (replace-regexp-in-string " - https://.*" " " (replace-regexp-in-string " - http://.*" " " title)))))
+   ((s-starts-with? "gimp" class t) (concat prefix "GIMP: " (replace-regexp-in-string " . GIMP" " " title)))
+   (t (concat prefix (s-capitalize class) ": " (replace-regexp-in-string (concat " . " exwm-class-name) " " title)))))
 
 (defun exwm/exwm-update-title ()
   (exwm-workspace-rename-buffer
-   (let* ((buffer-hidden-prefix (if (window-parameter (selected-window) 'split-window)
-                                    " "
-                                  ""))
-          (buffer-title (exwm/exwm-title-by-class exwm-title exwm-class-name buffer-hidden-prefix)))
-     buffer-title)))
-
+   (exwm/exwm-title-by-class (exwm/win-title) exwm-class-name (if (window-parameter (selected-window) 'split-window) " "  ""))))
 
 (defun exwm/exwm-set-fringe ()
   (setq left-fringe-width 1
