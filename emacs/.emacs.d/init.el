@@ -1216,18 +1216,27 @@ Only the `background' is used in this face."
 
 (use-package ejc-sql
   :config
-  (setq
-   ejc-result-table-impl 'orgtbl-mode
-   ejc-set-column-width-limit nil
-   ejc-set-use-unicode t)
+  (setq ejc-result-table-impl 'orgtbl-mode)
+
+  (add-hook 'ejc-sql-connected-hook
+        (lambda ()
+          (ejc-set-fetch-size 200)
+          (ejc-set-max-rows 200)
+          (ejc-set-show-too-many-rows-message nil)
+          (ejc-set-column-width-limit nil)
+          (ejc-set-use-unicode nil)))
+
   (add-hook 'sql-mode-hook
             (lambda ()
               (ejc-sql-mode t)))
+
   (add-hook 'ejc-sql-minor-mode-hook
             (lambda ()
               (ejc-eldoc-setup)))
+
   (require 'ejc-company)
   (push 'ejc-company-backend company-backends)
+
   (add-hook 'ejc-sql-minor-mode-hook
             (lambda ()
               (company-mode t))))
