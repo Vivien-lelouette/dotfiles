@@ -198,19 +198,18 @@
 (defun exwm/win-title ()
   (replace-regexp-in-string (concat " . " exwm-class-name) "" exwm-title))
 
-(defun exwm/exwm-title-by-class (title class)
+(defun exwm/exwm-title-by-class (title class prefix)
   (if (string= class "Google-chrome")
-      (replace-regexp-in-string " - https://.*" "" (replace-regexp-in-string " - http://.*" "" title))
-  title))
+      (concat prefix "Chrome: " (replace-regexp-in-string " - https://.*" "" (replace-regexp-in-string " - http://.*" "" title)))
+  (concat prefix (s-capitalized-words class) ": " title)))
 
 (defun exwm/exwm-update-title ()
   (exwm-workspace-rename-buffer
    (let* ((buffer-hidden-prefix (if (window-parameter (selected-window) 'split-window)
                                     " "
                                   ""))
-          (buffer-title (exwm/exwm-title-by-class (concat buffer-hidden-prefix exwm-class-name ": " exwm-title) exwm-class-name)))
-     (if (<= (length buffer-title) 100) buffer-title
-       (concat (substring buffer-title 0 99) "...")))))
+          (buffer-title (exwm/exwm-title-by-class exwm-title exwm-class-name buffer-hidden-prefix)))
+     buffer-title)))
 
 
 (defun exwm/exwm-set-fringe ()

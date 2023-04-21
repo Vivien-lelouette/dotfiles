@@ -253,6 +253,20 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (org-mode . mixed-pitch-mode))
 #+END_SRC
 
+* Utils
+#+BEGIN_SRC emacs-lisp
+  (defun utils/s-truncate (len s &optional ellipsis)
+    "Like `s-truncate' but
+  - return S when LEN is nil
+  - return empty string when len is shorter than ELLIPSIS"
+    (declare (pure t) (side-effect-free t))
+    (let ((ellipsis (or ellipsis "...")))
+      (cond
+       ((null len) s)
+       ((< len (length ellipsis)) "")
+       (t (s-truncate len s ellipsis)))))
+#+END_SRC
+
 * Dracula theme
 #+BEGIN_SRC emacs-lisp
   (load-file "~/.emacs.d/custom_packages/dracula-theme.el")
@@ -283,7 +297,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     :if (display-graphic-p))
 #+END_SRC
 
-* COMMENT Doom mode-line
+* Doom mode-line
 #+BEGIN_SRC emacs-lisp
   (use-package doom-modeline
     :config
@@ -305,17 +319,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 
     (remove-hook 'display-time-mode-hook #'doom-modeline-override-time-modeline)
     (remove-hook 'doom-modeline-mode-hook #'doom-modeline-override-time-modeline)
-
-    (defun utils/s-truncate (len s &optional ellipsis)
-      "Like `s-truncate' but
-  - return S when LEN is nil
-  - return empty string when len is shorter than ELLIPSIS"
-      (declare (pure t) (side-effect-free t))
-      (let ((ellipsis (or ellipsis "...")))
-        (cond
-         ((null len) s)
-         ((< len (length ellipsis)) "")
-         (t (s-truncate len s ellipsis)))))
 
     (defun doom-modeline/segment--buffer-info (orig-fn &rest args)
       "`doom-modeline-segment--buffer-info' but truncate."

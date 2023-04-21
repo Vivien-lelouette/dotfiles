@@ -192,6 +192,17 @@
   :hook
   (org-mode . mixed-pitch-mode))
 
+(defun utils/s-truncate (len s &optional ellipsis)
+  "Like `s-truncate' but
+- return S when LEN is nil
+- return empty string when len is shorter than ELLIPSIS"
+  (declare (pure t) (side-effect-free t))
+  (let ((ellipsis (or ellipsis "...")))
+    (cond
+     ((null len) s)
+     ((< len (length ellipsis)) "")
+     (t (s-truncate len s ellipsis)))))
+
 (load-file "~/.emacs.d/custom_packages/dracula-theme.el")
 (load-theme 'dracula t)
 
@@ -215,6 +226,37 @@
 
 (use-package all-the-icons
   :if (display-graphic-p))
+
+(use-package doom-modeline
+  :config
+  (defun my-doom-modeline--font-height ()
+    "Calculate the actual char height of the mode-line."
+    (- (frame-char-height) 10))
+  (advice-add #'doom-modeline--font-height :override #'my-doom-modeline--font-height)
+  (setq doom-modeline-battery nil
+        doom-modeline-time nil
+        doom-modeline-workspace-name nil
+        doom-modeline-bar-width 1
+        doom-modeline-window-width-limit nil
+        doom-modeline-height 22
+        doom-modeline-major-mode-icon nil
+        doom-modeline-icon t
+        doom-modeline-unicode-fallback nil)
+
+  (setq all-the-icons-scale-factor 0.95)
+
+  (remove-hook 'display-time-mode-hook #'doom-modeline-override-time-modeline)
+  (remove-hook 'doom-modeline-mode-hook #'doom-modeline-override-time-modeline)
+
+  (defun doom-modeline/segment--buffer-info (orig-fn &rest args)
+    "`doom-modeline-segment--buffer-info' but truncate."
+    (utils/s-truncate (max 10 (- (window-width) 45))
+     (format-mode-line (apply orig-fn args))
+     "..."))
+
+  (advice-add #'doom-modeline-segment--buffer-info :around #'doom-modeline/segment--buffer-info)
+
+  (doom-modeline-mode 1))
 
 (setq tab-always-indent t
       completions-format 'one-column
