@@ -203,6 +203,8 @@
 (defun exwm/exwm-title-by-class (title class prefix)
   (cond
    ((string= class "Google-chrome") (concat prefix "Chrome: " (replace-regexp-in-string " . Google Chrome" " " (replace-regexp-in-string " - https://.*" " " (replace-regexp-in-string " - http://.*" " " title)))))
+   ((string= class "systemsettings") (concat prefix "System Settings: " (replace-regexp-in-string " . System Settings" " " title)))
+   ((string= class "DBeaver") (concat prefix "DBeaver: " (replace-regexp-in-string "DBeaver .* - " "" title)))
    ((s-starts-with? "gimp" class t) (concat prefix "GIMP: " (replace-regexp-in-string " . GIMP" " " title)))
    (t (concat prefix (s-capitalize class) ": " (replace-regexp-in-string (concat " . " exwm-class-name) " " title)))))
 
