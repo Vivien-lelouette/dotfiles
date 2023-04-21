@@ -178,7 +178,8 @@ read it before opening a new issue about your will.")
                ;; transient
                (transient-posframe :inherit tooltip)
                (transient-posframe-border :background nil)
-
+               ;; flycheck-posframe
+               (flycheck-posframe-background-face :inherit tooltip)
                ;; auto-complete
                (ac-completion-face :underline t :foreground ,dracula-pink)
                ;; bookmarks

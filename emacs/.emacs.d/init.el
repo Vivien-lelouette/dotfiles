@@ -886,6 +886,13 @@ window list."
 (use-package flycheck
   :init (global-flycheck-mode))
 
+(use-package flycheck-posframe
+  :after flycheck
+  :config
+  (setq flycheck-posframe-position 'window-bottom-left-corner
+        flycheck-posframe-border-width 8)
+  (add-hook 'flycheck-mode-hook #'flycheck-posframe-mode))
+
 (setq electric-pair-pairs
   '(
     (?\' . ?\')
@@ -1298,7 +1305,7 @@ Only the `background' is used in this face."
   (add-to-list 'term-bind-key-alist '("TAB" . term-send-tab))
   (add-to-list 'term-bind-key-alist '("s-i" . term-line-mode)))
 
-(defun dired-open-file ()
+(defun dired/open-file ()
   "In dired, open the file named on this line."
   (interactive)
   (let* ((file (dired-get-filename nil t)))
@@ -1306,25 +1313,37 @@ Only the `background' is used in this face."
     (call-process "xdg-open" nil 0 nil file)
     (message "Opening %s done" file)))
 
-(defun dired-open-home-dir ()
+(defun dired/open-home-dir ()
   "Open the home directory in dired"
   (interactive)
   (dired "~"))
 
-(defun dired-open-current-dir ()
-  "Open the current directory in dired"
+(defun dired/first-file ()
   (interactive)
-  (dired "."))
+  (beginning-of-buffer)
+  (while (and (not (eobp))
+              (or (bolp)
+                  (member (dired-get-filename 'no-dir t)
+                          '("." ".."))))
+    (dired-next-line 1)))
+
+(defun dired/last-file ()
+  (interactive)
+  (end-of-buffer)
+  (dired-next-line -1))
 
 (use-package dired
   :elpaca nil
   :bind (
          :map dired-mode-map
          ("C-." . dired-hide-dotfiles-mode)
-         ("<C-return>" . dired-open-file)
+         ("<C-return>" . dired/open-file)
          ("M-p" . dired-up-directory)
          ("M-n" . dired-find-file)
-         ("s-i" . dired-toggle-read-only))
+         ("s-i" . dired-toggle-read-only)
+         ("M-<" . dired/first-file)
+         ("M->" . dired/last-file)
+         ("~" . dired/open-home-dir))
   :hook
   (dired-mode . dired-hide-details-mode)
   :config

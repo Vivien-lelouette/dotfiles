@@ -1074,8 +1074,14 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 #+BEGIN_SRC emacs-lisp
   (use-package flycheck
     :init (global-flycheck-mode))
-#+END_SRC
 
+  (use-package flycheck-posframe
+    :after flycheck
+    :config
+    (setq flycheck-posframe-position 'window-bottom-left-corner
+          flycheck-posframe-border-width 8)
+    (add-hook 'flycheck-mode-hook #'flycheck-posframe-mode))
+#+END_SRC
 
 ** Electric pair
 #+BEGIN_SRC emacs-lisp
@@ -1576,27 +1582,32 @@ This requires a Java runtime environment.
 
 * Dired
 #+BEGIN_SRC emacs-lisp
-  (defun dired-open-file ()
+  (defun dired/open-file ()
     "In dired, open the file named on this line."
     (interactive)
     (let* ((file (dired-get-filename nil t)))
       (message "Opening %s..." file)
       (call-process "xdg-open" nil 0 nil file)
       (message "Opening %s done" file)))
-#+END_SRC
 
-#+BEGIN_SRC emacs-lisp
-  (defun dired-open-home-dir ()
+  (defun dired/open-home-dir ()
     "Open the home directory in dired"
     (interactive)
     (dired "~"))
-#+END_SRC
 
-#+BEGIN_SRC emacs-lisp
-  (defun dired-open-current-dir ()
-    "Open the current directory in dired"
+  (defun dired/first-file ()
     (interactive)
-    (dired "."))
+    (beginning-of-buffer)
+    (while (and (not (eobp))
+                (or (bolp)
+                    (member (dired-get-filename 'no-dir t)
+                            '("." ".."))))
+      (dired-next-line 1)))
+
+  (defun dired/last-file ()
+    (interactive)
+    (end-of-buffer)
+    (dired-next-line -1))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -1605,10 +1616,13 @@ This requires a Java runtime environment.
     :bind (
            :map dired-mode-map
            ("C-." . dired-hide-dotfiles-mode)
-           ("<C-return>" . dired-open-file)
+           ("<C-return>" . dired/open-file)
            ("M-p" . dired-up-directory)
            ("M-n" . dired-find-file)
-           ("s-i" . dired-toggle-read-only))
+           ("s-i" . dired-toggle-read-only)
+           ("M-<" . dired/first-file)
+           ("M->" . dired/last-file)
+           ("~" . dired/open-home-dir))
     :hook
     (dired-mode . dired-hide-details-mode)
     :config
