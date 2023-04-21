@@ -949,7 +949,11 @@ window list."
   (interactive "sJWT: ")
   (shell-command-to-string (concat "PATH=~/.npm-packages/bin:$PATH NODE_PATH=~/.npm-packages/lib/node_modules node -e \"const jwt = require('jsonwebtoken'); console.log(jwt.decode('" jwt "', { complete: true }))\"")))
 
-(use-package nodejs-repl)
+(use-package nodejs-repl
+  :config
+  (defun nodejs-repl/remove-broken-filter ()
+    (remove-hook 'comint-output-filter-functions 'nodejs-repl--delete-prompt t))
+  (add-hook 'nodejs-repl-mode-hook #'nodejs-repl/remove-broken-filter))
 
 (use-package typescript-mode
   :mode "\\.ts\\'")
@@ -1227,47 +1231,6 @@ Only the `background' is used in this face."
   (add-hook 'ejc-sql-minor-mode-hook
             (lambda ()
               (company-mode t))))
-
-(use-package xterm-color
-  :config
-  (setq comint-output-filter-functions
-        (remove 'ansi-color-process-output comint-output-filter-functions))
-
-  (add-hook 'shell-mode-hook
-            (lambda ()
-              ;; Disable font-locking in this buffer to improve performance
-              (font-lock-mode -1)
-              ;; Prevent font-locking from being re-enabled in this buffer
-              (make-local-variable 'font-lock-function)
-              (setq font-lock-function (lambda (_) nil))
-              (add-hook 'comint-preoutput-filter-functions 'xterm-color-filter nil t)))
-
-  (add-hook 'eat-mode-hook
-            (lambda ()
-              ;; Disable font-locking in this buffer to improve performance
-              (font-lock-mode -1)
-              ;; Prevent font-locking from being re-enabled in this buffer
-              (make-local-variable 'font-lock-function)
-              (setq font-lock-function (lambda (_) nil))
-              (add-hook 'comint-preoutput-filter-functions 'xterm-color-filter nil t))))
-
-;; (require 'eshell) ; or use with-eval-after-load
-
-;;   (add-hook 'eshell-before-prompt-hook
-;;             (lambda ()
-;;               (setq xterm-color-preserve-properties t)))
-
-;;   (add-to-list 'eshell-preoutput-filter-functions 'xterm-color-filter)
-;;   (setq eshell-output-filter-functions (remove 'eshell-handle-ansi-color eshell-output-filter-functions))
-
-;;   (setenv "TERM" "xterm-256color")
-
-;;   (setq compilation-environment '("TERM=xterm-256color"))
-
-;;   (defun my/advice-compilation-filter (f proc string)
-;;     (funcall f proc (xterm-color-filter string)))
-
-;;   (advice-add 'compilation-filter :around #'my/advice-compilation-filter))
 
 (custom-set-faces
  `(ansi-color-black ((t (:foreground "#282a36"))))
