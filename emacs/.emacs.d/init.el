@@ -487,7 +487,7 @@
 
   (setq global-mode-string '("" display-time-string tab/space-between-status-element battery-mode-line-string tab/space-between-status-element))
 
-  (setq display-time-format (concat tab/space-between-status-element "  " (all-the-icons-faicon "clock-o" :v-adjust 0.03) "   %d-%m-%Y %H:%M"))
+  (setq display-time-format (concat tab/space-between-status-element "  " (all-the-icons-faicon "clock-o" :v-adjust 0) "   %d-%m-%Y %H:%M"))
   (display-time-mode 1)
 
   (setq battery-mode-line-format
@@ -659,7 +659,7 @@ window list."
          (window-height (plist-get info :parent-window-height))
          (posframe-width (plist-get info :posframe-width))
          (posframe-height (plist-get info :posframe-height))
-         (x (+ window-left window-width (- 0 posframe-width (window-right-divider-width))))
+         (x (- (+ window-left window-width) posframe-width (window-right-divider-width)))
          (top-y (+ window-top (window-header-line-height))))
     (if (> (cdr (window-absolute-pixel-position)) (+ top-y posframe-height))
         (cons x top-y)
@@ -745,7 +745,7 @@ window list."
 
 (use-package which-key
   :config
-  (setq which-key-min-display-lines 20)
+  (setq which-key-min-display-lines 25)
   (which-key-mode 1))
 
 (use-package which-key-posframe
