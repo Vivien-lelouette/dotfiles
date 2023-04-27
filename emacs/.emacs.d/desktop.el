@@ -63,30 +63,6 @@
 
 (elpaca (app-launcher :host github :repo "vivien-lelouette/app-launcher"))
 
-(with-eval-after-load 'posframe
-  (setq current-frame-pos-x 0)
-  (setq current-frame-pos-y 0)
-
-  (defun exwm/record-frame-positions ()
-    (let* ((current-frame-pos (frame-position)))
-                 (setq current-frame-pos-x (car current-frame-pos))
-                 (setq current-frame-pos-y (cdr current-frame-pos))))
-
-  (add-hook 'focus-in-hook #'exwm/record-frame-positions)
-
-  (defun exwm-deparent (frame)
-      (if (frame-parameter frame 'parent-frame)
-          (let* ((frame-pos-x (frame-parameter frame 'left))
-                 (frame-pos-y (frame-parameter frame 'top))
-                 (window-pos-x (car (window-absolute-pixel-edges)))
-                 (absolute-x (if (< frame-pos-x window-pos-x) (+ current-frame-pos-x frame-pos-x) frame-pos-x))
-                 (absolute-y (if (< frame-pos-y current-frame-pos-y) (+ current-frame-pos-y frame-pos-y) frame-pos-y)))
-            (set-frame-parameter frame 'parent-frame nil)
-            (set-frame-position frame absolute-x absolute-y)))
-    frame)
-
-  (advice-add 'posframe-show :filter-return #'exwm-deparent))
-
 (defcustom my-skippable-buffer-regexp
   (rx bos (or (seq "*" (zero-or-more anything))
               (seq "magit" (zero-or-more anything))

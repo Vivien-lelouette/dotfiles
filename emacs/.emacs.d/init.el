@@ -646,44 +646,74 @@ window list."
   (global-unset-key (kbd "C-?"))
   (global-set-key (kbd "C-?") 'vundo))
 
-(defun posframe/poshandler-window-bottom-center (info)
-  "Posframe's position handler.
+(with-eval-after-load 'posframe
+  (defun posframe/deparent (frame)
+    (set-frame-parameter frame 'parent-frame nil)
+    frame)
 
-  This poshandler function let bottom edge center of posframe align
-  to bottom edge center of window.
+  (advice-add 'posframe-show :filter-return #'posframe/deparent)
 
-  The structure of INFO can be found in docstring of
-  `posframe-show'."
-  (let* ((window-left (plist-get info :parent-window-left))
-         (window-top (plist-get info :parent-window-top))
-         (window-width (plist-get info :parent-window-width))
-         (window-height (plist-get info :parent-window-height))
-         (posframe-width (plist-get info :posframe-width))
-         (posframe-height (plist-get info :posframe-height))
-         (mode-line-height (plist-get info :mode-line-height)))
-    (cons (max 0 (+ window-left (/ (- window-width posframe-width (window-right-divider-width)) 2)))
-          (+ window-top window-height
-             (- 0 mode-line-height posframe-height)))))
+  (defun posframe/poshandler-window-bottom-left-corner (info)
+    "Posframe's position handler.
 
-(defun posframe/poshandler-window-top-or-bottom-right-corner (info)
-  "Posframe's position handler.
+This poshandler function let bottom left corner of posframe align to
+bottom left corner of window.
 
-    This poshandler function let top right corner of posframe align to
-    top left right of window.
+The structure of INFO can be found in docstring of
+`posframe-show'."
+    (let* ((parent-frame (plist-get info :parent-frame))
+           (parent-frame-position (frame-position parent-frame))
+           (window-left (+ (car parent-frame-position) (plist-get info :parent-window-left)))
+           (window-top (+ (cdr parent-frame-position) (plist-get info :parent-window-top)))
+           (window-height (plist-get info :parent-window-height))
+           (posframe-height (plist-get info :posframe-height))
+           (mode-line-height (plist-get info :mode-line-height)))
+      (cons window-left
+            (+ window-top window-height
+               (- 0 mode-line-height posframe-height)))))
+
+  (defun posframe/poshandler-window-bottom-center (info)
+    "Posframe's position handler.
+
+    This poshandler function let bottom edge center of posframe align
+    to bottom edge center of window.
 
     The structure of INFO can be found in docstring of
     `posframe-show'."
-  (let* ((window-left (plist-get info :parent-window-left))
-         (window-top (plist-get info :parent-window-top))
-         (window-width (plist-get info :parent-window-width))
-         (window-height (plist-get info :parent-window-height))
-         (posframe-width (plist-get info :posframe-width))
-         (posframe-height (plist-get info :posframe-height))
-         (x (- (+ window-left window-width) posframe-width (window-right-divider-width)))
-         (top-y (+ window-top (window-header-line-height))))
-    (if (> (cdr (window-absolute-pixel-position)) (+ top-y posframe-height))
-        (cons x top-y)
-      (cons x (- (+ top-y window-height) posframe-height (window-mode-line-height))))))
+    (let* ((parent-frame (plist-get info :parent-frame))
+           (parent-frame-position (frame-position parent-frame))
+           (window-left (+ (car parent-frame-position) (plist-get info :parent-window-left)))
+           (window-top (+ (cdr parent-frame-position) (plist-get info :parent-window-top)))
+           (window-width (plist-get info :parent-window-width))
+           (window-height (plist-get info :parent-window-height))
+           (posframe-width (plist-get info :posframe-width))
+           (posframe-height (plist-get info :posframe-height))
+           (mode-line-height (plist-get info :mode-line-height)))
+      (cons (max 0 (+ window-left (/ (- window-width posframe-width (window-right-divider-width)) 2)))
+            (+ window-top window-height
+               (- 0 mode-line-height posframe-height)))))
+
+  (defun posframe/poshandler-window-top-or-bottom-right-corner (info)
+    "Posframe's position handler.
+
+      This poshandler function let top right corner of posframe align to
+      top left right of window.
+
+      The structure of INFO can be found in docstring of
+      `posframe-show'."
+    (let* ((parent-frame (plist-get info :parent-frame))
+           (parent-frame-position (frame-position parent-frame))
+           (window-left (+ (car parent-frame-position) (plist-get info :parent-window-left)))
+           (window-top (+ (cdr parent-frame-position) (plist-get info :parent-window-top)))
+           (window-width (plist-get info :parent-window-width))
+           (window-height (plist-get info :parent-window-height))
+           (posframe-width (plist-get info :posframe-width))
+           (posframe-height (plist-get info :posframe-height))
+           (x (- (+ window-left window-width) posframe-width (window-right-divider-width)))
+           (top-y (+ window-top (window-header-line-height))))
+      (if (> (cdr (window-absolute-pixel-position)) (+ top-y posframe-height))
+          (cons x top-y)
+        (cons x (- (+ top-y window-height) posframe-height (window-mode-line-height)))))))
 
 (use-package olivetti
   :config
@@ -889,8 +919,27 @@ window list."
 (use-package flycheck-posframe
   :after flycheck
   :config
-  (setq flycheck-posframe-position 'window-bottom-left-corner
-        flycheck-posframe-border-width 8)
+  (setq flycheck-posframe-border-width 8)
+
+  ;; Redefined to allow custom poshandler
+  (defun flycheck-posframe-show-posframe (errors)
+    "Display ERRORS, using posframe.el library."
+    (posframe-hide flycheck-posframe-buffer)
+    (when (and errors
+               (not (run-hook-with-args-until-success 'flycheck-posframe-inhibit-functions)))
+      (flycheck-posframe-check-position)
+      (posframe-show
+       flycheck-posframe-buffer
+       :string (flycheck-posframe-format-errors errors)
+       :background-color (face-background 'flycheck-posframe-background-face nil t)
+       :position (point)
+       :internal-border-width flycheck-posframe-border-width
+       :internal-border-color (face-foreground (if flycheck-posframe-border-use-error-face
+                                                   (flycheck-posframe-highest-error-level-face errors)
+                                                 'flycheck-posframe-border-face) nil t)
+       :poshandler #'posframe/poshandler-window-bottom-left-corner
+       :hidehandler #'flycheck-posframe-hidehandler)))
+
   (add-hook 'flycheck-mode-hook #'flycheck-posframe-mode))
 
 (setq electric-pair-pairs
