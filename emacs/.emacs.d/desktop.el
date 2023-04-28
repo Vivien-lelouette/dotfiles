@@ -158,7 +158,7 @@
   (interactive)
   (pcase exwm-class-name
     ((rx (sequence "Ardour" (zero-or-more (any "ascii")))) (window/force-tile-to-other-window))
-    ("Google-chrome" (run-with-timer 0.2 nil (lambda () (execute-kbd-macro (kbd "<f11>")))))))
+    ("Google-chrome" (run-with-timer 0.4 nil (lambda () (execute-kbd-macro (kbd "<f11>")))))))
 
 (defun window/force-chrome-tiled ()
   (interactive)

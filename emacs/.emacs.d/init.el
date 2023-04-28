@@ -307,7 +307,8 @@
         company-minimum-prefix-length 1
         company-idle-delay 0.0
         company-selection-wrap-around t
-        company-tooltip-limit 15)
+        company-tooltip-limit 15
+        company-backends '((company-files :separate company-yasnippet :separate company-capf)))
   (global-company-mode))
 
 (use-package company-box
@@ -980,24 +981,12 @@ The structure of INFO can be found in docstring of
         transient-posframe-poshandler 'posframe/poshandler-window-bottom-center)
   (transient-posframe-mode))
 
-(use-package tempel
-  :bind (("C-<tab>" . tempel-complete))
-  :init
-  ;; Setup completion at point
-  (defun tempel-setup-capf ()
-    ;; Add the Tempel Capf to `completion-at-point-functions'.
-    ;; `tempel-expand' only triggers on exact matches. Alternatively use
-    ;; `tempel-complete' if you want to see all matches, but then you
-    ;; should also configure `tempel-trigger-prefix', such that Tempel
-    ;; does not trigger too often when you don't expect it. NOTE: We add
-    ;; `tempel-expand' *before* the main programming mode Capf, such
-    ;; that it will be tried first.
-    (setq-local completion-at-point-functions
-                (cons #'tempel-expand
-                      completion-at-point-functions)))
+(use-package yasnippet
+  :config
+  (yas-reload-all)
+  (yas-global-mode 1))
 
-  (add-hook 'prog-mode-hook 'tempel-setup-capf)
-  (add-hook 'text-mode-hook 'tempel-setup-capf))
+(use-package yasnippet-snippets)
 
 (use-package insert-shebang)
 
@@ -1173,8 +1162,8 @@ Only the `background' is used in this face."
    lsp-semantic-tokens-enable nil
    lsp-enable-folding nil
    lsp-enable-snippet t
-   lsp-idle-delay 0.0)
-
+   lsp-idle-delay 0.0
+   lsp-completion-provider :none)
   (defvar lsp/signature-posframe-params
     (list :poshandler #'posframe/poshandler-window-top-or-bottom-right-corner
           :height 10
