@@ -626,17 +626,30 @@ window list."
   (require 'bind-key)
   (bind-key "M-j" #'avy-goto-char-timer))
 
-(use-package multiple-cursors
-  :hook
-  ((multiple-cursors-mode . (lambda ()
-                              (set-face-attribute 'mc/cursor-bar-face nil :height 1 :background nil :inherit 'cursor))))
-  :config
-  (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
-  (global-set-key (kbd "C->") 'mc/mark-next-like-this)
-  (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
-  (global-set-key (kbd "C-;") 'mc/mark-all-like-this)
-  (global-set-key (kbd "C-S-<mouse-1>") 'mc/add-cursor-on-click)
-  (setq mc/black-list-prefer t))
+(elpaca (macrursors :host github :repo "corytertel/macrursors"))
+
+(eval-after-load "macrursors"
+  '(progn (dolist (mode '(company-mode))
+            (add-hook 'macrursors-pre-finish-hook mode)
+            (add-hook 'macrursors-post-finish-hook mode))
+          (define-prefix-command 'macrursors-mark-map)
+          (global-set-key (kbd "C-c SPC") #'macrursors-select)
+          (global-set-key (kbd "C->") #'macrursors-mark-next-instance-of)
+          (global-set-key (kbd "C-<") #'macrursors-mark-previous-instance-of)
+          (global-set-key (kbd "C-;") 'macrursors-mark-map)
+          (define-key macrursors-mark-map (kbd "C-;") #'macrursors-mark-all-instances-of)
+          (define-key macrursors-mark-map (kbd ";") #'macrursors-mark-all-instances-of)
+          (define-key macrursors-mark-map (kbd "i") #'macrursors-mark-all-lines-or-instances)
+          (define-key macrursors-mark-map (kbd "l") #'macrursors-mark-all-lists)
+          (define-key macrursors-mark-map (kbd "s") #'macrursors-mark-all-symbols)
+          (define-key macrursors-mark-map (kbd "e") #'macrursors-mark-all-sexps)
+          (define-key macrursors-mark-map (kbd "f") #'macrursors-mark-all-defuns)
+          (define-key macrursors-mark-map (kbd "n") #'macrursors-mark-all-numbers)
+          (define-key macrursors-mark-map (kbd ".") #'macrursors-mark-all-sentences)
+          (define-key macrursors-mark-map (kbd "r") #'macrursors-mark-all-lines)))
+
+(use-package kmacro-x
+  :init (kmacro-x-atomic-undo-mode 1))
 
 (use-package easy-kill
   :config
