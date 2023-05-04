@@ -568,7 +568,7 @@
   (setq god-exempt-major-modes (remove 'compilation-mode god-exempt-major-modes))
 
   (define-key god-local-mode-map (kbd ".") #'repeat)
-  ;; (global-set-key (kbd "<escape>") #'god-mode-all)
+  (global-set-key (kbd "<escape>") #'god-mode-all)
   (define-key god-local-mode-map (kbd "[") #'backward-paragraph)
   (define-key god-local-mode-map (kbd "]") #'forward-paragraph)
   (require 'god-mode-isearch)
@@ -577,7 +577,8 @@
 
   (defun my-god-mode-update-cursor-type ()
     (setq cursor-type (if (or god-local-mode buffer-read-only) 'box 'bar)))
-  (add-hook 'post-command-hook #'my-god-mode-update-cursor-type))
+  (add-hook 'post-command-hook #'my-god-mode-update-cursor-type)
+  (god-mode-all 1))
 
 (use-package ace-window
   :config
