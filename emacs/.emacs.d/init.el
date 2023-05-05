@@ -1182,6 +1182,7 @@ Only the `background' is used in this face."
    lsp-semantic-tokens-enable nil
    lsp-enable-folding nil
    lsp-enable-snippet nil
+   lsp-modeline-code-actions-enable nil
    lsp-idle-delay 0.5
    lsp-completion-provider :none)
   (defvar lsp/signature-posframe-params
