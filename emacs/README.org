@@ -61,20 +61,27 @@
   (add-hook 'elpaca-after-init-hook
             #'(lambda ()
                 (setq gc-cons-threshold (* 100 1000 1000))))
+  (add-hook 'focus-out-hook 'garbage-collect)
+  (run-with-idle-timer 5 t 'garbage-collect)
 #+END_SRC
 
-Warn when opening files bigger than 100MB
+** Display improvements
+#+BEGIN_SRC emacs-lisp
+  (setq redisplay-dont-pause t)
+#+END_SRC
+
+** Warn when opening files bigger than 100MB
 #+BEGIN_SRC emacs-lisp
   (setq large-file-warning-threshold 100000000)
 #+END_SRC
 
-Increase the amount of data which Emacs reads from a process
+** Increase the amount of data which Emacs reads from a process
 #+BEGIN_SRC emacs-lisp
 (setq read-process-output-max (* 5 (* 1024 1024)))
 (setq process-adaptive-read-buffering nil)
 #+END_SRC
 
-Good scrolling
+** Good scrolling
 #+begin_src emacs-lisp
   (pixel-scroll-precision-mode 1)
   (setq pixel-scroll-precision-use-momentum t)
@@ -82,10 +89,10 @@ Good scrolling
 
 ** Less verbose prompt
 #+BEGIN_SRC emacs-lisp
-  (setq tab-always-indent t)
   (defalias 'yes-or-no-p 'y-or-n-p)
-  (setq xref-prompt-for-identifier nil)
-  (setq comint-prompt-read-only t)
+  (setq xref-prompt-for-identifier nil
+        comint-prompt-read-only t
+        use-dialog-box nil)
 #+END_SRC
 
 ** Better minibuffer completion keybind
@@ -133,8 +140,10 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 
 ** Indentation
 #+BEGIN_SRC emacs-lisp
-  (setq indent-tabs-mode nil)
-  (setq indent-line-function 'insert-tab)
+  (setq tab-always-indent t
+        indent-tabs-mode nil
+        indent-line-function 'insert-tab)
+  
   (setq-default indent-tabs-mode nil)
   (setq-default tab-width 4)
   (setq c-basic-offset tab-width
@@ -1422,8 +1431,8 @@ Handle absolute posframe position. This allows for deparenting, ensuring windows
      lsp-headerline-breadcrumb-enable nil
      lsp-semantic-tokens-enable nil
      lsp-enable-folding nil
-     lsp-enable-snippet t
-     lsp-idle-delay 0.0
+     lsp-enable-snippet nil
+     lsp-idle-delay 0.5
      lsp-completion-provider :none)
     (defvar lsp/signature-posframe-params
       (list :poshandler #'posframe/poshandler-window-top-or-bottom-right-corner

@@ -50,6 +50,10 @@
 (add-hook 'elpaca-after-init-hook
           #'(lambda ()
               (setq gc-cons-threshold (* 100 1000 1000))))
+(add-hook 'focus-out-hook 'garbage-collect)
+(run-with-idle-timer 5 t 'garbage-collect)
+
+(setq redisplay-dont-pause t)
 
 (setq large-file-warning-threshold 100000000)
 
@@ -59,10 +63,10 @@
 (pixel-scroll-precision-mode 1)
 (setq pixel-scroll-precision-use-momentum t)
 
-(setq tab-always-indent t)
 (defalias 'yes-or-no-p 'y-or-n-p)
-(setq xref-prompt-for-identifier nil)
-(setq comint-prompt-read-only t)
+(setq xref-prompt-for-identifier nil
+      comint-prompt-read-only t
+      use-dialog-box nil)
 
 (define-key minibuffer-local-completion-map " " nil)
 (define-key minibuffer-local-must-match-map " " nil)
@@ -91,8 +95,10 @@
 
 (setq bookmark-save-flag 1)
 
-(setq indent-tabs-mode nil)
-(setq indent-line-function 'insert-tab)
+(setq tab-always-indent t
+      indent-tabs-mode nil
+      indent-line-function 'insert-tab)
+
 (setq-default indent-tabs-mode nil)
 (setq-default tab-width 4)
 (setq c-basic-offset tab-width
@@ -1175,8 +1181,8 @@ Only the `background' is used in this face."
    lsp-headerline-breadcrumb-enable nil
    lsp-semantic-tokens-enable nil
    lsp-enable-folding nil
-   lsp-enable-snippet t
-   lsp-idle-delay 0.0
+   lsp-enable-snippet nil
+   lsp-idle-delay 0.5
    lsp-completion-provider :none)
   (defvar lsp/signature-posframe-params
     (list :poshandler #'posframe/poshandler-window-top-or-bottom-right-corner
