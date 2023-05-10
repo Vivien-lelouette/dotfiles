@@ -391,6 +391,8 @@
    consult-ripgrep consult-git-grep consult-grep
    consult-bookmark consult-recent-file consult-xref
    consult--source-bookmark consult--source-recent-file
+   consult--source-buffer
+   :preview-key "M-."
    consult--source-project-recent-file
    :preview-key "M-.")
   (setq consult-narrow-key "<"))
@@ -583,8 +585,7 @@
 
   (defun my-god-mode-update-cursor-type ()
     (setq cursor-type (if (or god-local-mode buffer-read-only) 'box 'bar)))
-  (add-hook 'post-command-hook #'my-god-mode-update-cursor-type)
-  (god-mode-all 1))
+  (add-hook 'post-command-hook #'my-god-mode-update-cursor-type))
 
 (use-package ace-window
   :config
@@ -608,23 +609,6 @@
           (?b aw-split-window-horz "Split Horz Window")
           (?o delete-other-windows "Delete Other Windows")
           (?? aw-show-dispatch-help)))
-  (defun aw-update ()
-    "Update ace-window-path window parameter for all windows.
-
-Ensure all windows are labeled so the user can select a specific
-one, even from the set of windows typically ignored when making a
-window list."
-    (let ((aw-ignore-on)
-          (aw-ignore-current)
-          (ignore-window-parameters t))
-      (avy-traverse
-       (avy-tree (aw-window-list) aw-keys)
-       (lambda (path leaf)
-         (set-window-parameter
-          leaf 'ace-window-path
-          (propertize
-           (concat " " (apply #'string (reverse path)))
-           'face 'aw-mode-line-face))))))
   (ace-window-display-mode 1))
 
 (use-package avy
