@@ -311,9 +311,9 @@
   :config
   (setq company-require-match nil
         company-minimum-prefix-length 1
-        company-idle-delay 0.0
+        company-idle-delay 0.2
         company-selection-wrap-around t
-        company-tooltip-limit 15
+        company-tooltip-limit 10
         company-backends '((company-files :separate company-yasnippet :separate company-capf)))
   (global-company-mode))
 
@@ -375,19 +375,18 @@
          :map minibuffer-local-map
          ("M-s" . consult-history)                 ;; orig. next-matching-history-element
          ("M-r" . consult-history))                ;; orig. previous-matching-history-element
-  :hook (completion-list-mode . consult-preview-at-point-mode)
   :init
   (setq register-preview-delay 0.5
-        register-preview-function #'consult-register-format)
+        register-preview-function #'consult-register-format
+        xref-show-xrefs-function #'consult-xref
+        xref-show-definitions-function #'consult-xref
+        consult-buffer-sources '(consult--source-hidden-buffer consult--source-modified-buffer consult--source-buffer consult--source-recent-file consult--source-file-register consult--source-project-buffer-hidden consult--source-project-recent-file-hidden))
 
   (advice-add #'register-preview :override #'consult-register-window)
-
-  (setq xref-show-xrefs-function #'consult-xref
-        xref-show-definitions-function #'consult-xref)
   :config
   (consult-customize
    consult-theme
-   :preview-key '(:debounce 0.2 any)
+   :preview-key "M-."
    consult-ripgrep consult-git-grep consult-grep
    consult-bookmark consult-recent-file consult-xref
    consult--source-bookmark consult--source-recent-file
@@ -915,6 +914,14 @@ The structure of INFO can be found in docstring of
   (global-set-key (kbd "C-h F") #'helpful-function)
   (global-set-key (kbd "C-h C") #'helpful-command))
 
+(load-file "~/.emacs.d/custom_packages/siege-mode.el")
+(global-set-key (kbd "M-[") #'siege-explicit-call)
+(global-set-key (kbd "M-]") #'siege-explicit-call)
+
+(elpaca (explain-pause-mode :host github :repo "lastquestion/explain-pause-mode"))
+
+(use-package free-keys)
+
 (use-package nix-mode
   :mode "\\.nix\\'")
 
@@ -953,7 +960,17 @@ The structure of INFO can be found in docstring of
     (?\" . ?\")
     (?\[ . ?\])
     (?\{ . ?\})))
-(electric-pair-mode 1)
+
+(defun electric-pair/activate ()
+  (interactive)
+  (electric-pair-mode 1))
+
+(defun electric-pair/deactivate ()
+  (interactive)
+  (electric-pair-mode -1))
+
+(add-hook 'activate-mark-hook #'electric-pair/activate)
+(add-hook 'deactivate-mark-hook #'electric-pair/deactivate)
 
 (electric-indent-mode 1)
 
