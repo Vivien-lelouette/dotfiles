@@ -318,7 +318,7 @@
   (global-company-mode))
 
 (use-package company-box
-  :hook (company-mode . company-box-mode)
+  :hook (org-mode . company-box-mode)
   :config
   (setq
    company-box-scrollbar nil
@@ -719,12 +719,6 @@ The structure of INFO can be found in docstring of
           (cons x top-y)
         (cons x (- (+ top-y window-height) posframe-height (window-mode-line-height)))))))
 
-(use-package olivetti
-  :config
-  (setq olivetti-margin-width 120
-        olivetti-minimum-body-width 120
-        olivetti-body-width 120))
-
 (use-package hideshow
   :elpaca nil
   :hook
@@ -790,10 +784,9 @@ The structure of INFO can be found in docstring of
 
 (use-package ediff
     :elpaca nil
-    :custom
-    ((ediff-window-setup-function 'ediff-setup-windows-plain)
-     (ediff-diff-options "-w")
-     (ediff-split-window-function 'split-window-horizontally)))
+    :config
+    (setq ediff-window-setup-function 'ediff-setup-windows-plain
+          ediff-split-window-function 'split-window-horizontally))
 
 (use-package sudo-edit)
 

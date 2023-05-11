@@ -403,7 +403,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (global-company-mode))
 
   (use-package company-box
-    :hook (company-mode . company-box-mode)
+    :hook (org-mode . company-box-mode)
     :config
     (setq
      company-box-scrollbar nil
@@ -870,17 +870,7 @@ Handle absolute posframe position. This allows for deparenting, ensuring windows
             (cons x top-y)
           (cons x (- (+ top-y window-height) posframe-height (window-mode-line-height)))))))
 #+END_SRC
-** Focus
-*** Olivetti
-#+BEGIN_SRC emacs-lisp
-  (use-package olivetti
-    :config
-    (setq olivetti-margin-width 120
-          olivetti-minimum-body-width 120
-          olivetti-body-width 120))
-#+END_SRC
-
-*** Hideshow
+** Hideshow
 #+BEGIN_SRC emacs-lisp
   (use-package hideshow
     :elpaca nil
@@ -960,10 +950,9 @@ Handle absolute posframe position. This allows for deparenting, ensuring windows
 #+BEGIN_SRC emacs-lisp
   (use-package ediff
       :elpaca nil
-      :custom
-      ((ediff-window-setup-function 'ediff-setup-windows-plain)
-       (ediff-diff-options "-w")
-       (ediff-split-window-function 'split-window-horizontally)))
+      :config
+      (setq ediff-window-setup-function 'ediff-setup-windows-plain
+            ediff-split-window-function 'split-window-horizontally))
 #+END_SRC
 
 * Utilities
@@ -1128,7 +1117,7 @@ Handle absolute posframe position. This allows for deparenting, ensuring windows
   (elpaca (explain-pause-mode :host github :repo "lastquestion/explain-pause-mode"))
 #+END_SRC
 
-** Explain pause mode
+** Free keys
 #+BEGIN_SRC emacs-lisp
   (use-package free-keys)
 #+END_SRC
