@@ -154,7 +154,6 @@
 (menu-bar-mode -1)
 (setq window-divider-default-right-width 22
       window-divider-default-bottom-width 22)
-(setq-default header-line-format "")
 
 (window-divider-mode 1)
 (defun theme/minibuffer-echo-area ())
@@ -162,8 +161,8 @@
 (defun window/set-header-gap (window)
   (with-selected-window window
     (if (window-in-direction 'above)
-        (set-window-parameter window 'header-line-format "")
-      (set-window-parameter window 'header-line-format 'none))))
+        (set-window-parameter window 'tab-line-format "")
+      (set-window-parameter window 'tab-line-format 'none))))
 
 (defun window/set-current-header-gap ()
   (interactive)
@@ -278,8 +277,34 @@
 (use-package vertico
   :config
   (load-file "~/.emacs.d/elpaca/repos/vertico/extensions/vertico-multiform.el")
-  (setq vertico-cycle t)
-  (vertico-mode))
+  (load-file "~/.emacs.d/elpaca/repos/vertico/extensions/vertico-flat.el")
+  (setq vertico-cycle t
+        vertico-flat-format '(:multiple
+         #("| %s" 0 1
+           (face minibuffer-prompt)
+           3 4
+           (face minibuffer-prompt))
+         :single
+         #("| %s" 0 1
+           (face minibuffer-prompt)
+           1 3
+           (face success)
+           3 4
+           (face minibuffer-prompt))
+         :prompt
+         #("| %s" 0 1
+           (face minibuffer-prompt)
+           3 4
+           (face minibuffer-prompt))
+         :separator
+         #("    " 0 3
+           (face minibuffer-prompt))
+         :ellipsis
+         #("…" 0 1
+           (face minibuffer-prompt))
+         :no-match "| No match"))
+
+  (vertico-mode 1))
 
 (use-package vertico-posframe
   :config

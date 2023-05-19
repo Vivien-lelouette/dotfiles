@@ -211,6 +211,54 @@ Functions to split and move to the new split.
   (add-hook 'exwm-manage-finish-hook #'window/configure-window-by-class)
 #+END_SRC
 
+** Tab-line support
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'exwm-init-hook (lambda ()
+                              (defun exwm-layout--show (id &optional window)
+                                "Show window ID exactly fit in the Emacs window WINDOW."
+                                (exwm--log "Show #x%x in %s" id window)
+                                (let* ((edges (window-inside-absolute-pixel-edges window))
+                                       (x (pop edges))
+                                       (y (pop edges))
+                                       (width (- (pop edges) x))
+                                       (height (- (pop edges) y))
+                                       frame-x frame-y frame-width frame-height)
+                                  (with-current-buffer (exwm--id->buffer id)
+                                    (setq y (+ y (window-tab-line-height window)))
+                                    (when exwm--floating-frame
+                                      (setq frame-width (frame-pixel-width exwm--floating-frame)
+                                            frame-height (+ (frame-pixel-height exwm--floating-frame)
+                                                            ;; Use `frame-outer-height' in the future.
+                                                            exwm-workspace--frame-y-offset))
+                                      (when exwm--floating-frame-position
+                                        (setq frame-x (elt exwm--floating-frame-position 0)
+                                              frame-y (elt exwm--floating-frame-position 1)
+                                              x (+ x frame-x (- exwm-layout--floating-hidden-position))
+                                              y (+ y frame-y (- exwm-layout--floating-hidden-position)))
+                                        (setq exwm--floating-frame-position nil))
+                                      (exwm--set-geometry (frame-parameter exwm--floating-frame
+                                                                           'exwm-container)
+                                                          frame-x frame-y frame-width frame-height))
+                                    (when (exwm-layout--fullscreen-p)
+                                      (with-slots ((x* x)
+                                                   (y* y)
+                                                   (width* width)
+                                                   (height* height))
+                                          (exwm-workspace--get-geometry exwm--frame)
+                                        (setq x x*
+                                              y y*
+                                              width width*
+                                              height height*)))
+                                    (exwm--set-geometry id x y width height)
+                                    (xcb:+request exwm--connection (make-instance 'xcb:MapWindow :window id))
+                                    (exwm-layout--set-state id xcb:icccm:WM_STATE:NormalState)
+                                    (setq exwm--ewmh-state
+                                          (delq xcb:Atom:_NET_WM_STATE_HIDDEN exwm--ewmh-state))
+                                    (exwm-layout--set-ewmh-state id)
+                                    (exwm-layout--auto-iconify)))
+                                (xcb:flush exwm--connection))))
+#+END_SRC
+
 ** EXWM Configuration
 We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basis for our Emacs Desktop Environment.  The [[https://github.com/ch11ng/exwm/wiki][EXWM Wiki]] is a great place to find tips about how to configure everything!
 

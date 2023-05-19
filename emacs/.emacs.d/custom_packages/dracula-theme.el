@@ -109,7 +109,7 @@ read it before opening a new issue about your will.")
                (error :foreground ,dracula-red)
                (ffap :foreground ,fg4)
                (fringe :background ,dracula-bg :foreground ,fg4)
-               (header-line :inherit 'mode-line :background ,dracula-bg-alternate :box ,dracula-bg-alternate)
+               (header-line :inherit 'mode-line :background ,dracula-bg :box ,dracula-bg)
                (window-divider :foreground ,dracula-bg-alternate :background ,dracula-bg-alternate)
                (window-divider-first-pixel :foreground ,dracula-bg-alternate :background ,dracula-bg-alternate)
                (window-divider-last-pixel :foreground ,dracula-bg-alternate :background ,dracula-bg-alternate)
@@ -803,8 +803,8 @@ read it before opening a new issue about your will.")
                (tab-bar :background ,dracula-bg-alternate :foreground ,fg4 :underline nil :box (:line-width (1 . 2) :color ,dracula-bg-alternate) :height 120 :weight bold :inherit variable-pitch)
                (tab-bar-tab :inherit hl-line :foreground ,dracula-fg :box nil :height 120 :weight normal :style nil)
                (tab-bar-tab-inactive :box nil :height 120 :weight normal)
-               (tab-line :foreground ,dracula-purple :background ,dracula-current
-                         :height 0.9 :inherit variable-pitch)
+
+               (tab-line :inherit 'mode-line :background ,dracula-bg-alternate :box ,dracula-bg-alternate)
                (tab-line-tab :foreground ,dracula-pink :background ,dracula-bg-alternate
                              :box (:line-width 2 :color ,dracula-bg-alternate :style nil))
                (tab-line-tab-inactive :foreground ,dracula-purple :background ,bg2
