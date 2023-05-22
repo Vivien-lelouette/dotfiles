@@ -394,7 +394,7 @@
           ([?\s-f] . consult-bookmark)
           ([?\s-F] . blist)
 
-          ([s-return] . eshell)
+          ([s-return] . eshell/new-or-current)
           ([S-s-return] . eat)
           ([C-s-return] . utils/x-terminal)
 

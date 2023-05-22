@@ -246,7 +246,8 @@
         doom-modeline-height 22
         doom-modeline-major-mode-icon nil
         doom-modeline-icon t
-        doom-modeline-unicode-fallback nil)
+        doom-modeline-unicode-fallback nil
+        doom-modeline-buffer-file-name-style 'relative-from-project)
 
   (setq all-the-icons-scale-factor 0.95)
 
@@ -1353,6 +1354,24 @@ Only the `background' is used in this face."
    eshell-highlight-prompt t)
   (set-face-attribute 'eshell-prompt nil :weight 'ultra-bold :inherit 'minibuffer-prompt))
 (add-hook 'eshell-mode-hook #'eshell/hook)
+
+(defun eshell/rename-with-current-path ()
+  (interactive)
+  (rename-buffer (concat "Eshell: " (eshell/pwd)) t))
+(add-hook 'eshell-directory-change-hook #'eshell/rename-with-current-path)
+(add-hook 'eshell-mode-hook #'eshell/rename-with-current-path)
+
+(defun eshell/new-or-current ()
+  "Open a new instance of eshell."
+  (interactive)
+  (let ((eshell-buffer (car (seq-filter (lambda (buf)
+                                          (string-prefix-p (concat "Eshell: " (replace-regexp-in-string "/$" "" (doom-modeline-project-root)))
+                                                           (buffer-name buf)))
+                                        (buffer-list))))
+        (default-directory (doom-modeline-project-root)))
+    (if eshell-buffer
+        (switch-to-buffer eshell-buffer)
+      (eshell 'N))))
 
 (use-package eshell
   :elpaca nil
