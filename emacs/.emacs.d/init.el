@@ -1361,14 +1361,21 @@ Only the `background' is used in this face."
 (add-hook 'eshell-directory-change-hook #'eshell/rename-with-current-path)
 (add-hook 'eshell-mode-hook #'eshell/rename-with-current-path)
 
+(defun eshell/get-relevant-buffer ()
+  (if (derived-mode-p 'dired-mode)
+      (get-buffer (eshell/pwd))
+    (car (seq-filter (lambda (buf)
+                       (string-prefix-p (concat "Eshell: " (replace-regexp-in-string "/$" "" (doom-modeline-project-root)))
+                                        (buffer-name buf)))
+                     (buffer-list)))))
+
 (defun eshell/new-or-current ()
   "Open a new instance of eshell."
   (interactive)
-  (let ((eshell-buffer (car (seq-filter (lambda (buf)
-                                          (string-prefix-p (concat "Eshell: " (replace-regexp-in-string "/$" "" (doom-modeline-project-root)))
-                                                           (buffer-name buf)))
-                                        (buffer-list))))
-        (default-directory (doom-modeline-project-root)))
+  (let ((eshell-buffer (eshell/get-relevant-buffer))
+        (default-directory (if (derived-mode-p 'dired-mode)
+                               (eshell/pwd)
+                             (doom-modeline-project-root))))
     (if eshell-buffer
         (switch-to-buffer eshell-buffer)
       (eshell 'N))))
