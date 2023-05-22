@@ -363,30 +363,29 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (load-file "~/.emacs.d/elpaca/repos/vertico/extensions/vertico-flat.el")
     (setq vertico-cycle t
           vertico-flat-format '(:multiple
-           #("| %s" 0 1
-             (face minibuffer-prompt)
-             3 4
-             (face minibuffer-prompt))
-           :single
-           #("| %s" 0 1
-             (face minibuffer-prompt)
-             1 3
-             (face success)
-             3 4
-             (face minibuffer-prompt))
-           :prompt
-           #("| %s" 0 1
-             (face minibuffer-prompt)
-             3 4
-             (face minibuffer-prompt))
-           :separator
-           #("    " 0 3
-             (face minibuffer-prompt))
-           :ellipsis
-           #("…" 0 1
-             (face minibuffer-prompt))
-           :no-match "| No match"))
-
+                                #("| %s" 0 1
+                                  (face minibuffer-prompt)
+                                  3 4
+                                  (face minibuffer-prompt))
+                                :single
+                                #("| %s" 0 1
+                                  (face minibuffer-prompt)
+                                  1 3
+                                  (face success)
+                                  3 4
+                                  (face minibuffer-prompt))
+                                :prompt
+                                #("| %s" 0 1
+                                  (face minibuffer-prompt)
+                                  3 4
+                                  (face minibuffer-prompt))
+                                :separator
+                                #("    " 0 3
+                                  (face minibuffer-prompt))
+                                :ellipsis
+                                #("…" 0 1
+                                  (face minibuffer-prompt))
+                                :no-match "| No match"))
     (vertico-mode 1))
 
   (use-package vertico-posframe
@@ -397,10 +396,12 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (vertico/reset-position)
     (advice-add 'vertico-posframe--minibuffer-exit-hook :after #'vertico/reset-position)
 
-    (defun vertico/posframe-poshandler-point (info)
+  (defun vertico/posframe-poshandler-point (info)
+    (if (eq (buffer-local-value 'major-mode (window-buffer (old-selected-window))) 'exwm-mode)
+        (posframe-poshandler-window-center info)
       (let ((position (if vertico/position vertico/position (posframe-poshandler-point-1 info))))
         (setq vertico/position position)
-        vertico/position))
+        vertico/position)))
 
     (setq vertico-posframe-poshandler 'vertico/posframe-poshandler-point
           vertico-posframe-border-width 8
