@@ -314,12 +314,14 @@
   (vertico/reset-position)
   (advice-add 'vertico-posframe--minibuffer-exit-hook :after #'vertico/reset-position)
 
-(defun vertico/posframe-poshandler-point (info)
-  (if (eq (buffer-local-value 'major-mode (window-buffer (old-selected-window))) 'exwm-mode)
-      (posframe-poshandler-window-center info)
-    (let ((position (if vertico/position vertico/position (posframe-poshandler-point-1 info))))
+  (defun vertico/posframe-poshandler-point (info)
+    (let ((position (if vertico/position
+                        vertico/position
+                      (if (eq (buffer-local-value 'major-mode (window-buffer (old-selected-window))) 'exwm-mode)
+                          (posframe-poshandler-window-center info)
+                        (posframe-poshandler-point-1 info)))))
       (setq vertico/position position)
-      vertico/position)))
+      vertico/position))
 
   (setq vertico-posframe-poshandler 'vertico/posframe-poshandler-point
         vertico-posframe-border-width 8
