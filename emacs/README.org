@@ -707,31 +707,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 #+END_SRC
 
 * Movement packages
-** God-mode
-#+begin_src emacs-lisp
-  (use-package god-mode
-    :config
-    (setq god-mode-alist '((nil . "C-") ("z" . "M-") ("Z" . "C-M-")))
-    (setq god-exempt-predicates '(god-exempt-mode-p))
-    (add-to-list 'god-exempt-major-modes 'magit-mode)
-    (add-to-list 'god-exempt-major-modes 'magit-status-mode)
-    (add-to-list 'god-exempt-major-modes 'magit-diff-mode)
-    (add-to-list 'god-exempt-major-modes 'bookmark-bmenu-mode)
-    (setq god-exempt-major-modes (remove 'compilation-mode god-exempt-major-modes))
-
-    (define-key god-local-mode-map (kbd ".") #'repeat)
-    (global-set-key (kbd "<escape>") #'god-mode-all)
-    (define-key god-local-mode-map (kbd "[") #'backward-paragraph)
-    (define-key god-local-mode-map (kbd "]") #'forward-paragraph)
-    (require 'god-mode-isearch)
-    (define-key isearch-mode-map (kbd "<escape>") #'god-mode-isearch-activate)
-    (define-key god-mode-isearch-map (kbd "<escape>") #'god-mode-isearch-disable)
-
-    (defun my-god-mode-update-cursor-type ()
-      (setq cursor-type (if (or god-local-mode buffer-read-only) 'box 'bar)))
-    (add-hook 'post-command-hook #'my-god-mode-update-cursor-type))
-#+end_src
-
 ** Ace window
 #+BEGIN_SRC emacs-lisp
   (use-package ace-window
