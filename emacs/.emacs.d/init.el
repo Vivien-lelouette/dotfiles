@@ -1343,9 +1343,10 @@ Only the `background' is used in this face."
 (setq eshell-banner-message "")
 
 (defun eshell/hook ()
-  (define-key eshell-mode-map (kbd "M-m") #'eshell-bol)
   (require 'eshell)
   (require 'em-smart)
+  (define-key eshell-mode-map (kbd "M-m") #'eshell-bol)
+  (define-key eshell-hist-mode-map (kbd "M-s") nil)
   (setq 
    eshell-where-to-jump 'begin
    eshell-review-quick-commands nil
@@ -1390,7 +1391,6 @@ Only the `background' is used in this face."
 
 (use-package eat
   :config
-  ;; (setq eat-term-terminfo-directory (concat (getenv "HOME") "/.emacs.d/straight/build/eat/terminfo"))
   (add-hook 'eshell-load-hook #'eat-eshell-mode)
   (add-hook 'eshell-load-hook #'eat-eshell-visual-command-mode))
 
