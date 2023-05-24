@@ -1325,6 +1325,7 @@ Only the `background' is used in this face."
   (require 'em-smart)
   (define-key eshell-mode-map (kbd "M-m") #'eshell-bol)
   (define-key eshell-hist-mode-map (kbd "M-s") nil)
+  (define-key eshell-hist-mode-map (kbd "M-r") #'consult-history)
   (setq 
    eshell-where-to-jump 'begin
    eshell-review-quick-commands nil

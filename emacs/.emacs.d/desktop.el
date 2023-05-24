@@ -516,6 +516,8 @@
           ([?\C-n] . [down])
           ([?\C-a] . [home])
           ([?\C-e] . [end])
+          ([?\M-<] . [C-home])
+          ([?\M->] . [C-end])
 
           ([?\M-B] . [C-\S-left])
           ([?\M-F] . [C-\S-right])
@@ -530,6 +532,8 @@
           ([?\C-x ?\C-s] . [?\C-s])
           ([?\M-v] . [prior])
           ([?\C-v] . [next])
+
+          ([?\C-c ?\C-c] . [C-return])
 
           ([?\M-d] . [C-delete])
           ([?\C-d] . [delete])
