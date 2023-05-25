@@ -1370,6 +1370,7 @@ Only the `background' is used in this face."
 
 (use-package eat
   :config
+  (setq eat-term-terminfo-directory (concat elpaca-repos-directory "emacs-eat/terminfo"))
   (add-hook 'eshell-load-hook #'eat-eshell-mode)
   (add-hook 'eshell-load-hook #'eat-eshell-visual-command-mode))
 
