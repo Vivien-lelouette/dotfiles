@@ -92,6 +92,7 @@
 (bind-key* "C-x K" #'kill-buffer)
 (global-set-key (kbd "C-z") 'delete-frame)
 (delete-selection-mode 1)
+(set-default 'truncate-lines t)
 
 (setq bookmark-save-flag 1)
 
