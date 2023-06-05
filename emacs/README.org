@@ -987,7 +987,38 @@ Handle absolute posframe position. This allows for deparenting, ensuring windows
 
 ** Ibuffer
 #+begin_src emacs-lisp
-  (use-package ibuffer-vc)
+  (use-package ibuffer-vc
+    :config
+    (setq ibuffer-formats
+          '((mark modified read-only " "
+                  (name 80 80 :left :elide) ; change: 30s were originally 18s
+                  " "
+                  (size 9 -1 :right)
+                  " "
+                  (mode 16 16 :left :elide)
+                  " " filename-and-process)
+            (mark " "
+                  (name 16 -1)
+                  " " filename)))
+
+    (defun ibuffer/apply-filter-groups ()
+      "Combine my saved ibuffer filter groups with those generated
+     by `ibuffer-vc-generate-filter-groups-by-vc-root'"
+      (interactive)
+      (setq ibuffer-filter-groups
+            (append
+             (list '("EXWM" (mode . exwm-mode)))
+             (ibuffer-vc-generate-filter-groups-by-vc-root)
+             ibuffer-saved-filter-groups))
+
+      (let ((ibuf (get-buffer "*Ibuffer*")))
+        (when ibuf
+          (with-current-buffer ibuf
+            (pop-to-buffer ibuf)
+            (ibuffer-update nil t)))))
+
+    (add-hook 'ibuffer-hook 'ibuffer/apply-filter-groups)
+    (add-hook 'ibuffer-hook 'ibuffer-auto-mode))
 #+end_src
 
 ** Zoom-mode
@@ -1769,86 +1800,95 @@ This requires a Java runtime environment.
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
+  (use-package shrface
+    :config
+    (shrface-basic)
+    (shrface-trial)
+    ;; (shrface-default-keybindings)
+    (setq shrface-href-versatile t)
+    (with-eval-after-load 'eww
+      (define-key eww-mode-map (kbd "<tab>") 'shrface-outline-cycle)
+      (define-key eww-mode-map (kbd "S-<tab>") 'shrface-outline-cycle-buffer)
+      (define-key eww-mode-map (kbd "C-t") 'shrface-toggle-bullets)
+      (define-key eww-mode-map (kbd "C-j") 'shrface-next-headline)
+      (define-key eww-mode-map (kbd "C-k") 'shrface-previous-headline)
+      (define-key eww-mode-map (kbd "M-l") 'shrface-links-consult)
+      (define-key eww-mode-map (kbd "M-h") 'shrface-headline-consult))
+
+    (with-eval-after-load 'mu4e
+      (define-key mu4e-view-mode-map (kbd "<tab>") 'shrface-outline-cycle)
+      (define-key mu4e-view-mode-map (kbd "S-<tab>") 'shrface-outline-cycle-buffer)
+      (define-key mu4e-view-mode-map (kbd "C-t") 'shrface-toggle-bullets)
+      (define-key mu4e-view-mode-map (kbd "C-j") 'shrface-next-headline)
+      (define-key mu4e-view-mode-map (kbd "C-k") 'shrface-previous-headline)
+      (define-key mu4e-view-mode-map (kbd "M-l") 'shrface-links-consult)
+      (define-key mu4e-view-mode-map (kbd "M-h") 'shrface-headline-consult))
+
+    (require 'shrface)
+    (add-hook 'eww-after-render-hook #'shrface-mode))
+
   ;; Used to highlight code
   (use-package shr-tag-pre-highlight
     :after shr
-      :config
-      (add-to-list 'shr-external-rendering-functions
-                   '(pre . shr-tag-pre-highlight))
-      (when (version< emacs-version "26")
-        (with-eval-after-load 'eww
-          (advice-add 'eww-display-html :around
-                      'eww-display-html--override-shr-external-rendering-functions))))
+    :config
+    (require 'shr-tag-pre-highlight)
+    (add-to-list 'shr-external-rendering-functions '(pre . shrface-shr-tag-pre-highlight))
+    (defun shrface-shr-tag-pre-highlight (pre)
+      "Highlighting code in PRE."
+      (let* ((shr-folding-mode 'none)
+             (shr-current-font 'default)
+             (code (with-temp-buffer
+                     (shr-generic pre)
+                     ;; (indent-rigidly (point-min) (point-max) 2)
+                     (buffer-string)))
+             (lang (or (shr-tag-pre-highlight-guess-language-attr pre)
+                       (let ((sym (language-detection-string code)))
+                         (and sym (symbol-name sym)))))
+             (mode (and lang
+                        (shr-tag-pre-highlight--get-lang-mode lang))))
+        (shr-ensure-newline)
+        (shr-ensure-newline)
+        (setq start (point))
+        (insert
+         (propertize (concat "#+BEGIN_SRC " lang "\n") 'face 'org-block-begin-line)
+         (or (and (fboundp mode)
+                  (with-demoted-errors "Error while fontifying: %S"
+                    (shr-tag-pre-highlight-fontify code mode)))
+             code)
+         (propertize "#+END_SRC" 'face 'org-block-end-line ))
+        (shr-ensure-newline)
+        (setq end (point))
+        (if light
+            (add-face-text-property start end '(:background "#D8DEE9" :extend t))
+          (add-face-text-property start end '(:background "#292b2e" :extend t)))
+        (shr-ensure-newline)
+        (insert "\n")))
 
-  (use-package shrface
-      :config
-      (shrface-basic)
-      (shrface-trial)
-      (shrface-default-keybindings)
-      (setq shrface-href-versatile t)
-
-      ;; Code highlighting
-      (require 'shr-tag-pre-highlight)
-      (add-to-list 'shr-external-rendering-functions '(pre . shrface-shr-tag-pre-highlight))
-      (defun shrface-shr-tag-pre-highlight (pre)
-        "Highlighting code in PRE."
-        (let* ((shr-folding-mode 'none)
-               (shr-current-font 'default)
-               (code (with-temp-buffer
-                       (shr-generic pre)
-                       (setq-local fill-column 120)
-                       (indent-rigidly (point-min) (point-max) 2)
-                       (if (eq "" (dom-texts pre))
-                           nil
-                         (progn
-                           (setq-local fill-column shrface-paragraph-fill-column)
-                           (indent-rigidly (point-min) (point-max) shrface-paragraph-indentation)))
-                       (buffer-string)))
-               (lang (or (shr-tag-pre-highlight-guess-language-attr pre)
-                         (let ((sym (language-detection-string code)))
-                           (and sym (symbol-name sym)))))
-               (mode (and lang
-                          (shr-tag-pre-highlight--get-lang-mode lang))))
-          (shr-ensure-newline)
-          (insert (propertize (concat "#+BEGIN_SRC " lang) 'face 'org-block-begin-line))
-          (shr-ensure-newline)
-          (setq start (point))
-          (insert
-           (or (and (fboundp mode)
-                    (with-demoted-errors "Error while fontifying: %S"
-                      (shrface-tag-pre-highlight-fontify code mode)
-                      ))
-               code))
-          (shr-ensure-newline)
-          (setq end (point))
-          (insert (propertize "#+END_SRC" 'face 'org-block-end-line ))
-          (shr-ensure-newline)
-          (insert "\n"))))
+    (add-to-list 'shr-external-rendering-functions
+                 '(pre . shr-tag-pre-highlight))
+    (when (version< emacs-version "26")
+      (with-eval-after-load 'eww
+        (advice-add 'eww-display-html :around
+                    'eww-display-html--override-shr-external-rendering-functions))))
 #+END_SRC
 
 ** Emacs Web Wowser
 #+BEGIN_SRC emacs-lisp
-  (use-package eww
-    :elpaca nil
-    :bind (
-           :map eww-mode-map
-           ("M-r" . eww/open-in-eaf))
-    :config
-    (require 'shrface)
+  (with-eval-after-load 'eww
+
     (defun eww/rename-buffer ()
       "Rename `eww-mode' buffer so sites open in new page.
   URL `http://xahlee.info/emacs/emacs/emacs_eww_web_browser.html'
   Version 2017-11-10"
+      (interactive)
       (let (($title (plist-get eww-data :title)))
         (when (eq major-mode 'eww-mode )
           (if $title
-              (rename-buffer $title t)
-            (rename-buffer "eww" t)))))
+              (rename-buffer (concat "Eww: " $title) t)
+            (rename-buffer "Eww" t)))))
 
     (add-hook 'eww-after-render-hook 'eww/rename-buffer)
-    (add-hook 'eww-after-render-hook #'shrface-mode)
-    (add-hook 'eww-after-render-hook #'mixed-pitch-mode)
-    (add-hook 'eww-after-render-hook #'olivetti-mode))
+    (add-hook 'eww-after-render-hook #'mixed-pitch-mode))
 #+END_SRC
 
 * Mails

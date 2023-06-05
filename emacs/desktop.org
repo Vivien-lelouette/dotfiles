@@ -87,6 +87,43 @@ We use the [[https://github.com/DamienCassou/desktop-environment][desktop-enviro
 
 #+END_SRC
 
+** Menu items
+*** Emacs menu separator
+#+BEGIN_SRC emacs-lisp
+  (defvar emacs-header-bar-menu (make-sparse-keymap "-- Emacs menu --"))
+  (define-key global-map [menu-bar emacs-header-menu] (cons "-- Emacs menu --" emacs-header-bar-menu))
+#+END_SRC
+
+*** System menu
+#+BEGIN_SRC emacs-lisp
+  (defvar system-bar-menu (make-sparse-keymap "System"))
+  (define-key global-map [menu-bar system-menu] (cons "System" system-bar-menu))
+  (define-key system-bar-menu [shutdown]
+              '(menu-item "Shutdown" kde/shutdown :help "Shutdown the computer"))
+  (define-key system-bar-menu [reboot]
+              '(menu-item "Reboot" kde/reboot :help "Reboot the computer"))
+  (define-key system-bar-menu [logout]
+              '(menu-item "Logout" kde/logout :help "Logout user"))
+#+END_SRC
+
+*** Application menu
+#+BEGIN_SRC emacs-lisp
+  (defvar application-bar-menu (make-sparse-keymap "Applications"))
+  (define-key global-map [menu-bar application-menu] (cons "Applications" application-bar-menu))
+#+END_SRC
+
+*** System
+#+BEGIN_SRC emacs-lisp
+  (defvar system-bar-menu (make-sparse-keymap "System"))
+  (define-key global-map [menu-bar system-menu] (cons "System" system-bar-menu))
+  (define-key system-bar-menu [shutdown]
+              '(menu-item "Shutdown" kde/shutdown :help "Shutdown the computer"))
+  (define-key system-bar-menu [reboot]
+              '(menu-item "Reboot" kde/reboot :help "Reboot the computer"))
+  (define-key system-bar-menu [logout]
+              '(menu-item "Logout" kde/logout :help "Logout user"))
+#+END_SRC
+
 * Window Management
 ** Buffer management
   The next functions are tools to easily switch buffer only switch to next relevant buffer.
@@ -635,45 +672,6 @@ We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basi
         (define-key exwm-edit-mode-map (kbd "C-c <return>") 'exwm-edit--finish-and-press-return)
         (define-key exwm-edit-mode-map (kbd "C-c C-<return>") 'exwm-edit--finish-and-press-control-return)))
 #+end_src
-
-* Menu items
-** Emacs menu separator
-#+BEGIN_SRC emacs-lisp
-  (defvar emacs-header-bar-menu (make-sparse-keymap "-- Emacs menu --"))
-  (define-key global-map [menu-bar emacs-header-menu] (cons "-- Emacs menu --" emacs-header-bar-menu))
-#+END_SRC
-
-
-** System menu
-#+BEGIN_SRC emacs-lisp
-  (defvar system-bar-menu (make-sparse-keymap "System"))
-  (define-key global-map [menu-bar system-menu] (cons "System" system-bar-menu))
-  (define-key system-bar-menu [shutdown]
-              '(menu-item "Shutdown" kde/shutdown :help "Shutdown the computer"))
-  (define-key system-bar-menu [reboot]
-              '(menu-item "Reboot" kde/reboot :help "Reboot the computer"))
-  (define-key system-bar-menu [logout]
-              '(menu-item "Logout" kde/logout :help "Logout user"))
-#+END_SRC
-
-** Application menu
-#+BEGIN_SRC emacs-lisp
-  (defvar application-bar-menu (make-sparse-keymap "Applications"))
-  (define-key global-map [menu-bar application-menu] (cons "Applications" application-bar-menu))
-#+END_SRC
-
-
-** System
-#+BEGIN_SRC emacs-lisp
-  (defvar system-bar-menu (make-sparse-keymap "System"))
-  (define-key global-map [menu-bar system-menu] (cons "System" system-bar-menu))
-  (define-key system-bar-menu [shutdown]
-              '(menu-item "Shutdown" kde/shutdown :help "Shutdown the computer"))
-  (define-key system-bar-menu [reboot]
-              '(menu-item "Reboot" kde/reboot :help "Reboot the computer"))
-  (define-key system-bar-menu [logout]
-              '(menu-item "Logout" kde/logout :help "Logout user"))
-#+END_SRC
 
 * Bookmark handlers
 ** Chrome
