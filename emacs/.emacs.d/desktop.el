@@ -5,9 +5,14 @@
 (defun shell/async-command-no-output (command)
   (call-process-shell-command (concat command " &") nil 0))
 
-(defun apps/chrome-browser ()
+(defun apps/chrome-browser (&optional url)
   (interactive)
-  (shell/async-command-no-output "google-chrome-stable"))
+  (shell/async-command-no-output (concat "google-chrome-stable --new-window " url)))
+
+(defun internet/switch-browser ()
+  (interactive)
+  (cond ((derived-mode-p 'eww-mode) (let ((url (eww-current-url))) (kill-buffer) (apps/chrome-browser url)))
+        ((string= exwm-class-name "Google-chrome") (let ((url (chrome/get-url))) (kill-buffer) (eww url)))))
 
 (defun car-string-to-number (list-two-elements)
   (append (list (string-to-number (car list-two-elements))) (cdr list-two-elements)))
@@ -370,8 +375,7 @@
           ([?\s-r] . exwm-reset)
           ([?\s-R] . exwm/refresh-setup-and-monitors)
 
-          ([?\s-i] . exwm-input-release-keyboard)
-          ([?\s-I] . exwm-input-grab-keyboard)
+          ([s-escape] . exwm-input-toggle-keyboard)
 
           ([?\s-/] . winner-undo)
           ([?\s-?] . winner-redo)
@@ -410,7 +414,8 @@
           ([?\s-o ?\s-n] . settings/network)
           ([?\s-o ?\s-s] . settings/sound)
 
-          ([?\s-a] . app-launcher-run-app)
+          ([?\s-a ?\s-a] . app-launcher-run-app)
+          ([?\s-a ?\s-c] . apps/chrome-browser)
 
           ([?\s-b] . consult-buffer)
           ([?\s-B] . ibuffer-jump)
@@ -428,8 +433,9 @@
           ([?\s-s] . split-window-right)
 
           ;; Applications
-          ([?\s-c] . chrome/do-start-with-url-or-search)
-          ([?\s-C] . apps/chrome-browser)
+          ([?\s-i] . eww/do-start-with-url-or-search)
+          ([?\s-I] . internet/switch-browser)
+          ([?\s-\t] . chrome/do-start-with-url-or-search)
 
           ;; 's-N': Switch to certain workspace with Super (Win) plus a number key (0 - 9)
           ,@(mapcar (lambda (i)
@@ -606,13 +612,16 @@
 (eval-after-load "savehist"
   '(add-to-list 'savehist-additional-variables 'chrome/input-history))
 
+(defun chrome/get-url ()
+  (interactive)
+  (if (string= exwm-class-name "Google-chrome")
+      (concat "http" (car (last (mapcar (lambda (str) (s-replace " - Google Chrome" "" str)) (split-string exwm-title " - http")))))))
+
 (defun chrome/do-start-with-url-or-search ()
   (interactive)
   (if (string= exwm-class-name "Google-chrome")
-      (let ((split-title (mapcar (lambda (str) (s-replace " - Google Chrome" "" str)) (split-string exwm-title " - http"))))
-        (message (concat "http" (car (last split-title))))
-        (chrome/start-with-url-or-search (completing-read "URL or search " chrome/input-history nil nil (concat "http" (car (last split-title))) 'chrome/input-history)))
-    (chrome/start-with-url-or-search (completing-read "URL or search " chrome/input-history nil nil nil 'chrome/input-history))))
+      (chrome/start-with-url-or-search (completing-read "Chrome URL or search " chrome/input-history nil nil (chrome/get-url) 'chrome/input-history))
+    (chrome/start-with-url-or-search (completing-read "Chrome URL or search " chrome/input-history nil nil nil 'chrome/input-history))))
 
 (defun chrome/start-with-url-or-search (input)
   (interactive)

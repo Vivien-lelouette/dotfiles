@@ -1469,7 +1469,8 @@ Handle absolute posframe position. This allows for deparenting, ensuring windows
      lsp-enable-snippet nil
      lsp-modeline-code-actions-enable nil
      lsp-idle-delay 0.5
-     lsp-completion-provider :none)
+     lsp-completion-provider :none
+     lsp-enable-file-watchers nil)
     (defvar lsp/signature-posframe-params
       (list :poshandler #'posframe/poshandler-window-top-or-bottom-right-corner
             :height 10
@@ -1706,7 +1707,7 @@ This requires a Java runtime environment.
   (use-package multi-term
     :bind (
            :map term-mode-map
-           ("s-I" . term-char-mode))
+           ("s-<escape>" . term-char-mode))
     :config
     (defun term-send-tab ()
       (interactive)
@@ -1716,7 +1717,7 @@ This requires a Java runtime environment.
 
     (add-to-list 'term-bind-key-alist '("<backtab>" . term-send-up))
     (add-to-list 'term-bind-key-alist '("TAB" . term-send-tab))
-    (add-to-list 'term-bind-key-alist '("s-i" . term-line-mode)))
+    (add-to-list 'term-bind-key-alist '("s-<escape>" . term-line-mode)))
 #+end_src
 
 * Dired
@@ -1758,7 +1759,7 @@ This requires a Java runtime environment.
            ("<C-return>" . dired/open-file)
            ("M-p" . dired-up-directory)
            ("M-n" . dired-find-file)
-           ("s-i" . dired-toggle-read-only)
+           ("s-<escape>" . dired-toggle-read-only)
            ("M-<" . dired/first-file)
            ("M->" . dired/last-file)
            ("~" . dired/open-home-dir))
@@ -1771,7 +1772,7 @@ This requires a Java runtime environment.
     (setq wdired-allow-to-change-permissions t)
     (add-hook 'wdired-mode-hook
       (lambda ()
-        (define-key wdired-mode-map (kbd "s-I") 'wdired-abort-changes))))
+        (define-key wdired-mode-map (kbd "s-<escape>") 'wdired-abort-changes))))
 
   (use-package dired-subtree
     :bind (
@@ -1800,7 +1801,6 @@ This requires a Java runtime environment.
     (setq shr-folding-mode t))
 #+END_SRC
 
-#+BEGIN_SRC emacs-lisp
   (use-package shrface
     :config
     (shrface-basic)
@@ -1871,16 +1871,24 @@ This requires a Java runtime environment.
       (with-eval-after-load 'eww
         (advice-add 'eww-display-html :around
                     'eww-display-html--override-shr-external-rendering-functions))))
-#+END_SRC
 
 ** Emacs Web Wowser
 #+BEGIN_SRC emacs-lisp
-  (with-eval-after-load 'eww
+  (defvar eww/input-history nil)
+  (eval-after-load "savehist"
+    '(add-to-list 'savehist-additional-variables 'eww/input-history))
 
+  (defun eww/do-start-with-url-or-search ()
+    (interactive)
+    (if (derived-mode-p 'eww-mode)
+        (eww (completing-read "Eww URL or search " eww/input-history nil nil (eww-current-url) 'eww/input-history))
+      (eww (completing-read "Eww URL or search " eww/input-history nil nil nil 'eww/input-history))))
+
+  (with-eval-after-load 'eww
     (defun eww/rename-buffer ()
       "Rename `eww-mode' buffer so sites open in new page.
-  URL `http://xahlee.info/emacs/emacs/emacs_eww_web_browser.html'
-  Version 2017-11-10"
+    URL `http://xahlee.info/emacs/emacs/emacs_eww_web_browser.html'
+    Version 2017-11-10"
       (interactive)
       (let (($title (plist-get eww-data :title)))
         (when (eq major-mode 'eww-mode )

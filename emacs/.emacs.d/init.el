@@ -1217,7 +1217,8 @@ Only the `background' is used in this face."
    lsp-enable-snippet nil
    lsp-modeline-code-actions-enable nil
    lsp-idle-delay 0.5
-   lsp-completion-provider :none)
+   lsp-completion-provider :none
+   lsp-enable-file-watchers nil)
   (defvar lsp/signature-posframe-params
     (list :poshandler #'posframe/poshandler-window-top-or-bottom-right-corner
           :height 10
@@ -1412,7 +1413,7 @@ Only the `background' is used in this face."
 (use-package multi-term
   :bind (
          :map term-mode-map
-         ("s-I" . term-char-mode))
+         ("s-<escape>" . term-char-mode))
   :config
   (defun term-send-tab ()
     (interactive)
@@ -1422,7 +1423,7 @@ Only the `background' is used in this face."
 
   (add-to-list 'term-bind-key-alist '("<backtab>" . term-send-up))
   (add-to-list 'term-bind-key-alist '("TAB" . term-send-tab))
-  (add-to-list 'term-bind-key-alist '("s-i" . term-line-mode)))
+  (add-to-list 'term-bind-key-alist '("s-<escape>" . term-line-mode)))
 
 (defun dired/open-file ()
   "In dired, open the file named on this line."
@@ -1459,7 +1460,7 @@ Only the `background' is used in this face."
          ("<C-return>" . dired/open-file)
          ("M-p" . dired-up-directory)
          ("M-n" . dired-find-file)
-         ("s-i" . dired-toggle-read-only)
+         ("s-<escape>" . dired-toggle-read-only)
          ("M-<" . dired/first-file)
          ("M->" . dired/last-file)
          ("~" . dired/open-home-dir))
@@ -1472,7 +1473,7 @@ Only the `background' is used in this face."
   (setq wdired-allow-to-change-permissions t)
   (add-hook 'wdired-mode-hook
     (lambda ()
-      (define-key wdired-mode-map (kbd "s-I") 'wdired-abort-changes))))
+      (define-key wdired-mode-map (kbd "s-<escape>") 'wdired-abort-changes))))
 
 (use-package dired-subtree
   :bind (
@@ -1494,83 +1495,21 @@ Only the `background' is used in this face."
   (setq shr-width nil)
   (setq shr-folding-mode t))
 
-(use-package shrface
-  :config
-  (shrface-basic)
-  (shrface-trial)
-  ;; (shrface-default-keybindings)
-  (setq shrface-href-versatile t)
-  (with-eval-after-load 'eww
-    (define-key eww-mode-map (kbd "<tab>") 'shrface-outline-cycle)
-    (define-key eww-mode-map (kbd "S-<tab>") 'shrface-outline-cycle-buffer)
-    (define-key eww-mode-map (kbd "C-t") 'shrface-toggle-bullets)
-    (define-key eww-mode-map (kbd "C-j") 'shrface-next-headline)
-    (define-key eww-mode-map (kbd "C-k") 'shrface-previous-headline)
-    (define-key eww-mode-map (kbd "M-l") 'shrface-links-consult)
-    (define-key eww-mode-map (kbd "M-h") 'shrface-headline-consult))
+(defvar eww/input-history nil)
+(eval-after-load "savehist"
+  '(add-to-list 'savehist-additional-variables 'eww/input-history))
 
-  (with-eval-after-load 'mu4e
-    (define-key mu4e-view-mode-map (kbd "<tab>") 'shrface-outline-cycle)
-    (define-key mu4e-view-mode-map (kbd "S-<tab>") 'shrface-outline-cycle-buffer)
-    (define-key mu4e-view-mode-map (kbd "C-t") 'shrface-toggle-bullets)
-    (define-key mu4e-view-mode-map (kbd "C-j") 'shrface-next-headline)
-    (define-key mu4e-view-mode-map (kbd "C-k") 'shrface-previous-headline)
-    (define-key mu4e-view-mode-map (kbd "M-l") 'shrface-links-consult)
-    (define-key mu4e-view-mode-map (kbd "M-h") 'shrface-headline-consult))
-
-  (require 'shrface)
-  (add-hook 'eww-after-render-hook #'shrface-mode))
-
-;; Used to highlight code
-(use-package shr-tag-pre-highlight
-  :after shr
-  :config
-  (require 'shr-tag-pre-highlight)
-  (add-to-list 'shr-external-rendering-functions '(pre . shrface-shr-tag-pre-highlight))
-  (defun shrface-shr-tag-pre-highlight (pre)
-    "Highlighting code in PRE."
-    (let* ((shr-folding-mode 'none)
-           (shr-current-font 'default)
-           (code (with-temp-buffer
-                   (shr-generic pre)
-                   ;; (indent-rigidly (point-min) (point-max) 2)
-                   (buffer-string)))
-           (lang (or (shr-tag-pre-highlight-guess-language-attr pre)
-                     (let ((sym (language-detection-string code)))
-                       (and sym (symbol-name sym)))))
-           (mode (and lang
-                      (shr-tag-pre-highlight--get-lang-mode lang))))
-      (shr-ensure-newline)
-      (shr-ensure-newline)
-      (setq start (point))
-      (insert
-       (propertize (concat "#+BEGIN_SRC " lang "\n") 'face 'org-block-begin-line)
-       (or (and (fboundp mode)
-                (with-demoted-errors "Error while fontifying: %S"
-                  (shr-tag-pre-highlight-fontify code mode)))
-           code)
-       (propertize "#+END_SRC" 'face 'org-block-end-line ))
-      (shr-ensure-newline)
-      (setq end (point))
-      (if light
-          (add-face-text-property start end '(:background "#D8DEE9" :extend t))
-        (add-face-text-property start end '(:background "#292b2e" :extend t)))
-      (shr-ensure-newline)
-      (insert "\n")))
-
-  (add-to-list 'shr-external-rendering-functions
-               '(pre . shr-tag-pre-highlight))
-  (when (version< emacs-version "26")
-    (with-eval-after-load 'eww
-      (advice-add 'eww-display-html :around
-                  'eww-display-html--override-shr-external-rendering-functions))))
+(defun eww/do-start-with-url-or-search ()
+  (interactive)
+  (if (derived-mode-p 'eww-mode)
+      (eww (completing-read "Eww URL or search " eww/input-history nil nil (eww-current-url) 'eww/input-history))
+    (eww (completing-read "Eww URL or search " eww/input-history nil nil nil 'eww/input-history))))
 
 (with-eval-after-load 'eww
-
   (defun eww/rename-buffer ()
     "Rename `eww-mode' buffer so sites open in new page.
-URL `http://xahlee.info/emacs/emacs/emacs_eww_web_browser.html'
-Version 2017-11-10"
+  URL `http://xahlee.info/emacs/emacs/emacs_eww_web_browser.html'
+  Version 2017-11-10"
     (interactive)
     (let (($title (plist-get eww-data :title)))
       (when (eq major-mode 'eww-mode )
