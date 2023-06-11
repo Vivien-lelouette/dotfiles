@@ -548,14 +548,16 @@
   (setq display-time-format (concat tab/space-between-status-element "  " (all-the-icons-faicon "clock-o" :v-adjust 0) "   %d-%m-%Y %H:%M"))
   (display-time-mode 1)
 
-  (setq battery-mode-line-format
-        (cond ((eq battery-status-function #'battery-linux-proc-acpi) "%b%p%%,%d°C")
-              (battery-status-function "%b%p%%")))
-
   (when (and battery-status-function
              (not (string-match-p "N/A"
                                   (battery-format "%B"
+                                                  (funcall battery-status-function))))
+             (not (string-match-p "unknown"
+                                  (battery-format "%B"
                                                   (funcall battery-status-function)))))
+    (setq battery-mode-line-format
+          (cond ((eq battery-status-function #'battery-linux-proc-acpi) "%b%p%%,%d°C")
+                (battery-status-function "%b%p%%")))
     (display-battery-mode 1)
     (defun battery-update ()
       "Update battery status information in the mode line."
