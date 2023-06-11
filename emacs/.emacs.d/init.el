@@ -1375,13 +1375,13 @@ Only the `background' is used in this face."
 
 (defun eshell/rename-with-current-path ()
   (interactive)
-  (rename-buffer (concat "Eshell: " (eshell/pwd)) t))
+  (rename-buffer (concat "Eshell: " (replace-regexp-in-string "^[Directory ]*" "" (pwd))) t))
 (add-hook 'eshell-directory-change-hook #'eshell/rename-with-current-path)
 (add-hook 'eshell-mode-hook #'eshell/rename-with-current-path)
 
 (defun eshell/get-relevant-buffer ()
   (if (derived-mode-p 'dired-mode)
-      (get-buffer (eshell/pwd))
+      (get-buffer (replace-regexp-in-string "^[Directory ]*" "" (pwd)))
     (car (seq-filter (lambda (buf)
                        (string-prefix-p (concat "Eshell: " (replace-regexp-in-string "/$" "" (doom-modeline-project-root)))
                                         (buffer-name buf)))
@@ -1392,7 +1392,7 @@ Only the `background' is used in this face."
   (interactive)
   (let ((eshell-buffer (eshell/get-relevant-buffer))
         (default-directory (if (derived-mode-p 'dired-mode)
-                               (eshell/pwd)
+                               (replace-regexp-in-string "^[Directory ]*" "" (pwd))
                              (doom-modeline-project-root))))
     (if eshell-buffer
         (switch-to-buffer eshell-buffer)
@@ -1519,8 +1519,8 @@ Only the `background' is used in this face."
             (rename-buffer (concat "Eww: " $title) t)
           (rename-buffer "Eww" t)))))
 
-  (add-hook 'eww-after-render-hook 'eww/rename-buffer)
-  (add-hook 'eww-after-render-hook #'mixed-pitch-mode))
+  ;;(add-hook 'eww-after-render-hook #'mixed-pitch-mode)
+  (add-hook 'eww-after-render-hook 'eww/rename-buffer))
 
 (when (executable-find "mu")
   (use-package mu4e
