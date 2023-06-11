@@ -9,6 +9,10 @@
   (interactive)
   (shell/async-command-no-output (concat "google-chrome-stable --new-window " url)))
 
+(defun apps/konsole (&optional url)
+  (interactive)
+  (shell/async-command-no-output (concat "konsole" url)))
+
 (defun internet/switch-browser ()
   (interactive)
   (cond ((derived-mode-p 'eww-mode) (let ((url (eww-current-url))) (kill-buffer) (apps/chrome-browser url)))
@@ -415,7 +419,8 @@
           ([?\s-o ?\s-s] . settings/sound)
 
           ([?\s-a ?\s-a] . app-launcher-run-app)
-          ([?\s-a ?\s-c] . apps/chrome-browser)
+          ([?\s-a ?\c] . apps/chrome-browser)
+          ([?\s-a ?\k] . apps/konsole)
 
           ([?\s-b] . consult-buffer)
           ([?\s-B] . ibuffer-jump)
