@@ -59,7 +59,8 @@
   (tab/setup)
   (theme/minibuffer-echo-area)
   (window/set-all-header-gaps)
-  (setup/input))
+  (setup/input)
+  (menu/custom-menu))
 
 (defun exwm/refresh-setup-and-monitors ()
   (interactive)
@@ -75,6 +76,9 @@
 (defvar emacs-header-bar-menu (make-sparse-keymap "-- Emacs menu --"))
 (define-key global-map [menu-bar emacs-header-menu] (cons "-- Emacs menu --" emacs-header-bar-menu))
 
+(defun menu/custom-menu ()
+  (interactive)
+
 (defvar system-bar-menu (make-sparse-keymap "System"))
 (define-key global-map [menu-bar system-menu] (cons "System" system-bar-menu))
 (define-key system-bar-menu [shutdown]
@@ -87,14 +91,8 @@
 (defvar application-bar-menu (make-sparse-keymap "Applications"))
 (define-key global-map [menu-bar application-menu] (cons "Applications" application-bar-menu))
 
-(defvar system-bar-menu (make-sparse-keymap "System"))
-(define-key global-map [menu-bar system-menu] (cons "System" system-bar-menu))
-(define-key system-bar-menu [shutdown]
-            '(menu-item "Shutdown" kde/shutdown :help "Shutdown the computer"))
-(define-key system-bar-menu [reboot]
-            '(menu-item "Reboot" kde/reboot :help "Reboot the computer"))
-(define-key system-bar-menu [logout]
-            '(menu-item "Logout" kde/logout :help "Logout user"))
+)
+(menu/custom-menu)
 
 (defcustom my-skippable-buffer-regexp
   (rx bos (or (seq "*" (zero-or-more anything))

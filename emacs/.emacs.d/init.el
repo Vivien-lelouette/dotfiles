@@ -53,7 +53,11 @@
 (add-hook 'focus-out-hook 'garbage-collect)
 (run-with-idle-timer 5 t 'garbage-collect)
 
-(setq redisplay-dont-pause t)
+(setq redisplay-dont-pause t
+      jit-lock-stealth-time 1.25
+      jit-lock-stealth-nice 0.5
+      jit-lock-defer-time 0.3
+      jit-lock-chunk-size 4096)
 
 (setq large-file-warning-threshold 100000000)
 
@@ -341,7 +345,7 @@
   :config
   (setq company-require-match nil
         company-minimum-prefix-length 1
-        company-idle-delay 0.2
+        company-idle-delay 0.3
         company-selection-wrap-around t
         company-tooltip-limit 10
         company-backends '((company-files :separate company-yasnippet :separate company-capf)))
