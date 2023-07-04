@@ -514,7 +514,7 @@
 
 (defun tab-bar-format-menu-bar ()
   "Produce the Menu button for the tab bar that shows the menu bar."
-  `((menu-bar menu-item (propertize (concat tab/space-between-status-element (all-the-icons-fileicon "emacs" :v-adjust -0.15 :height 1.2) tab/space-between-status-element))
+  `((menu-bar menu-item (propertize (all-the-icons-fileicon "emacs" :v-adjust -0.10 :height 1.1))
               tab-bar-menu-bar :help "Menu Bar")))
 
 (defun tab-bar/application-launcher (event)
@@ -524,7 +524,7 @@
 
 (defun tab-bar-format-application-launcher ()
   "Produce the Menu button for the tab bar application launcher."
-  `((menu-bar menu-item (propertize (concat (all-the-icons-material "search" :height 1.2)  tab/space-between-status-element))
+  `((menu-bar menu-item (propertize (concat tab/space-between-status-element (all-the-icons-material "search" :v-adjust -0.2 :height 1.2)))
               tab-bar/application-launcher :help "Application launcher")))
 
 (defun tab-bar/kill-buffer (event)
@@ -534,7 +534,7 @@
 
 (defun tab-bar-format-kill-buffer ()
   "Produce the Menu button for the tab bar close buffer."
-  `((menu-bar menu-item (propertize (concat (all-the-icons-material "close" :height 1.2) tab/space-between-status-element))
+  `((menu-bar menu-item ""
               tab-bar/kill-buffer :help "Close selected buffer")))
 
 (defun tab-bar/close-window (event)
@@ -544,7 +544,7 @@
 
 (defun tab-bar-format-close-window ()
   "Produce the Menu button for the tab bar close window."
-  `((menu-bar menu-item (propertize (all-the-icons-material "remove" :v-adjust -0.4 :height 1.2))
+  `((menu-bar menu-item "    "
               tab-bar/close-window :help "Close selected window")))
 
 (defun tab-bar/switch-buffer (event)
@@ -554,7 +554,7 @@
 
 (defun tab-bar-format-switch-buffer ()
   "Produce the Menu button for the tab bar switch buffer."
-  `((menu-bar menu-item (propertize (all-the-icons-material "apps" :height 1.2))
+  `((menu-bar menu-item ""
               tab-bar/switch-buffer :help "Switch current buffer")))
 
 (defun tab/tab-bar-tab-face-default (tab)
@@ -568,19 +568,21 @@
              tab/space-between-status-element)
      'face (funcall tab-bar-tab-face-function tab))))
 
-(setq tab-bar-format '(tab-bar-format-menu-bar
-                       tab-bar-format-application-launcher
+(setq tab-bar-format '(tab-bar-separator
+                       tab-bar-format-menu-bar
                        tab-bar-separator
-                       tab-bar-format-switch-buffer
-                       tab-bar-format-close-window
-                       tab-bar-format-kill-buffer
+                       tab-bar-format-application-launcher
                        tab-bar-separator
                        tab-bar-format-tabs
                        tab-bar-separator
                        tab-bar-format-align-right
                        tab-bar-format-global
+                       tab-bar-separator
+                       tab-bar-format-switch-buffer
+                       tab-bar-separator
+                       tab-bar-format-close-window
+                       tab-bar-format-kill-buffer
                        tab-bar-separator)
-
       tab-bar-tab-face-function 'tab/tab-bar-tab-face-default)
 
 (defun tab/setup ()
