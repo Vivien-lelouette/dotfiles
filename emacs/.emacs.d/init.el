@@ -265,9 +265,10 @@
 
   (defun doom-modeline/segment--buffer-info (orig-fn &rest args)
     "`doom-modeline-segment--buffer-info' but truncate."
-    (utils/s-truncate (max 10 (- (window-width) 45))
-     (format-mode-line (apply orig-fn args))
-     "..."))
+    (let ((max-size (window-width)))
+      (utils/s-truncate (max 10 (- max-size (if (> max-size 93) 30 50)))
+                        (format-mode-line (apply orig-fn args))
+                        "...")))
 
   (advice-add #'doom-modeline-segment--buffer-info :around #'doom-modeline/segment--buffer-info)
 
