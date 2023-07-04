@@ -519,7 +519,7 @@
 
 (defun tab-bar-format-menu-bar ()
   "Produce the Menu button for the tab bar that shows the menu bar."
-  `((menu-bar menu-item (propertize (concat " " (all-the-icons-material "menu" :v-adjust -0.1 :height 1.2)))
+  `((menu-bar menu-item (propertize (concat " " (all-the-icons-material "power_settings_new" :v-adjust -0.15 :height 1.3)))
               tab-bar-menu-bar :help "Menu Bar")))
 
 (defun tab-bar/application-launcher (event)
@@ -529,7 +529,7 @@
 
 (defun tab-bar-format-application-launcher ()
   "Produce the Menu button for the tab bar application launcher."
-  `((menu-bar menu-item (propertize (concat tab/space-between-status-element (all-the-icons-material "search" :v-adjust -0.1 :height 1.1)))
+  `((menu-bar menu-item (propertize (concat tab/space-between-status-element (all-the-icons-material "apps" :v-adjust -0.14 :height 1.3)))
               tab-bar/application-launcher :help "Application launcher")))
 
 (defun tab-bar/kill-buffer (event)
@@ -549,7 +549,7 @@
 
 (defun tab-bar-format-close-window ()
   "Produce the Menu button for the tab bar close window."
-  `((menu-bar menu-item "    "
+  `((menu-bar menu-item "    "
               tab-bar/close-window :help "Close selected window")))
 
 (defun tab-bar/switch-buffer (event)
@@ -559,7 +559,7 @@
 
 (defun tab-bar-format-switch-buffer ()
   "Produce the Menu button for the tab bar switch buffer."
-  `((menu-bar menu-item ""
+  `((menu-bar menu-item ""
               tab-bar/switch-buffer :help "Switch current buffer")))
 
 (defun tab/tab-bar-tab-face-default (tab)
