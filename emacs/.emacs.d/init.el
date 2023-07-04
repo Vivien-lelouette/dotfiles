@@ -524,7 +524,7 @@
 
 (defun tab-bar-format-application-launcher ()
   "Produce the Menu button for the tab bar application launcher."
-  `((menu-bar menu-item (propertize (concat tab/space-between-status-element (all-the-icons-material "search" :v-adjust -0.15 :height 1.1)))
+  `((menu-bar menu-item (propertize (concat tab/space-between-status-element (all-the-icons-material "search" :v-adjust -0.1 :height 1.1)))
               tab-bar/application-launcher :help "Application launcher")))
 
 (defun tab-bar/kill-buffer (event)
