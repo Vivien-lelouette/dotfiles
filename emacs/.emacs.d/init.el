@@ -514,7 +514,7 @@
 
 (defun tab-bar-format-menu-bar ()
   "Produce the Menu button for the tab bar that shows the menu bar."
-  `((menu-bar menu-item (propertize (all-the-icons-fileicon "emacs" :v-adjust -0.10 :height 1.1))
+  `((menu-bar menu-item (propertize (concat " " (all-the-icons-fileicon "emacs" :v-adjust -0.10 :height 1.1)))
               tab-bar-menu-bar :help "Menu Bar")))
 
 (defun tab-bar/application-launcher (event)
