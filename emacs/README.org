@@ -191,8 +191,12 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 
 ** Lines style
 #+begin_src emacs-lisp
-  (setq display-line-numbers-type 'relative)
+  (setq
+   display-line-numbers-type 'relative
+   mode-line-percent-position nil)
   (global-display-line-numbers-mode 1)
+  (line-number-mode 0)
+  (column-number-mode 0)
   (global-hl-line-mode 1)
 #+end_src
 
@@ -1856,77 +1860,6 @@ This requires a Java runtime environment.
     (setq shr-width nil)
     (setq shr-folding-mode t))
 #+END_SRC
-
-  (use-package shrface
-    :config
-    (shrface-basic)
-    (shrface-trial)
-    ;; (shrface-default-keybindings)
-    (setq shrface-href-versatile t)
-    (with-eval-after-load 'eww
-      (define-key eww-mode-map (kbd "<tab>") 'shrface-outline-cycle)
-      (define-key eww-mode-map (kbd "S-<tab>") 'shrface-outline-cycle-buffer)
-      (define-key eww-mode-map (kbd "C-t") 'shrface-toggle-bullets)
-      (define-key eww-mode-map (kbd "C-j") 'shrface-next-headline)
-      (define-key eww-mode-map (kbd "C-k") 'shrface-previous-headline)
-      (define-key eww-mode-map (kbd "M-l") 'shrface-links-consult)
-      (define-key eww-mode-map (kbd "M-h") 'shrface-headline-consult))
-
-    (with-eval-after-load 'mu4e
-      (define-key mu4e-view-mode-map (kbd "<tab>") 'shrface-outline-cycle)
-      (define-key mu4e-view-mode-map (kbd "S-<tab>") 'shrface-outline-cycle-buffer)
-      (define-key mu4e-view-mode-map (kbd "C-t") 'shrface-toggle-bullets)
-      (define-key mu4e-view-mode-map (kbd "C-j") 'shrface-next-headline)
-      (define-key mu4e-view-mode-map (kbd "C-k") 'shrface-previous-headline)
-      (define-key mu4e-view-mode-map (kbd "M-l") 'shrface-links-consult)
-      (define-key mu4e-view-mode-map (kbd "M-h") 'shrface-headline-consult))
-
-    (require 'shrface)
-    (add-hook 'eww-after-render-hook #'shrface-mode))
-
-  ;; Used to highlight code
-  (use-package shr-tag-pre-highlight
-    :after shr
-    :config
-    (require 'shr-tag-pre-highlight)
-    (add-to-list 'shr-external-rendering-functions '(pre . shrface-shr-tag-pre-highlight))
-    (defun shrface-shr-tag-pre-highlight (pre)
-      "Highlighting code in PRE."
-      (let* ((shr-folding-mode 'none)
-             (shr-current-font 'default)
-             (code (with-temp-buffer
-                     (shr-generic pre)
-                     ;; (indent-rigidly (point-min) (point-max) 2)
-                     (buffer-string)))
-             (lang (or (shr-tag-pre-highlight-guess-language-attr pre)
-                       (let ((sym (language-detection-string code)))
-                         (and sym (symbol-name sym)))))
-             (mode (and lang
-                        (shr-tag-pre-highlight--get-lang-mode lang))))
-        (shr-ensure-newline)
-        (shr-ensure-newline)
-        (setq start (point))
-        (insert
-         (propertize (concat "#+BEGIN_SRC " lang "\n") 'face 'org-block-begin-line)
-         (or (and (fboundp mode)
-                  (with-demoted-errors "Error while fontifying: %S"
-                    (shr-tag-pre-highlight-fontify code mode)))
-             code)
-         (propertize "#+END_SRC" 'face 'org-block-end-line ))
-        (shr-ensure-newline)
-        (setq end (point))
-        (if light
-            (add-face-text-property start end '(:background "#D8DEE9" :extend t))
-          (add-face-text-property start end '(:background "#292b2e" :extend t)))
-        (shr-ensure-newline)
-        (insert "\n")))
-
-    (add-to-list 'shr-external-rendering-functions
-                 '(pre . shr-tag-pre-highlight))
-    (when (version< emacs-version "26")
-      (with-eval-after-load 'eww
-        (advice-add 'eww-display-html :around
-                    'eww-display-html--override-shr-external-rendering-functions))))
 
 ** Emacs Web Wowser
 #+BEGIN_SRC emacs-lisp

@@ -143,8 +143,12 @@
       hack-indent-offset tab-width
       standard-indent tab-width)
 
-(setq display-line-numbers-type 'relative)
+(setq
+ display-line-numbers-type 'relative
+ mode-line-percent-position nil)
 (global-display-line-numbers-mode 1)
+(line-number-mode 0)
+(column-number-mode 0)
 (global-hl-line-mode 1)
 
 (setq warning-minimum-level :error)
