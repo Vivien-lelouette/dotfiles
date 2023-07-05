@@ -325,11 +325,12 @@
   (advice-add 'vertico-posframe--minibuffer-exit-hook :after #'vertico/reset-position)
 
   (defun vertico/posframe-poshandler-point (info)
-    (let ((position (if vertico/position
-                        vertico/position
-                      (if (eq (buffer-local-value 'major-mode (window-buffer (old-selected-window))) 'exwm-mode)
-                          (posframe-poshandler-window-center info)
-                        (posframe-poshandler-point-1 info)))))
+    (let ((position
+           (if vertico/position
+               vertico/position
+             (if (eq (buffer-local-value 'major-mode (window-buffer (old-selected-window))) 'exwm-mode)
+                 (posframe-poshandler-window-center info)
+               (posframe-poshandler-point-1 info)))))
       (setq vertico/position position)
       vertico/position))
 
@@ -337,7 +338,23 @@
         vertico-posframe-border-width 8
         vertico-posframe-min-width 120)
 
-  (vertico-posframe-mode 1))
+  (vertico-posframe-mode 1)
+
+  (defun posframe/poshandler-frame-top-left-corner (_info)
+    (cons 0 (tab-bar-height (selected-frame) 1)))
+
+  (defun posframe/poshandler-frame-top-right-corner (_info)
+    (cons -1 (tab-bar-height (selected-frame) 1)))
+
+  (defun vertico/consult-buffer-top-right ()
+    (interactive)
+    (let ((vertico-posframe-poshandler 'posframe/poshandler-frame-top-right-corner))
+      (consult-buffer)))
+
+  (defun vertico/app-launcher-run-app-top-left ()
+    (interactive)
+    (let ((vertico-posframe-poshandler 'posframe/poshandler-frame-top-left-corner))
+      (app-launcher-run-app))))
 
 (use-package company
   :hook (emacs-lisp-mode . (lambda () (setq-local company-backends '(company-elisp))))
@@ -525,7 +542,7 @@
 (defun tab-bar/application-launcher (event)
   "Launch application"
   (interactive "e")
-  (app-launcher-run-app))
+  (vertico/app-launcher-run-app-top-left))
 
 (defun tab-bar-format-application-launcher ()
   "Produce the Menu button for the tab bar application launcher."
@@ -555,7 +572,7 @@
 (defun tab-bar/switch-buffer (event)
   "Switch buffer"
   (interactive "e")
-  (consult-buffer))
+  (vertico/consult-buffer-top-right))
 
 (defun tab-bar-format-switch-buffer ()
   "Produce the Menu button for the tab bar switch buffer."
