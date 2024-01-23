@@ -68,8 +68,8 @@
   (exwm-randr-refresh))
 
 (defun setup/input ()
-  (interactive)
-  (start-process-shell-command "trackball" nil "bash ~/.scripts/trackball-setup.sh"))
+  (interactive))
+  ;; (start-process-shell-command "trackball" nil "bash ~/.scripts/trackball-setup.sh"))
 
 (elpaca (app-launcher :host github :repo "vivien-lelouette/app-launcher"))
 

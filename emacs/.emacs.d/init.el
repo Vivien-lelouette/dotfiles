@@ -1,39 +1,41 @@
 (setq package-enable-at-startup nil)
-(defvar elpaca-installer-version 0.3)
+(defvar elpaca-installer-version 0.6)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
 (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
 (defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
 (defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
-                              :ref nil
-                              :files (:defaults (:exclude "extensions"))
-                              :build (:not elpaca--activate-package)))
+ 			 :ref nil
+ 			 :files (:defaults "elpaca-test.el" (:exclude "extensions"))
+ 			 :build (:not elpaca--activate-package)))
 (let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
-       (build (expand-file-name "elpaca/" elpaca-builds-directory))
-       (order (cdr elpaca-order))
-       (default-directory repo))
+   (build (expand-file-name "elpaca/" elpaca-builds-directory))
+   (order (cdr elpaca-order))
+   (default-directory repo))
   (add-to-list 'load-path (if (file-exists-p build) build repo))
   (unless (file-exists-p repo)
     (make-directory repo t)
+    (when (< emacs-major-version 28) (require 'subr-x))
     (condition-case-unless-debug err
-        (if-let ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
-                 ((zerop (call-process "git" nil buffer t "clone"
-                                       (plist-get order :repo) repo)))
-                 ((zerop (call-process "git" nil buffer t "checkout"
-                                       (or (plist-get order :ref) "--"))))
-                 (emacs (concat invocation-directory invocation-name))
-                 ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
-                                       "--eval" "(byte-recompile-directory \".\" 0 'force)")))
-                 ((require 'elpaca))
-                 ((elpaca-generate-autoloads "elpaca" repo)))
-            (kill-buffer buffer)
-          (error "%s" (with-current-buffer buffer (buffer-string))))
-      ((error) (warn "%s" err) (delete-directory repo 'recursive))))
+    (if-let ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
+ 	    ((zerop (call-process "git" nil buffer t "clone"
+ 				  (plist-get order :repo) repo)))
+ 	    ((zerop (call-process "git" nil buffer t "checkout"
+ 				  (or (plist-get order :ref) "--"))))
+ 	    (emacs (concat invocation-directory invocation-name))
+ 	    ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
+ 				  "--eval" "(byte-recompile-directory \".\" 0 'force)")))
+ 	    ((require 'elpaca))
+ 	    ((elpaca-generate-autoloads "elpaca" repo)))
+        (progn (message "%s" (buffer-string)) (kill-buffer buffer))
+      (error "%s" (with-current-buffer buffer (buffer-string))))
+  ((error) (warn "%s" err) (delete-directory repo 'recursive))))
   (unless (require 'elpaca-autoloads nil t)
     (require 'elpaca)
     (elpaca-generate-autoloads "elpaca" repo)
     (load "./elpaca-autoloads")))
 (add-hook 'after-init-hook #'elpaca-process-queues)
 (elpaca `(,@elpaca-order))
+  (defun elpaca-log-defaults ())
 
 ;; Install use-package support
 (elpaca elpaca-use-package
@@ -67,11 +69,6 @@
 (pixel-scroll-precision-mode 1)
 (setq pixel-scroll-precision-use-momentum t)
 
-(defalias 'yes-or-no-p 'y-or-n-p)
-(setq xref-prompt-for-identifier nil
-      comint-prompt-read-only t
-      use-dialog-box nil)
-
 (define-key minibuffer-local-completion-map " " nil)
 (define-key minibuffer-local-must-match-map " " nil)
 (define-key minibuffer-local-completion-map "?" nil)
@@ -97,6 +94,36 @@
 (global-set-key (kbd "C-z") 'delete-frame)
 (delete-selection-mode 1)
 (set-default 'truncate-lines t)
+
+(defun next-code-buffer ()
+  (interactive)
+  (let (( bread-crumb (buffer-name) ))
+    (next-buffer)
+    (while
+        (and
+         (string-match-p "^\*" (buffer-name))
+         (not ( equal bread-crumb (buffer-name) )) )
+      (next-buffer))))
+
+(defun previous-code-buffer ()
+  (interactive)
+  (let (( bread-crumb (buffer-name) ))
+    (previous-buffer)
+    (while
+        (and
+         (string-match-p "^\*" (buffer-name))
+         (not ( equal bread-crumb (buffer-name) )) )
+      (previous-buffer))))
+
+(global-set-key (kbd "C-M-o") 'next-code-buffer)
+(global-set-key (kbd "C-M-O") 'previous-code-buffer)
+
+(defun reverse-other-window ()
+  (interactive)
+  (other-window -1))
+
+(global-set-key (kbd "M-o") 'other-window)
+(global-set-key (kbd "M-O") 'reverse-other-window)
 
 (setq bookmark-save-flag 1)
 
@@ -144,7 +171,7 @@
       standard-indent tab-width)
 
 (setq
- display-line-numbers-type 'relative
+ display-line-numbers-type 'absolute
  mode-line-percent-position nil)
 (global-display-line-numbers-mode 1)
 (line-number-mode 0)
@@ -206,17 +233,6 @@
   :hook
   (org-mode . mixed-pitch-mode))
 
-(defun utils/s-truncate (len s &optional ellipsis)
-  "Like `s-truncate' but
-- return S when LEN is nil
-- return empty string when len is shorter than ELLIPSIS"
-  (declare (pure t) (side-effect-free t))
-  (let ((ellipsis (or ellipsis "...")))
-    (cond
-     ((null len) s)
-     ((< len (length ellipsis)) "")
-     (t (s-truncate len s ellipsis)))))
-
 (load-file "~/.emacs.d/custom_packages/dracula-theme.el")
 (load-theme 'dracula t)
 
@@ -241,38 +257,8 @@
 (use-package all-the-icons
   :if (display-graphic-p))
 
-(use-package doom-modeline
-  :config
-  (defun my-doom-modeline--font-height ()
-    "Calculate the actual char height of the mode-line."
-    (- (frame-char-height) 10))
-  (advice-add #'doom-modeline--font-height :override #'my-doom-modeline--font-height)
-  (setq doom-modeline-battery nil
-        doom-modeline-time nil
-        doom-modeline-workspace-name nil
-        doom-modeline-bar-width 1
-        doom-modeline-window-width-limit nil
-        doom-modeline-height 22
-        doom-modeline-major-mode-icon nil
-        doom-modeline-icon t
-        doom-modeline-unicode-fallback nil
-        doom-modeline-buffer-file-name-style 'relative-from-project)
-
-  (setq all-the-icons-scale-factor 0.95)
-
-  (remove-hook 'display-time-mode-hook #'doom-modeline-override-time-modeline)
-  (remove-hook 'doom-modeline-mode-hook #'doom-modeline-override-time-modeline)
-
-  (defun doom-modeline/segment--buffer-info (orig-fn &rest args)
-    "`doom-modeline-segment--buffer-info' but truncate."
-    (let ((max-size (window-width)))
-      (utils/s-truncate (max 10 (- max-size (if (> max-size 93) 30 50)))
-                        (format-mode-line (apply orig-fn args))
-                        "...")))
-
-  (advice-add #'doom-modeline-segment--buffer-info :around #'doom-modeline/segment--buffer-info)
-
-  (doom-modeline-mode 1))
+(use-package simple-modeline
+  :hook (after-init . simple-modeline-mode))
 
 (setq tab-always-indent t
       completions-format 'one-column
@@ -316,46 +302,6 @@
                               :no-match "| No match"))
   (vertico-mode 1))
 
-(use-package vertico-posframe
-  :config
-  (defun vertico/reset-position ()
-    (interactive)
-    (setq vertico/position nil))
-  (vertico/reset-position)
-  (advice-add 'vertico-posframe--minibuffer-exit-hook :after #'vertico/reset-position)
-
-  (defun vertico/posframe-poshandler-point (info)
-    (let ((position
-           (if vertico/position
-               vertico/position
-             (if (eq (buffer-local-value 'major-mode (window-buffer (old-selected-window))) 'exwm-mode)
-                 (posframe-poshandler-window-center info)
-               (posframe-poshandler-point-1 info)))))
-      (setq vertico/position position)
-      vertico/position))
-
-  (setq vertico-posframe-poshandler 'vertico/posframe-poshandler-point
-        vertico-posframe-border-width 8
-        vertico-posframe-min-width 120)
-
-  (vertico-posframe-mode 1)
-
-  (defun posframe/poshandler-frame-top-left-corner (_info)
-    (cons 0 (tab-bar-height (selected-frame) 1)))
-
-  (defun posframe/poshandler-frame-top-right-corner (_info)
-    (cons -1 (tab-bar-height (selected-frame) 1)))
-
-  (defun vertico/consult-buffer-top-right ()
-    (interactive)
-    (let ((vertico-posframe-poshandler 'posframe/poshandler-frame-top-right-corner))
-      (consult-buffer)))
-
-  (defun vertico/app-launcher-run-app-top-left ()
-    (interactive)
-    (let ((vertico-posframe-poshandler 'posframe/poshandler-frame-top-left-corner))
-      (app-launcher-run-app))))
-
 (use-package company
   :hook (emacs-lisp-mode . (lambda () (setq-local company-backends '(company-elisp))))
   :bind (:map company-active-map
@@ -374,7 +320,7 @@
   (global-company-mode))
 
 (use-package company-box
-  :hook (org-mode . company-box-mode)
+  :hook (company-mode . company-box-mode)
   :config
   (setq
    company-box-scrollbar nil
@@ -462,7 +408,16 @@
 
 (use-package org
   :config
-  (setq org-confirm-babel-evaluate nil)
+  (setq
+   org-confirm-babel-evaluate nil
+   org-image-actual-width 1400
+   org-startup-with-inline-images t)
+
+  (load-file "~/.emacs.d/custom_packages/org-flyimage.el")
+  (with-eval-after-load "org"
+    (require 'org-flyimage)
+    (add-hook 'org-mode-hook 'org-flyimage-mode))
+
   (defun org/org-babel-tangle-config ()
     (when (or (string-equal (buffer-file-name)
                             (expand-file-name "~/.dotfiles/README.org"))
@@ -532,169 +487,7 @@
 
 (elpaca-wait)
 
-(setq tab/space-between-status-element "    ")
-
-(defun tab-bar-format-menu-bar ()
-  "Produce the Menu button for the tab bar that shows the menu bar."
-  `((menu-bar menu-item (propertize (concat " " (all-the-icons-material "power_settings_new" :v-adjust -0.15 :height 1.3)))
-              tab-bar-menu-bar :help "Menu Bar")))
-
-(defun tab-bar/application-launcher (event)
-  "Launch application"
-  (interactive "e")
-  (vertico/app-launcher-run-app-top-left))
-
-(defun tab-bar-format-application-launcher ()
-  "Produce the Menu button for the tab bar application launcher."
-  `((menu-bar menu-item (propertize (concat tab/space-between-status-element (all-the-icons-material "apps" :v-adjust -0.14 :height 1.3)))
-              tab-bar/application-launcher :help "Application launcher")))
-
-(defun tab-bar/kill-buffer (event)
-  "Close selected buffer"
-  (interactive "e")
-  (kill-current-buffer))
-
-(defun tab-bar-format-kill-buffer ()
-  "Produce the Menu button for the tab bar close buffer."
-  `((menu-bar menu-item ""
-              tab-bar/kill-buffer :help "Close selected buffer")))
-
-(defun tab-bar/close-window (event)
-  "Close selected window"
-  (interactive "e")
-  (delete-window))
-
-(defun tab-bar-format-close-window ()
-  "Produce the Menu button for the tab bar close window."
-  `((menu-bar menu-item "    "
-              tab-bar/close-window :help "Close selected window")))
-
-(defun tab-bar/switch-buffer (event)
-  "Switch buffer"
-  (interactive "e")
-  (vertico/consult-buffer-top-right))
-
-(defun tab-bar-format-switch-buffer ()
-  "Produce the Menu button for the tab bar switch buffer."
-  `((menu-bar menu-item ""
-              tab-bar/switch-buffer :help "Switch current buffer")))
-
-(defun tab/tab-bar-tab-face-default (tab)
-  (if (and (> (length (tab-bar-tabs)) 1) (eq (car tab) 'current-tab)) 'tab-bar-tab 'tab-bar-tab-inactive))
-
-(defun tab/tab-bar-tab-name-format (tab i)
-  (let ((current-p (eq (car tab) 'current-tab)))
-    (propertize
-     (concat tab/space-between-status-element (if (and tab-bar-tab-hints (> (length (tab-bar-tabs)) 1)) (format "%d: " i))
-             (alist-get 'name tab)
-             tab/space-between-status-element)
-     'face (funcall tab-bar-tab-face-function tab))))
-
-(setq tab-bar-format '(tab-bar-separator
-                       tab-bar-format-menu-bar
-                       tab-bar-separator
-                       tab-bar-format-application-launcher
-                       tab-bar-separator
-                       tab-bar-format-tabs
-                       tab-bar-separator
-                       tab-bar-format-align-right
-                       tab-bar-format-global
-                       tab-bar-separator
-                       tab-bar-format-switch-buffer
-                       tab-bar-separator
-                       tab-bar-format-close-window
-                       tab-bar-format-kill-buffer
-                       tab-bar-separator)
-      tab-bar-tab-face-function 'tab/tab-bar-tab-face-default)
-
-(defun tab/setup ()
-  (interactive)
-  (display-time-mode -1)
-  (display-battery-mode -1)
-
-  (setq tab-bar-tab-name-format-function #'tab/tab-bar-tab-name-format
-        tab-bar-close-button-show nil
-        tab-bar-tab-hints t
-        tab-bar-border 1
-        tab-bar-auto-width-max nil
-        tab-bar-auto-width t)
-
-  (setq global-mode-string '("" display-time-string tab/space-between-status-element battery-mode-line-string tab/space-between-status-element))
-
-  (setq display-time-format (concat tab/space-between-status-element "  " (all-the-icons-faicon "clock-o" :v-adjust 0) "   %d-%m-%Y %H:%M"))
-  (display-time-mode 1)
-
-  (when (and battery-status-function
-             (not (string-match-p "N/A"
-                                  (battery-format "%B"
-                                                  (funcall battery-status-function))))
-             (not (string-match-p "unknown"
-                                  (battery-format "%B"
-                                                  (funcall battery-status-function)))))
-    (setq battery-mode-line-format
-          (cond ((eq battery-status-function #'battery-linux-proc-acpi) "%b%p%%,%d°C")
-                (battery-status-function "%b%p%%")))
-    (display-battery-mode 1)
-    (defun battery-update ()
-      "Update battery status information in the mode line."
-      (let* ((data (and battery-status-function (funcall battery-status-function)))
-             (percentage (car (read-from-string (cdr (assq ?p data)))))
-             (status (cdr (assoc ?L data)))
-             (charging? (or (string-equal "AC" status)
-                            (string-equal "on-line" status)))
-             (res (and battery-mode-line-format
-                       (or (not (numberp percentage))
-                           (<= percentage battery-mode-line-limit))
-                       (cond (charging? (concat "    " (all-the-icons-alltheicon "battery-charging" :v-adjust 0 :height 1.3) "  " (battery-format battery-mode-line-format data)))
-                             ((< percentage 5) (concat "    " (all-the-icons-faicon "battery-empty" :v-adjust 0.05) "  " (battery-format battery-mode-line-format data)))
-                             ((< percentage 25) (concat "    " (all-the-icons-faicon "battery-quarter" :v-adjust 0.05) "  " (battery-format battery-mode-line-format data)))
-                             ((< percentage 50) (concat "    " (all-the-icons-faicon "battery-half" :v-adjust 0.05) "  " (battery-format battery-mode-line-format data)))
-                             ((< percentage 95) (concat "    " (all-the-icons-faicon "battery-three-quarters" :v-adjust 0.05) "  " (battery-format battery-mode-line-format data)))
-                             (t (concat "  " (all-the-icons-faicon "battery-full" :v-adjust 0.05) "  " (battery-format battery-mode-line-format data))))))
-             (len (length res)))
-        (unless (zerop len)
-          (cond ((not (numberp percentage)))
-                ((< percentage battery-load-critical)
-                 (add-face-text-property 0 len 'battery-load-critical t res))
-                ((< percentage battery-load-low)
-                 (add-face-text-property 0 len 'battery-load-low t res)))
-          (put-text-property 0 len 'help-echo "Battery status information" res))
-        (setq battery-mode-line-string (or res ""))
-        (run-hook-with-args 'battery-update-functions data))
-      (force-mode-line-update t))
-    (battery-update))
-
-  (setq global-mode-string '("" display-time-string battery-mode-line-string tab/space-between-status-element)))
-
-(tab-bar-mode 1)
-
-(add-hook 'elpaca-after-init-hook #'tab/setup)
-
 (autoload 'exwm-enable "~/.emacs.d/desktop.el")
-
-(use-package ace-window
-  :config
-  (global-set-key (kbd "M-o") 'ace-window)
-  (setq
-   aw-keys '(?1 ?2 ?3 ?4 ?5 ?6 ?7 ?8 ?9 ?0)
-   aw-background nil
-   aw-dispatch-always t
-   aw-display-mode-overlay nil
-   aw-minibuffer-flag t)
-  (setq aw-dispatch-alist
-        '((?x aw-delete-window "Delete Window")
-          (?M aw-swap-window "Swap Windows")
-          (?m aw-move-window "Move Window")
-          (?c aw-copy-window "Copy Window")
-          (?j aw-switch-buffer-in-window "Select Buffer")
-          (?n aw-flip-window)
-          (?u aw-switch-buffer-other-window "Switch Buffer Other Window")
-          (?c aw-split-window-fair "Split Fair Window")
-          (?v aw-split-window-vert "Split Vert Window")
-          (?b aw-split-window-horz "Split Horz Window")
-          (?o delete-other-windows "Delete Other Windows")
-          (?? aw-show-dispatch-help)))
-  (ace-window-display-mode 1))
 
 (use-package avy
   :config
@@ -735,75 +528,6 @@
   (setq vundo-glyph-alist vundo-unicode-symbols)
   (global-unset-key (kbd "C-?"))
   (global-set-key (kbd "C-?") 'vundo))
-
-(with-eval-after-load 'posframe
-  (defun posframe/deparent (frame)
-    (set-frame-parameter frame 'parent-frame nil)
-    frame)
-
-  (advice-add 'posframe-show :filter-return #'posframe/deparent)
-
-  (defun posframe/poshandler-window-bottom-left-corner (info)
-    "Posframe's position handler.
-
-This poshandler function let bottom left corner of posframe align to
-bottom left corner of window.
-
-The structure of INFO can be found in docstring of
-`posframe-show'."
-    (let* ((parent-frame (plist-get info :parent-frame))
-           (parent-frame-position (frame-position parent-frame))
-           (window-left (+ (car parent-frame-position) (plist-get info :parent-window-left)))
-           (window-top (+ (cdr parent-frame-position) (plist-get info :parent-window-top)))
-           (window-height (plist-get info :parent-window-height))
-           (posframe-height (plist-get info :posframe-height))
-           (mode-line-height (plist-get info :mode-line-height)))
-      (cons window-left
-            (+ window-top window-height
-               (- 0 mode-line-height posframe-height)))))
-
-  (defun posframe/poshandler-window-bottom-center (info)
-    "Posframe's position handler.
-
-    This poshandler function let bottom edge center of posframe align
-    to bottom edge center of window.
-
-    The structure of INFO can be found in docstring of
-    `posframe-show'."
-    (let* ((parent-frame (plist-get info :parent-frame))
-           (parent-frame-position (frame-position parent-frame))
-           (window-left (+ (car parent-frame-position) (plist-get info :parent-window-left)))
-           (window-top (+ (cdr parent-frame-position) (plist-get info :parent-window-top)))
-           (window-width (plist-get info :parent-window-width))
-           (window-height (plist-get info :parent-window-height))
-           (posframe-width (plist-get info :posframe-width))
-           (posframe-height (plist-get info :posframe-height))
-           (mode-line-height (plist-get info :mode-line-height)))
-      (cons (max 0 (+ window-left (/ (- window-width posframe-width (window-right-divider-width)) 2)))
-            (+ window-top window-height
-               (- 0 mode-line-height posframe-height)))))
-
-  (defun posframe/poshandler-window-top-or-bottom-right-corner (info)
-    "Posframe's position handler.
-
-      This poshandler function let top right corner of posframe align to
-      top left right of window.
-
-      The structure of INFO can be found in docstring of
-      `posframe-show'."
-    (let* ((parent-frame (plist-get info :parent-frame))
-           (parent-frame-position (frame-position parent-frame))
-           (window-left (+ (car parent-frame-position) (plist-get info :parent-window-left)))
-           (window-top (+ (cdr parent-frame-position) (plist-get info :parent-window-top)))
-           (window-width (plist-get info :parent-window-width))
-           (window-height (plist-get info :parent-window-height))
-           (posframe-width (plist-get info :posframe-width))
-           (posframe-height (plist-get info :posframe-height))
-           (x (- (+ window-left window-width) posframe-width (window-right-divider-width)))
-           (top-y (+ window-top (window-header-line-height))))
-      (if (> (cdr (window-absolute-pixel-position)) (+ top-y posframe-height))
-          (cons x top-y)
-        (cons x (- (+ top-y window-height) posframe-height (window-mode-line-height)))))))
 
 (use-package hideshow
   :elpaca nil
@@ -881,11 +605,6 @@ The structure of INFO can be found in docstring of
   (setq which-key-min-display-lines 25)
   (which-key-mode 1))
 
-(use-package which-key-posframe
-  :config
-  (setq which-key-posframe-poshandler 'posframe/poshandler-window-bottom-center)
-  (which-key-posframe-mode 1))
-
 (use-package whole-line-or-region
   :config
   (whole-line-or-region-global-mode 1))
@@ -922,62 +641,6 @@ The structure of INFO can be found in docstring of
 
   (add-hook 'ibuffer-hook 'ibuffer/apply-filter-groups)
   (add-hook 'ibuffer-hook 'ibuffer-auto-mode))
-
-(use-package zoom
-  :custom
-  (zoom-size '(0.47 . 0.55)))
-
-(defun window/4k-streaming-layout ()
-  (interactive)
-  (tab-bar-new-tab)
-
-  (split-window-right)
-  (split-window)
-  (other-window 2)
-
-  (split-window)
-
-  (window-resize (get-buffer-window) 1 t t t)
-  (window-resize (get-buffer-window) 20 nil t t)
-
-  (select-window (get-mru-window t t t)))
-
-(defun window/4k-layout ()
-  (interactive)
-  (delete-other-windows)
-  (split-window-right)
-  (split-window-right)
-  (other-window 1)
-  (split-window)
-  (zoom))
-
-(defun window/unlock-size ()
-  (interactive)
-  (setq-local window-size-fixed nil))
-
-(defun window/lock-size ()
-  (interactive)
-  (setq-local window-size-fixed t))
-
-(defun window/toggle-pin ()
-  (interactive)
-  (if (window-parameter (selected-window) 'split-window)
-      (progn 
-        (window/unlock-size)
-        (set-window-parameter nil 'split-window nil)
-        (set-window-dedicated-p (selected-window) nil)
-        (rename-buffer (string-trim-left (buffer-name)))
-        (message "Window unpined"))
-    (progn
-      (setq-local window-size-fixed 'width)
-      (set-window-parameter nil 'split-window #'ignore)
-      (set-window-dedicated-p (selected-window) t)
-      (rename-buffer (concat " " (buffer-name)))
-      (message "Window pined"))))
-
-(global-set-key (kbd "C-c w p") #'window/toggle-pin)
-
-(global-set-key (kbd "C-c w l 4") #'window/4k-layout)
 
 (use-package blist
   :config
@@ -1038,32 +701,6 @@ The structure of INFO can be found in docstring of
 (use-package flycheck
   :init (global-flycheck-mode))
 
-(use-package flycheck-posframe
-  :after flycheck
-  :config
-  (setq flycheck-posframe-border-width 8)
-
-  ;; Redefined to allow custom poshandler
-  (defun flycheck-posframe-show-posframe (errors)
-    "Display ERRORS, using posframe.el library."
-    (posframe-hide flycheck-posframe-buffer)
-    (when (and errors
-               (not (run-hook-with-args-until-success 'flycheck-posframe-inhibit-functions)))
-      (flycheck-posframe-check-position)
-      (posframe-show
-       flycheck-posframe-buffer
-       :string (flycheck-posframe-format-errors errors)
-       :background-color (face-background 'flycheck-posframe-background-face nil t)
-       :position (point)
-       :internal-border-width flycheck-posframe-border-width
-       :internal-border-color (face-foreground (if flycheck-posframe-border-use-error-face
-                                                   (flycheck-posframe-highest-error-level-face errors)
-                                                 'flycheck-posframe-border-face) nil t)
-       :poshandler #'posframe/poshandler-window-bottom-left-corner
-       :hidehandler #'flycheck-posframe-hidehandler)))
-
-  (add-hook 'flycheck-mode-hook #'flycheck-posframe-mode))
-
 (setq electric-pair-pairs
   '(
     (?\' . ?\')
@@ -1092,25 +729,11 @@ The structure of INFO can be found in docstring of
     (let ((magit-display-buffer-function 'magit-display-buffer-same-window-except-diff-v1))
       (magit-status)))
   (global-unset-key (kbd "C-x g"))
-  (global-set-key (kbd "C-x g s") #'magit-status)
+  (global-set-key (kbd "C-x g g") #'magit-status)
   (global-set-key (kbd "C-x g c") #'magit-clone)
-  (global-set-key (kbd "C-x g g") #'magit/magit-status-no-split))
+  (global-set-key (kbd "C-x g s") #'magit/magit-status-no-split))
 
 (use-package forge)
-
-(use-package code-review
-  :bind (
-         :map forge-topic-mode-map
-         ("C-c r" . code-review-forge-pr-at-point)
-         ("C-c C-n" . code-review-comment-jump-next)
-         ("C-c C-p" . code-review-comment-jump-previous)))
-
-(use-package transient-posframe
-  :config
-  (setq transient-posframe-min-height 1
-        transient-posframe-min-width 1
-        transient-posframe-poshandler 'posframe/poshandler-window-bottom-center)
-  (transient-posframe-mode))
 
 (use-package yasnippet
   :config
@@ -1143,6 +766,7 @@ The structure of INFO can be found in docstring of
   (setf (alist-get 'prettier apheleia-formatters)
         '(npx "eslint" "--fix" file))
   (add-to-list 'apheleia-mode-alist '(js-mode . prettier))
+  (add-to-list 'apheleia-mode-alist '(typescript-mode . prettier))
   (apheleia-global-mode t))
 
 (use-package tree-sitter
@@ -1166,88 +790,6 @@ The structure of INFO can be found in docstring of
   :config
   (setq combobulate-flash-node nil))
 
-(require 'eldoc)
-(require 'posframe)
-
-(defgroup eldoc-posframe nil
-  "Display eldoc in tooltips using posframe.el."
-  :prefix "eldoc-posframe-"
-  :group 'eldoc)
-
-(defvar eldoc-posframe-buffer "*eldoc-posframe-buffer*"
-  "The posframe buffer name use by eldoc-posframe.")
-
-(defvar eldoc-posframe-hide-posframe-hooks
-  '(pre-command-hook post-command-hook focus-out-hook)
-  "The hooks which should trigger automatic removal of the posframe.")
-
-(defun eldoc-posframe-hide-posframe ()
-  "Hide messages currently being shown if any."
-  (posframe-hide eldoc-posframe-buffer)
-  (dolist (hook eldoc-posframe-hide-posframe-hooks)
-    (remove-hook hook #'eldoc-posframe-hide-posframe t)))
-
-(defun eldoc-posframe-show-posframe (format-string &rest args)
-  "Display FORMAT-STRING and ARGS, using posframe.el library."
-  (eldoc-posframe-hide-posframe)
-  (when format-string
-    (posframe-show
-     eldoc-posframe-buffer
-     :string (apply 'format format-string args)
-     :background-color (face-background 'eldoc-posframe-background-face nil t)
-     :internal-border-width 8
-     :posframe-width 80
-     :posframe-height 120
-     :parent-frame nil
-     :parent-frame-poshandler 'posframe-parent-frame-poshandler-xwininfo
-     :poshandler 'posframe/poshandler-window-top-or-bottom-right-corner)
-    (dolist (hook eldoc-posframe-hide-posframe-hooks)
-      (add-hook hook #'eldoc-posframe-hide-posframe nil t))))
-
-(defface eldoc-posframe-background-face
-  '((t :inherit highlight))
-  "The background color of the eldoc-posframe frame.
-Only the `background' is used in this face."
-  :group 'eldoc-posframe)
-
-(defun eldoc-posframe-enable ()
-  "Enable `eldoc-posframe-mode' minor mode."
-  (eldoc-posframe-mode 1))
-
-(defun eldoc-posframe-disable ()
-  "Disable `eldoc-posframe-mode' minor mode."
-  (eldoc-posframe-mode 0))
-
-(defun global-eldoc-posframe-enable ()
-  "Globally enable `eldoc-posframe-mode' minor mode."
-  (global-eldoc-posframe-mode 1))
-
-(defun global-eldoc-posframe-disable ()
-  "Globally disable `eldoc-posframe-mode' minor mode."
-  (global-eldoc-posframe-mode 0))
-
-;;;###autoload
-(define-minor-mode eldoc-posframe-mode
-  "A minor mode to show eldoc in a posframe."
-  :require 'eldoc-posframe-mode
-  :group 'eldoc-posframe
-  :init-value t
-  :lighter " ElDocPosframe"
-
-  (if eldoc-posframe-mode
-      (progn
-        (setq eldoc-message-function #'eldoc-posframe-show-posframe)
-        (eldoc-mode 1))
-    (setq eldoc-message-function #'eldoc-minibuffer-message)))
-
-;;;###autoload
-(define-globalized-minor-mode global-eldoc-posframe-mode eldoc-posframe-mode eldoc-posframe-enable
-  :group 'eldoc-posframe
-  :init-value t)
-
-(provide 'eldoc-posframe)
-(global-eldoc-posframe-mode 1)
-
 (use-package lsp-mode
   :defer t
   :init
@@ -1265,11 +807,8 @@ Only the `background' is used in this face."
                       (lsp)))
          (typescript-ts-mode . (lambda () 
                                  (lsp)))
-         (lsp-mode . (lambda ()
-                       (defun lsp-modeline--code-actions-icon (face)
-                         "Build the icon for modeline code actions using FACE."
-                         (propertize tab/space-between-status-element 'face face))
-                       (make-local-variable 'completion-at-point-functions)))
+         (typescript-mode . (lambda () 
+                                 (lsp)))
          ;; if you want which-key integration
          (lsp-mode . lsp-enable-which-key-integration))
   :commands lsp
@@ -1288,7 +827,7 @@ Only the `background' is used in this face."
    lsp-eslint-auto-fix-on-save nil
    lsp-signature-auto-activate t
    lsp-signature-render-documentation t
-   lsp-signature-function 'lsp/signature-posframe
+   lsp-signature-function 'lsp-lv-message
    lsp-headerline-breadcrumb-enable nil
    lsp-semantic-tokens-enable nil
    lsp-enable-folding nil
@@ -1296,48 +835,7 @@ Only the `background' is used in this face."
    lsp-modeline-code-actions-enable nil
    lsp-idle-delay 0.5
    lsp-completion-provider :none
-   lsp-enable-file-watchers nil)
-  (defvar lsp/signature-posframe-params
-    (list :poshandler #'posframe/poshandler-window-top-or-bottom-right-corner
-          :height 10
-          :width 60
-          :border-width 8
-          :min-width 60
-          :parent-frame nil)
-    "Params for signature and `posframe-show'.")
-
-  (defun lsp/signature-posframe (str)
-    "Use posframe to show the STR signatureHelp string."
-    (if str
-        (apply #'posframe-show
-               (with-current-buffer (get-buffer-create " *lsp-signature*")
-                 (erase-buffer)
-                 (insert str)
-                 (visual-line-mode 1)
-                 (lsp--setup-page-break-mode-if-present)
-                 (current-buffer))
-               (append
-                lsp/signature-posframe-params
-                (list :position (point)
-                      :background-color (face-attribute 'lsp-signature-posframe :background nil t)
-                      :foreground-color (face-attribute 'lsp-signature-posframe :foreground nil t)
-                      :border-color (face-attribute 'lsp-signature-posframe :background nil t))))
-      (posframe-hide " *lsp-signature*")))
-
-  (set-face-attribute 'lsp-signature-posframe nil :inherit 'hl-line))
-
-(defun disable-lsp-ltex ()
-  (interactive)
-  (lsp-workspace-shutdown 'lsp--cur-workspace))
-
-(use-package lsp-ltex
-  :config
-  (setq lsp-ltex-completion-enabled t)
-  :hook
-  (text-mode . (lambda ()
-                 (require 'lsp-ltex)
-                 (lsp)))
-  (yaml-mode . disable-lsp-ltex))
+   lsp-enable-file-watchers nil))
 
 (use-package dap-mode
   :config
@@ -1414,7 +912,7 @@ Only the `background' is used in this face."
 
   (require 'ejc-company)
   (push 'ejc-company-backend company-backends)
-
+  
   (add-hook 'ejc-sql-minor-mode-hook
             (lambda ()
               (company-mode t))))
@@ -1459,7 +957,7 @@ Only the `background' is used in this face."
   (if (derived-mode-p 'dired-mode)
       (get-buffer (replace-regexp-in-string "^[Directory ]*" "" (pwd)))
     (car (seq-filter (lambda (buf)
-                       (string-prefix-p (concat "Eshell: " (replace-regexp-in-string "/$" "" (doom-modeline-project-root)))
+                       (string-prefix-p (concat "Eshell: " (replace-regexp-in-string "/$" "" (consult--project-root)))
                                         (buffer-name buf)))
                      (buffer-list)))))
 
@@ -1469,10 +967,12 @@ Only the `background' is used in this face."
   (let ((eshell-buffer (eshell/get-relevant-buffer))
         (default-directory (if (derived-mode-p 'dired-mode)
                                (replace-regexp-in-string "^[Directory ]*" "" (pwd))
-                             (doom-modeline-project-root))))
+                             (consult--project-root))))
     (if eshell-buffer
         (switch-to-buffer eshell-buffer)
       (eshell 'N))))
+
+(global-set-key (kbd "C-c t") #'eshell/new-or-current)
 
 (use-package eshell
   :elpaca nil
@@ -1598,132 +1098,10 @@ Only the `background' is used in this face."
   ;;(add-hook 'eww-after-render-hook #'mixed-pitch-mode)
   (add-hook 'eww-after-render-hook 'eww/rename-buffer))
 
-(when (executable-find "mu")
-  (use-package mu4e
-    :elpaca nil
-    :ensure nil
-    :config
-    (setq mu4e-hide-index-messages t)
-    (setq mu4e-mu-binary (executable-find "mu"))
-    (setq mu4e-maildir "~/.maildir")
-    (setq mu4e-update-interval (* 1 60))
-    ;; use mu4e for e-mail in emacs
-    (setq mail-user-agent 'mu4e-user-agent)
-
-    (setq mu4e-drafts-folder "/[Gmail].Drafts")
-    (setq mu4e-sent-folder   "/[Gmail].Sent Mail")
-    (setq mu4e-trash-folder  "/[Gmail].Trash")
-
-    ;; don't save message to Sent Messages, Gmail/IMAP takes care of this
-    (setq mu4e-sent-messages-behavior 'delete)
-
-    ;; (See the documentation for `mu4e-sent-messages-behavior' if you have
-    ;; additional non-Gmail addresses and want assign them different
-    ;; behavior.)
-
-    ;; setup some handy shortcuts
-    ;; you can quickly switch to your Inbox -- press ``ji''
-    ;; then, when you want archive some messages, move them to
-    ;; the 'All Mail' folder by pressing ``ma''.
-
-    (setq mu4e-maildir-shortcuts
-          '( (:maildir "/INBOX"              :key ?i)
-             (:maildir "/[Gmail].Sent Mail"  :key ?s)
-             (:maildir "/[Gmail].Trash"      :key ?t)
-             (:maildir "/[Gmail].All Mail"   :key ?a)))
-
-    ;; allow for updating mail using 'U' in the main view:
-    (setq mu4e-get-mail-command "offlineimap")
-
-    ;; alternatively, for emacs-24 you can use:
-    ;;(setq message-send-mail-function 'smtpmail-send-it
-    ;;     smtpmail-stream-type 'starttls
-    ;;     smtpmail-default-smtp-server "smtp.gmail.com"
-    ;;     smtpmail-smtp-server "smtp.gmail.com"
-    ;;     smtpmail-smtp-service 587)
-
-    ;; don't keep message buffers around
-    (setq message-kill-buffer-on-exit t))
-
-  (use-package mu4e-alert
-    :config
-    (setq mu4e-alert-interesting-mail-query
-          (concat
-           "flag:unread"
-           " AND maildir:"
-           "\"/INBOX\""))
-
-    (defun mu4e-alert-default-mode-line-formatter (mail-count)
-      "Default formatter used to get the string to be displayed in the mode-line.
-MAIL-COUNT is the count of mails for which the string is to displayed."
-      (when (not (zerop mail-count))
-        (if (zerop mail-count)
-            " "
-          (format (concat tab/space-between-status-element "%d   ") mail-count))))
-
-    (defun mu4e-alert-enable-mode-line-display ()
-      "Enable display of unread emails in mode-line."
-      (interactive)
-      (add-to-list 'global-mode-string '(:eval mu4e-alert-mode-line))
-      (add-hook 'mu4e-index-updated-hook #'mu4e-alert-update-mail-count-modeline)
-      (add-hook 'mu4e-message-changed-hook #'mu4e-alert-update-mail-count-modeline)
-      (advice-add #'mu4e-context-switch :around #'mu4e-alert--context-switch)
-      (mu4e-alert-update-mail-count-modeline))
-    (mu4e-alert-enable-mode-line-display)))
-
-(defun utils/window-with-buffer-prefix (prefix)
-  "Returns the first window displaying a buffer starting with prefix"
-  (seq-find (lambda (win) (string-prefix-p prefix (buffer-name (window-buffer win)))) (window-list)))
-
-(setq gnus-use-full-window nil
-      gnus-inhibit-images nil)
-
-(add-hook 'gnus-startup-hook
-          '(lambda ()
-             (gnus-demon-init)
-             (doom-modeline-start-gnus-listener)
-             (setq gnus-demon-timestep 60)  ;; each timestep is 60 seconds
-             ;; Check for new mail every 1 timestep (1 minute)
-             (gnus-demon-add-handler 'gnus-demon-scan-news 1 t)
-             (defun gnus-configure-windows (setting &optional force)
-               (pcase setting
-                 ('summary (let ((win (utils/window-with-buffer-prefix "*Summary")))
-                             (if win
-                                 (set-window-buffer win gnus-summary-buffer)
-                               (set-window-buffer (selected-window) gnus-summary-buffer))
-                             (select-window (get-buffer-window gnus-summary-buffer))))))
-
-             ;; Don't crash gnus if disconnected
-             (defadvice gnus-demon-scan-news (around gnus-demon-timeout activate)
-               "Timeout for Gnus."
-               (with-timeout
-                   (120 (message "Gnus timed out."))
-                 ad-do-it))))
-
-(when window-system
-  (setq )
-  (setq gnus-sum-thread-tree-indent "  ")
-  (setq gnus-sum-thread-tree-root "")
-  (setq gnus-sum-thread-tree-false-root "")
-  (setq gnus-sum-thread-tree-single-indent "")
-  (setq gnus-sum-thread-tree-vertical        "│")
-  (setq gnus-sum-thread-tree-leaf-with-other "├─► ")
-  (setq gnus-sum-thread-tree-single-leaf     "╰─► "))
-(setq gnus-summary-line-format
-      (concat
-       "%0{%U%R%z%}"
-       "%3{│%}" "%1{%-8,8d%}" "%3{│%}" ;; date
-       "  "
-       "%4{%-20,20f%}"               ;; name
-       "  "
-       "%3{│%}"
-       " "
-       "%1{%B%}"
-       "%s\n"))
-(setq gnus-summary-display-arrow t)
-
 (add-hook 'elpaca-after-init-hook
-          #'(lambda ()
-              (let ((local-settings "~/.emacs.d/local.el"))
-                (when (file-exists-p local-settings)
-                  (load-file local-settings)))))
+      #'(lambda ()
+  	(let ((local-settings "~/.emacs.d/local.el"))
+  	  (when (file-exists-p local-settings)
+  	    (load-file local-settings)))
+  	(eval-after-load "frames-only-mode"
+  	  (frames-only-mode 1))))
