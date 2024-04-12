@@ -1,0 +1,219 @@
+#+TITLE: Waybar configuration
+
+* Style
+ #+BEGIN_SRC css :tangle .config/waybar/style.css :mkdirp yes
+   ,* {
+       border: none;
+       border-radius: 0;
+       font-family: SauceCodePro NF, monospace;
+       font-weight: bold;
+       font-size: 16px;
+       min-height: 0;
+   }
+
+   window#waybar {
+       background: rgba(21, 18, 27, 0);
+       color: #f8f8f2;
+   }
+
+   tooltip {
+       background: #282a36;
+       border-radius: 10px;
+       border-width: 3px;
+       border-style: solid;
+       border-color: #bd93f9;
+   }
+
+   #workspaces button {
+       padding: 3px;
+       color: #6272a4;
+   }
+
+   #workspaces button.active {
+       color: #bd93f9;
+   }
+
+   #workspaces button.focused {
+       color: #f8f8f2;
+       background: #9aedfe;
+       border-radius: 10px;
+   }
+
+   #workspaces button.urgent {
+       color: #bd93f9;
+       background: #f8f8f2;
+       border-radius: 10px;
+   }
+
+   #workspaces button:hover {
+       border-radius: 10px;
+       border-width: 3px;
+       border-color: #bd93f9;
+   }
+
+   #mpris,
+   #window,
+   #clock,
+   #battery,
+   #pulseaudio,
+   #network,
+   #workspaces,
+   #tray {
+       padding: 0px 10px;
+       margin-right: 5px;
+       margin-top: 5px;
+   }
+
+   #mpris,
+   #battery,
+   #clock,
+   #tray {
+       color: #f8f8f2;
+       background: #282a36;
+       border-radius: 10px;
+       margin-right: 5px;
+   }
+
+   #workspaces {
+       background: #282a36;
+       border-radius: 10px;
+       margin-left: 5px;
+       padding-right: 0px;
+       padding-left: 0px;
+       border: 1px solid #282836;
+   }
+
+   #pulseaudio {
+       color: #f8f8f2;
+       background: #282a36;
+       border-radius: 10px;
+       border-left: 0px;
+       border-right: 0px;
+       min-width: 5px;
+   }
+
+   #window {
+       color: #f8f8f2;
+       background: #282a36;
+       border-radius: 10px;
+       margin-left: 5px;
+       margin-right: 60px;
+   }
+
+   window#waybar.empty  #window{
+       border: 0px;
+       margin: 0Px;
+       padding: 0px;
+       background-color: transparent;
+   }
+
+   #clock {
+       border-radius: 10px;
+       margin-right: 5px;
+       border-right: 0px;
+   }
+
+   #mpris {
+       border-radius: 0px 0px 0px 0px;
+       border-left: 0px;
+       border-right: 0px;
+   }
+#+END_SRC
+
+* Configuration
+ #+BEGIN_SRC json :tangle .config/waybar/config.jsonc :mkdirp yes
+{
+    "layer": "top",
+    "position": "top",
+    "mod": "dock",
+    "exclusive": true,
+    "passthrough": false,
+    "gtk-layer-shell": true,
+    "height": 0,
+    "modules-left": ["hyprland/window"],
+    "modules-center": ["hyprland/workspaces"],
+    "modules-right": [
+        "tray",
+        "pulseaudio",
+        "mpris",
+        "clock",
+        "battery"
+    ],
+
+    "hyprland/window": {
+        "format": "{}"
+    },
+    "hyprland/workspaces": {
+        "disable-scroll": true,
+        "all-outputs": false,
+        "on-click": "activate",
+        //"format": "{icon}",
+    },
+
+    "mpris": {
+      "format": "<span size='x-large' rise='-3000'>{status_icon}</span> {length}",
+      "format-paused": "<span size='x-large' rise='-3000'>{status_icon}</span> <i>{position}/{length}</i>",
+      "player-icons": {
+                      "default": "▶",
+                      "mpv": ""
+                      },
+      "status-icons": {
+        "playing": "▶",
+        "paused": ""
+      },
+      // "ignored-players": ["firefox"]
+    },
+
+    "mpd": {
+      "format": "<span size='x-large' rise='-3000'></span> <span size='x-large' rise='-3000'>{stateIcon}</span> <span size='x-large' rise='-3000'>{consumeIcon}</span><span size='x-large' rise='-3000'>{randomIcon}</span><span size='x-large' rise='-3000'>{repeatIcon}</span><span size='x-large' rise='-3000'>{singleIcon}</span> {title}",
+      "format-disconnected": " Disconnected",
+      "format-stopped": " {consumeIcon}{randomIcon}{repeatIcon}{singleIcon}Not Playing",
+      "interval": 10,
+      "consume-icons": {
+        "on": " " // Icon shows only when "consume" is on
+      },
+      "random-icons": {
+        "on": " "
+      },
+      "repeat-icons": {
+        "on": " "
+      },
+      "single-icons": {
+        "on": "1 "
+      },
+      "state-icons": {
+        "paused": "",
+        "playing": ""
+      },
+      "tooltip-format": "MPD (connected)",
+      "tooltip-format-disconnected": "MPD (disconnected)"
+    },
+    "tray": {
+        "icon-size": 18,
+        "spacing": 10
+    },
+    "clock": {
+        "format": "<span size='x-large' rise='-3000'></span> {:%d %b  <span size='x-large' rise='-3000'></span> %H:%M}",
+        "tooltip-format": "<big>{:%Y}</big>\n<tt><small>{calendar}</small></tt>"
+    },
+    "battery": {
+        "format": "<span size='x-large' rise='-3000'>{icon}</span> {capacity}%",
+        "format-icons": ["", "", "", "", ""],
+    },
+     "pulseaudio": {
+        "format": "<span size='x-large' rise='-3000'>{icon}</span> {volume}%",
+        "tooltip": false,
+        "format-muted": "Muted ",
+        "scroll-step": 5,
+        "format-icons": {
+            "headphone": "",
+            "hands-free": "",
+            "headset": "",
+            "phone": "",
+            "portable": "",
+            "car": "",
+            "default": ["", "", ""]
+        }
+    },
+}
+#+END_SRC

@@ -112,3 +112,4 @@ emacs/.emacs.d/amx-items
 emacs/.emacs.d/history
 /emacs/.emacs.d/elpaca/
 /emacs/nohup.out
+/emacs/.emacs.d/tree-sitter/

@@ -86,7 +86,6 @@
 
 (use-package no-littering)
 
-(setq global-auto-revert-non-file-buffers t)
 (global-auto-revert-mode 1)
 (require 'bind-key)
 (bind-key* "C-x k" #'kill-current-buffer)
@@ -422,19 +421,13 @@
     (when (or (string-equal (buffer-file-name)
                             (expand-file-name "~/.dotfiles/README.org"))
               (string-equal (buffer-file-name)
-                            (expand-file-name "~/.dotfiles/qutebrowser/README.org"))
+                            (expand-file-name "~/.dotfiles/hyprland/README.org"))
+              (string-equal (buffer-file-name)
+                            (expand-file-name "~/.dotfiles/waybar/README.org"))
               (string-equal (buffer-file-name)
                             (expand-file-name "~/.dotfiles/emacs/README.org"))
               (string-equal (buffer-file-name)
                             (expand-file-name "~/.dotfiles/emacs/desktop.org"))
-              (string-equal (buffer-file-name)
-                            (expand-file-name "~/.dotfiles/herbstluftwm/README.org"))
-              (string-equal (buffer-file-name)
-                            (expand-file-name "~/.dotfiles/rofi/README.org"))
-              (string-equal (buffer-file-name)
-                            (expand-file-name "~/.dotfiles/polybar/README.org"))
-              (string-equal (buffer-file-name)
-                            (expand-file-name "~/.dotfiles/kmonad/README.org"))
               (string-equal (buffer-file-name)
                             (expand-file-name "~/.dotfiles/emacs/local.org")))
       ;; Dynamic scoping to the rescue
@@ -523,11 +516,19 @@
   :config
   (global-set-key (kbd "C-=") 'easy-mark))
 
+(use-package goto-last-change
+  :config
+  (global-set-key (kbd "C-z") 'goto-last-change))
+
 (use-package vundo
   :config
   (setq vundo-glyph-alist vundo-unicode-symbols)
   (global-unset-key (kbd "C-?"))
   (global-set-key (kbd "C-?") 'vundo))
+
+(use-package frames-only-mode
+  :config
+  (frames-only-mode))
 
 (use-package hideshow
   :elpaca nil
@@ -598,6 +599,17 @@
     (setq ediff-window-setup-function 'ediff-setup-windows-plain
           ediff-split-window-function 'split-window-horizontally))
 
+(use-package string-inflection
+  :config
+  (global-set-key (kbd "C-c C-u C-u") 'string-inflection-upcase)
+  (global-set-key (kbd "C-c C-u C-k") 'string-inflection-kebab-case)
+
+  (global-set-key (kbd "C-c C-u C-c") 'string-inflection-lower-camelcase)
+  (global-set-key (kbd "C-c C-u C-S-c") 'string-inflection-camelcase)
+
+  (global-set-key (kbd "C-c C-u C--") 'string-inflection-underscore)
+  (global-set-key (kbd "C-c C-u C-_") 'string-inflection-capital-underscore))
+
 (use-package sudo-edit)
 
 (use-package which-key
@@ -629,7 +641,6 @@
     (interactive)
     (setq ibuffer-filter-groups
           (append
-           (list '("EXWM" (mode . exwm-mode)))
            (ibuffer-vc-generate-filter-groups-by-vc-root)
            ibuffer-saved-filter-groups))
 
@@ -641,6 +652,7 @@
 
   (add-hook 'ibuffer-hook 'ibuffer/apply-filter-groups)
   (add-hook 'ibuffer-hook 'ibuffer-auto-mode))
+(global-set-key (kbd "C-x C-b") 'ibuffer)
 
 (use-package blist
   :config
@@ -759,36 +771,24 @@
 
 (use-package jest-test-mode 
   :commands jest-test-mode
-  :hook (typescript-mode js-mode typescript-tsx-mode))
+  :hook (typescript-mode typescript-ts-mode js-mode js-ts-mode typescript-tsx-mode))
 
 (use-package apheleia
   :config
   (setf (alist-get 'prettier apheleia-formatters)
         '(npx "eslint" "--fix" file))
   (add-to-list 'apheleia-mode-alist '(js-mode . prettier))
+  (add-to-list 'apheleia-mode-alist '(js-ts-mode . prettier))
   (add-to-list 'apheleia-mode-alist '(typescript-mode . prettier))
+  (add-to-list 'apheleia-mode-alist '(typescript-ts-mode . prettier))
   (apheleia-global-mode t))
 
-(use-package tree-sitter
-  :ensure t
+(use-package treesit-auto
+  :custom
+  (treesit-auto-install 'prompt)
   :config
-  ;; activate tree-sitter on any buffer containing code for which it has a parser available
-  (global-tree-sitter-mode)
-  ;; you can easily see the difference tree-sitter-hl-mode makes for python, ts or tsx
-  ;; by switching on and off
-  (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
-
-(use-package tree-sitter-langs
-  :ensure t
-  :after tree-sitter)
-
-(use-package combobulate
-  :elpaca nil
-  :hook ((python-mode . combobulate-mode)
-         (js-mode . combobulate-mode)
-         (typescript-mode . combobulate-mode))
-  :config
-  (setq combobulate-flash-node nil))
+  (treesit-auto-add-to-auto-mode-alist 'all)
+  (global-treesit-auto-mode))
 
 (use-package lsp-mode
   :defer t
@@ -804,6 +804,8 @@
          ("M-." . lsp-find-definition))
   :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
          (js-mode . (lambda () 
+                      (lsp)))
+         (js-ts-mode . (lambda () 
                       (lsp)))
          (typescript-ts-mode . (lambda () 
                                  (lsp)))
@@ -968,8 +970,10 @@
         (default-directory (if (derived-mode-p 'dired-mode)
                                (replace-regexp-in-string "^[Directory ]*" "" (pwd))
                              (consult--project-root))))
+    
+    (pop-to-buffer (current-buffer) 'display-buffer-pop-up-frame)
     (if eshell-buffer
-        (switch-to-buffer eshell-buffer)
+       (switch-to-buffer eshell-buffer)
       (eshell 'N))))
 
 (global-set-key (kbd "C-c t") #'eshell/new-or-current)
@@ -981,7 +985,11 @@
 
 (use-package eat
   :config
-  (setq eat-term-terminfo-directory (concat elpaca-repos-directory "emacs-eat/terminfo"))
+  (setq
+   eat-term-terminfo-directory (concat elpaca-repos-directory "emacs-eat/terminfo")
+   )
+  (setq eshell-visual-commands '())
+
   (add-hook 'eshell-load-hook #'eat-eshell-mode)
   (add-hook 'eshell-load-hook #'eat-eshell-visual-command-mode))
 
