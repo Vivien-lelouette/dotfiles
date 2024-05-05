@@ -113,3 +113,5 @@ emacs/.emacs.d/history
 /emacs/.emacs.d/elpaca/
 /emacs/nohup.out
 /emacs/.emacs.d/tree-sitter/
+/emacs/.emacs.d/dape-breakpoints
+/fonts/.local/share/fonts/NFM.ttf

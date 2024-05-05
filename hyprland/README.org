@@ -80,6 +80,10 @@ general {
 decoration {
     rounding = 10
     col.shadow = rgba(1E202900)
+    blur {
+        ignore_opacity = true
+        passes = 2
+    }
 }
 
 group {
@@ -91,10 +95,11 @@ group {
         priority = 3
         height = 30
         col.active = rgb(7c60a3)
-        col.inactive = rgb(232530)
+        col.inactive = rgba(232530cc)
     }
 }
 windowrulev2 = bordercolor rgb(ff5555),xwayland:1 # check if window is xwayland
+windowrulev2 = opacity 1.0 0.85 1.0,class:(.*)
 #+END_SRC
 
  #+BEGIN_SRC config :tangle .config/hypr/hyprland.conf :mkdirp yes
@@ -114,6 +119,8 @@ env = XCURSOR_SIZE,32
  #+BEGIN_SRC config :tangle .config/hypr/hyprland.conf :mkdirp yes
 animation = windowsIn,0
 animation = windowsOut,0
+
+animation = border,0
 #+END_SRC
 
  #+BEGIN_SRC config :tangle .config/hypr/hyprland.conf :mkdirp yes
@@ -160,17 +167,17 @@ bind = $mainMod SHIFT, n, movewindow, d
 
 *** Resizes the active window
  #+BEGIN_SRC config :tangle .config/hypr/hyprland.conf :mkdirp yes
-bind = $mainMod SHIFT, bracketleft, resizeactive, -20 0
-bind = $mainMod SHIFT, bracketright, resizeactive, 20 0
-bind = $mainMod SHIFT, V, resizeactive, 0 -20
-bind = $mainMod, V, resizeactive, 0 20
+binde = $mainMod SHIFT, bracketleft, resizeactive, -60 0
+binde = $mainMod SHIFT, bracketright, resizeactive, 60 0
+binde = $mainMod SHIFT, V, resizeactive, 0 -60
+binde = $mainMod, V, resizeactive, 0 60
 #+END_SRC
 
 *** Tabs
  #+BEGIN_SRC config :tangle .config/hypr/hyprland.conf :mkdirp yes
-bind= $mainMod ALT, t, togglegroup,
-binde= $mainMod SHIFT, t, changegroupactive, b
-binde= $mainMod, t, changegroupactive, f
+bind= $mainMod ALT, TAB, togglegroup,
+binde= $mainMod SHIFT, TAB, changegroupactive, b
+binde= $mainMod, TAB, changegroupactive, f
 bind= $mainMod, q, moveoutofgroup,
 bind= $mainMod ALT, b, moveintogroup, l
 bind= $mainMod ALT, p, moveintogroup, u
@@ -283,11 +290,18 @@ bindl = $mainMod SHIFT, s, exec, if pidof wf-recorder; then pkill -SIGINT wf-rec
 *** Applications
 Example binds, see https://wiki.hyprland.org/Configuring/Binds/ for more
  #+BEGIN_SRC config :tangle .config/hypr/hyprland.conf :mkdirp yes
-bind = $mainMod, Return, exec, alacritty
+bind = $mainMod SHIFT, Return, exec, alacritty
+bind = $mainMod, Return, exec, if ! pidof emacs; then bash -l -c 'emacs --daemon'; fi; emacsclient -c -n -e '(eshell/new-or-current)'
+
 bind = $mainMod, X, exec, wofi --show drun
 
-bind = $mainMod, E, exec, if ! pidof emacs; then bash -l -c 'emacs --daemon'; fi; emacsclient -c -n -e '(switch-to-buffer nil)'
-bind = $mainMod, I, exec, vivaldi
+bind = $mainMod, E, exec, if ! pidof emacs; then bash -l -c 'emacs --daemon'; fi; emacsclient -c -n -e '(switch-to-buffer (window-buffer (selected-window)))'
+bind = $mainMod SHIFT, E, exec, if ! pidof emacs; then bash -l -c 'emacs --daemon'; fi; emacsclient -c -n -e '(switch-to-buffer nil)'
+
+bind = $mainMod, J, exec, if ! pidof emacs; then bash -l -c 'emacs --daemon'; fi; emacsclient -c -n -e '(with-current-buffer (window-buffer (selected-window)) (dired-jump))'
+
+bind = $mainMod, I, exec, if ! pidof emacs; then bash -l -c 'emacs --daemon'; fi; emacsclient -c -n -e '(eww "https://www.google.com")'
+bind = $mainMod SHIFT, I, exec, vivaldi
 #+END_SRC
 
 ** Starting Applications
@@ -296,5 +310,9 @@ exec-once = hyprpaper
 exec-once = waybar
 exec-once = systemctl --user start xremap
 exec-once = nm-applet --indicator
+
+exec-once = bash -l -c "gsettings set org.gnome.desktop.interface gtk-theme 'Dracula'"
+exec-once = bash -l -c "gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'"
+
 exec-once = bash -l -c 'emacs --daemon'
 #+END_SRC

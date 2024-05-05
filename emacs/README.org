@@ -94,7 +94,7 @@
 #+end_src
 
 ** Less verbose prompt
-#+BEGIN_SRC emacs-lis
+#+BEGIN_SRC emacs-lisp
   (defalias 'yes-or-no-p 'y-or-n-p)
   (setq xref-prompt-for-identifier nil
         comint-prompt-read-only t
@@ -176,8 +176,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 
 ** Indentation
 #+BEGIN_SRC emacs-lisp
-  (setq tab-always-indent t
-        indent-tabs-mode nil
+  (setq indent-tabs-mode nil
         indent-line-function 'insert-tab)
   
   (setq-default indent-tabs-mode nil)
@@ -223,12 +222,13 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 ** Lines style
 #+begin_src emacs-lisp
   (setq
-   display-line-numbers-type 'absolute
+   display-line-numbers-type 'relative
    mode-line-percent-position nil)
   (global-display-line-numbers-mode 1)
+  (add-hook 'completion-list-mode-hook (lambda () (display-line-numbers-mode 0)))
   (line-number-mode 0)
   (column-number-mode 0)
-  (global-hl-line-mode 1)
+  (global-hl-line-mode 0)
 #+end_src
 
 ** Log level
@@ -256,41 +256,22 @@ As bookmarks are at the center of my workflow, this is a crucial option.
         window-divider-default-bottom-width 22)
 
   (window-divider-mode 1)
-  (defun theme/minibuffer-echo-area ())
-
-  (defun window/set-header-gap (window)
-    (with-selected-window window
-      (if (window-in-direction 'above)
-          (set-window-parameter window 'tab-line-format "")
-        (set-window-parameter window 'tab-line-format 'none))))
-
-  (defun window/set-current-header-gap ()
-    (interactive)
-    (window/set-header-gap (selected-window)))
-
-  (defun window/set-all-header-gaps ()
-    (interactive)
-    (theme/minibuffer-echo-area)
-    (dolist (frame (frame-list))
-      (with-selected-frame frame
-        (dolist (window (window-list))
-          (window/set-header-gap window)))))
-
-
-  (add-hook 'window-configuration-change-hook #'window/set-all-header-gaps)
 #+END_SRC
 
 ** Fonts setting
 #+BEGIN_SRC emacs-lisp
-  (setq-default fill-column 100)
+  (setq-default fill-column 120)
 
-  (set-face-attribute 'default nil :font "SauceCodePro NF-11")
+  (defun fonts/set-fonts ()
+    (interactive)
+    (set-face-attribute 'default nil :font "SauceCodePro NF-11")
 
-  ;; Set the fixed pitch face
-  (set-face-attribute 'fixed-pitch nil :font "SauceCodePro NF-11")
+    ;; Set the fixed pitch face
+    (set-face-attribute 'fixed-pitch nil :font "SauceCodePro NF-11")
 
-  ;; Set the variable pitch face
-  (set-face-attribute 'variable-pitch nil :font "Cantarell-11" :weight 'regular)
+    ;; Set the variable pitch face
+    (set-face-attribute 'variable-pitch nil :font "Cantarell-11" :weight 'regular))
+  (add-hook 'server-after-make-frame-hook #'fonts/set-fonts)
 
   (defun disable-mixed-pitch ()
     (interactive)
@@ -331,25 +312,25 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     :if (display-graphic-p))
 #+END_SRC
 
-* Simple modeline
-#+BEGIN_SRC emacs-lisp
-  (use-package simple-modeline
-    :hook (after-init . simple-modeline-mode))
-#+END_SRC
+* Doom modeline
+#+begin_src emacs-lisp
+  (use-package doom-modeline
+    :hook (after-init . doom-modeline-mode))
+#+end_src
 
 * Search & completion
 ** Built-in setup
 #+begin_src emacs-lisp
-    (setq tab-always-indent t
-          completions-format 'one-column
-          completions-header-format nil
-          completion-show-help t
-          completion-show-inline-help t
-          completions-max-height nil
-          completion-auto-select nil)
+  (setq tab-always-indent 'complete)
+  ;;       completions-format 'one-column
+  ;;       completions-header-format nil
+  ;;       completion-show-help t
+  ;;       completion-show-inline-help t
+  ;;       completions-max-height nil
+  ;;       completion-auto-select nil)
 
-    (setq-default isearch-lazy-count t
-                  isearch-allow-motion t)
+  (setq-default isearch-lazy-count t
+                isearch-allow-motion t)
   #+end_src
 
 ** Vertico
@@ -358,7 +339,11 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     :config
     (load-file "~/.emacs.d/elpaca/repos/vertico/extensions/vertico-multiform.el")
     (load-file "~/.emacs.d/elpaca/repos/vertico/extensions/vertico-flat.el")
+    (load-file "~/.emacs.d/elpaca/repos/vertico/extensions/vertico-buffer.el")
+    
     (setq vertico-cycle t
+          vertico-buffer-mode nil
+          vertico-buffer-display-action 'display-buffer-in-child-frame
           vertico-flat-format '(:multiple
                                 #("| %s" 0 1
                                   (face minibuffer-prompt)
@@ -383,34 +368,123 @@ As bookmarks are at the center of my workflow, this is a crucial option.
                                 #("…" 0 1
                                   (face minibuffer-prompt))
                                 :no-match "| No match"))
+    
     (vertico-mode 1))
 #+END_SRC
 
-** Company
-#+BEGIN_SRC emacs-lisp
-  (use-package company
-    :hook (emacs-lisp-mode . (lambda () (setq-local company-backends '(company-elisp))))
-    :bind (:map company-active-map
-                ("<tab>" . company-complete-selection))
-    (:map company-active-map
-          ("<return>" . nil)
-          ("RET" . nil)
-          ("M-<return>" . company-complete-selection))
+*** Vertico posframe
+#+begin_src emacs-lisp
+  (use-package vertico-posframe
+    :ensure (:host github :repo "tumashu/vertico-posframe")
     :config
-    (setq company-require-match nil
-          company-minimum-prefix-length 1
-          company-idle-delay 0.3
-          company-selection-wrap-around t
-          company-tooltip-limit 10
-          company-backends '((company-files :separate company-yasnippet :separate company-capf)))
-    (global-company-mode))
+    (vertico-posframe-mode 1))
+#+end_src
 
-  (use-package company-box
-    :hook (company-mode . company-box-mode)
+** Corfu
+#+BEGIN_SRC emacs-lisp
+  (use-package corfu
+    :init
+    (global-corfu-mode)
     :config
-    (setq
-     company-box-scrollbar nil
-     company-box-doc-enable nil))
+    (setq corfu-auto t
+          corfu-auto-prefix 1
+          corfu-echo-documentation t
+          corfu-quit-no-match 'separator
+          corfu-preselect 'valid)
+    
+    (add-hook 'eshell-mode-hook
+              (lambda ()
+                (setq-local corfu-auto nil)
+                (corfu-mode)))
+    
+    (defun corfu-send-shell (&rest _)
+      "Send completion candidate when inside comint/eshell."
+      (cond
+       ((and (derived-mode-p 'eshell-mode) (fboundp 'eshell-send-input))
+        (eshell-send-input))
+       ((and (derived-mode-p 'comint-mode)  (fboundp 'comint-send-input))
+        (comint-send-input))))
+    (advice-add #'corfu-insert :after #'corfu-send-shell)
+    
+    ;; Enable Corfu more generally for every minibuffer, as long as no other
+    ;; completion UI is active. If you use Mct or Vertico as your main minibuffer
+    ;; completion UI. From
+    ;; https://github.com/minad/corfu#completing-with-corfu-in-the-minibuffer
+    (defun corfu-enable-always-in-minibuffer ()
+      "Enable Corfu in the minibuffer if Vertico/Mct are not active."
+      (unless (or (bound-and-true-p mct--active) ; Useful if I ever use MCT
+                  (bound-and-true-p vertico--input))
+        (setq-local corfu-auto nil)       ; Ensure auto completion is disabled
+        (corfu-mode 1)))
+    (add-hook 'minibuffer-setup-hook #'corfu-enable-always-in-minibuffer 1))
+
+  (use-package corfu-terminal
+    :config
+    (unless (display-graphic-p)
+      (corfu-terminal-mode +1)))
+#+END_SRC
+
+*** Cape
+#+BEGIN_SRC emacs-lisp
+  (use-package cape
+    ;; Bind dedicated completion commands
+    ;; Alternative prefix keys: C-c p, M-p, M-+, ...
+    :bind (("C-c p p" . completion-at-point) ;; capf
+           ("C-c p t" . complete-tag)        ;; etags
+           ("C-c p d" . cape-dabbrev)        ;; or dabbrev-completion
+           ("C-c p h" . cape-history)
+           ("C-c p f" . cape-file)
+           ("C-c p k" . cape-keyword)
+           ("C-c p s" . cape-elisp-symbol)
+           ("C-c p e" . cape-elisp-block)
+           ("C-c p a" . cape-abbrev)
+           ("C-c p l" . cape-line)
+           ("C-c p w" . cape-dict)
+           ("C-c p :" . cape-emoji)
+           ("C-c p \\" . cape-tex)
+           ("C-c p _" . cape-tex)
+           ("C-c p ^" . cape-tex)
+           ("C-c p &" . cape-sgml)
+           ("C-c p r" . cape-rfc1345))
+    :init
+    ;; Add to the global default value of `completion-at-point-functions' which is
+    ;; used by `completion-at-point'.  The order of the functions matters, the
+    ;; first function returning a result wins.  Note that the list of buffer-local
+    ;; completion functions takes precedence over the global list.
+    (add-to-list 'completion-at-point-functions #'tempel-complete)
+    (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+    (add-to-list 'completion-at-point-functions #'cape-file)
+    (add-to-list 'completion-at-point-functions #'cape-elisp-block)
+    ;;(add-to-list 'completion-at-point-functions #'cape-history)
+    ;;(add-to-list 'completion-at-point-functions #'cape-keyword)
+    ;;(add-to-list 'completion-at-point-functions #'cape-tex)
+    ;;(add-to-list 'completion-at-point-functions #'cape-sgml)
+    ;;(add-to-list 'completion-at-point-functions #'cape-rfc1345)
+    ;;(add-to-list 'completion-at-point-functions #'cape-abbrev)
+    ;;(add-to-list 'completion-at-point-functions #'cape-dict)
+    ;;(add-to-list 'completion-at-point-functions #'cape-elisp-symbol)
+    ;;(add-to-list 'completion-at-point-functions #'cape-line)
+    )
+#+END_SRC
+
+*** Kind-icon
+#+BEGIN_SRC emacs-lisp
+  (use-package kind-icon
+    :after corfu
+    :custom
+    (kind-icon-use-icons t)
+    (kind-icon-default-face 'corfu-default) ; Have background color be the same as `corfu' face background
+    (kind-icon-blend-background nil)  ; Use midpoint color between foreground and background colors ("blended")?
+    (kind-icon-blend-frac 0.08)
+
+    ;; NOTE 2022-02-05: `kind-icon' depends `svg-lib' which creates a cache
+    ;; directory that defaults to the `user-emacs-directory'. Here, I change that
+    ;; directory to a location appropriate to `no-littering' conventions, a
+    ;; package which moves directories of other packages to sane locations.
+    (svg-lib-icons-dir (no-littering-expand-var-file-name "svg-lib/cache/")) ; Change cache dir
+    :config
+    (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter) ; Enable `kind-icon'
+    )
 #+END_SRC
 
 ** Embark
@@ -475,19 +549,10 @@ As bookmarks are at the center of my workflow, this is a crucial option.
           xref-show-xrefs-function #'consult-xref
           xref-show-definitions-function #'consult-xref
           consult-buffer-sources '(consult--source-hidden-buffer consult--source-modified-buffer consult--source-buffer consult--source-recent-file consult--source-file-register consult--source-project-buffer-hidden consult--source-project-recent-file-hidden))
+    (consult-preview-at-point-mode 0)
 
     (advice-add #'register-preview :override #'consult-register-window)
     :config
-    (consult-customize
-     consult-theme
-     :preview-key "M-."
-     consult-ripgrep consult-git-grep consult-grep
-     consult-bookmark consult-recent-file consult-xref
-     consult--source-bookmark consult--source-recent-file
-     consult--source-buffer
-     :preview-key "M-."
-     consult--source-project-recent-file
-     :preview-key "M-.")
     (setq consult-narrow-key "<"))
 
   (use-package embark-consult)
@@ -514,7 +579,9 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (load-file "~/.emacs.d/custom_packages/org-flyimage.el")
     (with-eval-after-load "org"
       (require 'org-flyimage)
-      (add-hook 'org-mode-hook 'org-flyimage-mode))
+      (add-hook 'org-mode-hook 'org-flyimage-mode)
+      (require 'org-indent)
+      (add-hook 'org-mode-hook 'org-indent-mode))
 
     (defun org/org-babel-tangle-config ()
       (when (or (string-equal (buffer-file-name)
@@ -539,38 +606,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
      '(org-level-3 ((t (:inherit outline-3 :height 1.4))))
      '(org-level-4 ((t (:inherit outline-4 :height 1.2))))
      '(org-level-5 ((t (:inherit outline-5 :height 1.0))))))
-#+END_SRC
-
-** Org modern (pimp my org)
-#+BEGIN_SRC emacs-lisp
-  (use-package org-modern
-    :config
-    (setq
-     ;; Edit settings
-     org-auto-align-tags nil
-     org-tags-column 0
-     org-catch-invisible-edits 'show-and-error
-     org-special-ctrl-a/e t
-     org-insert-heading-respect-content t
-
-     ;; Org styling, hide markup etc.
-     org-hide-emphasis-markers t
-     org-pretty-entities nil
-     org-ellipsis "…"
-
-     ;; Agenda styling
-     org-agenda-block-separator ?─
-     org-agenda-time-grid
-     '((daily today require-timed)
-       (800 1000 1200 1400 1600 1800 2000)
-       " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
-     org-agenda-current-time-string
-     "⭠ now ─────────────────────────────────────────────────")
-
-    ;; Enable org-modern-mode
-    (add-hook 'org-mode-hook #'org-modern-mode)
-    (add-hook 'orgtbl-mode #'org-modern-mode)
-    (add-hook 'org-agenda-finalize-hook #'org-modern-agenda))
 #+END_SRC
 
 * Time package
@@ -603,40 +638,20 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (bind-key "M-j" #'avy-goto-char-timer))
 #+END_SRC
 
-** Multiple cursors (with macrursors)
+** Multiple cursors
+#+BEGIN_SRC emacs-lisp
   (use-package multiple-cursors
+    :ensure (:host github :repo "magnars/multiple-cursors.el")
     :hook
     ((multiple-cursors-mode . (lambda ()
                                 (set-face-attribute 'mc/cursor-bar-face nil :height 1 :background nil :inherit 'cursor))))
     :config
     (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
-    (global-set-key (kbd "C->") 'mc/mark-next-like-this)
-    (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
+    (global-set-key (kbd "C-}") 'mc/mark-next-like-this)
+    (global-set-key (kbd "C-{") 'mc/mark-previous-like-this)
     (global-set-key (kbd "C-;") 'mc/mark-all-like-this)
     (global-set-key (kbd "C-S-<mouse-1>") 'mc/add-cursor-on-click)
     (setq mc/black-list-prefer t))
-#+BEGIN_SRC emacs-lisp
-  (elpaca (macrursors :host github :repo "corytertel/macrursors"))
-
-  (eval-after-load "macrursors"
-    '(progn (dolist (mode '(company-mode))
-              (add-hook 'macrursors-pre-finish-hook mode)
-              (add-hook 'macrursors-post-finish-hook mode))
-            (define-prefix-command 'macrursors-mark-map)
-            (global-set-key (kbd "C-c SPC") #'macrursors-select)
-            (global-set-key (kbd "C->") #'macrursors-mark-next-instance-of)
-            (global-set-key (kbd "C-<") #'macrursors-mark-previous-instance-of)
-            (global-set-key (kbd "C-;") 'macrursors-mark-map)
-            (define-key macrursors-mark-map (kbd "C-;") #'macrursors-mark-all-instances-of)
-            (define-key macrursors-mark-map (kbd ";") #'macrursors-mark-all-instances-of)
-            (define-key macrursors-mark-map (kbd "i") #'macrursors-mark-all-lines-or-instances)
-            (define-key macrursors-mark-map (kbd "l") #'macrursors-mark-all-lists)
-            (define-key macrursors-mark-map (kbd "s") #'macrursors-mark-all-symbols)
-            (define-key macrursors-mark-map (kbd "e") #'macrursors-mark-all-sexps)
-            (define-key macrursors-mark-map (kbd "f") #'macrursors-mark-all-defuns)
-            (define-key macrursors-mark-map (kbd "n") #'macrursors-mark-all-numbers)
-            (define-key macrursors-mark-map (kbd ".") #'macrursors-mark-all-sentences)
-            (define-key macrursors-mark-map (kbd "r") #'macrursors-mark-all-lines)))
 #+END_SRC
 
 ** kmacro-x
@@ -652,7 +667,22 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (global-set-key (kbd "C-=") 'easy-mark))
 #+END_SRC
 
-** Easy mark
+** Combobulate
+#+begin_src emacs-lisp
+  (use-package combobulate
+    :ensure (:host github :repo "mickeynp/combobulate")
+    :hook
+    ((python-ts-mode . combobulate-mode)
+     (js-ts-mode . combobulate-mode)
+     (html-ts-mode . combobulate-mode)
+     (css-ts-mode . combobulate-mode)
+     (yaml-ts-mode . combobulate-mode)
+     (typescript-ts-mode . combobulate-mode)
+     (json-ts-mode . combobulate-mode)
+     (tsx-ts-mode . combobulate-mode)))
+#+end_src
+
+** Goto last change
 #+BEGIN_SRC emacs-lisp
   (use-package goto-last-change
     :config
@@ -672,7 +702,9 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 #+begin_src emacs-lisp
   (use-package frames-only-mode
     :config
+    (add-to-list 'frames-only-mode-kill-frame-when-buffer-killed-buffer-list '(regexp . "\\*helpful.*"))
     (frames-only-mode))
+  (setq disabled-command-function nil)
 #+end_src
 
 * Advanced Appearance
@@ -727,10 +759,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
   (use-package all-the-icons
     :if (display-graphic-p))
 
-  (use-package all-the-icons-dired
-    :hook
-    (dired-mode . all-the-icons-dired-mode))
-
   (use-package all-the-icons-ibuffer
     :after all-the-icons)
 #+END_SRC
@@ -757,8 +785,58 @@ As bookmarks are at the center of my workflow, this is a crucial option.
             ediff-split-window-function 'split-window-horizontally))
 #+END_SRC
 
-* Utilities
+** Flymake margin
+#+begin_src emacs-lisp
+  (use-package flymake-margin
+    :ensure (:host github :repo "LionyxML/flymake-margin")
+    :after flymake
+    :config
+    (flymake-margin-mode ))
+#+end_src
 
+** Olivetti
+#+begin_src emacs-lisp
+  (use-package olivetti
+    :config
+    ;; (add-hook 'minibuffer-mode-hook 'olivetti-mode)
+    )
+
+  (use-package auto-olivetti
+    :ensure (:host sourcehut :repo "ashton314/auto-olivetti")
+    :config
+    (defun auto-olivetti--do-change ()
+      "Turn on or off `olivetti-mode' depending on the current window configuration."
+      (setq-local auto-olivetti--vlm-active (or olivetti--visual-line-mode
+                                                (and (not olivetti-mode) visual-line-mode)))
+      (if (and (bound-and-true-p auto-olivetti-mode)                  ; mode enabled?
+               (not (apply #'derived-mode-p auto-olivetti-disabled-modes))   ; in correct major-mode
+               (not (eq (buffer-name) " *corfu*"))
+               (> (window-total-width)                                ; window big enough?
+                  (if (eq auto-olivetti-threshold-method 'fraction)
+                      (* (or olivetti-body-width 80) auto-olivetti-threshold-fraction)
+                    auto-olivetti-threshold-absolute)))
+          (olivetti-mode +1)
+        (when olivetti-mode
+          (olivetti-mode -1)
+          (when (bound-and-true-p auto-olivetti--vlm-active)
+            (visual-line-mode)))))
+    (setq
+     auto-olivetti-disabled-modes '(csv-mode)
+     auto-olivetti-threshold-absolute 0
+     auto-olivetti-threshold-method 'absolute))
+#+end_src
+
+** Perfect margin
+#+begin_src emacs-lisp
+  (use-package perfect-margin
+    :config
+    (setq perfect-margin-only-set-left-margin nil
+          perfect-margin-ignore-regexps nil
+          perfect-margin-ignore-filters nil)
+    (perfect-margin-mode 1))
+#+end_src
+
+* Utilities
 ** string-inflection
 #+BEGIN_SRC emacs-lisp
   (use-package string-inflection
@@ -782,7 +860,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 #+BEGIN_SRC emacs-lisp
   (use-package which-key
     :config
-    (setq which-key-min-display-lines 25)
+    (setq which-key-popup-type 'minibuffer)
     (which-key-mode 1))
 #+END_SRC
 
@@ -903,6 +981,86 @@ As bookmarks are at the center of my workflow, this is a crucial option.
   (use-package free-keys)
 #+END_SRC
 
+** Csv mode
+#+begin_src emacs-lisp
+  (use-package csv-mode
+    :config
+    (setq csv-comment-start-default nil)
+    (customize-set-variable 'csv-separators '("," "	" ";" "~"))
+    (customize-set-variable 'csv-header-lines 1)
+    (add-hook 'csv-mode-hook 'csv-align-mode)
+    (add-hook 'csv-mode-hook 'csv-header-line)
+
+    (defcustom csv+-quoted-newline "\^@"
+      "Replace for newlines in quoted fields."
+      :group 'sv
+      :type 'string)
+
+    (defun csv+-quoted-newlines (&optional b e inv)
+      "Replace newlines in quoted fields of region B E by `csv+-quoted-newline'.
+  B and E default to `point-min' and `point-max', respectively.
+  If INV is non-nil replace quoted `csv+-quoted-newline' chars by newlines."
+      (interactive
+       (append (when (region-active-p)
+                 (list (region-begin)
+                       (region-end)))
+               prefix-arg))
+      (unless b (setq b (point-min)))
+      (unless e (setq e (point-max)))
+      (save-excursion
+        (goto-char b)
+        (let ((from (if inv csv+-quoted-newline "\n"))
+              (to (if inv "\n" csv+-quoted-newline)))
+          (while (search-forward from e t)
+            (when (nth 3 (save-excursion (syntax-ppss (1- (point)))))
+              (replace-match to))))))
+
+    (defsubst csv+-quoted-newlines-write-contents ()
+      "Inverse operation of `csv+-quoted-newlines' for the full buffer."
+      (save-excursion
+        (save-restriction
+          (widen)
+          (let ((file (buffer-file-name))
+                (contents (buffer-string)))
+            (with-temp-buffer
+              (insert contents)
+              (csv+-quoted-newlines (point-min) (point-max) t)
+              (write-region (point-min) (point-max) file)))))
+      (set-visited-file-modtime)
+      (set-buffer-modified-p nil)
+      t ;; File contents has been written (see `write-contents-functions').
+      )
+
+    (defun csv+-setup-quoted-newlines ()
+      "Hook function for `csv-mode-hook'.
+  Transform newlines in quoted fields to `csv+-quoted-newlines'
+  when reading files and the other way around when writing contents."
+      (add-hook 'write-contents-functions #'csv+-quoted-newlines-write-contents t t)
+      (let ((modified-p (buffer-modified-p)))
+        (csv+-quoted-newlines)
+        (set-buffer-modified-p modified-p)))
+
+    (remove-hook 'csv-mode-hook #'csv+-setup-quoted-newlines))
+#+end_src
+
+** d2 mode
+#+begin_src emacs-lisp
+  (use-package d2-mode)
+
+  (use-package ob-d2
+    :ensure (:host github :repo "dmacvicar/ob-d2")
+    :defer t)
+#+end_src
+
+** Jinx
+#+begin_src emacs-lisp
+  (use-package jinx
+    :ensure nil
+    :hook (emacs-startup . global-jinx-mode)
+    :bind (("M-$" . jinx-correct)
+           ("C-M-$" . jinx-languages)))
+#+end_src
+
 * Coding
 ** Nix
 #+BEGIN_SRC emacs-lisp
@@ -940,6 +1098,9 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 ** Electric indent
 #+begin_src emacs-lisp
   (electric-indent-mode 1)
+  (defun electric-indent/inhibit ()
+    (interactive)
+    (setq-local electric-indent-inhibit t))
 #+end_src
 
 ** The only holy git client !
@@ -954,25 +1115,51 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (global-unset-key (kbd "C-x g"))
     (global-set-key (kbd "C-x g g") #'magit-status)
     (global-set-key (kbd "C-x g c") #'magit-clone)
-    (global-set-key (kbd "C-x g s") #'magit/magit-status-no-split))
+    (global-set-key (kbd "C-x g s") #'magit/magit-status-no-split)
+    (setq magit-bury-buffer-function 'magit-mode-quit-window))
 
   (use-package forge)
 #+END_SRC
 
-** Yasnippet
+** Git browse at remote
 #+begin_src emacs-lisp
-  (use-package yasnippet
+  (use-package browse-at-remote
     :config
-    (yas-reload-all)
-    (yas-global-mode 1))
-
-  (use-package yasnippet-snippets)
+    (global-set-key (kbd "C-x g b") 'browse-at-remote))
 #+end_src
 
-** Insert Shebang
+** Why this
 #+begin_src emacs-lisp
-  (use-package insert-shebang)
+  (use-package why-this
+    :config
+    (global-why-this-mode))
 #+end_src
+
+** Tempel
+#+BEGIN_SRC emacs-lisp
+  (use-package tempel
+    :bind (("M-TAB" . tempel-complete) ;; Alternative tempel-expand
+           :map tempel-map
+           ("M-TAB" . tempel-next)
+           ("M-S-TAB" . tempel-previous)))
+#+END_SRC
+
+*** tempel-collection
+#+BEGIN_SRC emacs-lisp
+  (use-package tempel-collection
+    :ensure t
+    :after tempel
+    )
+#+END_SRC
+
+*** eglot-tempel
+#+BEGIN_SRC emacs-lisp
+  (use-package eglot-tempel
+    :ensure t
+    :after tempel
+    :config
+    (add-hook 'tempel-mode-hook 'eglot-tempel-mode))
+#+END_SRC
 
 ** Json Web Token
 #+begin_src emacs-lisp
@@ -996,9 +1183,37 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     :mode "\\.ts\\'")
 #+end_src
 
+** PHP
+#+begin_src emacs-lisp
+  (use-package php-mode)
+#+end_src
+
+** SQL
+#+begin_src emacs-lisp
+  (use-package sql-mode
+    :ensure nil
+    :config
+    (add-hook 'sql-mode-hook 'electric-indent/inhibit))
+
+  (use-package sql-indent
+    :config
+    (add-hook 'sql-mode-hook 'sqlind-minor-mode))
+
+  (use-package sqlup-mode
+    :config
+    (add-hook 'sql-mode-hook 'sqlup-mode))
+#+end_src
+
+** SQLite
+#+begin_src emacs-lisp
+  (use-package sqlite-mode-extras
+    :ensure (:host github :repo "xenodium/sqlite-mode-extras")
+    :hook ((sqlite-mode . sqlite-extras-minor-mode)))
+#+end_src
+
 ** Jest
 #+begin_src emacs-lisp
-  (use-package jest-test-mode 
+  (use-package jest-test-mode
     :commands jest-test-mode
     :hook (typescript-mode typescript-ts-mode js-mode js-ts-mode typescript-tsx-mode))
 #+end_src
@@ -1007,8 +1222,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 #+BEGIN_SRC emacs-lisp
   (use-package apheleia
     :config
-    (setf (alist-get 'prettier apheleia-formatters)
-          '(npx "eslint" "--fix" file))
     (add-to-list 'apheleia-mode-alist '(js-mode . prettier))
     (add-to-list 'apheleia-mode-alist '(js-ts-mode . prettier))
     (add-to-list 'apheleia-mode-alist '(typescript-mode . prettier))
@@ -1026,167 +1239,191 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (global-treesit-auto-mode))
 #+end_src
 
-** Lsp mode (or emacs as an IDE)
- 
+** Eglot
 #+BEGIN_SRC emacs-lisp
-  (use-package lsp-mode
-    :defer t
-    :init
-    ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
-    (setq lsp-keymap-prefix "C-c l")
+  (use-package eglot
+    :elpaca nil
+    :ensure t
+    :hook ((( js-mode js-ts-mode typescript-ts-mode typescript-mode php-mode)
+            . eglot-ensure))
+    :bind (:map eglot-mode-map
+                ("C-." . eglot-code-actions))
     :custom
-    (lsp-clients-typescript-server-args '("--stdio"))
-    :bind (
-           :map lsp-mode-map
-           ("C-h ." . lsp-describe-thing-at-point)
-           ("C-." . lsp-execute-code-action)
-           ("M-." . lsp-find-definition))
-    :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
-           (js-mode . (lambda () 
-                        (lsp)))
-           (js-ts-mode . (lambda () 
-                        (lsp)))
-           (typescript-ts-mode . (lambda () 
-                                   (lsp)))
-           (typescript-mode . (lambda () 
-                                   (lsp)))
-           ;; if you want which-key integration
-           (lsp-mode . lsp-enable-which-key-integration))
-    :commands lsp
-    :config
-    (with-eval-after-load 'js
-      (define-key js-mode-map (kbd "M-.") nil)
-      )
-    (setq
-     lsp-log-io nil
-     lsp-enable-symbol-highlighting nil
-     lsp-eldoc-render-all t
-     lsp-auto-guess-root t
-     lsp-log-io nil
-     lsp-restart 'auto-restart
-     lsp-enable-on-type-formatting nil
-     lsp-eslint-auto-fix-on-save nil
-     lsp-signature-auto-activate t
-     lsp-signature-render-documentation t
-     lsp-signature-function 'lsp-lv-message
-     lsp-headerline-breadcrumb-enable nil
-     lsp-semantic-tokens-enable nil
-     lsp-enable-folding nil
-     lsp-enable-snippet nil
-     lsp-modeline-code-actions-enable nil
-     lsp-idle-delay 0.5
-     lsp-completion-provider :none
-     lsp-enable-file-watchers nil))
- #+END_SRC
+    (eglot-autoshutdown t)
+    (eglot-extend-to-xref t)
 
-*** Dap mode
-#+BEGIN_SRC emacs-lisp
-  (use-package dap-mode
     :config
-    (require 'dap-node)
-    (dap-node-setup))
+    (add-to-list 'eglot-server-programs '(php-mode . ("phpactor" "language-server")))
+    
+    (defclass eglot-sqls (eglot-lsp-server) ())
+    (add-to-list 'eglot-server-programs '(sql-mode . (eglot-sqls "sqls")))
+
+    (cl-defmethod eglot-execute
+      :around
+      ((server eglot-sqls) action)
+
+      (pcase (plist-get action :command)
+        ("executeQuery"
+         (if (use-region-p)
+             (let* ((begin (region-beginning))
+                    (end (region-end))
+                    (begin-lsp (eglot--pos-to-lsp-position begin))
+                    (end-lsp (eglot--pos-to-lsp-position end))
+                    (action (plist-put action :range `(:start ,begin-lsp :end ,end-lsp)))
+                    (result (cl-call-next-method server action)))
+               (eglot/sqls-show-results result))
+           (message "No region")))
+
+        ((or
+          "showConnections"
+          "showDatabases"
+          "showSchemas"
+          "showTables")
+         (eglot/sqls-show-results (cl-call-next-method)))
+
+        ("switchConnections"
+         (let* ((connections (eglot--request server :workspace/executeCommand
+                                             '(:command "showConnections")))
+                (collection (split-string connections "\n"))
+                (connection (completing-read "Switch to connection: " collection nil t))
+                (index (number-to-string (string-to-number connection)))
+                (action (plist-put action :arguments (vector index))))
+           (cl-call-next-method server action)))
+
+        ("switchDatabase"
+         (let* ((databases (eglot--request server :workspace/executeCommand
+                                           '(:command "showDatabases")))
+                (collection (split-string databases "\n"))
+                (database (completing-read "Switch to database: " collection nil t))
+                (action (plist-put action :arguments (vector database))))
+           (cl-call-next-method server action)))
+
+        (_
+         (cl-call-next-method))))
+
+    (defun eglot/sqls-show-results (result)
+      (with-current-buffer (get-buffer-create "*sqls result*")
+        (erase-buffer)
+        (insert result)
+        (display-buffer (current-buffer))))
+
+    (defun eglot/sqls-execute-command ()
+      (interactive)
+      (let* ((server (eglot-current-server))
+             (command "executeQuery")
+             (arguments (concat "file://" (buffer-file-name)))
+             (beg (eglot--pos-to-lsp-position (if (use-region-p) (region-beginning) (point-min))))
+             (end (eglot--pos-to-lsp-position (if (use-region-p) (region-end) (point-max)))))
+        (eglot/sqls-show-results
+         (jsonrpc-request
+          server
+          :workspace/executeCommand
+          `(
+            :command ,(format "%s" command)
+            :arguments [,arguments]
+            :timeout 0.5
+            :range (:start ,beg :end ,end))))))
+
+    (defun eglot/sqls-select-and-execute-command ()
+      (interactive)
+      (call-interactively 'sql-beginning-of-statement)
+      (call-interactively 'set-mark-command)
+      (call-interactively 'sql-end-of-statement)
+      (eglot/sqls-execute-command)
+      (deactivate-mark))
+    
+    (defun sql/hook ()
+      (interactive)
+      (eglot-ensure)
+      (define-key sql-mode-map (kbd "C-c C-c") 'eglot/sqls-select-and-execute-command))
+    (add-hook 'sql-mode-hook 'sql/hook))
 #+END_SRC
 
-** Adoc
-#+BEGIN_SRC emacs-lisp
-  (use-package adoc-mode
-    :config
-    (add-to-list 'auto-mode-alist '("\\.adoc\\'" . adoc-mode)))
-#+END_SRC
-
-** Restclient
-#+BEGIN_SRC emacs-lisp
-  (use-package restclient
-    :config
-    (add-to-list 'auto-mode-alist '("\\.http\\'" . restclient-mode)))
-
-  (use-package ob-restclient
-    :after org
-    :config
-    (org-babel-do-load-languages
-     'org-babel-load-languages
-     '((restclient . t))))
-#+END_SRC
-
-** Kubel
-#+BEGIN_SRC emacs-lisp
-  (if (eq (shell-command "kubectl --help") 0 )
-      (use-package kubel))
-#+END_SRC
-
-** Docker
-#+BEGIN_SRC emacs-lisp
-  (use-package dockerfile-mode)
-
-  (use-package docker-compose-mode)
-
-  (use-package docker
-    :config
-    (define-derived-mode docker-container-mode tabulated-list-mode "Containers Menu"
-      "Major mode for handling a list of docker containers."
-      (setq tabulated-list-format [("Id" 5 t)("Image" 5 t)("Command" 10 t)("Created" 10 t)("Status" 10 t)("Ports" 35 t)("Names" 30 t)])
-      (setq tabulated-list-padding 2)
-      (setq tabulated-list-sort-key docker-container-default-sort-key)
-      (add-hook 'tabulated-list-revert-hook 'docker-container-refresh nil t)
-      (tabulated-list-init-header)
-      (tablist-minor-mode))
-
-    (setq docker-container-shell-file-name "/bin/sh")
-
-    (add-hook 'docker-container-mode 'docker/set-format))
-#+END_SRC
-
-** Csv
-#+BEGIN_SRC emacs-lisp
-  (use-package csv-mode
-    :config
-    (add-hook 'csv-mode-hook 'csv-guess-set-separator)
-    (setq csv-separators '("," ";" ":")))
-#+END_SRC
-
-** devdocs
+*** Eglot Booster
 #+begin_src emacs-lisp
-  (use-package devdocs
-    :config
-    (global-set-key (kbd "C-h D") #'devdocs-lookup)
-    (add-hook 'js-mode-hook
-          (lambda () (setq-local devdocs-current-docs '("node~16_lts" "jsdoc" "javascript")))))
+  (use-package eglot-booster
+    :ensure (:host github :repo "jdtsmith/eglot-booster")
+    :after eglot
+    :config (eglot-booster-mode)
+    (setq eglot-booster-no-remote-boost t))
 #+end_src
 
-** ejc-sql
+** Dape
 #+begin_src emacs-lisp
-  (use-package ejc-sql
+  (use-package dape
+    :ensure (:host github :repo "svaante/dape")
+    :hook
+    ((kill-emacs . dape-breakpoint-save)
+     (after-init . dape-breakpoint-load))
+
+    :init
+    (setq
+     dape-buffer-window-arrangement 'left
+     dape-info-hide-mode-line nil)
+
     :config
-    (setq ejc-result-table-impl 'orgtbl-mode)
+    ;; Global bindings for setting breakpoints with mouse
+    (dape-breakpoint-global-mode)
 
-    (add-hook 'ejc-sql-connected-hook
-          (lambda ()
-            (ejc-set-fetch-size 200)
-            (ejc-set-max-rows 200)
-            (ejc-set-show-too-many-rows-message nil)
-            (ejc-set-column-width-limit nil)
-            (ejc-set-use-unicode nil)))
+    ;; Save buffers on startup, useful for interpreted languages
+    ;; (add-hook 'dape-on-start-hooks (lambda () (save-some-buffers t t)))
+    )
+#+end_src
 
-    (add-hook 'sql-mode-hook
-              (lambda ()
-                (ejc-sql-mode t)))
+** kmacro-x
+#+BEGIN_SRC emacs-lisp
+  (use-package kmacro-x
+    :init (kmacro-x-atomic-undo-mode 1))
+#+END_SRC
 
-    (add-hook 'ejc-sql-minor-mode-hook
-              (lambda ()
-                (ejc-eldoc-setup)))
+** Expand Region
+#+BEGIN_SRC emacs-lisp
+  (use-package expreg
+    :config
+    (global-set-key (kbd "C-=") 'expreg-expand)
+    (global-set-key (kbd "C-`") 'expreg-contract))
+#+END_SRC
 
-    (require 'ejc-company)
-    (push 'ejc-company-backend company-backends)
-    
-    (add-hook 'ejc-sql-minor-mode-hook
-              (lambda ()
-                (company-mode t))))
+** Goto last change
+#+BEGIN_SRC emacs-lisp
+  (use-package goto-last-change
+    :config
+    (global-set-key (kbd "C-z") 'goto-last-change))
+#+END_SRC
+
+** vundu
+#+begin_src emacs-lisp
+  (use-package vundo
+    :config
+    (setq vundo-glyph-alist vundo-unicode-symbols)
+    (global-unset-key (kbd "C-?"))
+    (global-set-key (kbd "C-?") 'vundo))
+#+end_src
+
+* Frames only mode
+#+begin_src emacs-lisp
+  (use-package frames-only-mode
+    :config
+    (frames-only-mode))
 #+end_src
 
 * Shells & terminals
-
 ** Eshell
 #+begin_src emacs-lisp
+  (defun utils/get-project-root-if-wanted ()
+    (interactive)
+    (let ((cur-buffer (window-buffer (selected-window))))
+      (with-current-buffer cur-buffer
+        (if (derived-mode-p 'dired-mode)
+            (replace-regexp-in-string "^[Directory ]*" "" (pwd))
+          (let ((project-root (consult--project-root)))
+            (if project-root
+                project-root
+              (let ((current-file-name (buffer-file-name cur-buffer)))
+                (if current-file-name
+                    current-file-name
+                  ""))))))))
+
   (custom-set-faces
    `(ansi-color-black ((t (:foreground "#282a36"))))
    `(ansi-color-red ((t (:foreground "#ff5555"))))
@@ -1214,7 +1451,9 @@ As bookmarks are at the center of my workflow, this is a crucial option.
        (concat (format-time-string " %Y-%m-%d %H:%M" (current-time))
                (if (= (user-uid) 0) " # " " $ ")))
      eshell-highlight-prompt t)
-    (set-face-attribute 'eshell-prompt nil :weight 'ultra-bold :inherit 'minibuffer-prompt))
+    (set-face-attribute 'eshell-prompt nil :weight 'ultra-bold :inherit 'minibuffer-prompt)
+    (eat-eshell-mode 1)
+    (eat-eshell-visual-command-mode 1))
   (add-hook 'eshell-mode-hook #'eshell/hook)
 
   (defun eshell/rename-with-current-path ()
@@ -1223,33 +1462,23 @@ As bookmarks are at the center of my workflow, this is a crucial option.
   (add-hook 'eshell-directory-change-hook #'eshell/rename-with-current-path)
   (add-hook 'eshell-mode-hook #'eshell/rename-with-current-path)
 
-  (defun eshell/get-relevant-buffer ()
-    (if (derived-mode-p 'dired-mode)
-        (get-buffer (replace-regexp-in-string "^[Directory ]*" "" (pwd)))
-      (car (seq-filter (lambda (buf)
-                         (string-prefix-p (concat "Eshell: " (replace-regexp-in-string "/$" "" (consult--project-root)))
-                                          (buffer-name buf)))
-                       (buffer-list)))))
+  (defun eshell/get-relevant-buffer (path)
+    (message path)
+    (get-buffer (concat "Eshell: " (replace-regexp-in-string "/$" "" path))))
 
   (defun eshell/new-or-current ()
     "Open a new instance of eshell."
     (interactive)
-    (let ((eshell-buffer (eshell/get-relevant-buffer))
-          (default-directory (if (derived-mode-p 'dired-mode)
-                                 (replace-regexp-in-string "^[Directory ]*" "" (pwd))
-                               (consult--project-root))))
-      
-      (pop-to-buffer (current-buffer) 'display-buffer-pop-up-frame)
+    (let* ((default-directory (replace-regexp-in-string "/$" "" (utils/get-project-root-if-wanted)))
+           (eshell-buffer (eshell/get-relevant-buffer default-directory)))
       (if eshell-buffer
-         (switch-to-buffer eshell-buffer)
+          (switch-to-buffer eshell-buffer)
         (eshell 'N))))
 
   (global-set-key (kbd "C-c t") #'eshell/new-or-current)
 
   (use-package eshell
-    :elpaca nil
-    :bind (:map eshell-mode-map
-                ("<tab>" . company-complete)))
+    :elpaca nil)
 #+end_src
 
 *** Eat
@@ -1261,8 +1490,37 @@ As bookmarks are at the center of my workflow, this is a crucial option.
      )
     (setq eshell-visual-commands '())
 
-    (add-hook 'eshell-load-hook #'eat-eshell-mode)
-    (add-hook 'eshell-load-hook #'eat-eshell-visual-command-mode))
+    (defun start-file-process-shell-command-using-eat-exec
+        (name buffer command)
+      (require 'eat)
+      (with-current-buffer (eat-exec buffer name "bash" nil (list "-ilc" command))
+        (eat-emacs-mode)
+        (setq eat--synchronize-scroll-function #'eat--synchronize-scroll)
+        (get-buffer-process (current-buffer))))
+    
+    (advice-add #'compilation-start :around
+                (defun hijack-start-file-process-shell-command (o &rest args)
+                  (advice-add #'start-file-process-shell-command :override
+                              #'start-file-process-shell-command-using-eat-exec)
+                  (unwind-protect
+                      (apply o args)
+                    (advice-remove
+                     #'start-file-process-shell-command
+                     #'start-file-process-shell-command-using-eat-exec))))
+
+    (add-hook #'compilation-start-hook
+              (defun revert-to-eat-setup (proc)
+                (set-process-filter proc #'eat--filter)
+                (add-function :after (process-sentinel proc) #'eat--sentinel)))
+    
+    (advice-add #'kill-compilation :override
+                (defun kill-compilation-by-sending-C-c ()
+                  (interactive)
+                  (let ((buffer (compilation-find-buffer)))
+                    (if (get-buffer-process buffer)
+  	                  ;; interrupt-process does not work
+                        (process-send-string (get-buffer-process buffer) (kbd "C-c"))
+                      (error "The %s process is not running" (downcase mode-name)))))))
 #+end_src
               
 *** Aliases
@@ -1289,6 +1547,16 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (add-to-list 'term-bind-key-alist '("s-<escape>" . term-line-mode)))
 #+end_src
 
+** Fancy compilation
+#+begin_src emacs-lisp
+  (use-package fancy-compilation
+    :commands (fancy-compilation-mode)
+    :config
+    (setq fancy-compilation-override-colors nil))
+
+  (with-eval-after-load 'compile
+    (fancy-compilation-mode))
+#+end_src
 * Dired
 #+BEGIN_SRC emacs-lisp
   (defun dired/open-file ()
@@ -1340,8 +1608,8 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (setq ls-lisp-dirs-first t)
     (setq wdired-allow-to-change-permissions t)
     (add-hook 'wdired-mode-hook
-      (lambda ()
-        (define-key wdired-mode-map (kbd "s-<escape>") 'wdired-abort-changes))))
+              (lambda ()
+                (define-key wdired-mode-map (kbd "s-<escape>") 'wdired-abort-changes))))
 
   (use-package dired-subtree
     :bind (
@@ -1349,12 +1617,14 @@ As bookmarks are at the center of my workflow, this is a crucial option.
            ("C-<tab>" . dired-subtree-cycle)
            ("<tab>" . dired-subtree-toggle)
            ("<backtab>" . dired-subtree-remove)))
-#+END_SRC
 
-#+BEGIN_SRC emacs-lisp
   (use-package dired-hide-dotfiles
     :hook
     (dired-mode . dired-hide-dotfiles-mode))
+
+  (use-package nerd-icons-dired
+    :hook
+    (dired-mode . nerd-icons-dired-mode))
 #+END_SRC
 
 * Internet
@@ -1363,15 +1633,24 @@ As bookmarks are at the center of my workflow, this is a crucial option.
   (use-package shr
     :elpaca nil
     :config
-    (setq shr-use-fonts nil)
+    (setq shr-use-fonts t)
     (setq shr-use-colors nil)
-    (setq shr-max-image-proportion 1)
+    (setq shr-inhibit-images t)
+    (setq shr-max-image-proportion 0.9)
     (setq shr-width nil)
     (setq shr-folding-mode t))
+
+  (use-package shr-tag-pre-highlight
+    :ensure t
+    :after shr
+    :config
+    (add-to-list 'shr-external-rendering-functions
+                 '(pre . shr-tag-pre-highlight)))
 #+END_SRC
 
 ** Emacs Web Wowser
 #+BEGIN_SRC emacs-lisp
+
   (defvar eww/input-history nil)
   (eval-after-load "savehist"
     '(add-to-list 'savehist-additional-variables 'eww/input-history))
@@ -1382,6 +1661,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
         (eww (completing-read "Eww URL or search " eww/input-history nil nil (eww-current-url) 'eww/input-history))
       (eww (completing-read "Eww URL or search " eww/input-history nil nil nil 'eww/input-history))))
 
+  (setq eww-search-prefix "https://www.google.com/search?ie=utf-8&oe=utf-8&q=")
   (with-eval-after-load 'eww
     (defun eww/rename-buffer ()
       "Rename `eww-mode' buffer so sites open in new page.

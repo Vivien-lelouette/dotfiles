@@ -133,8 +133,8 @@ read it before opening a new issue about your will.")
                 ,@(if dracula-alternate-mode-line-and-minibuffer
                       (list :weight 'normal :foreground dracula-fg)
                     (list :weight 'bold :foreground dracula-pink)))
-               (mode-line :background ,dracula-selection
-                          :box ,dracula-selection :inverse-video nil
+               (mode-line :background ,dracula-bg
+                          :box ,dracula-bg :inverse-video nil
                           ,@(if dracula-alternate-mode-line-and-minibuffer
                                 (list :foreground fg3)
                               (list :foreground dracula-fg)))
@@ -143,9 +143,10 @@ read it before opening a new issue about your will.")
                 ,@(if dracula-alternate-mode-line-and-minibuffer
                       (list :foreground dracula-comment :box dracula-bg)
                     (list :foreground fg4 :box dracula-bg)))
+
                ;; Doom-modeline
-               (doom-modeline-bar :inherit mode-line)
-               (doom-modeline-bar-inactive :inherit mode-line-inactive)
+               (doom-modeline-bar :foreground ,dracula-bg :background ,dracula-bg)
+               (doom-modeline-bar-inactive :foreground ,dracula-bg :background ,dracula-bg)
                (read-multiple-choice-face :inherit completions-first-difference)
                (region :inherit match :extend t)
                (shadow :foreground ,dracula-comment)
@@ -154,6 +155,7 @@ read it before opening a new issue about your will.")
                (trailing-whitespace :background ,dracula-orange)
                (vertical-border :foreground ,bg2)
                (warning :foreground ,dracula-orange)
+
                ;; syntax / font-lock
                (font-lock-builtin-face :foreground ,dracula-cyan :slant italic)
                (font-lock-comment-face :inherit shadow)
@@ -173,19 +175,32 @@ read it before opening a new issue about your will.")
                (font-lock-type-face :inherit font-lock-builtin-face)
                (font-lock-variable-name-face :foreground ,dracula-fg :weight bold)
                (font-lock-warning-face :inherit warning :background ,bg2)
+
                ;; vertico
+               (vertico-current :inherit 'match)
                (vertico-posframe :inherit tooltip)
                (vertico-posframe-border :background nil)
-               (vertico-current :inherit 'match)
+               (mini-popup-default :inherit default)
+               (mini-popup-border :background ,dracula-selection)
+
+               ;; corfu
+               (corfu-bar :foreground ,dracula-fg)
+               (corfu-current :inherit 'match)
+               (corfu-default :inherit 'default :background ,dracula-current)
+
                ;; transient
                (transient-posframe :inherit tooltip)
                (transient-posframe-border :background nil)
+
                ;; flycheck-posframe
                (flycheck-posframe-background-face :inherit tooltip)
+
                ;; auto-complete
                (ac-completion-face :underline t :foreground ,dracula-pink)
+
                ;; bookmarks
                (bookmark-face :foreground ,dracula-pink)
+
                ;; company
                (company-echo-common :foreground ,dracula-bg :background ,dracula-fg)
                (company-preview :background ,dracula-current :foreground ,dark-blue)
