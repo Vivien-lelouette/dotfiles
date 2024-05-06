@@ -246,11 +246,11 @@
   :hook (after-init . doom-modeline-mode))
 
 (setq tab-always-indent 'complete)
-;;       completions-format 'one-column
+;; (setq completions-format 'one-column
 ;;       completions-header-format nil
 ;;       completion-show-help t
 ;;       completion-show-inline-help t
-;;       completions-max-height nil
+;;       completions-max-height 30
 ;;       completion-auto-select nil)
 
 (setq-default isearch-lazy-count t
@@ -291,11 +291,6 @@
                               :no-match "| No match"))
   
   (vertico-mode 1))
-
-(use-package vertico-posframe
-  :ensure (:host github :repo "tumashu/vertico-posframe")
-  :config
-  (vertico-posframe-mode 1))
 
 (use-package corfu
   :init
@@ -537,10 +532,6 @@
 (use-package kmacro-x
   :init (kmacro-x-atomic-undo-mode 1))
 
-(use-package easy-kill
-  :config
-  (global-set-key (kbd "C-=") 'easy-mark))
-
 (use-package combobulate
   :ensure (:host github :repo "mickeynp/combobulate")
   :hook
@@ -562,12 +553,6 @@
   (setq vundo-glyph-alist vundo-unicode-symbols)
   (global-unset-key (kbd "C-?"))
   (global-set-key (kbd "C-?") 'vundo))
-
-(use-package frames-only-mode
-  :config
-  (add-to-list 'frames-only-mode-kill-frame-when-buffer-killed-buffer-list '(regexp . "\\*helpful.*"))
-  (frames-only-mode))
-(setq disabled-command-function nil)
 
 (use-package hideshow
   :elpaca nil
@@ -640,41 +625,12 @@
   :config
   (flymake-margin-mode ))
 
-(use-package olivetti
-  :config
-  ;; (add-hook 'minibuffer-mode-hook 'olivetti-mode)
-  )
-
-(use-package auto-olivetti
-  :ensure (:host sourcehut :repo "ashton314/auto-olivetti")
-  :config
-  (defun auto-olivetti--do-change ()
-    "Turn on or off `olivetti-mode' depending on the current window configuration."
-    (setq-local auto-olivetti--vlm-active (or olivetti--visual-line-mode
-                                              (and (not olivetti-mode) visual-line-mode)))
-    (if (and (bound-and-true-p auto-olivetti-mode)                  ; mode enabled?
-             (not (apply #'derived-mode-p auto-olivetti-disabled-modes))   ; in correct major-mode
-             (not (eq (buffer-name) " *corfu*"))
-             (> (window-total-width)                                ; window big enough?
-                (if (eq auto-olivetti-threshold-method 'fraction)
-                    (* (or olivetti-body-width 80) auto-olivetti-threshold-fraction)
-                  auto-olivetti-threshold-absolute)))
-        (olivetti-mode +1)
-      (when olivetti-mode
-        (olivetti-mode -1)
-        (when (bound-and-true-p auto-olivetti--vlm-active)
-          (visual-line-mode)))))
-  (setq
-   auto-olivetti-disabled-modes '(csv-mode)
-   auto-olivetti-threshold-absolute 0
-   auto-olivetti-threshold-method 'absolute))
-
 (use-package perfect-margin
   :config
   (setq perfect-margin-only-set-left-margin nil
         perfect-margin-ignore-regexps nil
         perfect-margin-ignore-filters nil)
-  (perfect-margin-mode 1))
+  (perfect-margin-mode 0))
 
 (use-package string-inflection
   :config
@@ -775,10 +731,6 @@
   (global-set-key (kbd "C-c C-d") #'helpful-at-point)
   (global-set-key (kbd "C-h F") #'helpful-function)
   (global-set-key (kbd "C-h C") #'helpful-command))
-
-(load-file "~/.emacs.d/custom_packages/siege-mode.el")
-(global-set-key (kbd "M-[") #'siege-explicit-call)
-(global-set-key (kbd "M-]") #'siege-explicit-call)
 
 (elpaca (explain-pause-mode :host github :repo "lastquestion/explain-pause-mode"))
 
@@ -1115,10 +1067,6 @@ when reading files and the other way around when writing contents."
   (global-unset-key (kbd "C-?"))
   (global-set-key (kbd "C-?") 'vundo))
 
-(use-package frames-only-mode
-  :config
-  (frames-only-mode))
-
 (defun utils/get-project-root-if-wanted ()
   (interactive)
   (let ((cur-buffer (window-buffer (selected-window))))
@@ -1324,10 +1272,11 @@ when reading files and the other way around when writing contents."
   :config
   (setq shr-use-fonts t)
   (setq shr-use-colors nil)
-  (setq shr-inhibit-images t)
+  (setq shr-inhibit-images nil)
   (setq shr-max-image-proportion 0.9)
   (setq shr-width nil)
-  (setq shr-folding-mode t))
+  (setq shr-folding-mode t)
+  (setq shr-width -1))
 
 (use-package shr-tag-pre-highlight
   :ensure t
@@ -1361,11 +1310,10 @@ when reading files and the other way around when writing contents."
 
   ;;(add-hook 'eww-after-render-hook #'mixed-pitch-mode)
   (add-hook 'eww-after-render-hook 'eww/rename-buffer))
+  (add-hook 'eww-after-render-hook (lambda () (visual-line-mode 1)))
 
 (add-hook 'elpaca-after-init-hook
       #'(lambda ()
   	(let ((local-settings "~/.emacs.d/local.el"))
   	  (when (file-exists-p local-settings)
-  	    (load-file local-settings)))
-  	(eval-after-load "frames-only-mode"
-  	  (frames-only-mode 1))))
+  	    (load-file local-settings)))))

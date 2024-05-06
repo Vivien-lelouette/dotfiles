@@ -2,6 +2,7 @@
 #+PROPERTY: header-args:emacs-lisp :tangle .emacs.d/init.el :mkdirp yes
 
 * Elpaca setup
+
  #+BEGIN_SRC emacs-lisp
    (setq package-enable-at-startup nil)
    (defvar elpaca-installer-version 0.6)
@@ -9,31 +10,31 @@
    (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
    (defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
    (defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
-				 :ref nil
-				 :files (:defaults "elpaca-test.el" (:exclude "extensions"))
-				 :build (:not elpaca--activate-package)))
+    			 :ref nil
+    			 :files (:defaults "elpaca-test.el" (:exclude "extensions"))
+    			 :build (:not elpaca--activate-package)))
    (let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
-	  (build (expand-file-name "elpaca/" elpaca-builds-directory))
-	  (order (cdr elpaca-order))
-	  (default-directory repo))
+      (build (expand-file-name "elpaca/" elpaca-builds-directory))
+      (order (cdr elpaca-order))
+      (default-directory repo))
      (add-to-list 'load-path (if (file-exists-p build) build repo))
      (unless (file-exists-p repo)
        (make-directory repo t)
        (when (< emacs-major-version 28) (require 'subr-x))
        (condition-case-unless-debug err
-	   (if-let ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
-		    ((zerop (call-process "git" nil buffer t "clone"
-					  (plist-get order :repo) repo)))
-		    ((zerop (call-process "git" nil buffer t "checkout"
-					  (or (plist-get order :ref) "--"))))
-		    (emacs (concat invocation-directory invocation-name))
-		    ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
-					  "--eval" "(byte-recompile-directory \".\" 0 'force)")))
-		    ((require 'elpaca))
-		    ((elpaca-generate-autoloads "elpaca" repo)))
-	       (progn (message "%s" (buffer-string)) (kill-buffer buffer))
-	     (error "%s" (with-current-buffer buffer (buffer-string))))
-	 ((error) (warn "%s" err) (delete-directory repo 'recursive))))
+       (if-let ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
+    	    ((zerop (call-process "git" nil buffer t "clone"
+    				  (plist-get order :repo) repo)))
+    	    ((zerop (call-process "git" nil buffer t "checkout"
+    				  (or (plist-get order :ref) "--"))))
+    	    (emacs (concat invocation-directory invocation-name))
+    	    ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
+    				  "--eval" "(byte-recompile-directory \".\" 0 'force)")))
+    	    ((require 'elpaca))
+    	    ((elpaca-generate-autoloads "elpaca" repo)))
+           (progn (message "%s" (buffer-string)) (kill-buffer buffer))
+         (error "%s" (with-current-buffer buffer (buffer-string))))
+     ((error) (warn "%s" err) (delete-directory repo 'recursive))))
      (unless (require 'elpaca-autoloads nil t)
        (require 'elpaca)
        (elpaca-generate-autoloads "elpaca" repo)
@@ -280,6 +281,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
   (use-package mixed-pitch
     :hook
     (org-mode . mixed-pitch-mode))
+  
 #+END_SRC
 
 * Dracula theme
@@ -322,19 +324,24 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 ** Built-in setup
 #+begin_src emacs-lisp
   (setq tab-always-indent 'complete)
-  ;;       completions-format 'one-column
+  ;; (setq completions-format 'one-column
   ;;       completions-header-format nil
   ;;       completion-show-help t
   ;;       completion-show-inline-help t
-  ;;       completions-max-height nil
+  ;;       completions-max-height 30
   ;;       completion-auto-select nil)
 
   (setq-default isearch-lazy-count t
                 isearch-allow-motion t)
   #+end_src
 
+** VComplete
+  (use-package vcomplete
+    :config
+    (vcomplete-mode))
+
 ** Vertico
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
   (use-package vertico
     :config
     (load-file "~/.emacs.d/elpaca/repos/vertico/extensions/vertico-multiform.el")
@@ -370,18 +377,10 @@ As bookmarks are at the center of my workflow, this is a crucial option.
                                 :no-match "| No match"))
     
     (vertico-mode 1))
-#+END_SRC
-
-*** Vertico posframe
-#+begin_src emacs-lisp
-  (use-package vertico-posframe
-    :ensure (:host github :repo "tumashu/vertico-posframe")
-    :config
-    (vertico-posframe-mode 1))
 #+end_src
 
 ** Corfu
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
   (use-package corfu
     :init
     (global-corfu-mode)
@@ -422,7 +421,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     :config
     (unless (display-graphic-p)
       (corfu-terminal-mode +1)))
-#+END_SRC
+#+end_src
 
 *** Cape
 #+BEGIN_SRC emacs-lisp
@@ -465,7 +464,8 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     ;;(add-to-list 'completion-at-point-functions #'cape-elisp-symbol)
     ;;(add-to-list 'completion-at-point-functions #'cape-line)
     )
-#+END_SRC
+#+end_src
+    
 
 *** Kind-icon
 #+BEGIN_SRC emacs-lisp
@@ -660,13 +660,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     :init (kmacro-x-atomic-undo-mode 1))
 #+END_SRC
 
-** Easy mark
-#+BEGIN_SRC emacs-lisp
-  (use-package easy-kill
-    :config
-    (global-set-key (kbd "C-=") 'easy-mark))
-#+END_SRC
-
 ** Combobulate
 #+begin_src emacs-lisp
   (use-package combobulate
@@ -696,15 +689,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (setq vundo-glyph-alist vundo-unicode-symbols)
     (global-unset-key (kbd "C-?"))
     (global-set-key (kbd "C-?") 'vundo))
-#+end_src
-
-* Frames only mode
-#+begin_src emacs-lisp
-  (use-package frames-only-mode
-    :config
-    (add-to-list 'frames-only-mode-kill-frame-when-buffer-killed-buffer-list '(regexp . "\\*helpful.*"))
-    (frames-only-mode))
-  (setq disabled-command-function nil)
 #+end_src
 
 * Advanced Appearance
@@ -794,38 +778,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (flymake-margin-mode ))
 #+end_src
 
-** Olivetti
-#+begin_src emacs-lisp
-  (use-package olivetti
-    :config
-    ;; (add-hook 'minibuffer-mode-hook 'olivetti-mode)
-    )
-
-  (use-package auto-olivetti
-    :ensure (:host sourcehut :repo "ashton314/auto-olivetti")
-    :config
-    (defun auto-olivetti--do-change ()
-      "Turn on or off `olivetti-mode' depending on the current window configuration."
-      (setq-local auto-olivetti--vlm-active (or olivetti--visual-line-mode
-                                                (and (not olivetti-mode) visual-line-mode)))
-      (if (and (bound-and-true-p auto-olivetti-mode)                  ; mode enabled?
-               (not (apply #'derived-mode-p auto-olivetti-disabled-modes))   ; in correct major-mode
-               (not (eq (buffer-name) " *corfu*"))
-               (> (window-total-width)                                ; window big enough?
-                  (if (eq auto-olivetti-threshold-method 'fraction)
-                      (* (or olivetti-body-width 80) auto-olivetti-threshold-fraction)
-                    auto-olivetti-threshold-absolute)))
-          (olivetti-mode +1)
-        (when olivetti-mode
-          (olivetti-mode -1)
-          (when (bound-and-true-p auto-olivetti--vlm-active)
-            (visual-line-mode)))))
-    (setq
-     auto-olivetti-disabled-modes '(csv-mode)
-     auto-olivetti-threshold-absolute 0
-     auto-olivetti-threshold-method 'absolute))
-#+end_src
-
 ** Perfect margin
 #+begin_src emacs-lisp
   (use-package perfect-margin
@@ -833,7 +785,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (setq perfect-margin-only-set-left-margin nil
           perfect-margin-ignore-regexps nil
           perfect-margin-ignore-filters nil)
-    (perfect-margin-mode 1))
+    (perfect-margin-mode 0))
 #+end_src
 
 * Utilities
@@ -962,13 +914,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (global-set-key (kbd "C-c C-d") #'helpful-at-point)
     (global-set-key (kbd "C-h F") #'helpful-function)
     (global-set-key (kbd "C-h C") #'helpful-command))
-#+END_SRC
-
-** Siege mode
-#+BEGIN_SRC emacs-lisp
-  (load-file "~/.emacs.d/custom_packages/siege-mode.el")
-  (global-set-key (kbd "M-[") #'siege-explicit-call)
-  (global-set-key (kbd "M-]") #'siege-explicit-call)
 #+END_SRC
 
 ** Explain pause mode
@@ -1400,13 +1345,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (global-set-key (kbd "C-?") 'vundo))
 #+end_src
 
-* Frames only mode
-#+begin_src emacs-lisp
-  (use-package frames-only-mode
-    :config
-    (frames-only-mode))
-#+end_src
-
 * Shells & terminals
 ** Eshell
 #+begin_src emacs-lisp
@@ -1635,10 +1573,11 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     :config
     (setq shr-use-fonts t)
     (setq shr-use-colors nil)
-    (setq shr-inhibit-images t)
+    (setq shr-inhibit-images nil)
     (setq shr-max-image-proportion 0.9)
     (setq shr-width nil)
-    (setq shr-folding-mode t))
+    (setq shr-folding-mode t)
+    (setq shr-width -1))
 
   (use-package shr-tag-pre-highlight
     :ensure t
@@ -1676,6 +1615,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 
     ;;(add-hook 'eww-after-render-hook #'mixed-pitch-mode)
     (add-hook 'eww-after-render-hook 'eww/rename-buffer))
+    (add-hook 'eww-after-render-hook (lambda () (visual-line-mode 1)))
 #+END_SRC
 
 * Local settings
@@ -1685,7 +1625,5 @@ Sometimes, settings are specific to one of my computers. Those settings are stor
 	    #'(lambda ()
 		(let ((local-settings "~/.emacs.d/local.el"))
 		  (when (file-exists-p local-settings)
-		    (load-file local-settings)))
-		(eval-after-load "frames-only-mode"
-		  (frames-only-mode 1))))
+		    (load-file local-settings)))))
 #+END_SRC
