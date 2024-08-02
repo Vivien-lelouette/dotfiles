@@ -131,7 +131,9 @@
   (require 'bind-key)
   (bind-key* "C-x k" #'kill-current-buffer)
   (bind-key* "C-x K" #'kill-buffer)
-  (global-set-key (kbd "C-z") 'delete-frame)
+  (global-set-key (kbd "M-[") 'previous-buffer)
+  (global-set-key (kbd "M-]") 'next-buffer)
+
   (delete-selection-mode 1)
   (set-default 'truncate-lines t)
 
@@ -242,11 +244,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
   (repeat-mode 1)
 #+end_src
 
-** Useful for french characters ?
-#+begin_src emacs-lisp
-  (require 'iso-transl)
-#+end_src
-
 ** Lighter interface
 #+BEGIN_SRC emacs-lisp
   (scroll-bar-mode 1)
@@ -306,12 +303,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
         (set-window-scroll-bars (minibuffer-window) nil nil)
         (face-remap-add-relative 'default :background "#282a36")
         (face-remap-add-relative 'fringe :background "#282a36"))))
-#+END_SRC
-
-* All the icons
-#+BEGIN_SRC emacs-lisp
-  (use-package all-the-icons
-    :if (display-graphic-p))
 #+END_SRC
 
 * Doom modeline
@@ -544,12 +535,11 @@ As bookmarks are at the center of my workflow, this is a crucial option.
            ("M-s" . consult-history)                 ;; orig. next-matching-history-element
            ("M-r" . consult-history))                ;; orig. previous-matching-history-element
     :init
-    (setq register-preview-delay 0.5
+    (setq consult-preview-key "M-."
           register-preview-function #'consult-register-format
           xref-show-xrefs-function #'consult-xref
           xref-show-definitions-function #'consult-xref
           consult-buffer-sources '(consult--source-hidden-buffer consult--source-modified-buffer consult--source-buffer consult--source-recent-file consult--source-file-register consult--source-project-buffer-hidden consult--source-project-recent-file-hidden))
-    (consult-preview-at-point-mode 0)
 
     (advice-add #'register-preview :override #'consult-register-window)
     :config
@@ -573,7 +563,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     :config
     (setq
      org-confirm-babel-evaluate nil
-     org-image-actual-width 1400
+     org-image-actual-width t
      org-startup-with-inline-images t)
 
     (load-file "~/.emacs.d/custom_packages/org-flyimage.el")
@@ -607,6 +597,39 @@ As bookmarks are at the center of my workflow, this is a crucial option.
      '(org-level-4 ((t (:inherit outline-4 :height 1.2))))
      '(org-level-5 ((t (:inherit outline-5 :height 1.0))))))
 #+END_SRC
+
+** Org roam
+#+begin_src emacs-lisp
+  ;; (make-directory "~/RoamNotes")
+  (use-package org-roam
+    :custom
+    (org-roam-directory "~/RoamNotes")
+    :bind (("C-c n l" . org-roam-buffer-toggle)
+           ("C-c n f" . org-roam-node-find)
+           ("C-c n i" . org-roam-node-insert))
+    :config
+    (org-roam-setup))
+
+  (use-package org-roam-ui
+    :ensure
+    (:host github :repo "org-roam/org-roam-ui")
+    :after org-roam
+    ;;         normally we'd recommend hooking orui after org-roam, but since org-roam does not have
+    ;;         a hookable mode anymore, you're advised to pick something yourself
+    ;;         if you don't care about startup time, use
+    ;;  :hook (after-init . org-roam-ui-mode)
+    :config
+    (setq org-roam-ui-sync-theme t
+          org-roam-ui-follow t
+          org-roam-ui-update-on-save t
+          org-roam-ui-open-on-start t))
+
+#+end_src
+
+** Org Jira exporter
+#+begin_src emacs-lisp
+  (use-package ox-jira)
+#+end_src
 
 * Time package
 #+BEGIN_SRC emacs-lisp
@@ -672,7 +695,9 @@ As bookmarks are at the center of my workflow, this is a crucial option.
      (yaml-ts-mode . combobulate-mode)
      (typescript-ts-mode . combobulate-mode)
      (json-ts-mode . combobulate-mode)
-     (tsx-ts-mode . combobulate-mode)))
+     (tsx-ts-mode . combobulate-mode))
+    :config
+    (setq combobulate-flash-node nil))
 #+end_src
 
 ** Goto last change
@@ -1006,6 +1031,13 @@ As bookmarks are at the center of my workflow, this is a crucial option.
            ("C-M-$" . jinx-languages)))
 #+end_src
 
+** Docker
+#+begin_src emacs-lisp
+  (use-package docker
+    :ensure t
+    :bind ("C-c d" . docker))
+#+end_src
+
 * Coding
 ** Nix
 #+BEGIN_SRC emacs-lisp
@@ -1063,7 +1095,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (global-set-key (kbd "C-x g s") #'magit/magit-status-no-split)
     (setq magit-bury-buffer-function 'magit-mode-quit-window))
 
-  (use-package forge)
+  ;; (use-package forge)
 #+END_SRC
 
 ** Git browse at remote
@@ -1075,9 +1107,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 
 ** Why this
 #+begin_src emacs-lisp
-  (use-package why-this
-    :config
-    (global-why-this-mode))
+  (use-package why-this)
 #+end_src
 
 ** Tempel
@@ -1135,15 +1165,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 
 ** SQL
 #+begin_src emacs-lisp
-  (use-package sql-mode
-    :ensure nil
-    :config
-    (add-hook 'sql-mode-hook 'electric-indent/inhibit))
-
-  (use-package sql-indent
-    :config
-    (add-hook 'sql-mode-hook 'sqlind-minor-mode))
-
   (use-package sqlup-mode
     :config
     (add-hook 'sql-mode-hook 'sqlup-mode))
@@ -1160,7 +1181,14 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 #+begin_src emacs-lisp
   (use-package jest-test-mode
     :commands jest-test-mode
-    :hook (typescript-mode typescript-ts-mode js-mode js-ts-mode typescript-tsx-mode))
+    :hook (typescript-mode typescript-ts-mode js-mode js-ts-mode typescript-tsx-mode)
+    :config
+    (setq display-buffer-alist '())
+    (add-to-list
+     'display-buffer-alist
+     '("\\*jest-test-compilation\\*"
+       (display-buffer-reuse-window display-buffer-pop-up-frame)
+       (reusable-frames . visible))))
 #+end_src
 
 ** Apheleia
@@ -1304,22 +1332,13 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     :init
     (setq
      dape-buffer-window-arrangement 'left
-     dape-info-hide-mode-line nil)
+     dape-info-hide-mode-line nil
+     dape-info-buffer-window-groups nil)
 
     :config
     ;; Global bindings for setting breakpoints with mouse
-    (dape-breakpoint-global-mode)
-
-    ;; Save buffers on startup, useful for interpreted languages
-    ;; (add-hook 'dape-on-start-hooks (lambda () (save-some-buffers t t)))
-    )
+    (dape-breakpoint-global-mode))
 #+end_src
-
-** kmacro-x
-#+BEGIN_SRC emacs-lisp
-  (use-package kmacro-x
-    :init (kmacro-x-atomic-undo-mode 1))
-#+END_SRC
 
 ** Expand Region
 #+BEGIN_SRC emacs-lisp
@@ -1328,22 +1347,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (global-set-key (kbd "C-=") 'expreg-expand)
     (global-set-key (kbd "C-`") 'expreg-contract))
 #+END_SRC
-
-** Goto last change
-#+BEGIN_SRC emacs-lisp
-  (use-package goto-last-change
-    :config
-    (global-set-key (kbd "C-z") 'goto-last-change))
-#+END_SRC
-
-** vundu
-#+begin_src emacs-lisp
-  (use-package vundo
-    :config
-    (setq vundo-glyph-alist vundo-unicode-symbols)
-    (global-unset-key (kbd "C-?"))
-    (global-set-key (kbd "C-?") 'vundo))
-#+end_src
 
 * Shells & terminals
 ** Eshell
@@ -1423,9 +1426,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 #+begin_src emacs-lisp
   (use-package eat
     :config
-    (setq
-     eat-term-terminfo-directory (concat elpaca-repos-directory "emacs-eat/terminfo")
-     )
     (setq eshell-visual-commands '())
 
     (defun start-file-process-shell-command-using-eat-exec
@@ -1589,33 +1589,44 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 
 ** Emacs Web Wowser
 #+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "M-s M-i") 'eww)
+  (global-set-key (kbd "M-s i") 'eww)
 
-  (defvar eww/input-history nil)
-  (eval-after-load "savehist"
-    '(add-to-list 'savehist-additional-variables 'eww/input-history))
+  (use-package eww
+    :elpaca nil
+    :ensure nil
+    :bind (:map eww-mode-map
+                ("M-p" . eww-back-url)
+                ("M-p" . eww-next-url)
+                ("C-|" . eww-browse-with-external-browser)
+                ("C-c g" . eww-reload))
+    :config
+    (defvar eww/input-history nil)
+    (eval-after-load "savehist"
+      '(add-to-list 'savehist-additional-variables 'eww/input-history))
 
-  (defun eww/do-start-with-url-or-search ()
-    (interactive)
-    (if (derived-mode-p 'eww-mode)
-        (eww (completing-read "Eww URL or search " eww/input-history nil nil (eww-current-url) 'eww/input-history))
-      (eww (completing-read "Eww URL or search " eww/input-history nil nil nil 'eww/input-history))))
-
-  (setq eww-search-prefix "https://www.google.com/search?ie=utf-8&oe=utf-8&q=")
-  (with-eval-after-load 'eww
-    (defun eww/rename-buffer ()
-      "Rename `eww-mode' buffer so sites open in new page.
-    URL `http://xahlee.info/emacs/emacs/emacs_eww_web_browser.html'
-    Version 2017-11-10"
+    (defun eww/do-start-with-url-or-search ()
       (interactive)
-      (let (($title (plist-get eww-data :title)))
-        (when (eq major-mode 'eww-mode )
-          (if $title
-              (rename-buffer (concat "Eww: " $title) t)
-            (rename-buffer "Eww" t)))))
+      (if (derived-mode-p 'eww-mode)
+          (eww (completing-read "Eww URL or search " eww/input-history nil nil (eww-current-url) 'eww/input-history))
+        (eww (completing-read "Eww URL or search " eww/input-history nil nil nil 'eww/input-history))))
 
-    ;;(add-hook 'eww-after-render-hook #'mixed-pitch-mode)
-    (add-hook 'eww-after-render-hook 'eww/rename-buffer))
-    (add-hook 'eww-after-render-hook (lambda () (visual-line-mode 1)))
+    (setq eww-search-prefix "https://www.google.com/search?ie=utf-8&oe=utf-8&q=")
+    (with-eval-after-load 'eww
+      (defun eww/rename-buffer ()
+        "Rename `eww-mode' buffer so sites open in new page.
+      URL `http://xahlee.info/emacs/emacs/emacs_eww_web_browser.html'
+      Version 2017-11-10"
+        (interactive)
+        (let (($title (plist-get eww-data :title)))
+          (when (eq major-mode 'eww-mode )
+            (if $title
+                (rename-buffer (concat "Eww: " $title) t)
+              (rename-buffer "Eww" t)))))
+
+      (add-hook 'eww-after-render-hook #'mixed-pitch-mode)
+      (add-hook 'eww-after-render-hook 'eww/rename-buffer)
+      (add-hook 'eww-after-render-hook (lambda () (visual-line-mode 1)))))
 #+END_SRC
 
 * Local settings

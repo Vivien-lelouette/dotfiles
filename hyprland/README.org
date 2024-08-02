@@ -140,10 +140,13 @@ $mainMod = SUPER
 #+END_SRC
 
 *** Compose key
+    kb_variant = colemak_dh
  #+BEGIN_SRC config :tangle .config/hypr/hyprland.conf :mkdirp yes
 input {
+    kb_layout = us
     kb_options = compose:caps
 }
+
 #+END_SRC
 
 *** Move focus with mainMod + vim keys
@@ -283,8 +286,6 @@ bindle = , XF86AudioLowerVolume, exec, pamixer -d 2
  #+BEGIN_SRC config :tangle .config/hypr/hyprland.conf :mkdirp yes
 bindl = $mainMod, s, exec, if pidof wf-recorder; then pkill -SIGINT wf-recorder; else grim -g "$(slurp)" - | swappy -f -; fi
 bindl = $mainMod SHIFT, s, exec, if pidof wf-recorder; then pkill -SIGINT wf-recorder; else rm -f ~/recording.mkv && wf-recorder -g "$(slurp)"; fi
-
-
 #+END_SRC
 
 *** Applications
@@ -300,8 +301,13 @@ bind = $mainMod SHIFT, E, exec, if ! pidof emacs; then bash -l -c 'emacs --daemo
 
 bind = $mainMod, J, exec, if ! pidof emacs; then bash -l -c 'emacs --daemon'; fi; emacsclient -c -n -e '(with-current-buffer (window-buffer (selected-window)) (dired-jump))'
 
-bind = $mainMod, I, exec, if ! pidof emacs; then bash -l -c 'emacs --daemon'; fi; emacsclient -c -n -e '(eww "https://www.google.com")'
-bind = $mainMod SHIFT, I, exec, vivaldi
+bind = $mainMod, I, exec, qutebrowser
+bind = $mainMod SHIFT, I, exec, if ! pidof emacs; then bash -l -c 'emacs --daemon'; fi; emacsclient -c -n -e '(eww "https://www.google.com")'
+
+bind = $mainMod, t, exec, if [[ $(hyprctl activewindow -j | jq .class) == '"Logseq"' ]]; then hyprctl dispatch movetoworkspacesilent 666,Logseq; else if [[ "$(hyprctl clients | grep Logseq)" == "" ]]; then bash -l -c 'logseq'; fi; hyprctl dispatch movetoworkspace $(hyprctl activeworkspace -j | jq '.id'),Logseq; hyprctl dispatch focuswindow Logseq; fi
+bind = $mainMod SHIFT, t, exec, hyprctl dispatch workspace 666;if [[ "$(hyprctl clients | grep Logseq)" == "" ]]; then bash -l -c 'logseq'; fi;
+
+bind = $mainMod, C, exec, logseq
 #+END_SRC
 
 ** Starting Applications
