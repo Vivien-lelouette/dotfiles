@@ -149,12 +149,12 @@ input {
 
 #+END_SRC
 
-*** Move focus with mainMod + vim keys
+*** Move focus with mainMod
  #+BEGIN_SRC config :tangle .config/hypr/hyprland.conf :mkdirp yes
-bind = $mainMod, b, movefocus, l
-bind = $mainMod, f, movefocus, r
-bind = $mainMod, p, movefocus, u
-bind = $mainMod, n, movefocus, d
+bind = $mainMod, LEFT, movefocus, l
+bind = $mainMod, RIGHT, movefocus, r
+bind = $mainMod, UP, movefocus, u
+bind = $mainMod, DOWN, movefocus, d
 
 bind = $mainMod, O, focuscurrentorlast
 bind = $mainMod SHIFT, O,cyclenext,prev
@@ -162,18 +162,18 @@ bind = $mainMod SHIFT, O,cyclenext,prev
 
 *** Moves the active window
  #+BEGIN_SRC config :tangle .config/hypr/hyprland.conf :mkdirp yes
-bind = $mainMod SHIFT, b, movewindow, l
-bind = $mainMod SHIFT, f, movewindow, r
-bind = $mainMod SHIFT, p, movewindow, u
-bind = $mainMod SHIFT, n, movewindow, d
+bind = $mainMod SHIFT, LEFT, movewindow, l
+bind = $mainMod SHIFT, RIGHT, movewindow, r
+bind = $mainMod SHIFT, UP, movewindow, u
+bind = $mainMod SHIFT, DOWN, movewindow, d
 #+END_SRC
 
 *** Resizes the active window
  #+BEGIN_SRC config :tangle .config/hypr/hyprland.conf :mkdirp yes
-binde = $mainMod SHIFT, bracketleft, resizeactive, -60 0
-binde = $mainMod SHIFT, bracketright, resizeactive, 60 0
-binde = $mainMod SHIFT, V, resizeactive, 0 -60
-binde = $mainMod, V, resizeactive, 0 60
+binde = $mainMod CTRL, LEFT, resizeactive, -60 0
+binde = $mainMod CTRL, RIGHT, resizeactive, 60 0
+binde = $mainMod CTRL, UP, resizeactive, 0 -60
+binde = $mainMod CTRL, DOWN, resizeactive, 0 60
 #+END_SRC
 
 *** Tabs
@@ -186,14 +186,6 @@ bind= $mainMod ALT, b, moveintogroup, l
 bind= $mainMod ALT, p, moveintogroup, u
 bind= $mainMod ALT, n, moveintogroup, d
 bind= $mainMod ALT, f, moveintogroup, r
-#+END_SRC
-
-Those are a necessity when xremap and global emacs mapping is enabled.
- #+BEGIN_SRC config :tangle .config/hypr/hyprland.conf :mkdirp yes
-bind= $mainMod CTRL, left, moveintogroup, l
-bind= $mainMod CTRL, up, moveintogroup, u
-bind= $mainMod CTRL, down, moveintogroup, d
-bind= $mainMod CTRL, right, moveintogroup, r
 #+END_SRC
 
 *** Switch workspaces with mainMod + [0-9]
@@ -307,7 +299,8 @@ bind = $mainMod SHIFT, I, exec, if ! pidof emacs; then bash -l -c 'emacs --daemo
 bind = $mainMod, t, exec, if [[ $(hyprctl activewindow -j | jq .class) == '"Logseq"' ]]; then hyprctl dispatch movetoworkspacesilent 666,Logseq; else if [[ "$(hyprctl clients | grep Logseq)" == "" ]]; then bash -l -c 'logseq'; fi; hyprctl dispatch movetoworkspace $(hyprctl activeworkspace -j | jq '.id'),Logseq; hyprctl dispatch focuswindow Logseq; fi
 bind = $mainMod SHIFT, t, exec, hyprctl dispatch workspace 666;if [[ "$(hyprctl clients | grep Logseq)" == "" ]]; then bash -l -c 'logseq'; fi;
 
-bind = $mainMod, C, exec, logseq
+bind = $mainMod, d, exec, if [[ $(hyprctl activewindow -j | jq .class) == '"beekeeper-studio"' ]]; then hyprctl dispatch movetoworkspacesilent 665,beekeeper-studio; else if [[ "$(hyprctl clients | grep beekeeper-studio)" == "" ]]; then bash -l -c 'beekeeper-studio --use-gl=desktop'; fi; hyprctl dispatch movetoworkspace $(hyprctl activeworkspace -j | jq '.id'),beekeeper-studio; hyprctl dispatch focuswindow beekeeper-studio; fi
+bind = $mainMod SHIFT, d, exec, hyprctl dispatch workspace 665;if [[ "$(hyprctl clients | grep beekeeper-studio)" == "" ]]; then bash -l -c 'beekeeper-studio --use-gl=desktop'; fi;
 #+END_SRC
 
 ** Starting Applications

@@ -91,6 +91,11 @@
 
 (use-package no-littering)
 
+(global-set-key (kbd "<up>") 'previous-line)
+(global-set-key (kbd "<down>") 'next-line)
+(global-set-key (kbd "<left>") 'backward-char)
+(global-set-key (kbd "<right>") 'forward-char)
+
 (global-auto-revert-mode 1)
 (require 'bind-key)
 (bind-key* "C-x k" #'kill-current-buffer)
@@ -459,10 +464,14 @@
 
 (use-package org
   :config
+  (define-key org-mode-map (kbd "C-M-S-<left>") nil)
+  (define-key org-mode-map (kbd "C-M-S-<right>") nil)
+
   (setq
    org-confirm-babel-evaluate nil
    org-image-actual-width t
-   org-startup-with-inline-images t)
+   org-startup-with-inline-images t
+   org-support-shift-select t)
 
   (load-file "~/.emacs.d/custom_packages/org-flyimage.el")
   (with-eval-after-load "org"
@@ -1075,6 +1084,11 @@ when reading files and the other way around when writing contents."
   (global-set-key (kbd "C-=") 'expreg-expand)
   (global-set-key (kbd "C-`") 'expreg-contract))
 
+(use-package exec-path-from-shell
+  :config
+  (when (memq window-system '(mac ns x))
+    (exec-path-from-shell-initialize)))
+
 (defun utils/get-project-root-if-wanted ()
   (interactive)
   (let ((cur-buffer (window-buffer (selected-window))))
@@ -1107,6 +1121,8 @@ when reading files and the other way around when writing contents."
   (define-key eshell-mode-map (kbd "M-m") #'eshell-bol)
   (define-key eshell-hist-mode-map (kbd "M-s") nil)
   (define-key eshell-hist-mode-map (kbd "M-r") #'consult-history)
+  (define-key eshell-hist-mode-map (kbd "<up>") nil)
+  (define-key eshell-hist-mode-map (kbd "<down>") nil)
   (setq 
    eshell-where-to-jump 'begin
    eshell-review-quick-commands nil
@@ -1251,8 +1267,9 @@ when reading files and the other way around when writing contents."
   :config
   (setq ls-lisp-use-insert-directory-program nil)
   (require 'ls-lisp)
-  (setq ls-lisp-dirs-first t)
-  (setq wdired-allow-to-change-permissions t)
+  (setq ls-lisp-dirs-first t
+        wdired-allow-to-change-permissions t
+        dired-auto-revert-buffer t)
   (add-hook 'wdired-mode-hook
             (lambda ()
               (define-key wdired-mode-map (kbd "s-<escape>") 'wdired-abort-changes))))

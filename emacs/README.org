@@ -125,6 +125,14 @@
   (use-package no-littering)
 #+END_SRC
 
+** Bind arrow keys
+#+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "<up>") 'previous-line)
+  (global-set-key (kbd "<down>") 'next-line)
+  (global-set-key (kbd "<left>") 'backward-char)
+  (global-set-key (kbd "<right>") 'forward-char)
+#+END_SRC
+
 ** Buffers, frames & windows
 #+BEGIN_SRC emacs-lisp
   (global-auto-revert-mode 1)
@@ -561,10 +569,14 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 #+BEGIN_SRC emacs-lisp
   (use-package org
     :config
+    (define-key org-mode-map (kbd "C-M-S-<left>") nil)
+    (define-key org-mode-map (kbd "C-M-S-<right>") nil)
+
     (setq
      org-confirm-babel-evaluate nil
      org-image-actual-width t
-     org-startup-with-inline-images t)
+     org-startup-with-inline-images t
+     org-support-shift-select t)
 
     (load-file "~/.emacs.d/custom_packages/org-flyimage.el")
     (with-eval-after-load "org"
@@ -1349,6 +1361,14 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 #+END_SRC
 
 * Shells & terminals
+** exec-path-from-shell
+#+begin_src emacs-lisp
+  (use-package exec-path-from-shell
+    :config
+    (when (memq window-system '(mac ns x))
+      (exec-path-from-shell-initialize)))
+#+end_src
+
 ** Eshell
 #+begin_src emacs-lisp
   (defun utils/get-project-root-if-wanted ()
@@ -1383,6 +1403,8 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (define-key eshell-mode-map (kbd "M-m") #'eshell-bol)
     (define-key eshell-hist-mode-map (kbd "M-s") nil)
     (define-key eshell-hist-mode-map (kbd "M-r") #'consult-history)
+    (define-key eshell-hist-mode-map (kbd "<up>") nil)
+    (define-key eshell-hist-mode-map (kbd "<down>") nil)
     (setq 
      eshell-where-to-jump 'begin
      eshell-review-quick-commands nil
@@ -1543,8 +1565,9 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     :config
     (setq ls-lisp-use-insert-directory-program nil)
     (require 'ls-lisp)
-    (setq ls-lisp-dirs-first t)
-    (setq wdired-allow-to-change-permissions t)
+    (setq ls-lisp-dirs-first t
+          wdired-allow-to-change-permissions t
+          dired-auto-revert-buffer t)
     (add-hook 'wdired-mode-hook
               (lambda ()
                 (define-key wdired-mode-map (kbd "s-<escape>") 'wdired-abort-changes))))
