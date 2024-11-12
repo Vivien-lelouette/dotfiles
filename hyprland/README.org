@@ -116,14 +116,14 @@ env = GDK_SCALE,1
 env = XCURSOR_SIZE,32
 #+END_SRC
 
- #+BEGIN_SRC config :tangle .config/hypr/hyprland.conf :mkdirp yes
+#+BEGIN_SRC config :tangle .config/hypr/hyprland.conf :mkdirp yes
 animation = windowsIn,0
 animation = windowsOut,0
 
 animation = border,0
 #+END_SRC
 
- #+BEGIN_SRC config :tangle .config/hypr/hyprland.conf :mkdirp yes
+#+BEGIN_SRC config :tangle .config/hypr/hyprland.conf :mkdirp yes
 misc {
     disable_splash_rendering = 0
     disable_hyprland_logo = 0

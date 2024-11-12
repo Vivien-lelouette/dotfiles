@@ -91,10 +91,21 @@
 
 (use-package no-littering)
 
-(global-set-key (kbd "<up>") 'previous-line)
-(global-set-key (kbd "<down>") 'next-line)
-(global-set-key (kbd "<left>") 'backward-char)
-(global-set-key (kbd "<right>") 'forward-char)
+(define-key key-translation-map (kbd "<up>") (kbd "C-p"))
+(define-key key-translation-map (kbd "<down>") (kbd "C-n"))
+(define-key key-translation-map (kbd "<left>") (kbd "C-b"))
+(define-key key-translation-map (kbd "<right>") (kbd "C-f"))
+
+(define-key key-translation-map [f1] (kbd "C-1"))
+(define-key key-translation-map [f2] (kbd "C-2"))
+(define-key key-translation-map [f3] (kbd "C-3"))
+(define-key key-translation-map [f4] (kbd "C-4"))
+(define-key key-translation-map [f5] (kbd "C-5"))
+(define-key key-translation-map [f6] (kbd "C-6"))
+(define-key key-translation-map [f7] (kbd "C-7"))
+(define-key key-translation-map [f8] (kbd "C-8"))
+(define-key key-translation-map [f9] (kbd "C-9"))
+(define-key key-translation-map [f0] (kbd "C-0"))
 
 (global-auto-revert-mode 1)
 (require 'bind-key)
@@ -298,8 +309,8 @@
   :init
   (global-corfu-mode)
   :config
-  (setq corfu-auto t
-        corfu-auto-prefix 1
+  (setq corfu-auto nil
+        ;; corfu-auto-prefix 1
         corfu-echo-documentation t
         corfu-quit-no-match 'separator
         corfu-preselect 'valid)
@@ -873,6 +884,7 @@ when reading files and the other way around when writing contents."
   (interactive)
   (setq-local electric-indent-inhibit t))
 
+(use-package transient)
 (use-package magit
   :config
   (defun magit/magit-status-no-split ()
@@ -1121,8 +1133,6 @@ when reading files and the other way around when writing contents."
   (define-key eshell-mode-map (kbd "M-m") #'eshell-bol)
   (define-key eshell-hist-mode-map (kbd "M-s") nil)
   (define-key eshell-hist-mode-map (kbd "M-r") #'consult-history)
-  (define-key eshell-hist-mode-map (kbd "<up>") nil)
-  (define-key eshell-hist-mode-map (kbd "<down>") nil)
   (setq 
    eshell-where-to-jump 'begin
    eshell-review-quick-commands nil
