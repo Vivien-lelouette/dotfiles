@@ -105,7 +105,7 @@
 (define-key key-translation-map [f7] (kbd "C-7"))
 (define-key key-translation-map [f8] (kbd "C-8"))
 (define-key key-translation-map [f9] (kbd "C-9"))
-(define-key key-translation-map [f0] (kbd "C-0"))
+(define-key key-translation-map [f10] (kbd "C-0"))
 
 (global-auto-revert-mode 1)
 (require 'bind-key)
