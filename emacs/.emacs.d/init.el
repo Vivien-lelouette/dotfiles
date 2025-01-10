@@ -39,9 +39,9 @@
 
 ;; Install use-package support
 (elpaca elpaca-use-package
-        ;; Enable :elpaca use-package keyword.
+        ;; Enable :ensure use-package keyword.
         (elpaca-use-package-mode)
-        ;; Assume :elpaca t unless otherwise specified.
+        ;; Assume :ensure t unless otherwise specified.
         (setq elpaca-use-package-by-default t))
 
 ;; Block until current queue processed.
@@ -194,7 +194,7 @@
 (setq
  display-line-numbers-type 'relative
  mode-line-percent-position nil)
-(global-display-line-numbers-mode 1)
+(global-display-line-numbers-mode 0)
 (add-hook 'completion-list-mode-hook (lambda () (display-line-numbers-mode 0)))
 (line-number-mode 0)
 (column-number-mode 0)
@@ -234,6 +234,8 @@
   :hook
   (org-mode . mixed-pitch-mode))
 
+(setq auth-sources '("~/.authinfo.gpg"))
+
 (load-file "~/.emacs.d/custom_packages/dracula-theme.el")
 (load-theme 'dracula t)
 
@@ -256,7 +258,19 @@
       (face-remap-add-relative 'fringe :background "#282a36"))))
 
 (use-package doom-modeline
-  :hook (after-init . doom-modeline-mode))
+  :hook (after-init . doom-modeline-mode)
+  :config
+  (setq
+   inhibit-compacting-font-caches t
+   mode-line-right-align-edge 'window
+   doom-modeline-percent-position nil
+   doom-modeline-enable-word-count t
+   doom-modeline-continuous-word-count-modes nil
+   doom-modeline-total-line-number t
+   doom-modeline-position-line-format '("" " " "%l")
+   doom-modeline-position-column-line-format '("" " " "%cC %lL"))
+  (line-number-mode 1)
+  (column-number-mode 0))
 
 (setq tab-always-indent 'complete)
 ;; (setq completions-format 'one-column
@@ -440,10 +454,10 @@
          ("M-g I" . consult-imenu-multi)
          ;; M-s bindings (search-map)
          ("M-s e" . consult-isearch-history)
-         ("M-s d" . consult-find)
-         ("M-s D" . consult-locate)
+         ("M-s M-d" . consult-find)
+         ("M-s d" . consult-locate)
          ("M-s g" . consult-grep)
-         ("M-s G" . consult-git-grep)
+         ("M-s M-g" . consult-git-grep)
          ("M-s r" . consult-ripgrep)
          ("M-s l" . consult-line)
          ("M-s L" . consult-line-multi)
@@ -542,7 +556,7 @@
 (use-package ox-jira)
 
 (use-package time
-  :elpaca nil
+  :ensure nil
   :commands world-clock
   :config
   (setq display-time-interval 60)
@@ -593,13 +607,21 @@
   (global-set-key (kbd "C-z") 'goto-last-change))
 
 (use-package vundo
+  :bind (
+         :map vundo-mode-map
+         ("C-b" . vundo-backward)
+         ("C-f" . vundo-forward)
+         ("C-p" . vundo-previous)
+         ("C-n" . vundo-next)
+         ("<home>" . vundo-stem-root)
+         ("<end>" . vundo-stem-end))
   :config
   (setq vundo-glyph-alist vundo-unicode-symbols)
   (global-unset-key (kbd "C-?"))
   (global-set-key (kbd "C-?") 'vundo))
 
 (use-package hideshow
-  :elpaca nil
+  :ensure nil
   :hook
   (prog-mode . hs-minor-mode)
   :bind (
@@ -658,7 +680,7 @@
 (add-hook 'prog-mode-hook #'custom/coding-faces)
 
 (use-package ediff
-    :elpaca nil
+    :ensure nil
     :config
     (setq ediff-window-setup-function 'ediff-setup-windows-plain
           ediff-split-window-function 'split-window-horizontally))
@@ -761,7 +783,7 @@
 (use-package wgrep)
 
 (use-package savehist
-  :elpaca nil
+  :ensure nil
   :init
   (savehist-mode))
 
@@ -855,6 +877,8 @@ when reading files and the other way around when writing contents."
   :ensure t
   :bind ("C-c d" . docker))
 
+(use-package lingva)
+
 (use-package nix-mode
   :mode "\\.nix\\'")
 
@@ -886,6 +910,7 @@ when reading files and the other way around when writing contents."
 
 (use-package transient)
 (use-package magit
+  :ensure (:host github :repo "magit/magit" :ref "g7f472995")
   :config
   (defun magit/magit-status-no-split ()
     "Don't split window."
@@ -898,7 +923,39 @@ when reading files and the other way around when writing contents."
   (global-set-key (kbd "C-x g s") #'magit/magit-status-no-split)
   (setq magit-bury-buffer-function 'magit-mode-quit-window))
 
-;; (use-package forge)
+(use-package magit-todos
+  :after magit
+  :config (magit-todos-mode 1))
+
+(use-package forge
+  :ensure (:host github :repo "magit/forge" :ref "fca33c6")
+  :after magit
+  :config
+  (defun forge--format-topic-title (topic)
+    (with-temp-buffer
+      (save-excursion
+        (with-slots (title status state) topic
+          (insert
+           (magit--propertize-face
+            title
+            `(,@(and (forge-pullreq-p topic)
+                     (oref topic draft-p)
+                     '(forge-pullreq-draft))
+              ,(pcase status
+                 ('unread  'forge-topic-unread)
+                 ('pending 'forge-topic-pending)
+                 ('done    'forge-topic-done))
+              ,(pcase (list (eieio-object-class topic) state)
+                 (`(forge-issue   open)      'forge-issue-open)
+                 (`(forge-issue   completed) 'forge-issue-completed)
+                 (`(forge-issue   unplanned) 'forge-issue-unplanned)
+                 (`(forge-pullreq open)      'forge-pullreq-open)
+                 (`(forge-pullreq merged)    'forge-pullreq-merged)
+                 (`(forge-pullreq rejected)  'forge-pullreq-rejected)))))))
+      (run-hook-wrapped 'forge-topic-wash-title-hook
+                        (lambda (fn) (prog1 nil (save-excursion (funcall fn)))))
+      (buffer-string)))
+  )
 
 (use-package browse-at-remote
   :config
@@ -965,15 +1022,16 @@ when reading files and the other way around when writing contents."
   (add-to-list 'apheleia-mode-alist '(typescript-ts-mode . prettier))
   (apheleia-global-mode t))
 
-(use-package treesit-auto
-  :custom
-  (treesit-auto-install 'prompt)
-  :config
-  (treesit-auto-add-to-auto-mode-alist 'all)
-  (global-treesit-auto-mode))
+;; (use-package treesit-auto
+;;   :custom
+;;   (treesit-auto-install 'prompt)
+;;   :config
+;;   ;; (treesit-auto-add-to-auto-mode-alist 'all)
+;;   (treesit-auto-add-to-auto-mode-alist (list "awk" "bash" "c" "c-sharp" "css" "dockerfile" "html" "java" "json" "kotlin" "make" "markdown" "nix" "nu" "org" "python" "rust" "sql" "vue" "yaml" "typescript" "tsx"))
+;;   (global-treesit-auto-mode))
 
 (use-package eglot
-  :elpaca nil
+  :ensure nil
   :ensure t
   :hook ((( js-mode js-ts-mode typescript-ts-mode typescript-mode php-mode)
           . eglot-ensure))
@@ -1144,7 +1202,8 @@ when reading files and the other way around when writing contents."
    eshell-highlight-prompt t)
   (set-face-attribute 'eshell-prompt nil :weight 'ultra-bold :inherit 'minibuffer-prompt)
   (eat-eshell-mode 1)
-  (eat-eshell-visual-command-mode 1))
+  (eat-eshell-visual-command-mode 1)
+  (display-line-numbers-mode 0))
 (add-hook 'eshell-mode-hook #'eshell/hook)
 
 (defun eshell/rename-with-current-path ()
@@ -1169,7 +1228,7 @@ when reading files and the other way around when writing contents."
 (global-set-key (kbd "C-c t") #'eshell/new-or-current)
 
 (use-package eshell
-  :elpaca nil)
+  :ensure nil)
 
 (use-package eat
   :config
@@ -1261,7 +1320,7 @@ when reading files and the other way around when writing contents."
   (dired-next-line -1))
 
 (use-package dired
-  :elpaca nil
+  :ensure nil
   :bind (
          :map dired-mode-map
          ("C-." . dired-hide-dotfiles-mode)
@@ -1300,7 +1359,7 @@ when reading files and the other way around when writing contents."
   (dired-mode . nerd-icons-dired-mode))
 
 (use-package shr
-  :elpaca nil
+  :ensure nil
   :config
   (setq shr-use-fonts t)
   (setq shr-use-colors nil)
@@ -1321,7 +1380,6 @@ when reading files and the other way around when writing contents."
 (global-set-key (kbd "M-s i") 'eww)
 
 (use-package eww
-  :elpaca nil
   :ensure nil
   :bind (:map eww-mode-map
               ("M-p" . eww-back-url)

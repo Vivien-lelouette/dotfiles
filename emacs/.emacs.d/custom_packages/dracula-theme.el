@@ -104,7 +104,7 @@ read it before opening a new issue about your will.")
                 (dark-green           "#037a22" "#00af00" "green") ; 40% darker
                 (dark-blue            "#0189cc" "#0087ff" "brightblue")))
       (faces '(;; default / basic faces
-               (cursor :background ,fg3)
+               (cursor :background ,dracula-purple)
                (default :background ,dracula-bg :foreground ,dracula-fg)
                (default-italic :slant italic)
                (error :foreground ,dracula-red)
@@ -147,6 +147,7 @@ read it before opening a new issue about your will.")
                ;; Doom-modeline
                (doom-modeline-bar :foreground ,dracula-bg :background ,dracula-bg)
                (doom-modeline-bar-inactive :foreground ,dracula-bg :background ,dracula-bg)
+               (doom-modeline-emphasis :foreground ,dracula-purple :weight bold)
                (read-multiple-choice-face :inherit completions-first-difference)
                (region :inherit match :extend t)
                (shadow :foreground ,dracula-comment)
