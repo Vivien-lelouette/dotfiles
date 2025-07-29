@@ -1,0 +1,211 @@
+#+TITLE: Hyprland configuration
+* River
+** Style
+#+BEGIN_SRC config :tangle ~/.config/river/init :mkdirp yes
+
+#+END_SRC
+
+** Makes new window at the bottom of the stack
+#+BEGIN_SRC config :tangle ~/.config/river/init :mkdirp yes
+riverctl default-attach-mode bottom
+riverctl focus-follows-cursor always
+riverctl set-cursor-warp on-focus-change
+riverctl hide-cursor timeout 1000
+riverctl background-color "0x000000"
+#+END_SRC
+
+** Bindings
+*** Move focus with mainMod
+#+BEGIN_SRC config :tangle ~/.config/river/init :mkdirp yes
+riverctl map normal Super LEFT focus-view left
+riverctl map normal Super RIGHT focus-view right
+riverctl map normal Super UP focus-view up
+riverctl map normal Super DOWN focus-view down
+
+riverctl map normal Super Space send-layout-cmd wideriver "--layout-toggle"
+
+riverctl map normal Super+Control LEFT send-layout-cmd wideriver "--ratio -0.025"
+riverctl map normal Super+Control RIGHT  send-layout-cmd wideriver "--ratio +0.025"
+riverctl map normal Super+Control UP send-layout-cmd wideriver "--layout wide --stack even --count 3 --ratio 0.4"
+riverctl map normal Super+Control DOWN send-layout-cmd wideriver "--ratio 0.40"
+
+riverctl map normal Super plus  send-layout-cmd wideriver "--count +1"
+riverctl map normal Super equal send-layout-cmd wideriver "--count -1"
+riverctl map normal Super minus send-layout-cmd wideriver "--count -1"
+#+END_SRC
+
+*** Moves the active window
+#+BEGIN_SRC config :tangle ~/.config/river/init :mkdirp yes
+riverctl map normal Super+Shift LEFT swap left
+riverctl map normal Super+Shift RIGHT swap right
+riverctl map normal Super+Shift UP swap up
+riverctl map normal Super+Shift DOWN swap down
+
+# Super + Left Mouse Button to move views
+riverctl map-pointer normal Super BTN_LEFT move-view
+#+END_SRC
+
+*** Resizes the active window
+#+BEGIN_SRC config :tangle ~/.config/river/init :mkdirp yes
+# Super + Right Mouse Button to resize views
+riverctl map-pointer normal Super BTN_RIGHT resize-view
+#+END_SRC
+
+*** Tabs
+#+BEGIN_SRC config :tangle ~/.config/river/init :mkdirp yes
+#+END_SRC
+
+*** Monitor
+#+BEGIN_SRC config :tangle ~/.config/river/init :mkdirp yes
+riverctl map normal Super+Control minus spawn 'way-displays --set SCALE "" 1.000'
+riverctl map normal Super minus spawn 'echo $(way-displays -g | grep "    scale:     " | head -n 1 | sed -e "s|    scale:     ||g" | cut -d " " -f1) + 0.200 | bc | xargs way-displays --set SCALE ""'
+riverctl map normal Super underscore spawn 'echo $(way-displays -g | grep "    scale:     " | head -n 1 | sed -e "s|    scale:     ||g" | cut -d " " -f1) - 0.200 | bc | xargs way-displays --set SCALE ""'
+
+riverctl map normal Super+Alt LEFT focus-output left
+riverctl map normal Super+Alt RIGHT focus-output right
+riverctl map normal Super+Alt UP focus-output up
+riverctl map normal Super+Alt DOWN focus-output down
+
+riverctl map normal Super+Alt+Shift LEFT send-to-output left
+riverctl map normal Super+Alt+Shift RIGHT send-to-output right
+riverctl map normal Super+Alt+Shift UP send-to-output up
+riverctl map normal Super+Alt+Shift DOWN send-to-output down
+#+END_SRC
+
+*** Switch tags with mainMod + [0-9]
+#+BEGIN_SRC config :tangle ~/.config/river/init :mkdirp yes
+for i in $(seq 1 10)
+do
+    tags=$((1 << ($i - 1)))
+
+    key=$(if [ "$i" = "10" ]; then echo 0; else echo $i; fi)
+
+    echo "${key}"
+    
+    # Super+[1-0] to focus tag [0-10]
+    riverctl map normal Super $key set-focused-tags $tags
+
+    # Super+Shift+[1-0] to tag focused view with tag [0-10]
+    riverctl map normal Super+Shift $key set-view-tags $tags
+
+    # Super+Control+[1-0] to toggle focus of tag [0-10]
+    riverctl map normal Super+Control $key toggle-focused-tags $tags
+
+    # Super+Shift+Control+[1-0] to toggle tag [0-10] of focused view
+    riverctl map normal Super+Shift+Control $key toggle-view-tags $tags
+done
+
+# Super+backtick to focus all tags
+# Super+Shift+backtick to tag focused view with all tags
+all_tags=$(((1 << 32) - 1))
+riverctl map normal Super grave set-focused-tags $all_tags
+riverctl map normal Super+Shift grave set-view-tags $all_tags
+#+END_SRC
+
+*** Move active window to a workspace with mainMod + SHIFT + [0-9]
+#+BEGIN_SRC config :tangle ~/.config/river/init :mkdirp yes
+#+END_SRC
+
+*** Send active window to a workspace siltently with mainMod + CTRL + [0-9]
+#+BEGIN_SRC config :tangle ~/.config/river/init :mkdirp yes
+#+END_SRC
+
+*** Scroll through existing workspaces with mainMod + scroll
+#+BEGIN_SRC config :tangle ~/.config/river/init :mkdirp yes
+#+END_SRC
+
+*** Move/resize windows with mainMod + LMB/RMB and dragging
+#+BEGIN_SRC config :tangle ~/.config/river/init :mkdirp yes
+#+END_SRC
+
+*** Window states
+#+BEGIN_SRC config :tangle ~/.config/river/init :mkdirp yes
+riverctl map normal Super M toggle-float
+riverctl map normal Super+Shift M toggle-fullscreen
+#+END_SRC
+
+*** Kill selected window
+#+BEGIN_SRC config :tangle ~/.config/river/init :mkdirp yes
+riverctl map normal Super K close
+#+END_SRC
+
+*** Lock screen
+#+BEGIN_SRC config :tangle ~/.config/river/init :mkdirp yes
+riverctl map normal Super L spawn hyprlock
+#+END_SRC
+
+*** Waybar
+#+BEGIN_SRC config :tangle ~/.config/river/init :mkdirp yes
+riverctl map normal Super apostrophe spawn "if pidof waybar; then pkill waybar; else waybar; fi"
+#+END_SRC
+
+*** Screenshot
+
+#+BEGIN_SRC config :tangle ~/.config/river/init :mkdirp yes
+riverctl map normal Super S spawn 'if pidof wf-recorder; then pkill -SIGINT wf-recorder; else grim -g "$(slurp)" - | swappy -f -; fi'
+riverctl map normal Super+Shift S spawn 'if pidof wf-recorder; then pkill -SIGINT wf-recorder; else rm -f ~/recording.mkv && wf-recorder -g "$(slurp)"; fi'
+#+END_SRC
+
+*** Applications
+Example binds, see https://wiki.hyprland.org/Configuring/Binds/ for more
+#+BEGIN_SRC config :tangle ~/.config/river/init :mkdirp yes
+riverctl map normal Super+Shift Return spawn alacritty
+riverctl map normal Super I spawn zen
+riverctl map normal Super Return spawn "if ! pidof emacs; then 'emacs --daemon'; fi; emacsclient -c -n -e '(eshell/new-or-current)'"
+
+riverctl map normal Super X spawn "wofi --show drun"
+
+riverctl map normal Super E spawn "if ! pidof emacs; then 'emacs --daemon'; fi; emacsclient -c -n -e '(switch-to-buffer (window-buffer (selected-window)))'"
+riverctl map normal Super+Shift E spawn "if ! pidof emacs; then 'emacs --daemon'; fi; emacsclient -c -n -e '(switch-to-buffer nil)'"
+
+riverctl map normal Super J spawn "if ! pidof emacs; then 'emacs --daemon'; fi; emacsclient -c -n -e '(with-current-buffer (window-buffer (selected-window)) (dired-jump))'"
+
+riverctl map normal Super+Shift I spawn "if ! pidof emacs; then 'emacs --daemon'; fi; emacsclient -c -n -e '(eww "https://www.google.com")'"
+#+END_SRC
+
+** Starting Applications
+#+BEGIN_SRC config :tangle ~/.config/river/init :mkdirp yes
+riverctl rule-add ssd
+# set layout manager
+riverctl default-layout wideriver &
+
+# start layout manager
+wideriver \
+    --layout                       wide        \
+    --layout-alt                   right       \
+    --stack                        even        \
+    --count                        2           \
+    --count-wide-left              0           \
+    --ratio-wide                   0.40        \
+    --no-smart-gaps                            \
+    --inner-gaps                   4           \
+    --outer-gaps                   4           \
+    --border-width                 6           \
+    --border-width-smart-gaps      0           \
+    --border-color-focused         "0x7c60a3"  \
+    --border-color-focused-monocle "0x7c60a3"  \
+    --border-color-unfocused       "0x232530"  \
+    --log-threshold                info        \
+   > "/tmp/wideriver.${XDG_VTNR}.${USER}.log" 2>&1 &
+
+nohup systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP &
+nohup dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=river &
+nohup systemctl --user restart xdg-desktop-portal &
+nohup systemctl --user import-environment PATH
+nohup systemctl --user restart xdg-desktop-portal.service
+
+nohup way-displays > /tmp/way-displays.${XDG_VTNR}.${USER}.log 2>&1 &
+nohup way-displays --set SCALE "" 1.000 &
+
+nohup hyprpaper &
+nohup waybar &
+nohup systemctl --user start xremap &
+nohup nm-applet --indicator &
+
+nohup gsettings set org.gnome.desktop.interface gtk-theme 'Dracula' &
+nohup gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark' &
+
+nohup bash -l -c "emacs --daemon" &
+
+nohup riverctl send-layout-cmd wideriver "--layout wide --stack even --count 3 --ratio 0.4" &
+#+END_SRC

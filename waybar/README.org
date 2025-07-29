@@ -7,7 +7,7 @@
        border-radius: 0;
        font-family: SauceCodePro NF, monospace;
        font-weight: bold;
-       font-size: 16px;
+       font-size: 14px;
        min-height: 0;
    }
 
@@ -18,10 +18,19 @@
 
    tooltip {
        background: #282a36;
-       border-radius: 10px;
+       border-radius: 0px;
        border-width: 3px;
        border-style: solid;
        border-color: #bd93f9;
+   }
+
+   #workspaces {
+       background: #282a36;
+       border-radius: 0px;
+       margin-left: 5px;
+       padding-right: 0px;
+       padding-left: 0px;
+       border: 1px solid #282836;
    }
 
    #workspaces button {
@@ -36,17 +45,52 @@
    #workspaces button.focused {
        color: #f8f8f2;
        background: #9aedfe;
-       border-radius: 10px;
+       border-radius: 0px;
    }
 
    #workspaces button.urgent {
        color: #bd93f9;
        background: #f8f8f2;
-       border-radius: 10px;
+       border-radius: 0px;
    }
 
    #workspaces button:hover {
-       border-radius: 10px;
+       border-radius: 0px;
+       border-width: 3px;
+       border-color: #bd93f9;
+   }
+
+   #tags {
+       background: #282a36;
+       border-radius: 0px;
+       margin-top: 4px;
+       padding: 0px;
+       border: 3px solid #282836;
+   }
+      
+   #tags button {
+       padding: 2px;
+       color: #6272a4;
+   }
+
+   #tags button.active {
+       color: #bd93f9;
+   }
+
+   #tags button.focused {
+       color: #f8f8f2;
+       background: #bd93f9;
+       border-radius: 0px;
+   }
+
+   #tags button.urgent {
+       color: #bd93f9;
+       background: #f8f8f2;
+       border-radius: 0px;
+   }
+
+   #tags button:hover {
+       border-radius: 0px;
        border-width: 3px;
        border-color: #bd93f9;
    }
@@ -70,23 +114,14 @@
    #tray {
        color: #f8f8f2;
        background: #282a36;
-       border-radius: 10px;
+       border-radius: 0px;
        margin-right: 5px;
-   }
-
-   #workspaces {
-       background: #282a36;
-       border-radius: 10px;
-       margin-left: 5px;
-       padding-right: 0px;
-       padding-left: 0px;
-       border: 1px solid #282836;
    }
 
    #pulseaudio {
        color: #f8f8f2;
        background: #282a36;
-       border-radius: 10px;
+       border-radius: 0px;
        border-left: 0px;
        border-right: 0px;
        min-width: 5px;
@@ -95,7 +130,7 @@
    #window {
        color: #f8f8f2;
        background: #282a36;
-       border-radius: 10px;
+       border-radius: 0px;
        margin-left: 5px;
        margin-right: 60px;
    }
@@ -108,7 +143,7 @@
    }
 
    #clock {
-       border-radius: 10px;
+       border-radius: 0px;
        margin-right: 5px;
        border-right: 0px;
    }
@@ -130,8 +165,8 @@
     "passthrough": false,
     "gtk-layer-shell": true,
     "height": 0,
-    "modules-left": ["hyprland/window"],
-    "modules-center": ["hyprland/workspaces"],
+    "modules-left": ["river/window"],
+    "modules-center": ["river/tags"],
     "modules-right": [
         "tray",
         "pulseaudio",
@@ -139,16 +174,6 @@
         "clock",
         "battery"
     ],
-
-    "hyprland/window": {
-        "format": "{}"
-    },
-    "hyprland/workspaces": {
-        "disable-scroll": true,
-        "all-outputs": false,
-        "on-click": "activate",
-        //"format": "{icon}",
-    },
 
     "mpris": {
       "format": "<span size='x-large' rise='-3000'>{status_icon}</span> {length}",
@@ -162,6 +187,11 @@
         "paused": ""
       },
       // "ignored-players": ["firefox"]
+    },
+
+    "river/tags" : {
+      "num-tags": 10,
+      "hide-vacant": true
     },
 
     "mpd": {
@@ -204,7 +234,8 @@
         "format": "<span size='x-large' rise='-3000'>{icon}</span> {volume}%",
         "tooltip": false,
         "format-muted": "Muted ",
-        "scroll-step": 5,
+        "scroll-step": 2,
+        "on-click": "pavucontrol",
         "format-icons": {
             "headphone": "",
             "hands-free": "",

@@ -4,45 +4,45 @@
 (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
 (defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
 (defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
- 			 :ref nil
- 			 :files (:defaults "elpaca-test.el" (:exclude "extensions"))
- 			 :build (:not elpaca--activate-package)))
+ 			                        :ref nil
+ 			                        :files (:defaults "elpaca-test.el" (:exclude "extensions"))
+ 			                        :build (:not elpaca--activate-package)))
 (let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
-   (build (expand-file-name "elpaca/" elpaca-builds-directory))
-   (order (cdr elpaca-order))
-   (default-directory repo))
+       (build (expand-file-name "elpaca/" elpaca-builds-directory))
+       (order (cdr elpaca-order))
+       (default-directory repo))
   (add-to-list 'load-path (if (file-exists-p build) build repo))
   (unless (file-exists-p repo)
     (make-directory repo t)
     (when (< emacs-major-version 28) (require 'subr-x))
     (condition-case-unless-debug err
-    (if-let ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
- 	    ((zerop (call-process "git" nil buffer t "clone"
- 				  (plist-get order :repo) repo)))
- 	    ((zerop (call-process "git" nil buffer t "checkout"
- 				  (or (plist-get order :ref) "--"))))
- 	    (emacs (concat invocation-directory invocation-name))
- 	    ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
- 				  "--eval" "(byte-recompile-directory \".\" 0 'force)")))
- 	    ((require 'elpaca))
- 	    ((elpaca-generate-autoloads "elpaca" repo)))
-        (progn (message "%s" (buffer-string)) (kill-buffer buffer))
-      (error "%s" (with-current-buffer buffer (buffer-string))))
-  ((error) (warn "%s" err) (delete-directory repo 'recursive))))
+        (if-let ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
+ 	               ((zerop (call-process "git" nil buffer t "clone"
+ 				                               (plist-get order :repo) repo)))
+ 	               ((zerop (call-process "git" nil buffer t "checkout"
+ 				                               (or (plist-get order :ref) "--"))))
+ 	               (emacs (concat invocation-directory invocation-name))
+ 	               ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
+ 				                               "--eval" "(byte-recompile-directory \".\" 0 'force)")))
+ 	               ((require 'elpaca))
+ 	               ((elpaca-generate-autoloads "elpaca" repo)))
+            (progn (message "%s" (buffer-string)) (kill-buffer buffer))
+          (error "%s" (with-current-buffer buffer (buffer-string))))
+      ((error) (warn "%s" err) (delete-directory repo 'recursive))))
   (unless (require 'elpaca-autoloads nil t)
     (require 'elpaca)
     (elpaca-generate-autoloads "elpaca" repo)
     (load "./elpaca-autoloads")))
 (add-hook 'after-init-hook #'elpaca-process-queues)
 (elpaca `(,@elpaca-order))
-  (defun elpaca-log-defaults ())
+(defun elpaca-log-defaults ())
 
 ;; Install use-package support
 (elpaca elpaca-use-package
-        ;; Enable :ensure use-package keyword.
-        (elpaca-use-package-mode)
-        ;; Assume :ensure t unless otherwise specified.
-        (setq elpaca-use-package-by-default t))
+  ;; Enable :ensure use-package keyword.
+  (elpaca-use-package-mode)
+  ;; Assume :ensure t unless otherwise specified.
+  (setq elpaca-use-package-by-default t))
 
 ;; Block until current queue processed.
 (elpaca-wait)
@@ -63,8 +63,11 @@
 
 (setq large-file-warning-threshold 100000000)
 
-(setq read-process-output-max (* 5 (* 1024 1024)))
-(setq process-adaptive-read-buffering nil)
+(setq read-process-output-max (* 5 1024 1024)
+    process-adaptive-read-buffering nil)
+
+(prefer-coding-system 'utf-8)
+(set-selection-coding-system 'utf-8)
 
 (pixel-scroll-precision-mode 1)
 (setq pixel-scroll-precision-use-momentum t)
@@ -151,45 +154,90 @@
 
 (setq indent-tabs-mode nil
       indent-line-function 'insert-tab)
-
 (setq-default indent-tabs-mode nil)
-(setq-default tab-width 4)
-(setq c-basic-offset tab-width
-      c-basic-offset tab-width
-      c-basic-offset tab-width
-      csharp-tree-sitter-indent-offset tab-width
-      c-basic-offset tab-width
-      c-basic-offset tab-width
-      c-basic-offset tab-width
-      js-indent-level tab-width
-      js2-basic-offset tab-width
-      js3-indent-level tab-width
-      js-indent-level tab-width
-      lua-indent-level tab-width
-      c-basic-offset tab-width
-      c-basic-offset tab-width
-      perl-indent-level tab-width
-      cperl-indent-level tab-width
-      raku-indent-offset tab-width
-      erlang-indent-level tab-width
-      ada-indent tab-width
-      sgml-basic-offset tab-width
-      nxml-child-indent tab-width
-      pascal-indent-level tab-width
-      typescript-indent-level tab-width
-      sh-basic-offset tab-width
-      ruby-indent-level tab-width
-      enh-ruby-indent-level tab-width
-      crystal-indent-level tab-width
-      css-indent-offset tab-width
-      rust-indent-offset tab-width
-      rustic-indent-offset tab-width
-      scala-indent:step tab-width
-      powershell-indent tab-width
-      ess-indent-offset tab-width
-      yaml-indent-offset tab-width
-      hack-indent-offset tab-width
-      standard-indent tab-width)
+
+(defun tab/default-width (width)
+  (interactive "nTab default width: ")
+
+  (setq-default tab-width width)
+  (setq c-basic-offset tab-width
+        c-basic-offset tab-width
+        c-basic-offset tab-width
+        csharp-tree-sitter-indent-offset tab-width
+        c-basic-offset tab-width
+        c-basic-offset tab-width
+        c-basic-offset tab-width
+        js-indent-level tab-width
+        js2-basic-offset tab-width
+        js3-indent-level tab-width
+        js-indent-level tab-width
+        lua-indent-level tab-width
+        c-basic-offset tab-width
+        c-basic-offset tab-width
+        perl-indent-level tab-width
+        cperl-indent-level tab-width
+        raku-indent-offset tab-width
+        erlang-indent-level tab-width
+        ada-indent tab-width
+        sgml-basic-offset tab-width
+        nxml-child-indent tab-width
+        pascal-indent-level tab-width
+        typescript-indent-level tab-width
+        sh-basic-offset tab-width
+        ruby-indent-level tab-width
+        enh-ruby-indent-level tab-width
+        crystal-indent-level tab-width
+        css-indent-offset tab-width
+        rust-indent-offset tab-width
+        rustic-indent-offset tab-width
+        scala-indent:step tab-width
+        powershell-indent tab-width
+        ess-indent-offset tab-width
+        yaml-indent-offset tab-width
+        hack-indent-offset tab-width
+        standard-indent tab-width))
+
+(defun tab/width (width)
+  (interactive "nTab width: ")
+  (setq-local tab-width width
+              c-basic-offset tab-width
+              c-basic-offset tab-width
+              c-basic-offset tab-width
+              csharp-tree-sitter-indent-offset tab-width
+              c-basic-offset tab-width
+              c-basic-offset tab-width
+              c-basic-offset tab-width
+              js-indent-level tab-width
+              js2-basic-offset tab-width
+              js3-indent-level tab-width
+              js-indent-level tab-width
+              lua-indent-level tab-width
+              c-basic-offset tab-width
+              c-basic-offset tab-width
+              perl-indent-level tab-width
+              cperl-indent-level tab-width
+              raku-indent-offset tab-width
+              erlang-indent-level tab-width
+              ada-indent tab-width
+              sgml-basic-offset tab-width
+              nxml-child-indent tab-width
+              pascal-indent-level tab-width
+              typescript-indent-level tab-width
+              sh-basic-offset tab-width
+              ruby-indent-level tab-width
+              enh-ruby-indent-level tab-width
+              crystal-indent-level tab-width
+              css-indent-offset tab-width
+              rust-indent-offset tab-width
+              rustic-indent-offset tab-width
+              scala-indent:step tab-width
+              powershell-indent tab-width
+              ess-indent-offset tab-width
+              yaml-indent-offset tab-width
+              hack-indent-offset tab-width
+              standard-indent tab-width))
+
+(tab/default-width 4)
 
 (setq
  display-line-numbers-type 'relative
@@ -236,6 +284,13 @@
 
 (setq auth-sources '("~/.authinfo.gpg"))
 
+(setq remote-file-name-inhibit-cache nil
+      vc-ignore-dir-regexp
+      (format "%s\\|%s"
+              vc-ignore-dir-regexp
+              tramp-file-name-regexp)
+      tramp-verbose 1)
+
 (load-file "~/.emacs.d/custom_packages/dracula-theme.el")
 (load-theme 'dracula t)
 
@@ -272,16 +327,35 @@
   (line-number-mode 1)
   (column-number-mode 0))
 
+(use-package hide-mode-line
+  :config
+  (add-hook 'completion-list-mode-hook #'hide-mode-line-mode))
+
 (setq tab-always-indent 'complete)
-;; (setq completions-format 'one-column
-;;       completions-header-format nil
-;;       completion-show-help t
-;;       completion-show-inline-help t
-;;       completions-max-height 30
-;;       completion-auto-select nil)
+(setq completions-format 'one-column
+      completions-header-format nil
+      completion-show-help nil
+      completion-show-inline-help nil
+      completions-max-height 30
+      completion-auto-select nil)
 
 (setq-default isearch-lazy-count t
               isearch-allow-motion t)
+
+
+(defun my/minibuffer-choose-completion (&optional no-exit no-quit)
+  (interactive "P")
+  (with-minibuffer-completions-window
+    (let ((completion-use-base-affixes nil))
+      (choose-completion nil no-exit no-quit))))
+
+;; (define-key minibuffer-mode-map (kbd "C-n") 'minibuffer-next-completion)
+;; (define-key minibuffer-mode-map (kbd "C-p") 'minibuffer-previous-completion)
+
+;; (define-key completion-in-region-mode-map (kbd "C-n") 'minibuffer-next-completion)
+;; (define-key completion-in-region-mode-map (kbd "C-p") 'minibuffer-previous-completion)
+;; (define-key completion-in-region-mode-map (kbd "RET") 'my/minibuffer-choose-completion)
+;; (define-key completion-in-region-mode-map (kbd "<tab>") 'my/minibuffer-choose-completion)
 
 (use-package vertico
   :config
@@ -321,19 +395,29 @@
 
 (use-package corfu
   :init
-  (global-corfu-mode)
+  (global-corfu-mode 1)
   :config
-  (setq corfu-auto nil
-        ;; corfu-auto-prefix 1
+  (load-file "~/.emacs.d/elpaca/repos/corfu/extensions/corfu-history.el")
+  (corfu-history-mode 1)
+  (savehist-mode 1)
+  (add-to-list 'savehist-additional-variables 'corfu-history)
+  
+  (load-file "~/.emacs.d/elpaca/repos/corfu/extensions/corfu-popupinfo.el")
+  (corfu-popupinfo-mode)
+
+  (setq corfu-auto t
+        corfu-auto-prefix 2
         corfu-echo-documentation t
         corfu-quit-no-match 'separator
-        corfu-preselect 'valid)
-  
+        corfu-preselect 'valid
+        corfu-cycle t
+        corfu-count 10)
+
   (add-hook 'eshell-mode-hook
             (lambda ()
               (setq-local corfu-auto nil)
-              (corfu-mode)))
-  
+              (corfu-mode 1)))
+
   (defun corfu-send-shell (&rest _)
     "Send completion candidate when inside comint/eshell."
     (cond
@@ -341,24 +425,56 @@
       (eshell-send-input))
      ((and (derived-mode-p 'comint-mode)  (fboundp 'comint-send-input))
       (comint-send-input))))
-  (advice-add #'corfu-insert :after #'corfu-send-shell)
   
   ;; Enable Corfu more generally for every minibuffer, as long as no other
   ;; completion UI is active. If you use Mct or Vertico as your main minibuffer
   ;; completion UI. From
   ;; https://github.com/minad/corfu#completing-with-corfu-in-the-minibuffer
-  (defun corfu-enable-always-in-minibuffer ()
-    "Enable Corfu in the minibuffer if Vertico/Mct are not active."
-    (unless (or (bound-and-true-p mct--active) ; Useful if I ever use MCT
-                (bound-and-true-p vertico--input))
-      (setq-local corfu-auto nil)       ; Ensure auto completion is disabled
-      (corfu-mode 1)))
-  (add-hook 'minibuffer-setup-hook #'corfu-enable-always-in-minibuffer 1))
+  (setq global-corfu-minibuffer
+        (lambda ()
+          (not (or (bound-and-true-p mct--active)
+                   (bound-and-true-p vertico--input)
+                   (eq (current-local-map) read-passwd-map)))))
+  ;; Automatically confirm minibuffer inputs.
+  (advice-add #'corfu-insert
+              :after
+              (lambda ()
+                (when (and (minibufferp) minibuffer-completion-table)
+                  (exit-minibuffer))))
+  
+  (defun corfu-minibuffer-setup+ ()
+    (setq-local corfu-quit-no-match nil
+                corfu-quit-at-boundary nil)
+    (corfu-mode 1)
+    (minibuffer-complete))
 
-(use-package corfu-terminal
-  :config
-  (unless (display-graphic-p)
-    (corfu-terminal-mode +1)))
+  (defun corfu-after-change-functions+ (&rest _)
+    (when (and (minibufferp)
+               (string-empty-p (minibuffer-contents-no-properties)))
+      (minibuffer-complete)))
+
+  (defun corfu-sort-function+ (candidates)
+    "Calls 'corfu-sort-function' and moves 'minibuffer-default' to
+front."
+    (let ((candidates (funcall corfu-sort-function candidates))
+          (default (cond ((stringp minibuffer-default)
+                          minibuffer-default)
+                         ((listp minibuffer-default)
+                          (car minibuffer-default)))))
+      (if default
+          (cons default (remove default candidates))
+        candidates)))
+
+  (setopt corfu-sort-override-function #'corfu-sort-function+)
+
+  ;; (add-hook 'minibuffer-setup-hook #'corfu-minibuffer-setup+)
+  ;; (add-hook 'after-change-functions #'corfu-after-change-functions+)
+  )
+
+;; (use-package corfu-terminal
+;;   :config
+;;   (unless (display-graphic-p)
+;;     (corfu-terminal-mode +1)))
 
 (use-package cape
   ;; Bind dedicated completion commands
@@ -385,10 +501,10 @@
   ;; used by `completion-at-point'.  The order of the functions matters, the
   ;; first function returning a result wins.  Note that the list of buffer-local
   ;; completion functions takes precedence over the global list.
-  (add-to-list 'completion-at-point-functions #'tempel-complete)
-  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-  (add-to-list 'completion-at-point-functions #'cape-file)
-  (add-to-list 'completion-at-point-functions #'cape-elisp-block)
+  ;; (add-to-list 'completion-at-point-functions #'tempel-complete)
+  ;; (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  ;; (add-to-list 'completion-at-point-functions #'cape-file)
+  ;; (add-to-list 'completion-at-point-functions #'cape-elisp-block)
   ;;(add-to-list 'completion-at-point-functions #'cape-history)
   ;;(add-to-list 'completion-at-point-functions #'cape-keyword)
   ;;(add-to-list 'completion-at-point-functions #'cape-tex)
@@ -400,27 +516,14 @@
   ;;(add-to-list 'completion-at-point-functions #'cape-line)
   )
 
-(use-package kind-icon
-  :after corfu
-  :custom
-  (kind-icon-use-icons t)
-  (kind-icon-default-face 'corfu-default) ; Have background color be the same as `corfu' face background
-  (kind-icon-blend-background nil)  ; Use midpoint color between foreground and background colors ("blended")?
-  (kind-icon-blend-frac 0.08)
 
-  ;; NOTE 2022-02-05: `kind-icon' depends `svg-lib' which creates a cache
-  ;; directory that defaults to the `user-emacs-directory'. Here, I change that
-  ;; directory to a location appropriate to `no-littering' conventions, a
-  ;; package which moves directories of other packages to sane locations.
-  (svg-lib-icons-dir (no-littering-expand-var-file-name "svg-lib/cache/")) ; Change cache dir
-  :config
-  (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter) ; Enable `kind-icon'
-  )
 
 (use-package embark
   :bind (
          :map minibuffer-local-map
          ("C-c e" . embark-act)))
+
+
 
 (use-package consult
   :bind (;; C-c bindings (mode-specific-map)
@@ -477,7 +580,8 @@
 
   (advice-add #'register-preview :override #'consult-register-window)
   :config
-  (setq consult-narrow-key "<"))
+  (setq consult-narrow-key "<")
+  (add-hook 'completion-list-mode-hook #'consult-preview-at-point-mode))
 
 (use-package embark-consult)
 
@@ -491,6 +595,8 @@
   :config
   (define-key org-mode-map (kbd "C-M-S-<left>") nil)
   (define-key org-mode-map (kbd "C-M-S-<right>") nil)
+  (define-key org-mode-map (kbd "C-S-<right>") nil)
+  (define-key org-mode-map (kbd "C-S-<left>") nil)
 
   (setq
    org-confirm-babel-evaluate nil
@@ -508,6 +614,8 @@
   (defun org/org-babel-tangle-config ()
     (when (or (string-equal (buffer-file-name)
                             (expand-file-name "~/.dotfiles/README.org"))
+              (string-equal (buffer-file-name)
+                            (expand-file-name "~/.dotfiles/river/README.org"))
               (string-equal (buffer-file-name)
                             (expand-file-name "~/.dotfiles/hyprland/README.org"))
               (string-equal (buffer-file-name)
@@ -607,6 +715,8 @@
   (global-set-key (kbd "C-z") 'goto-last-change))
 
 (use-package vundo
+  :ensure
+  (:host github :repo "casouri/vundo")
   :bind (
          :map vundo-mode-map
          ("C-b" . vundo-backward)
@@ -689,7 +799,7 @@
   :ensure (:host github :repo "LionyxML/flymake-margin")
   :after flymake
   :config
-  (flymake-margin-mode ))
+  (flymake-margin-mode -1))
 
 (use-package perfect-margin
   :config
@@ -754,6 +864,8 @@
 (global-set-key (kbd "C-x C-b") 'ibuffer)
 
 (use-package blist
+  :ensure
+  (:host github :repo "emacs-straight/blist")
   :config
   (setq blist-filter-groups
         (list
@@ -803,6 +915,8 @@
 (use-package free-keys)
 
 (use-package csv-mode
+  :ensure
+  (:host github :repo "emacsmirror/csv-mode")
   :config
   (setq csv-comment-start-default nil)
   (customize-set-variable 'csv-separators '("," "	" ";" "~"))
@@ -875,15 +989,41 @@ when reading files and the other way around when writing contents."
 
 (use-package docker
   :ensure t
-  :bind ("C-c d" . docker))
+  :bind ("C-c d" . docker)
+  :config
+  (setq docker-container-default-sort-key '("Names")
+        docker-pop-to-buffer-action '((display-buffer-pop-up-frame)))
+  (docker-utils-columns-setter 'docker-container-columns '((:name "Names" :width 40 :template "{{ json .Names }}" :sort nil :format nil)
+                                                           (:name "Status" :width 30 :template "{{ json .Status }}" :sort nil :format nil)
+                                                           (:name "Ports" :width 60 :template "{{ json .Ports }}" :sort nil :format nil)
+                                                           (:name "Id" :width 16 :template "{{ json .ID }}" :sort nil :format nil)
+                                                           (:name "Image" :width 90 :template "{{ json .Image }}" :sort nil :format nil)
+                                                           (:name "Command" :width 30 :template "{{ json .Command }}" :sort nil :format nil)
+                                                           (:name "Created" :width 23 :template "{{ json .CreatedAt }}" :sort nil :format
+                                                                  (lambda (x) (format-time-string "%F %T" (date-to-time x))))
+                                                           ))
+  )
 
 (use-package lingva)
+
+(use-package gptel
+  :config
+  (setq
+   gptel-default-mode 'org-mode
+   gptel-prompt-prefix-alist '((markdown-mode . "## ") (org-mode . "** ") (text-mode . "## "))
+   gptel-display-buffer-action '((display-buffer-pop-up-frame))))
 
 (use-package nix-mode
   :mode "\\.nix\\'")
 
 (use-package flycheck
-  :init (global-flycheck-mode))
+  :init (global-flycheck-mode)
+  :config
+  (setq flycheck-javascript-eslint-executable "eslint_d")
+  (flycheck-add-mode 'javascript-eslint 'js-ts-mode)
+  (flycheck-add-mode 'javascript-eslint 'js-ts-mode)
+  (flycheck-add-mode 'javascript-eslint 'typescript-mode)
+  (flycheck-add-mode 'javascript-eslint 'typescript-ts-mode))
 
 (setq electric-pair-pairs
   '(
@@ -908,9 +1048,13 @@ when reading files and the other way around when writing contents."
   (interactive)
   (setq-local electric-indent-inhibit t))
 
+
+
+(use-package ilist
+  :ensure (:host github :repo "emacs-straight/ilist"))
 (use-package transient)
 (use-package magit
-  :ensure (:host github :repo "magit/magit" :ref "g7f472995")
+  :after ilist
   :config
   (defun magit/magit-status-no-split ()
     "Don't split window."
@@ -928,7 +1072,6 @@ when reading files and the other way around when writing contents."
   :config (magit-todos-mode 1))
 
 (use-package forge
-  :ensure (:host github :repo "magit/forge" :ref "fca33c6")
   :after magit
   :config
   (defun forge--format-topic-title (topic)
@@ -980,9 +1123,8 @@ when reading files and the other way around when writing contents."
   :config
   (add-hook 'tempel-mode-hook 'eglot-tempel-mode))
 
-(defun eshell/jwt-decode (jwt)
-  (interactive "sJWT: ")
-  (shell-command-to-string (concat "PATH=~/.npm-packages/bin:$PATH NODE_PATH=~/.npm-packages/lib/node_modules node -e \"const jwt = require('jsonwebtoken'); console.log(jwt.decode('" jwt "', { complete: true }))\"")))
+(use-package jwt
+  :ensure (:host github :repo "joshbax189/jwt-el"))
 
 (use-package nodejs-repl
   :config
@@ -1016,19 +1158,21 @@ when reading files and the other way around when writing contents."
 
 (use-package apheleia
   :config
-  (add-to-list 'apheleia-mode-alist '(js-mode . prettier))
-  (add-to-list 'apheleia-mode-alist '(js-ts-mode . prettier))
-  (add-to-list 'apheleia-mode-alist '(typescript-mode . prettier))
-  (add-to-list 'apheleia-mode-alist '(typescript-ts-mode . prettier))
+  (push
+   '(eslint
+     . ("apheleia-npx" "eslint_d" "--fix-to-stdout" "--stdin" "--stdin-filename" file)) apheleia-formatters)
+  (add-to-list 'apheleia-mode-alist '(js-mode . eslint))
+  (add-to-list 'apheleia-mode-alist '(js-ts-mode . eslint))
+  (add-to-list 'apheleia-mode-alist '(typescript-mode . eslint))
+  (add-to-list 'apheleia-mode-alist '(typescript-ts-mode . eslint))
   (apheleia-global-mode t))
 
-;; (use-package treesit-auto
-;;   :custom
-;;   (treesit-auto-install 'prompt)
-;;   :config
-;;   ;; (treesit-auto-add-to-auto-mode-alist 'all)
-;;   (treesit-auto-add-to-auto-mode-alist (list "awk" "bash" "c" "c-sharp" "css" "dockerfile" "html" "java" "json" "kotlin" "make" "markdown" "nix" "nu" "org" "python" "rust" "sql" "vue" "yaml" "typescript" "tsx"))
-;;   (global-treesit-auto-mode))
+(use-package treesit-auto
+  :custom
+  (treesit-auto-install 'prompt)
+  :config
+  (treesit-auto-add-to-auto-mode-alist 'all)
+  (global-treesit-auto-mode))
 
 (use-package eglot
   :ensure nil
@@ -1141,15 +1285,48 @@ when reading files and the other way around when writing contents."
 
   :init
   (setq
-   dape-buffer-window-arrangement 'left
+   dape-buffer-window-arrangement nil
    dape-info-hide-mode-line nil
    dape-info-buffer-window-groups nil)
 
   :config
+  (defun dape--display-buffer (buffer)
+    "Display BUFFER according to `dape-buffer-window-arrangement'."
+    (pcase-let* ((mode (with-current-buffer buffer major-mode))
+                 (group (cl-position-if (lambda (group) (memq mode group))
+                                        dape-info-buffer-window-groups))
+                 (`(,fns . ,alist)
+                  (pcase dape-buffer-window-arrangement
+                    ((or 'left 'right)
+                     (cons '(display-buffer-in-side-window)
+                           (pcase (cons mode group)
+                             (`(dape-repl-mode . ,_) '((side . bottom) (slot . -1)))
+                             (`(dape-shell-mode . ,_) '((side . bottom) (slot . 0)))
+                             (`(,_ . 0) `((side . ,dape-buffer-window-arrangement) (slot . -1)))
+                             (`(,_ . 1) `((side . ,dape-buffer-window-arrangement) (slot . 0)))
+                             (`(,_ . 2) `((side . ,dape-buffer-window-arrangement) (slot . 1)))
+                             (_ (error "Unable to display buffer of mode `%s'" mode)))))
+                    ('gud
+                     (pcase (cons mode group)
+                       (`(dape-repl-mode . ,_)
+                        '((display-buffer-in-side-window) (side . top) (slot . -1)))
+                       (`(dape-shell-mode . ,_)
+                        '((display-buffer-pop-up-window)
+                          (direction . right) (dedicated . t)))
+                       (`(,_ . 0)
+                        '((display-buffer-in-side-window) (side . top) (slot . 0)))
+                       (`(,_ . 1)
+                        '((display-buffer-in-side-window) (side . bottom) (slot . -1)))
+                       (`(,_ . 2)
+                        '((display-buffer-in-side-window) (side . bottom) (slot . 0)))
+                       (_ (error "Unable to display buffer of mode `%s'" mode))))
+                    (_ nil))))))
   ;; Global bindings for setting breakpoints with mouse
   (dape-breakpoint-global-mode))
 
 (use-package expreg
+  :ensure
+  (:host github :repo "casouri/expreg")
   :config
   (global-set-key (kbd "C-=") 'expreg-expand)
   (global-set-key (kbd "C-`") 'expreg-contract))
@@ -1225,12 +1402,14 @@ when reading files and the other way around when writing contents."
         (switch-to-buffer eshell-buffer)
       (eshell 'N))))
 
-(global-set-key (kbd "C-c t") #'eshell/new-or-current)
+(global-set-key (kbd "C-s-<return>") #'eshell/new-or-current)
 
 (use-package eshell
   :ensure nil)
 
 (use-package eat
+  :ensure
+  (:host codeberg :repo "akib/emacs-eat")
   :config
   (setq eshell-visual-commands '())
 
@@ -1397,7 +1576,7 @@ when reading files and the other way around when writing contents."
         (eww (completing-read "Eww URL or search " eww/input-history nil nil (eww-current-url) 'eww/input-history))
       (eww (completing-read "Eww URL or search " eww/input-history nil nil nil 'eww/input-history))))
 
-  (setq eww-search-prefix "https://www.google.com/search?ie=utf-8&oe=utf-8&q=")
+  (setq eww-search-prefix "https://duckduckgo.com/html/?q=")
   (with-eval-after-load 'eww
     (defun eww/rename-buffer ()
       "Rename `eww-mode' buffer so sites open in new page.

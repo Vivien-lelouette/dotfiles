@@ -6,8 +6,8 @@
     "passthrough": false,
     "gtk-layer-shell": true,
     "height": 0,
-    "modules-left": ["hyprland/window"],
-    "modules-center": ["hyprland/workspaces"],
+    "modules-left": ["river/window"],
+    "modules-center": ["river/tags"],
     "modules-right": [
         "tray",
         "pulseaudio",
@@ -15,16 +15,6 @@
         "clock",
         "battery"
     ],
-
-    "hyprland/window": {
-        "format": "{}"
-    },
-    "hyprland/workspaces": {
-        "disable-scroll": true,
-        "all-outputs": false,
-        "on-click": "activate",
-        //"format": "{icon}",
-    },
 
     "mpris": {
       "format": "<span size='x-large' rise='-3000'>{status_icon}</span> {length}",
@@ -38,6 +28,11 @@
         "paused": ""
       },
       // "ignored-players": ["firefox"]
+    },
+
+    "river/tags" : {
+      "num-tags": 10,
+      "hide-vacant": true
     },
 
     "mpd": {
@@ -80,7 +75,8 @@
         "format": "<span size='x-large' rise='-3000'>{icon}</span> {volume}%",
         "tooltip": false,
         "format-muted": "Muted ",
-        "scroll-step": 5,
+        "scroll-step": 2,
+        "on-click": "pavucontrol",
         "format-icons": {
             "headphone": "",
             "hands-free": "",
