@@ -93,8 +93,8 @@ riverctl map normal Super L spawn hyprlock
 
 riverctl map normal Super apostrophe spawn "if pidof waybar; then pkill waybar; else waybar; fi"
 
-riverctl map normal Super S spawn 'if pidof wf-recorder; then pkill -SIGINT wf-recorder; else grim -g "$(slurp)" - | swappy -f -; fi'
-riverctl map normal Super+Shift S spawn 'if pidof wf-recorder; then pkill -SIGINT wf-recorder; else rm -f ~/recording.mkv && wf-recorder -g "$(slurp)"; fi'
+riverctl map normal Super S spawn 'if pidof wf-recorder; then pkill -SIGINT wf-recorder && mkdir -p ~/Videos/recordings && mv recording.mkv ~/Videos/recordings/$(date +%Y_%m_%d-%H_%M_%S).mkv; else grim -g "$(slurp)" - | swappy -f -; fi'
+riverctl map normal Super+Shift S spawn 'if pidof wf-recorder; then pkill -SIGINT wf-recorder && mkdir -p ~/Videos/recordings && mv recording.mkv ~/Videos/recordings/$(date +%Y_%m_%d-%H_%M_%S).mkv; else rm -f recording.mkv && wf-recorder -g "$(slurp)"; fi'
 
 riverctl map normal Super+Shift Return spawn alacritty
 riverctl map normal Super I spawn zen
