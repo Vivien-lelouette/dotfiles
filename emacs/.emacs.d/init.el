@@ -915,8 +915,7 @@ front."
 (use-package free-keys)
 
 (use-package csv-mode
-  :ensure
-  (:host github :repo "emacsmirror/csv-mode")
+  :ensure (:host github :repo "emacsmirror/csv-mode" :branch "master")
   :config
   (setq csv-comment-start-default nil)
   (customize-set-variable 'csv-separators '("," "	" ";" "~"))

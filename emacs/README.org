@@ -1142,8 +1142,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 ** Csv mode
 #+begin_src emacs-lisp
   (use-package csv-mode
-    :ensure
-    (:host github :repo "emacsmirror/csv-mode")
+    :ensure (:host github :repo "emacsmirror/csv-mode" :branch "master")
     :config
     (setq csv-comment-start-default nil)
     (customize-set-variable 'csv-separators '("," "	" ";" "~"))
