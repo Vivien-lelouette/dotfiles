@@ -115,3 +115,4 @@ emacs/.emacs.d/history
 /emacs/.emacs.d/tree-sitter/
 /emacs/.emacs.d/dape-breakpoints
 /fonts/.local/share/fonts/NFM.ttf
+emacs/.emacs.d/etc/transient/*
