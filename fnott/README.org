@@ -1,0 +1,71 @@
+#+TITLE: Notification daemon Fnott
+* Notification daemon Fnott
+
+#+BEGIN_SRC ini :tangle .config/fnott/fnott.ini :mkdirp yes
+  # Global values
+  # output=<undefined>#
+  # min-width=0
+  max-width=1000
+  max-height=800
+  stacking-order=bottom-up
+  anchor=top-right
+  edge-margin-vertical=4
+  edge-margin-horizontal=4
+  # notification-margin=10
+  # icon-theme=hicolor
+  # max-icon-size=32
+  # selection-helper=dmenu
+  # selection-helper-uses-null-separator=no
+  # play-sound=aplay ${filename}
+
+  # Default values, may be overridden in 'urgency' specific sections
+  layer=top
+  background= 373844ff
+
+  border-color=bd93f9ff
+  # border-radius=0
+  border-size=6
+
+  # padding-vertical=20
+  # padding-horizontal=20
+
+  dpi-aware=no
+
+  title-font=Cantarell-14
+  title-color=ffffffff
+  # title-format=<i>%a%A</i>
+
+  summary-font=Cantarell-14
+  summary-color=ffffffff
+  # summary-format=<b>%s</b>\n
+
+  body-font=Cantarell-11
+  body-color=ffffffff
+  # body-format=%b
+
+  # progress-bar-height=20
+  # progress-color=ffffffff
+  # progress-style=bar
+
+  # sound-file=
+  # icon=
+
+  # Timeout values are in seconds. 0 to disable
+  max-timeout=10
+  default-timeout=10
+  idle-timeout=10
+
+  # [low]
+  background=373844ff
+  title-color=ffffffff
+  summary-color=ffffffff
+  body-color=ffffffff
+
+  # [normal]
+
+  # [critical]
+  background=373844ff
+  title-color=ffffffff
+  summary-color=ffffffff
+  body-color=ffffffff
+#+END_SRC

@@ -69,8 +69,12 @@
 (prefer-coding-system 'utf-8)
 (set-selection-coding-system 'utf-8)
 
-(pixel-scroll-precision-mode 1)
-(setq pixel-scroll-precision-use-momentum t)
+(use-package ultra-scroll
+  :init
+  (setq scroll-conservatively 3 ; or whatever value you prefer, since v0.4
+        scroll-margin 0)
+  :config
+  (ultra-scroll-mode 1))
 
 (defalias 'yes-or-no-p 'y-or-n-p)
 (setq xref-prompt-for-identifier nil
@@ -294,7 +298,7 @@
 (load-file "~/.emacs.d/custom_packages/dracula-theme.el")
 (load-theme 'dracula t)
 
-(fringe-mode '(24 . 8))
+(fringe-mode '(24 . 12))
 
 (defun theme/minibuffer-echo-area ()
   (interactive)
@@ -617,6 +621,8 @@ front."
               (string-equal (buffer-file-name)
                             (expand-file-name "~/.dotfiles/river/README.org"))
               (string-equal (buffer-file-name)
+                            (expand-file-name "~/.dotfiles/fnott/README.org"))
+              (string-equal (buffer-file-name)
                             (expand-file-name "~/.dotfiles/hyprland/README.org"))
               (string-equal (buffer-file-name)
                             (expand-file-name "~/.dotfiles/waybar/README.org"))
@@ -734,8 +740,12 @@ front."
   :ensure nil
   :hook
   (prog-mode . hs-minor-mode)
+  (yaml-ts-mode . hs-minor-mode)
   :bind (
          :map prog-mode-map
+         ("C-<tab>" . hs-cycle)
+         ("C-<iso-lefttab>" . hs-global-cycle)
+         :map hs-minor-mode-map
          ("C-<tab>" . hs-cycle)
          ("C-<iso-lefttab>" . hs-global-cycle))
   :config
@@ -990,17 +1000,75 @@ when reading files and the other way around when writing contents."
   :ensure t
   :bind ("C-c d" . docker)
   :config
-  (setq docker-container-default-sort-key '("Names")
+  (setq docker-show-messages nil
+        docker-container-default-sort-key '("Names")
         docker-pop-to-buffer-action '((display-buffer-pop-up-frame)))
-  (docker-utils-columns-setter 'docker-container-columns '((:name "Names" :width 40 :template "{{ json .Names }}" :sort nil :format nil)
-                                                           (:name "Status" :width 30 :template "{{ json .Status }}" :sort nil :format nil)
-                                                           (:name "Ports" :width 60 :template "{{ json .Ports }}" :sort nil :format nil)
-                                                           (:name "Id" :width 16 :template "{{ json .ID }}" :sort nil :format nil)
-                                                           (:name "Image" :width 90 :template "{{ json .Image }}" :sort nil :format nil)
-                                                           (:name "Command" :width 30 :template "{{ json .Command }}" :sort nil :format nil)
-                                                           (:name "Created" :width 23 :template "{{ json .CreatedAt }}" :sort nil :format
-                                                                  (lambda (x) (format-time-string "%F %T" (date-to-time x))))
-                                                           ))
+
+  (defun docker-run-async-with-buffer-shell (program &rest args)
+    "Execute \"PROGRAM ARGS\" and display output in a new `shell' buffer."
+    (let* ((process (apply #'docker-run-start-file-process-shell-command program args))
+           (buffer (process-buffer process)))
+      (set-process-query-on-exit-flag process nil)
+      (with-current-buffer buffer (shell-mode))
+      (set-process-filter process 'comint-output-filter)
+      (display-buffer-same-window buffer nil)))
+
+  (defun docker-run-async-with-buffer-vterm (program &rest args)
+    "Execute \"PROGRAM ARGS\" and display output in a new `vterm' buffer."
+    (defvar vterm-kill-buffer-on-exit)
+    (defvar vterm-shell)
+    (if (fboundp 'vterm-same-window)
+        (let* ((process-args (-remove 's-blank? (-flatten args)))
+               (vterm-shell (s-join " " (-insert-at 0 program process-args)))
+               (vterm-kill-buffer-on-exit nil))
+          (vterm-same-window
+           (apply #'docker-utils-generate-new-buffer-name program process-args)))
+      (error "The vterm package is not installed")))
+  
+  (defun docker-run-async-with-buffer-shell (program &rest args)
+    "Execute \"PROGRAM ARGS\" and display output in a new `shell' buffer."
+    (let* ((process (apply #'docker-run-start-file-process-shell-command program args))
+           (buffer (process-buffer process)))
+      (set-process-query-on-exit-flag process nil)
+      (with-current-buffer buffer (shell-mode))
+      (set-process-filter process 'comint-output-filter)
+      (display-buffer-same-window buffer nil)))
+  
+  (defun run-with-local-timer (secs repeat function &rest args)
+    "Like `run-with-idle-timer', but always runs in the `current-buffer'.
+
+  Cancels itself, if this buffer was killed."
+    (let* (;; Chicken and egg problem.
+           (fns (make-symbol "local-timer"))
+           (timer (apply 'run-with-timer secs repeat fns args))
+           (fn `(lambda (&rest args)
+                  (if (not (buffer-live-p ,(current-buffer)))
+                      (cancel-timer ,timer)
+                    (with-current-buffer ,(current-buffer)
+                      (apply (function ,function) args))))))
+      (fset fns fn)
+      fn))
+
+  (defun docker/auto-refresh ()
+    "Auto-refresh docker containers view. Cancels itself, if this buffer was killed."
+    (run-with-local-timer 5 5 'revert-buffer))
+
+  (add-hook 'docker-container-mode-hook #'docker/auto-refresh)
+
+  (defun docker/format ()
+    (docker-utils-columns-setter 'docker-container-columns '((:name "Names" :width 40 :template "{{ json .Names }}" :sort nil :format nil)
+                                                             (:name "Status" :width 40 :template "{{ json .Status }}" :sort nil :format nil)
+                                                             (:name "Ports" :width 60 :template "{{ json .Ports }}" :sort nil :format nil)
+                                                             (:name "Id" :width 16 :template "{{ json .ID }}" :sort nil :format nil)
+                                                             (:name "Image" :width 90 :template "{{ json .Image }}" :sort nil :format nil)
+                                                             (:name "Command" :width 30 :template "{{ json .Command }}" :sort nil :format nil)
+                                                             (:name "Created" :width 23 :template "{{ json .CreatedAt }}" :sort nil :format
+                                                                    (lambda (x) (format-time-string "%F %T" (date-to-time x))))
+                                                             )
+                                 )
+    )
+
+  (add-hook 'docker-container-mode-hook #'docker/format)
   )
 
 (use-package lingva)
@@ -1461,6 +1529,8 @@ when reading files and the other way around when writing contents."
   (add-to-list 'term-bind-key-alist '("<backtab>" . term-send-up))
   (add-to-list 'term-bind-key-alist '("TAB" . term-send-tab))
   (add-to-list 'term-bind-key-alist '("s-<escape>" . term-line-mode)))
+
+;; (use-package vterm)
 
 (use-package fancy-compilation
   :commands (fancy-compilation-mode)

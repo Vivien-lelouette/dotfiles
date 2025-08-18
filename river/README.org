@@ -1,4 +1,4 @@
-#+TITLE: Hyprland configuration
+#+TITLE: River
 * River
 ** Style
 #+BEGIN_SRC config :tangle .config/river/init :mkdirp yes
@@ -149,18 +149,21 @@ riverctl map normal Super+Shift S spawn 'if pidof wf-recorder; then pkill -SIGIN
 *** Applications
 Example binds, see https://wiki.hyprland.org/Configuring/Binds/ for more
 #+BEGIN_SRC config :tangle .config/river/init :mkdirp yes
-riverctl map normal Super+Shift Return spawn alacritty
-riverctl map normal Super I spawn zen
-riverctl map normal Super Return spawn "if ! pidof emacs; then 'emacs --daemon'; fi; emacsclient -c -n -e '(eshell/new-or-current)'"
+  riverctl map normal Super+Shift Return spawn alacritty
+  riverctl map normal Super I spawn zen
+  riverctl map normal Super Return spawn "if ! pidof emacs; then 'emacs --daemon'; fi; emacsclient -c -n -e '(eshell/new-or-current)'"
 
-riverctl map normal Super X spawn "wofi --show drun"
+  riverctl map normal Super F spawn fm
 
-riverctl map normal Super E spawn "if ! pidof emacs; then 'emacs --daemon'; fi; emacsclient -c -n -e '(switch-to-buffer (window-buffer (selected-window)))'"
-riverctl map normal Super+Shift E spawn "if ! pidof emacs; then 'emacs --daemon'; fi; emacsclient -c -n -e '(switch-to-buffer nil)'"
+  riverctl map normal Super X spawn "wofi --show drun"
 
-riverctl map normal Super J spawn "if ! pidof emacs; then 'emacs --daemon'; fi; emacsclient -c -n -e '(with-current-buffer (window-buffer (selected-window)) (dired-jump))'"
+  riverctl map normal Super E spawn "if ! pidof emacs; then 'emacs --daemon'; fi; emacsclient -c -n -e '(switch-to-buffer (window-buffer (selected-window)))'"
+  riverctl map normal Super+Shift E spawn "if ! pidof emacs; then 'emacs --daemon'; fi; emacsclient -c -n -e '(switch-to-buffer nil)'"
 
-riverctl map normal Super+Shift I spawn "if ! pidof emacs; then 'emacs --daemon'; fi; emacsclient -c -n -e '(eww "https://www.google.com")'"
+  riverctl map normal Super J spawn "if ! pidof emacs; then 'emacs --daemon'; fi; emacsclient -c -n -e '(with-current-buffer (window-buffer (selected-window)) (dired-jump))'"
+  riverctl map normal Super D spawn "if ! pidof emacs; then 'emacs --daemon'; fi; emacsclient -c -n -e \"(with-current-buffer (window-buffer (selected-window)) (setq-local docker-pop-to-buffer-action '((display-buffer-same-window))) (docker-containers))\""
+
+  riverctl map normal Super+Shift I spawn "if ! pidof emacs; then 'emacs --daemon'; fi; emacsclient -c -n -e '(eww "https://www.google.com")'"
 #+END_SRC
 
 ** Starting Applications
@@ -182,8 +185,8 @@ wideriver \
     --outer-gaps                   4           \
     --border-width                 6           \
     --border-width-smart-gaps      0           \
-    --border-color-focused         "0x7c60a3"  \
-    --border-color-focused-monocle "0x7c60a3"  \
+    --border-color-focused         "0xbd93f9"  \
+    --border-color-focused-monocle "0xbd93f9"  \
     --border-color-unfocused       "0x232530"  \
     --log-threshold                info        \
    > "/tmp/wideriver.${XDG_VTNR}.${USER}.log" 2>&1 &
