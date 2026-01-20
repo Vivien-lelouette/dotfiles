@@ -116,3 +116,7 @@ emacs/.emacs.d/history
 /emacs/.emacs.d/dape-breakpoints
 /fonts/.local/share/fonts/NFM.ttf
 emacs/.emacs.d/etc/transient/*
+/emacs/.emacs.d/detached/
+/emacs/.emacs.d/lsp-cache/
+/emacs/.emacs.d/org-roam.db
+/emacs/.emacs.d/projects

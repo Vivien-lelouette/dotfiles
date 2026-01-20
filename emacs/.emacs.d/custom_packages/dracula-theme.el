@@ -93,6 +93,7 @@ read it before opening a new issue about your will.")
                 (dracula-red          "#ff5555" "#ff8787" "red")         ; official red
                 (dracula-yellow       "#f1fa8c" "#ffff87" "yellow")      ; official yellow
                 (dracula-selection    "#7c60a3" "#7c60a3" "selection")
+                (dracula-selection-alternate    "#BD93F9" "#BD93F9" "selection")
                 (dracula-gtk-scrollbar "#a1a1a2" "unspecified" "unspecified")
                 ;; Other colors
                 (bg2                  "#373844" "#121212" "brightblack")
@@ -122,7 +123,7 @@ read it before opening a new issue about your will.")
                (link :foreground ,dracula-cyan :underline t)
                (linum :slant italic :foreground ,bg3 :background ,dracula-bg)
                (line-number :slant italic :foreground ,bg3 :background ,dracula-bg)
-               (line-number-current-line :foreground ,dracula-fg :background ,dracula-current)
+               (line-number-current-line :foreground ,dracula-fg :background ,dracula-bg)
                ;; (match :background ,dracula-selection :foreground ,dracula-bg)
                (match :background ,dracula-selection)
                (menu :background ,dracula-current :inverse-video nil
@@ -188,6 +189,9 @@ read it before opening a new issue about your will.")
                (corfu-bar :foreground ,dracula-fg)
                (corfu-current :inherit 'match)
                (corfu-default :inherit 'default :background ,dracula-current)
+
+               ;;
+               (minimap-active-region-background :background ,dracula-current)
 
                ;; transient
                (transient-posframe :inherit tooltip)
@@ -424,6 +428,8 @@ read it before opening a new issue about your will.")
                (helm-time-zone-current :foreground ,dracula-orange :background ,dracula-bg)
                (helm-time-zone-home :foreground ,dracula-purple :background ,dracula-bg)
                (helm-visible-mark :foreground ,dracula-bg :background ,dracula-current)
+               (helm-posframe :inherit tooltip)
+               (helm-posframe-border :background ,dracula-selection-alternate)
                ;; highlight-indentation minor mode
                (highlight-indentation-face :background ,bg2)
                ;; icicle
