@@ -10,8 +10,6 @@
   (package-initialize)
 #+END_SRC
 
-#+RESULTS:
-
 ** Sane modern file setup
 #+BEGIN_SRC emacs-lisp
   ;; Raise GC threshold during init for faster startup
@@ -32,9 +30,6 @@
                 (garbage-collect))))
 #+END_SRC
 
-#+RESULTS:
-| #[nil ((unless (or (active-minibuffer-window) (bound-and-true-p company-candidates)) (garbage-collect))) nil] | #[nil ((if (or (active-minibuffer-window) (and (boundp 'company-candidates) company-candidates)) nil (garbage-collect))) nil] |
-
 ** Display improvements
 #+BEGIN_SRC emacs-lisp
   ;; redisplay-dont-pause is obsolete since Emacs 24.5 - removed
@@ -45,16 +40,10 @@
         jit-lock-chunk-size 1000) ; Smaller chunks = more responsive
 #+END_SRC
 
-#+RESULTS:
-: 1000
-
 ** Warn when opening files bigger than 100MB
 #+BEGIN_SRC emacs-lisp
   (setq large-file-warning-threshold 100000000)
 #+END_SRC
-
-#+RESULTS:
-: 100000000
 
 ** Increase the amount of data which Emacs reads from a process
 #+BEGIN_SRC emacs-lisp
@@ -62,16 +51,11 @@
       process-adaptive-read-buffering nil)
 #+END_SRC
 
-#+RESULTS:
-
 ** Encoding
 #+BEGIN_SRC emacs-lisp
   (prefer-coding-system 'utf-8)
   (set-selection-coding-system 'utf-8)
 #+END_SRC
-
-#+RESULTS:
-: utf-8
 
 ** Good scrolling
 #+begin_src emacs-lisp
@@ -83,9 +67,6 @@
     (ultra-scroll-mode 1))
 #+end_src
 
-#+RESULTS:
-: t
-
 ** Less verbose prompt
 #+BEGIN_SRC emacs-lisp
   (defalias 'yes-or-no-p 'y-or-n-p)
@@ -94,8 +75,6 @@
         use-dialog-box nil)
 #+END_SRC
 
-#+RESULTS:
-
 ** Better minibuffer completion keybind
 #+begin_src emacs-lisp
   (define-key minibuffer-local-completion-map " " nil)
@@ -103,10 +82,8 @@
   (define-key minibuffer-local-completion-map "?" nil)
   (define-key minibuffer-local-must-match-map "?" nil)
   (define-key minibuffer-local-map (kbd "S-<return>") (lambda () (interactive) (insert "\n")))
+  (add-hook 'minibuffer-setup-hook #'subword-mode)
 #+end_src
-
-#+RESULTS:
-: newline
 
 ** Avoid emacs littering
 #+BEGIN_SRC emacs-lisp
@@ -123,8 +100,6 @@
   (use-package no-littering)
 #+END_SRC
 
-#+RESULTS:
-
 ** Bind arrow keys
 #+BEGIN_SRC emacs-lisp
   (define-key key-translation-map (kbd "<up>") (kbd "C-p"))
@@ -132,9 +107,6 @@
   (define-key key-translation-map (kbd "<left>") (kbd "C-b"))
   (define-key key-translation-map (kbd "<right>") (kbd "C-f"))
 #+END_SRC
-
-#+RESULTS:
-: 
 
 ** Bind function keys
 #+BEGIN_SRC emacs-lisp
@@ -149,9 +121,6 @@
   (define-key key-translation-map [f9] (kbd "C-9"))
   (define-key key-translation-map [f10] (kbd "C-0"))
 #+END_SRC
-
-#+RESULTS:
-: [67108912]
 
 ** Buffers, frames & windows
 #+BEGIN_SRC emacs-lisp
@@ -201,9 +170,6 @@
   (global-hl-line-mode 1)
 #+END_SRC
 
-#+RESULTS:
-: t
-
 ** Bookmarks
 This persists the bookmarks state after each bookmark modification.
 It ensures that bookmarks are always up-to-date even when Emacs crashes.
@@ -212,9 +178,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 #+begin_src emacs-lisp
   (setq bookmark-save-flag 1)
 #+end_src
-
-#+RESULTS:
-: 1
 
 ** Indentation
 #+BEGIN_SRC emacs-lisp
@@ -306,9 +269,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
   (tab/default-width 4)
 #+END_SRC
 
-#+RESULTS:
-: 8
-
 ** Lines style
 #+begin_src emacs-lisp
   (setq
@@ -321,23 +281,15 @@ As bookmarks are at the center of my workflow, this is a crucial option.
   (global-hl-line-mode 0)
 #+end_src
 
-#+RESULTS:
-
 ** Log level
 #+BEGIN_SRC emacs-lisp
   (setq warning-minimum-level :error)
 #+END_SRC
 
-#+RESULTS:
-: :error
-
 ** Repeat
 #+begin_src emacs-lisp
   (repeat-mode 1)
 #+end_src
-
-#+RESULTS:
-: t
 
 ** Lighter interface
 #+BEGIN_SRC emacs-lisp
@@ -357,12 +309,9 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (spacious-padding-mode 1))
 #+END_SRC
 
-#+RESULTS:
-: t
-
 ** Fonts setting
 #+BEGIN_SRC emacs-lisp
-  (setq-default fill-column 120)
+  (setq-default fill-column 148)
 
   (defun fonts/set-fonts ()
     (interactive)
@@ -374,11 +323,10 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     ;; Set the variable pitch face
     (set-face-attribute 'variable-pitch nil :font "Cantarell-11" :weight 'regular)
     (dolist (face '(default fixed-pitch))
-      (set-face-attribute `,face nil :font "SauceCodePro NF-11")))
+      (set-face-attribute `,face nil :font "SauceCodePro NF-11"))
+    (fix-char-width-for-spinners))
   (add-hook 'server-after-make-frame-hook #'fonts/set-fonts)
 #+END_SRC
-
-#+RESULTS:
 | fonts/set-fonts | spacious-padding-set-parameters-of-selected-frame |
 
   (defun disable-mixed-pitch ()
@@ -394,8 +342,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 #+BEGIN_SRC emacs-lisp
   (setq auth-sources '("~/.authinfo.gpg"))
 #+END_SRC
-
-#+RESULTS:
 | ~/.authinfo.gpg |
 
 ** Tramp
@@ -405,11 +351,15 @@ As bookmarks are at the center of my workflow, this is a crucial option.
         (format "%s\\|%s"
                 vc-ignore-dir-regexp
                 tramp-file-name-regexp)
-        tramp-verbose 1)
-#+END_SRC
+        tramp-verbose 1
+        tramp-default-method "ssh"
+        tramp-use-ssh-controlmaster-options nil
+        tramp-chunksize 500
+        tramp-auto-save-directory "~/.emacs.d/var/tramp-autosave/")
 
-#+RESULTS:
-: 1
+  (with-eval-after-load 'tramp
+    (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
+#+END_SRC
 
 * Dracula theme
 #+BEGIN_SRC emacs-lisp
@@ -436,8 +386,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
                       (face-remap-add-relative 'default :background "#282a36")
                       (face-remap-add-relative 'fringe :background "#282a36"))))))
 #+END_SRC
-
-#+RESULTS:
 | #[nil ((load-file ~/.emacs.d/custom_packages/dracula-theme.el) (load-theme 'dracula t) (fringe-mode '(24 . 12)) (defun theme/minibuffer-echo-area nil (interactive) (dolist (buf '( *Minibuf-1*)) (with-current-buffer (get-buffer-create buf) (face-remap-add-relative 'default :background #44475a) (face-remap-add-relative 'fringe :background #44475a))) (dolist (buf '( *Minibuf-0*  *Echo Area 0*  *Echo Area 1*)) (with-current-buffer (get-buffer-create buf) (when (= (buffer-size) 0) (insert  )) (add-hook 'kill-buffer-query-functions #'ignore nil 'local) (set-window-scroll-bars (minibuffer-window) nil nil) (face-remap-add-relative 'default :background #282a36) (face-remap-add-relative 'fringe :background #282a36))))) nil] | org-persist-load-all | #[nil ((let ((local-settings ~/.emacs.d/local.el)) (if (file-exists-p local-settings) (progn (load-file local-settings)))) (lsp)) nil] | doom-modeline-mode | #[nil ((load-file ~/.emacs.d/custom_packages/dracula-theme.el) (load-theme 'dracula t) (fringe-mode '(24 . 12)) (defalias 'theme/minibuffer-echo-area #'(lambda nil (interactive) (let ((tail '( *Minibuf-1*))) (while tail (let ((buf (car tail))) (save-current-buffer (set-buffer (get-buffer-create buf)) (face-remap-add-relative 'default :background #44475a) (face-remap-add-relative 'fringe :background #44475a)) (setq tail (cdr tail))))) (let ((tail '( *Minibuf-0*  *Echo Area 0*  *Echo Area 1*))) (while tail (let ((buf (car tail))) (save-current-buffer (set-buffer (get-buffer-create buf)) (if (= (buffer-size) 0) (progn (insert  ))) (add-hook 'kill-buffer-query-functions #'ignore nil 'local) (set-window-scroll-bars (minibuffer-window) nil nil) (face-remap-add-relative 'default :background #282a36) (face-remap-add-relative 'fringe :background #282a36)) (setq tail (cdr tail)))))))) nil] | pgtk-use-im-context-handler | tramp-register-archive-autoload-file-name-handler | magit-maybe-define-global-key-bindings | table--make-cell-map |
 
 * Doom modeline
@@ -463,9 +411,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 
 #+end_src
 
-#+RESULTS:
-: t
-
 * Search & completion
 ** Built-in setup
 #+begin_src emacs-lisp
@@ -488,14 +433,11 @@ As bookmarks are at the center of my workflow, this is a crucial option.
         (choose-completion nil no-exit no-quit))))
 #+END_SRC
 
-#+RESULTS:
-: my/minibuffer-choose-completion
-
 ** Helm
 #+BEGIN_SRC emacs-lisp
   (use-package helm
     :config
-    (setq helm-input-idle-delay                     0.01
+    (setq helm-input-idle-delay                     0.1
           helm-reuse-last-window-split-state        nil
           helm-always-two-windows                   nil
           helm-split-window-default-side            'below
@@ -516,9 +458,9 @@ As bookmarks are at the center of my workflow, this is a crucial option.
           helm-kill-real-or-display-selection       'real
           helm-truncate-lines                       t
           helm-net-prefer-curl                      t
-          helm-split-window-in-side-p               t
+          helm-split-window-inside-p                t
           helm-grep-git-grep-command "git --no-pager grep -n%cH --color=always --full-name -e %p"
-          helm-buffers-show-icons t
+          helm-buffers-show-icons nil
           helm-buffer-max-length 35)
 
     (defun helm--show-action-window-other-window-p ()
@@ -602,9 +544,9 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (helm-autoresize-mode 1))
 
   (use-package helm-xref)
-#+END_SRC
 
-#+RESULTS:
+  (use-package helm-tramp)
+#+END_SRC
 
 ** Company
 #+BEGIN_SRC emacs-lisp
@@ -623,9 +565,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (global-company-mode 1))
 #+END_SRC
 
-#+RESULTS:
-: company-indent-or-complete-common
-
 ** Orderless
 #+BEGIN_SRC emacs-lisp
   (use-package orderless
@@ -634,8 +573,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     completion-category-defaults nil
     completion-category-overrides '((file (styles partial-completion)))))
 #+END_SRC
-
-#+RESULTS:
 
 * Org mode
 #+BEGIN_SRC emacs-lisp
@@ -686,9 +623,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
      '(org-level-5 ((t (:inherit outline-5 :height 1.0))))))
 #+END_SRC
 
-#+RESULTS:
-: t
-
 ** Org roam
 #+begin_src emacs-lisp
   ;; (make-directory "~/RoamNotes")
@@ -716,8 +650,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 
 #+end_src
 
-#+RESULTS:
-
 * Time package
 #+BEGIN_SRC emacs-lisp
   (use-package time
@@ -729,15 +661,10 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (setq display-time-default-load-average nil))
 #+END_SRC
 
-#+RESULTS:
-
 * Start desktop mode if needed
 #+BEGIN_SRC emacs-lisp
   (autoload 'exwm-enable "~/.emacs.d/desktop.el")
 #+END_SRC
-
-#+RESULTS:
-: exwm-enable
 
 * Movement packages
 ** Avy
@@ -747,9 +674,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (require 'bind-key)
     (bind-key "M-j" #'avy-goto-char-timer))
 #+END_SRC
-
-#+RESULTS:
-: t
 
 ** Multiple cursors
 #+BEGIN_SRC emacs-lisp
@@ -767,16 +691,11 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (setq mc/black-list-prefer t))
 #+END_SRC
 
-#+RESULTS:
-| #[nil ((set-face-attribute 'mc/cursor-bar-face nil :height 1 :background nil :inherit 'cursor)) nil] |
-
 ** kmacro-x
 #+BEGIN_SRC emacs-lisp
   (use-package kmacro-x
     :init (kmacro-x-atomic-undo-mode 1))
 #+END_SRC
-
-#+RESULTS:
 
 ** Combobulate
 #+begin_src emacs-lisp
@@ -795,18 +714,12 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (setq combobulate-flash-node nil))
 #+end_src
 
-#+RESULTS:
-| combobulate-mode |
-
 ** Goto last change
 #+BEGIN_SRC emacs-lisp
   (use-package goto-last-change
     :config
     (global-set-key (kbd "C-z") 'goto-last-change))
 #+END_SRC
-
-#+RESULTS:
-: t
 
 ** vundu
 #+begin_src emacs-lisp
@@ -825,8 +738,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (global-unset-key (kbd "C-?"))
     (global-set-key (kbd "C-?") 'vundo))
 #+end_src
-
-#+RESULTS:
 
 * Advanced Appearance
 ** Hideshow
@@ -879,9 +790,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
         (_ (hs-hide-all)))))
 #+END_SRC
 
-#+RESULTS:
-: hs-global-cycle
-
 ** All the icons
 #+BEGIN_SRC emacs-lisp
   (use-package all-the-icons
@@ -890,8 +798,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
   (use-package all-the-icons-ibuffer
     :after all-the-icons)
 #+END_SRC
-
-#+RESULTS:
 
 ** Coding style
 #+BEGIN_SRC emacs-lisp
@@ -906,9 +812,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
   (add-hook 'prog-mode-hook #'custom/coding-faces)
 #+END_SRC
 
-#+RESULTS:
-| custom/coding-faces | subword-mode | hs-minor-mode |
-
 ** Ediff style
 #+BEGIN_SRC emacs-lisp
   (use-package ediff
@@ -917,9 +820,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
       (setq ediff-window-setup-function 'ediff-setup-windows-plain
             ediff-split-window-function 'split-window-horizontally))
 #+END_SRC
-
-#+RESULTS:
-: t
 
 ** Perfect margin
 #+begin_src emacs-lisp
@@ -931,7 +831,8 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (setq perfect-margin-only-set-left-margin nil
           perfect-margin-ignore-regexps '("*docker-container*" "*Ibuffer*" "* docker")
           perfect-margin-ignore-filters nil
-          perfect-margin-visible-width 148)
+          perfect-margin-visible-width 148
+          perfect-margin-disable-in-splittable-check nil)
 
     (defun perfect-margin-minibuffer-setup ()
       "Apply perfect-margin to minibuffer window."
@@ -942,11 +843,8 @@ As bookmarks are at the center of my workflow, this is a crucial option.
           (set-window-margins win margin margin))))
     (add-hook 'minibuffer-setup-hook #'perfect-margin-minibuffer-setup)
 
-    (perfect-margin-mode 1))
+    (perfect-margin-mode 0))
 #+end_src
-
-#+RESULTS:
-: perfect-margin-mode
 
 * Utilities
 ** PGmacs
@@ -955,8 +853,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     :vc (:url "https://github.com/emarsden/pgmacs" :rev :newest)
     :defer t)
 #+END_SRC
-
-#+RESULTS:
 
 ** string-inflection
 #+BEGIN_SRC emacs-lisp
@@ -970,16 +866,11 @@ As bookmarks are at the center of my workflow, this is a crucial option.
            ("C-c C-u C-_" . string-inflection-capital-underscore)))
 #+END_SRC
 
-#+RESULTS:
-: string-inflection-capital-underscore
-
 ** Sudo edit
 #+BEGIN_SRC emacs-lisp
   (use-package sudo-edit
     :commands (sudo-edit sudo-edit-find-file))
 #+END_SRC
-
-#+RESULTS:
 
 ** which-key
 #+BEGIN_SRC emacs-lisp
@@ -991,9 +882,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (which-key-mode 1))
 #+END_SRC
 
-#+RESULTS:
-: t
-
 ** Whole line or region
 #+begin_src emacs-lisp
   (use-package whole-line-or-region
@@ -1001,9 +889,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     :config
     (whole-line-or-region-global-mode 1))
 #+end_src
-
-#+RESULTS:
-: t
 
 ** Ibuffer
 #+begin_src emacs-lisp
@@ -1041,9 +926,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
   (global-set-key (kbd "C-x C-b") 'ibuffer)
 #+end_src
 
-#+RESULTS:
-: ibuffer
-
 ** blist
 #+BEGIN_SRC emacs-lisp
   (use-package blist
@@ -1075,9 +957,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
                                 #'bookmark/chrome-bookmark-handler)))
 #+END_SRC
 
-#+RESULTS:
-: t
-
 ** Wgrep
 #+BEGIN_SRC emacs-lisp
   (use-package wgrep
@@ -1095,8 +974,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     :after (wgrep helm))
 #+END_SRC
 
-#+RESULTS:
-
 ** Savehist
 #+BEGIN_SRC emacs-lisp
   (use-package savehist
@@ -1104,8 +981,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     :init
     (savehist-mode))
 #+END_SRC
-
-#+RESULTS:
 
 ** Helpful
 #+BEGIN_SRC emacs-lisp
@@ -1122,24 +997,17 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (setq counsel-describe-variable-funtion #'helpful-variable))
 #+END_SRC
 
-#+RESULTS:
-: helpful-command
-
 ** Explain pause mode
 #+BEGIN_SRC emacs-lisp
   (use-package explain-pause-mode
     :vc (:url "https://github.com/lastquestion/explain-pause-mode" :rev :newest))
 #+END_SRC
 
-#+RESULTS:
-
 ** Free keys
 #+BEGIN_SRC emacs-lisp
   (use-package free-keys
     :commands free-keys)
 #+END_SRC
-
-#+RESULTS:
 
 ** Csv mode
 #+begin_src emacs-lisp
@@ -1204,9 +1072,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (remove-hook 'csv-mode-hook #'csv+-setup-quoted-newlines))
 #+end_src
 
-#+RESULTS:
-: t
-
 ** d2 mode
 #+begin_src emacs-lisp
   (use-package d2-mode)
@@ -1216,8 +1081,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     :defer t)
 #+end_src
 
-#+RESULTS:
-
 ** Jinx
 #+begin_src emacs-lisp
   (use-package jinx
@@ -1226,9 +1089,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     :bind (("M-$" . jinx-correct)
            ("C-M-$" . jinx-languages)))
 #+end_src
-
-#+RESULTS:
-: jinx-languages
 
 ** Docker
 #+begin_src emacs-lisp
@@ -1303,9 +1163,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     )
 #+end_src
 
-#+RESULTS:
-: t
-
 ** gptel
 #+BEGIN_SRC emacs-lisp
   (use-package gptel
@@ -1316,31 +1173,77 @@ As bookmarks are at the center of my workflow, this is a crucial option.
      gptel-display-buffer-action '((display-buffer-pop-up-frame))))
 #+END_SRC
 
-#+RESULTS:
-: t
-
 ** Claude
 #+BEGIN_SRC emacs-lisp
-  (use-package claude-code
-            :vc (:url "https://github.com/stevemolitor/claude-code.el"
-                 :rev :newest
-                 :branch "main")
-            :bind-keymap
-            ("C-c c" . claude-code-command-map)
-            :hook                                             
-            (claude-code-start . claude-code-read-only-mode))
-#+END_SRC
+  (use-package claudemacs
+    :vc (:url "https://github.com/cpoile/claudemacs"
+              :rev :newest
+              :branch "main")
+    :config
+    (setq claudemacs-use-shell-env t
+          claudemacs-switch-to-buffer-on-create nil
+          claudemacs-switch-to-buffer-on-toggle nil
+          claudemacs-switch-to-buffer-on-file-add nil
+          claudemacs-switch-to-buffer-on-send-error nil
+          claudemacs-switch-to-buffer-on-add-context nil)
 
-#+RESULTS:
-: #[nil ((use-package-autoload-keymap 'claude-code-command-map 'claude-code nil)) nil nil nil nil]
+    (add-to-list 'display-buffer-alist
+                 '("^\\*claudemacs"
+                   (display-buffer-reuse-window display-buffer-pop-up-frame)
+                   (reusable-frames . visible)))
+
+    (defvar claudemacs--scroll-timer nil)
+
+    (defun claudemacs/scroll-to-bottom ()
+      "Scroll all claudemacs windows to the bottom."
+      (dolist (buf (buffer-list))
+        (when (and (buffer-live-p buf)
+                   (string-prefix-p "*claudemacs" (buffer-name buf)))
+          (dolist (window (get-buffer-window-list buf nil t))
+            (with-selected-window window
+              (goto-char (point-max))
+              (recenter -1))))))
+
+    (defun claudemacs/start-scroll-timer ()
+      "Start auto-scroll timer for claudemacs."
+      (unless claudemacs--scroll-timer
+        (setq claudemacs--scroll-timer
+              (run-with-timer 0 0.5 #'claudemacs/scroll-to-bottom))))
+
+    (defun claudemacs/stop-scroll-timer ()
+      "Stop auto-scroll timer."
+      (when claudemacs--scroll-timer
+        (cancel-timer claudemacs--scroll-timer)
+        (setq claudemacs--scroll-timer nil)))
+
+    (defun claudemacs/toggle-follow ()
+      "Toggle auto-scroll for claudemacs buffers."
+      (interactive)
+      (if claudemacs--scroll-timer
+          (progn
+            (claudemacs/stop-scroll-timer)
+            (message "Claudemacs follow: OFF"))
+        (claudemacs/start-scroll-timer)
+        (message "Claudemacs follow: ON")))
+
+    (transient-append-suffix 'claudemacs-transient-menu '(-1)
+      ["Quick"
+       ("c" "Claude" transient:claudemacs-start-menu::0)
+       ("f" "Toggle follow" claudemacs/toggle-follow)])
+
+    (defun claudemacs/startup-hook ()
+      (claudemacs/start-scroll-timer)
+      (run-with-timer 0.5 nil #'eat-emacs-mode))
+
+    (add-hook 'claudemacs-startup-hook #'claudemacs/startup-hook)
+
+    (global-set-key (kbd "C-c c") #'claudemacs-transient-menu))
+#+END_SRC
 
 ** structured logs
 #+BEGIN_SRC emacs-lisp
    (load-file "~/.emacs.d/custom_packages/structured-log-mode.el")
 #+END_SRC
-
-#+RESULTS:
-: t
 
 * Coding
 ** Nix
@@ -1348,9 +1251,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
   (use-package nix-mode
     :mode "\\.nix\\'")
 #+END_SRC
-
-#+RESULTS:
-: ((\(\.js[mx]?\|\.har\)\' . js-ts-mode) (^yang\.settings$ . jsonc-mode) (\.ya?ml\' . yaml-ts-mode) (\.ts\' . typescript-ts-mode) (\.tsx\' . tsx-ts-mode) (\.toml\' . toml-ts-mode) (\.rs\' . rust-ts-mode) (\(?:\.\(?:rbw?\|ru\|rake\|thor\|jbuilder\|rabl\|gemspec\|podspec\)\|/\(?:Gem\|Rake\|Cap\|Thor\|Puppet\|Berks\|Brew\|Vagrant\|Guard\|Pod\)file\)\' . ruby-ts-mode) (\.py[iw]?\' . python-ts-mode) (\.lua\' . lua-ts-mode) (\.js\' . js-ts-mode) (\.java\' . java-ts-mode) (\.html\' . html-ts-mode) (\.heex\' . heex-ts-mode) (go\.mod\' . go-mod-ts-mode) (\.go\' . go-ts-mode) (\.ex\' . elixir-ts-mode) (\Dockerfile\' . dockerfile-ts-mode) (\.css\' . css-ts-mode) (\.cpp\' . c++-ts-mode) (\.cmake\' . cmake-ts-mode) (\.cs\' . csharp-ts-mode) (\.c\' . c-ts-mode) (\.sh\' . bash-ts-mode) (\.json\' . json-ts-mode) (\.tsv\' . tsv-mode) (\.[Cc][Ss][Vv]\' . csv-mode) (/git-rebase-todo\' . git-rebase-mode) (\.\(?:md\|markdown\|mkd\|mdown\|mkdn\|mdwn\)\' . markdown-mode) (\.nix\' . nix-mode) (^/nix/store/.+\.drv\' . nix-drv-mode) (\.\(?:php[s345]?\|phtml\)\' . php-mode-maybe) (\.\(?:php\.inc\|stub\)\' . php-mode) (/\.php_cs\(?:\.dist\)?\' . php-mode) (\.ts\' . typescript-mode) (\.vue\' . vue-mode) (\.gpg\(~\|\.~[0-9]+~\)?\' nil epa-file) (\.elc\' . elisp-byte-code-mode) (\.zst\' nil jka-compr) (\.dz\' nil jka-compr) (\.xz\' nil jka-compr) (\.lzma\' nil jka-compr) (\.lz\' nil jka-compr) (\.g?z\' nil jka-compr) (\.bz2\' nil jka-compr) (\.Z\' nil jka-compr) (\.vr[hi]?\' . vera-mode) (\(?:\.\(?:rbw?\|ru\|rake\|thor\|axlsx\|jbuilder\|rabl\|gemspec\|podspec\)\|/\(?:Gem\|Rake\|Cap\|Thor\|Puppet\|Berks\|Brew\|Fast\|Vagrant\|Guard\|Pod\)file\)\' . ruby-mode) (\.re?st\' . rst-mode) (/\(?:Pipfile\|\.?flake8\)\' . conf-mode) (\.py[iw]?\' . python-mode) (\.m\' . octave-maybe-mode) (\.less\' . less-css-mode) (\.editorconfig\' . editorconfig-conf-mode) (\.scss\' . scss-mode) (\.cs\' . csharp-mode) (\.awk\' . awk-mode) (\.\(u?lpc\|pike\|pmod\(\.in\)?\)\' . pike-mode) (\.idl\' . idl-mode) (\.java\' . java-mode) (\.m\' . objc-mode) (\.ii\' . c++-mode) (\.i\' . c-mode) (\.lex\' . c-mode) (\.y\(acc\)?\' . c-mode) (\.h\' . c-or-c++-mode) (\.c\' . c-mode) (\.\(CC?\|HH?\)\' . c++-mode) (\.[ch]\(pp\|xx\|\+\+\)\' . c++-mode) (\.\(cc\|hh\)\' . c++-mode) (\.\(bat\|cmd\)\' . bat-mode) (\.[sx]?html?\(\.[a-zA-Z_]+\)?\' . mhtml-mode) (\.svgz?\' . image-mode) (\.svgz?\' . xml-mode) (\.x[bp]m\' . image-mode) (\.x[bp]m\' . c-mode) (\.p[bpgn]m\' . image-mode) (\.tiff?\' . image-mode) (\.gif\' . image-mode) (\.png\' . image-mode) (\.jpe?g\' . image-mode) (\.webp\' . image-mode) (\.te?xt\' . text-mode) (\.[tT]e[xX]\' . tex-mode) (\.ins\' . tex-mode) (\.ltx\' . latex-mode) (\.dtx\' . doctex-mode) (\.org\' . org-mode) (\.dir-locals\(?:-2\)?\.el\' . lisp-data-mode) (\.eld\' . lisp-data-mode) (eww-bookmarks\' . lisp-data-mode) (tramp\' . lisp-data-mode) (/archive-contents\' . lisp-data-mode) (places\' . lisp-data-mode) (\.emacs-places\' . lisp-data-mode) (\.el\' . emacs-lisp-mode) (Project\.ede\' . emacs-lisp-mode) (\(?:\.\(?:scm\|sls\|sld\|stk\|ss\|sch\)\|/\.guile\)\' . scheme-mode) (\.l\' . lisp-mode) (\.li?sp\' . lisp-mode) (\.[fF]\' . fortran-mode) (\.for\' . fortran-mode) (\.p\' . pascal-mode) (\.pas\' . pascal-mode) (\.\(dpr\|DPR\)\' . delphi-mode) (\.\([pP]\([Llm]\|erl\|od\)\|al\)\' . perl-mode) (Imakefile\' . makefile-imake-mode) (Makeppfile\(?:\.mk\)?\' . makefile-makepp-mode) (\.makepp\' . makefile-makepp-mode) (\.mk\' . makefile-gmake-mode) (\.make\' . makefile-gmake-mode) ([Mm]akefile\' . makefile-gmake-mode) (\.am\' . makefile-automake-mode) (\.texinfo\' . texinfo-mode) (\.te?xi\' . texinfo-mode) (\.[sS]\' . asm-mode) (\.asm\' . asm-mode) (\.css\' . css-mode) (\.mixal\' . mixal-mode) (\.gcov\' . compilation-mode) (/\.[a-z0-9-]*gdbinit . gdb-script-mode) (-gdb\.gdb . gdb-script-mode) ([cC]hange\.?[lL]og?\' . change-log-mode) ([cC]hange[lL]og[-.][0-9]+\' . change-log-mode) (\$CHANGE_LOG\$\.TXT . change-log-mode) (\.scm\.[0-9]*\' . scheme-mode) (\.[ckz]?sh\'\|\.shar\'\|/\.z?profile\' . sh-mode) (\.bash\' . sh-mode) (/PKGBUILD\' . sh-mode) (\(/\|\`\)\.\(bash_\(profile\|history\|log\(in\|out\)\)\|z?log\(in\|out\)\)\' . sh-mode) (\(/\|\`\)\.\(shrc\|zshrc\|m?kshrc\|bashrc\|t?cshrc\|esrc\)\' . sh-mode) (\(/\|\`\)\.\([kz]shenv\|xinitrc\|startxrc\|xsession\)\' . sh-mode) (\.m?spec\' . sh-mode) (\.m[mes]\' . nroff-mode) (\.man\' . nroff-mode) (\.sty\' . latex-mode) (\.cl[so]\' . latex-mode) (\.bbl\' . latex-mode) (\.bib\' . bibtex-mode) (\.bst\' . bibtex-style-mode) (\.sql\' . sql-mode) (\(acinclude\|aclocal\|acsite\)\.m4\' . autoconf-mode) (\.m[4c]\' . m4-mode) (\.mf\' . metafont-mode) (\.mp\' . metapost-mode) (\.vhdl?\' . vhdl-mode) (\.article\' . text-mode) (\.letter\' . text-mode) (\.i?tcl\' . tcl-mode) (\.exp\' . tcl-mode) (\.itk\' . tcl-mode) (\.icn\' . icon-mode) (\.sim\' . simula-mode) (\.mss\' . scribe-mode) (\.f9[05]\' . f90-mode) (\.f0[38]\' . f90-mode) (\.indent\.pro\' . fundamental-mode) (\.\(pro\|PRO\)\' . idlwave-mode) (\.srt\' . srecode-template-mode) (\.prolog\' . prolog-mode) (\.tar\' . tar-mode) (\.\(arc\|zip\|lzh\|lha\|zoo\|[jew]ar\|xpi\|rar\|cbr\|7z\|squashfs\|ARC\|ZIP\|LZH\|LHA\|ZOO\|[JEW]AR\|XPI\|RAR\|CBR\|7Z\|SQUASHFS\)\' . archive-mode) (\.oxt\' . archive-mode) (\.\(deb\|[oi]pk\)\' . archive-mode) (\`/tmp/Re . text-mode) (/Message[0-9]*\' . text-mode) (\`/tmp/fol/ . text-mode) (\.oak\' . scheme-mode) (\.sgml?\' . sgml-mode) (\.x[ms]l\' . xml-mode) (\.dbk\' . xml-mode) (\.dtd\' . sgml-mode) (\.ds\(ss\)?l\' . dsssl-mode) (\.js[mx]?\' . javascript-mode) (\.har\' . javascript-mode) (\.json\' . js-json-mode) (\.[ds]?va?h?\' . verilog-mode) (\.by\' . bovine-grammar-mode) (\.wy\' . wisent-grammar-mode) (\.erts\' . erts-mode) ([:/\]\..*\(emacs\|gnus\|viper\)\' . emacs-lisp-mode) (\`\..*emacs\' . emacs-lisp-mode) ([:/]_emacs\' . emacs-lisp-mode) (/crontab\.X*[0-9]+\' . shell-script-mode) (\.ml\' . lisp-mode) (\.ld[si]?\' . ld-script-mode) (ld\.?script\' . ld-script-mode) (\.xs\' . c-mode) (\.x[abdsru]?[cnw]?\' . ld-script-mode) (\.zone\' . dns-mode) (\.soa\' . dns-mode) (\.asd\' . lisp-mode) (\.\(asn\|mib\|smi\)\' . snmp-mode) (\.\(as\|mi\|sm\)2\' . snmpv2-mode) (\.\(diffs?\|patch\|rej\)\' . diff-mode) (\.\(dif\|pat\)\' . diff-mode) (\.[eE]?[pP][sS]\' . ps-mode) (\.\(?:PDF\|EPUB\|CBZ\|FB2\|O?XPS\|DVI\|OD[FGPST]\|DOCX\|XLSX?\|PPTX?\|pdf\|epub\|cbz\|fb2\|o?xps\|djvu\|dvi\|od[fgpst]\|docx\|xlsx?\|pptx?\)\' . doc-view-mode-maybe) (configure\.\(ac\|in\)\' . autoconf-mode) (\.s\(v\|iv\|ieve\)\' . sieve-mode) (BROWSE\' . ebrowse-tree-mode) (\.ebrowse\' . ebrowse-tree-mode) (#\*mail\* . mail-mode) (\.g\' . antlr-mode) (\.mod\' . m2-mode) (\.ses\' . ses-mode) (\.docbook\' . sgml-mode) (\.com\' . dcl-mode) (/config\.\(?:bat\|log\)\' . fundamental-mode) (/\.?\(authinfo\|netrc\)\' . authinfo-mode) (\.\(?:[iI][nN][iI]\|[lL][sS][tT]\|[rR][eE][gG]\|[sS][yY][sS]\)\' . conf-mode) (\.la\' . conf-unix-mode) (\.ppd\' . conf-ppd-mode) (java.+\.conf\' . conf-javaprop-mode) (\.properties\(?:\.[a-zA-Z0-9._-]+\)?\' . conf-javaprop-mode) (\.toml\' . conf-toml-mode) (\.desktop\' . conf-desktop-mode) (/\.redshift\.conf\' . conf-windows-mode) (\`/etc/\(?:DIR_COLORS\|ethers\|.?fstab\|.*hosts\|lesskey\|login\.?de\(?:fs\|vperm\)\|magic\|mtab\|pam\.d/.*\|permissions\(?:\.d/.+\)?\|protocols\|rpc\|services\)\' . conf-space-mode) (\`/etc/\(?:acpid?/.+\|aliases\(?:\.d/.+\)?\|default/.+\|group-?\|hosts\..+\|inittab\|ksysguarddrc\|opera6rc\|passwd-?\|shadow-?\|sysconfig/.+\)\' . conf-mode) ([cC]hange[lL]og[-.][-0-9a-z]+\' . change-log-mode) (/\.?\(?:gitconfig\|gnokiirc\|hgrc\|kde.*rc\|mime\.types\|wgetrc\)\' . conf-mode) (/\.mailmap\' . conf-unix-mode) (/\.\(?:asound\|enigma\|fetchmail\|gltron\|gtk\|hxplayer\|mairix\|mbsync\|msmtp\|net\|neverball\|nvidia-settings-\|offlineimap\|qt/.+\|realplayer\|reportbug\|rtorrent\.\|screen\|scummvm\|sversion\|sylpheed/.+\|xmp\)rc\' . conf-mode) (/\.\(?:gdbtkinit\|grip\|mpdconf\|notmuch-config\|orbital/.+txt\|rhosts\|tuxracer/options\)\' . conf-mode) (/\.?X\(?:default\|resource\|re\)s\> . conf-xdefaults-mode) (/X11.+app-defaults/\|\.ad\' . conf-xdefaults-mode) (/X11.+locale/.+/Compose\' . conf-colon-mode) (/X11.+locale/compose\.dir\' . conf-javaprop-mode) (\.~?[0-9]+\.[0-9][-.0-9]*~?\' nil t) (\.\(?:orig\|in\|[bB][aA][kK]\)\' nil t) ([/.]c\(?:on\)?f\(?:i?g\)?\(?:\.[a-zA-Z0-9._-]+\)?\' . conf-mode-maybe) (\.[1-9]\' . nroff-mode) (\.art\' . image-mode) (\.avs\' . image-mode) (\.bmp\' . image-mode) (\.cmyk\' . image-mode) (\.cmyka\' . image-mode) (\.crw\' . image-mode) (\.dcr\' . image-mode) (\.dcx\' . image-mode) (\.dng\' . image-mode) (\.dpx\' . image-mode) (\.fax\' . image-mode) (\.heic\' . image-mode) (\.hrz\' . image-mode) (\.icb\' . image-mode) (\.icc\' . image-mode) (\.icm\' . image-mode) (\.ico\' . image-mode) (\.icon\' . image-mode) (\.jbg\' . image-mode) (\.jbig\' . image-mode) (\.jng\' . image-mode) (\.jnx\' . image-mode) (\.miff\' . image-mode) (\.mng\' . image-mode) (\.mvg\' . image-mode) (\.otb\' . image-mode) (\.p7\' . image-mode) (\.pcx\' . image-mode) (\.pdb\' . image-mode) (\.pfa\' . image-mode) (\.pfb\' . image-mode) (\.picon\' . image-mode) (\.pict\' . image-mode) (\.rgb\' . image-mode) (\.rgba\' . image-mode) (\.tga\' . image-mode) (\.wbmp\' . image-mode) (\.webp\' . image-mode) (\.wmf\' . image-mode) (\.wpg\' . image-mode) (\.xcf\' . image-mode) (\.xmp\' . image-mode) (\.xwd\' . image-mode) (\.yuv\' . image-mode) (\.tgz\' . tar-mode) (\.tbz2?\' . tar-mode) (\.txz\' . tar-mode) (\.tzst\' . tar-mode))
 
 ** Electric pair
 #+BEGIN_SRC emacs-lisp
@@ -1373,9 +1273,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
   (add-hook 'deactivate-mark-hook #'electric-pair/deactivate)
 #+END_SRC
 
-#+RESULTS:
-| electric-pair/deactivate |
-
 ** Electric indent
 #+begin_src emacs-lisp
   (electric-indent-mode 1)
@@ -1383,9 +1280,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (interactive)
     (setq-local electric-indent-inhibit t))
 #+end_src
-
-#+RESULTS:
-: electric-indent/inhibit
  
 ** The only holy git client !
 #+BEGIN_SRC emacs-lisp
@@ -1446,8 +1340,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     )
 #+END_SRC
 
-#+RESULTS:
-
 ** Yasnippet
 #+BEGIN_SRC emacs-lisp
   (use-package yasnippet
@@ -1472,15 +1364,11 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     :after yasnippet)
 #+END_SRC
 
-#+RESULTS:
-
 ** Json Web Token
 #+begin_src emacs-lisp
   (use-package jwt
     :vc (:url "https://github.com/joshbax189/jwt-el" :rev :newest))
 #+end_src
-
-#+RESULTS:
 
 ** NodeJS REPL
 #+begin_src emacs-lisp
@@ -1491,17 +1379,11 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (add-hook 'nodejs-repl-mode-hook #'nodejs-repl/remove-broken-filter))
 #+end_src
 
-#+RESULTS:
-: t
-
 ** TypeScript
 #+begin_src emacs-lisp
   (use-package typescript-mode
     :mode "\\.ts\\'")
 #+end_src
-
-#+RESULTS:
-: ((\(\.js[mx]?\|\.har\)\' . js-ts-mode) (^yang\.settings$ . jsonc-mode) (\.ya?ml\' . yaml-ts-mode) (\.ts\' . typescript-ts-mode) (\.tsx\' . tsx-ts-mode) (\.toml\' . toml-ts-mode) (\.rs\' . rust-ts-mode) (\(?:\.\(?:rbw?\|ru\|rake\|thor\|jbuilder\|rabl\|gemspec\|podspec\)\|/\(?:Gem\|Rake\|Cap\|Thor\|Puppet\|Berks\|Brew\|Vagrant\|Guard\|Pod\)file\)\' . ruby-ts-mode) (\.py[iw]?\' . python-ts-mode) (\.lua\' . lua-ts-mode) (\.js\' . js-ts-mode) (\.java\' . java-ts-mode) (\.html\' . html-ts-mode) (\.heex\' . heex-ts-mode) (go\.mod\' . go-mod-ts-mode) (\.go\' . go-ts-mode) (\.ex\' . elixir-ts-mode) (\Dockerfile\' . dockerfile-ts-mode) (\.css\' . css-ts-mode) (\.cpp\' . c++-ts-mode) (\.cmake\' . cmake-ts-mode) (\.cs\' . csharp-ts-mode) (\.c\' . c-ts-mode) (\.sh\' . bash-ts-mode) (\.json\' . json-ts-mode) (\.tsv\' . tsv-mode) (\.[Cc][Ss][Vv]\' . csv-mode) (/git-rebase-todo\' . git-rebase-mode) (\.\(?:md\|markdown\|mkd\|mdown\|mkdn\|mdwn\)\' . markdown-mode) (\.nix\' . nix-mode) (^/nix/store/.+\.drv\' . nix-drv-mode) (\.\(?:php[s345]?\|phtml\)\' . php-mode-maybe) (\.\(?:php\.inc\|stub\)\' . php-mode) (/\.php_cs\(?:\.dist\)?\' . php-mode) (\.ts\' . typescript-mode) (\.vue\' . vue-mode) (\.gpg\(~\|\.~[0-9]+~\)?\' nil epa-file) (\.elc\' . elisp-byte-code-mode) (\.zst\' nil jka-compr) (\.dz\' nil jka-compr) (\.xz\' nil jka-compr) (\.lzma\' nil jka-compr) (\.lz\' nil jka-compr) (\.g?z\' nil jka-compr) (\.bz2\' nil jka-compr) (\.Z\' nil jka-compr) (\.vr[hi]?\' . vera-mode) (\(?:\.\(?:rbw?\|ru\|rake\|thor\|axlsx\|jbuilder\|rabl\|gemspec\|podspec\)\|/\(?:Gem\|Rake\|Cap\|Thor\|Puppet\|Berks\|Brew\|Fast\|Vagrant\|Guard\|Pod\)file\)\' . ruby-mode) (\.re?st\' . rst-mode) (/\(?:Pipfile\|\.?flake8\)\' . conf-mode) (\.py[iw]?\' . python-mode) (\.m\' . octave-maybe-mode) (\.less\' . less-css-mode) (\.editorconfig\' . editorconfig-conf-mode) (\.scss\' . scss-mode) (\.cs\' . csharp-mode) (\.awk\' . awk-mode) (\.\(u?lpc\|pike\|pmod\(\.in\)?\)\' . pike-mode) (\.idl\' . idl-mode) (\.java\' . java-mode) (\.m\' . objc-mode) (\.ii\' . c++-mode) (\.i\' . c-mode) (\.lex\' . c-mode) (\.y\(acc\)?\' . c-mode) (\.h\' . c-or-c++-mode) (\.c\' . c-mode) (\.\(CC?\|HH?\)\' . c++-mode) (\.[ch]\(pp\|xx\|\+\+\)\' . c++-mode) (\.\(cc\|hh\)\' . c++-mode) (\.\(bat\|cmd\)\' . bat-mode) (\.[sx]?html?\(\.[a-zA-Z_]+\)?\' . mhtml-mode) (\.svgz?\' . image-mode) (\.svgz?\' . xml-mode) (\.x[bp]m\' . image-mode) (\.x[bp]m\' . c-mode) (\.p[bpgn]m\' . image-mode) (\.tiff?\' . image-mode) (\.gif\' . image-mode) (\.png\' . image-mode) (\.jpe?g\' . image-mode) (\.webp\' . image-mode) (\.te?xt\' . text-mode) (\.[tT]e[xX]\' . tex-mode) (\.ins\' . tex-mode) (\.ltx\' . latex-mode) (\.dtx\' . doctex-mode) (\.org\' . org-mode) (\.dir-locals\(?:-2\)?\.el\' . lisp-data-mode) (\.eld\' . lisp-data-mode) (eww-bookmarks\' . lisp-data-mode) (tramp\' . lisp-data-mode) (/archive-contents\' . lisp-data-mode) (places\' . lisp-data-mode) (\.emacs-places\' . lisp-data-mode) (\.el\' . emacs-lisp-mode) (Project\.ede\' . emacs-lisp-mode) (\(?:\.\(?:scm\|sls\|sld\|stk\|ss\|sch\)\|/\.guile\)\' . scheme-mode) (\.l\' . lisp-mode) (\.li?sp\' . lisp-mode) (\.[fF]\' . fortran-mode) (\.for\' . fortran-mode) (\.p\' . pascal-mode) (\.pas\' . pascal-mode) (\.\(dpr\|DPR\)\' . delphi-mode) (\.\([pP]\([Llm]\|erl\|od\)\|al\)\' . perl-mode) (Imakefile\' . makefile-imake-mode) (Makeppfile\(?:\.mk\)?\' . makefile-makepp-mode) (\.makepp\' . makefile-makepp-mode) (\.mk\' . makefile-gmake-mode) (\.make\' . makefile-gmake-mode) ([Mm]akefile\' . makefile-gmake-mode) (\.am\' . makefile-automake-mode) (\.texinfo\' . texinfo-mode) (\.te?xi\' . texinfo-mode) (\.[sS]\' . asm-mode) (\.asm\' . asm-mode) (\.css\' . css-mode) (\.mixal\' . mixal-mode) (\.gcov\' . compilation-mode) (/\.[a-z0-9-]*gdbinit . gdb-script-mode) (-gdb\.gdb . gdb-script-mode) ([cC]hange\.?[lL]og?\' . change-log-mode) ([cC]hange[lL]og[-.][0-9]+\' . change-log-mode) (\$CHANGE_LOG\$\.TXT . change-log-mode) (\.scm\.[0-9]*\' . scheme-mode) (\.[ckz]?sh\'\|\.shar\'\|/\.z?profile\' . sh-mode) (\.bash\' . sh-mode) (/PKGBUILD\' . sh-mode) (\(/\|\`\)\.\(bash_\(profile\|history\|log\(in\|out\)\)\|z?log\(in\|out\)\)\' . sh-mode) (\(/\|\`\)\.\(shrc\|zshrc\|m?kshrc\|bashrc\|t?cshrc\|esrc\)\' . sh-mode) (\(/\|\`\)\.\([kz]shenv\|xinitrc\|startxrc\|xsession\)\' . sh-mode) (\.m?spec\' . sh-mode) (\.m[mes]\' . nroff-mode) (\.man\' . nroff-mode) (\.sty\' . latex-mode) (\.cl[so]\' . latex-mode) (\.bbl\' . latex-mode) (\.bib\' . bibtex-mode) (\.bst\' . bibtex-style-mode) (\.sql\' . sql-mode) (\(acinclude\|aclocal\|acsite\)\.m4\' . autoconf-mode) (\.m[4c]\' . m4-mode) (\.mf\' . metafont-mode) (\.mp\' . metapost-mode) (\.vhdl?\' . vhdl-mode) (\.article\' . text-mode) (\.letter\' . text-mode) (\.i?tcl\' . tcl-mode) (\.exp\' . tcl-mode) (\.itk\' . tcl-mode) (\.icn\' . icon-mode) (\.sim\' . simula-mode) (\.mss\' . scribe-mode) (\.f9[05]\' . f90-mode) (\.f0[38]\' . f90-mode) (\.indent\.pro\' . fundamental-mode) (\.\(pro\|PRO\)\' . idlwave-mode) (\.srt\' . srecode-template-mode) (\.prolog\' . prolog-mode) (\.tar\' . tar-mode) (\.\(arc\|zip\|lzh\|lha\|zoo\|[jew]ar\|xpi\|rar\|cbr\|7z\|squashfs\|ARC\|ZIP\|LZH\|LHA\|ZOO\|[JEW]AR\|XPI\|RAR\|CBR\|7Z\|SQUASHFS\)\' . archive-mode) (\.oxt\' . archive-mode) (\.\(deb\|[oi]pk\)\' . archive-mode) (\`/tmp/Re . text-mode) (/Message[0-9]*\' . text-mode) (\`/tmp/fol/ . text-mode) (\.oak\' . scheme-mode) (\.sgml?\' . sgml-mode) (\.x[ms]l\' . xml-mode) (\.dbk\' . xml-mode) (\.dtd\' . sgml-mode) (\.ds\(ss\)?l\' . dsssl-mode) (\.js[mx]?\' . javascript-mode) (\.har\' . javascript-mode) (\.json\' . js-json-mode) (\.[ds]?va?h?\' . verilog-mode) (\.by\' . bovine-grammar-mode) (\.wy\' . wisent-grammar-mode) (\.erts\' . erts-mode) ([:/\]\..*\(emacs\|gnus\|viper\)\' . emacs-lisp-mode) (\`\..*emacs\' . emacs-lisp-mode) ([:/]_emacs\' . emacs-lisp-mode) (/crontab\.X*[0-9]+\' . shell-script-mode) (\.ml\' . lisp-mode) (\.ld[si]?\' . ld-script-mode) (ld\.?script\' . ld-script-mode) (\.xs\' . c-mode) (\.x[abdsru]?[cnw]?\' . ld-script-mode) (\.zone\' . dns-mode) (\.soa\' . dns-mode) (\.asd\' . lisp-mode) (\.\(asn\|mib\|smi\)\' . snmp-mode) (\.\(as\|mi\|sm\)2\' . snmpv2-mode) (\.\(diffs?\|patch\|rej\)\' . diff-mode) (\.\(dif\|pat\)\' . diff-mode) (\.[eE]?[pP][sS]\' . ps-mode) (\.\(?:PDF\|EPUB\|CBZ\|FB2\|O?XPS\|DVI\|OD[FGPST]\|DOCX\|XLSX?\|PPTX?\|pdf\|epub\|cbz\|fb2\|o?xps\|djvu\|dvi\|od[fgpst]\|docx\|xlsx?\|pptx?\)\' . doc-view-mode-maybe) (configure\.\(ac\|in\)\' . autoconf-mode) (\.s\(v\|iv\|ieve\)\' . sieve-mode) (BROWSE\' . ebrowse-tree-mode) (\.ebrowse\' . ebrowse-tree-mode) (#\*mail\* . mail-mode) (\.g\' . antlr-mode) (\.mod\' . m2-mode) (\.ses\' . ses-mode) (\.docbook\' . sgml-mode) (\.com\' . dcl-mode) (/config\.\(?:bat\|log\)\' . fundamental-mode) (/\.?\(authinfo\|netrc\)\' . authinfo-mode) (\.\(?:[iI][nN][iI]\|[lL][sS][tT]\|[rR][eE][gG]\|[sS][yY][sS]\)\' . conf-mode) (\.la\' . conf-unix-mode) (\.ppd\' . conf-ppd-mode) (java.+\.conf\' . conf-javaprop-mode) (\.properties\(?:\.[a-zA-Z0-9._-]+\)?\' . conf-javaprop-mode) (\.toml\' . conf-toml-mode) (\.desktop\' . conf-desktop-mode) (/\.redshift\.conf\' . conf-windows-mode) (\`/etc/\(?:DIR_COLORS\|ethers\|.?fstab\|.*hosts\|lesskey\|login\.?de\(?:fs\|vperm\)\|magic\|mtab\|pam\.d/.*\|permissions\(?:\.d/.+\)?\|protocols\|rpc\|services\)\' . conf-space-mode) (\`/etc/\(?:acpid?/.+\|aliases\(?:\.d/.+\)?\|default/.+\|group-?\|hosts\..+\|inittab\|ksysguarddrc\|opera6rc\|passwd-?\|shadow-?\|sysconfig/.+\)\' . conf-mode) ([cC]hange[lL]og[-.][-0-9a-z]+\' . change-log-mode) (/\.?\(?:gitconfig\|gnokiirc\|hgrc\|kde.*rc\|mime\.types\|wgetrc\)\' . conf-mode) (/\.mailmap\' . conf-unix-mode) (/\.\(?:asound\|enigma\|fetchmail\|gltron\|gtk\|hxplayer\|mairix\|mbsync\|msmtp\|net\|neverball\|nvidia-settings-\|offlineimap\|qt/.+\|realplayer\|reportbug\|rtorrent\.\|screen\|scummvm\|sversion\|sylpheed/.+\|xmp\)rc\' . conf-mode) (/\.\(?:gdbtkinit\|grip\|mpdconf\|notmuch-config\|orbital/.+txt\|rhosts\|tuxracer/options\)\' . conf-mode) (/\.?X\(?:default\|resource\|re\)s\> . conf-xdefaults-mode) (/X11.+app-defaults/\|\.ad\' . conf-xdefaults-mode) (/X11.+locale/.+/Compose\' . conf-colon-mode) (/X11.+locale/compose\.dir\' . conf-javaprop-mode) (\.~?[0-9]+\.[0-9][-.0-9]*~?\' nil t) (\.\(?:orig\|in\|[bB][aA][kK]\)\' nil t) ([/.]c\(?:on\)?f\(?:i?g\)?\(?:\.[a-zA-Z0-9._-]+\)?\' . conf-mode-maybe) (\.[1-9]\' . nroff-mode) (\.art\' . image-mode) (\.avs\' . image-mode) (\.bmp\' . image-mode) (\.cmyk\' . image-mode) (\.cmyka\' . image-mode) (\.crw\' . image-mode) (\.dcr\' . image-mode) (\.dcx\' . image-mode) (\.dng\' . image-mode) (\.dpx\' . image-mode) (\.fax\' . image-mode) (\.heic\' . image-mode) (\.hrz\' . image-mode) (\.icb\' . image-mode) (\.icc\' . image-mode) (\.icm\' . image-mode) (\.ico\' . image-mode) (\.icon\' . image-mode) (\.jbg\' . image-mode) (\.jbig\' . image-mode) (\.jng\' . image-mode) (\.jnx\' . image-mode) (\.miff\' . image-mode) (\.mng\' . image-mode) (\.mvg\' . image-mode) (\.otb\' . image-mode) (\.p7\' . image-mode) (\.pcx\' . image-mode) (\.pdb\' . image-mode) (\.pfa\' . image-mode) (\.pfb\' . image-mode) (\.picon\' . image-mode) (\.pict\' . image-mode) (\.rgb\' . image-mode) (\.rgba\' . image-mode) (\.tga\' . image-mode) (\.wbmp\' . image-mode) (\.webp\' . image-mode) (\.wmf\' . image-mode) (\.wpg\' . image-mode) (\.xcf\' . image-mode) (\.xmp\' . image-mode) (\.xwd\' . image-mode) (\.yuv\' . image-mode) (\.tgz\' . tar-mode) (\.tbz2?\' . tar-mode) (\.txz\' . tar-mode) (\.tzst\' . tar-mode))
 
 ** Vue
 #+BEGIN_SRC emacs-lisp
@@ -1509,15 +1391,10 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     :mode "\\.vue\\'")
 #+END_SRC
 
-#+RESULTS:
-: ((\(\.js[mx]?\|\.har\)\' . js-ts-mode) (^yang\.settings$ . jsonc-mode) (\.ya?ml\' . yaml-ts-mode) (\.ts\' . typescript-ts-mode) (\.tsx\' . tsx-ts-mode) (\.toml\' . toml-ts-mode) (\.rs\' . rust-ts-mode) (\(?:\.\(?:rbw?\|ru\|rake\|thor\|jbuilder\|rabl\|gemspec\|podspec\)\|/\(?:Gem\|Rake\|Cap\|Thor\|Puppet\|Berks\|Brew\|Vagrant\|Guard\|Pod\)file\)\' . ruby-ts-mode) (\.py[iw]?\' . python-ts-mode) (\.lua\' . lua-ts-mode) (\.js\' . js-ts-mode) (\.java\' . java-ts-mode) (\.html\' . html-ts-mode) (\.heex\' . heex-ts-mode) (go\.mod\' . go-mod-ts-mode) (\.go\' . go-ts-mode) (\.ex\' . elixir-ts-mode) (\Dockerfile\' . dockerfile-ts-mode) (\.css\' . css-ts-mode) (\.cpp\' . c++-ts-mode) (\.cmake\' . cmake-ts-mode) (\.cs\' . csharp-ts-mode) (\.c\' . c-ts-mode) (\.sh\' . bash-ts-mode) (\.json\' . json-ts-mode) (\.tsv\' . tsv-mode) (\.[Cc][Ss][Vv]\' . csv-mode) (/git-rebase-todo\' . git-rebase-mode) (\.\(?:md\|markdown\|mkd\|mdown\|mkdn\|mdwn\)\' . markdown-mode) (\.nix\' . nix-mode) (^/nix/store/.+\.drv\' . nix-drv-mode) (\.\(?:php[s345]?\|phtml\)\' . php-mode-maybe) (\.\(?:php\.inc\|stub\)\' . php-mode) (/\.php_cs\(?:\.dist\)?\' . php-mode) (\.ts\' . typescript-mode) (\.vue\' . vue-mode) (\.gpg\(~\|\.~[0-9]+~\)?\' nil epa-file) (\.elc\' . elisp-byte-code-mode) (\.zst\' nil jka-compr) (\.dz\' nil jka-compr) (\.xz\' nil jka-compr) (\.lzma\' nil jka-compr) (\.lz\' nil jka-compr) (\.g?z\' nil jka-compr) (\.bz2\' nil jka-compr) (\.Z\' nil jka-compr) (\.vr[hi]?\' . vera-mode) (\(?:\.\(?:rbw?\|ru\|rake\|thor\|axlsx\|jbuilder\|rabl\|gemspec\|podspec\)\|/\(?:Gem\|Rake\|Cap\|Thor\|Puppet\|Berks\|Brew\|Fast\|Vagrant\|Guard\|Pod\)file\)\' . ruby-mode) (\.re?st\' . rst-mode) (/\(?:Pipfile\|\.?flake8\)\' . conf-mode) (\.py[iw]?\' . python-mode) (\.m\' . octave-maybe-mode) (\.less\' . less-css-mode) (\.editorconfig\' . editorconfig-conf-mode) (\.scss\' . scss-mode) (\.cs\' . csharp-mode) (\.awk\' . awk-mode) (\.\(u?lpc\|pike\|pmod\(\.in\)?\)\' . pike-mode) (\.idl\' . idl-mode) (\.java\' . java-mode) (\.m\' . objc-mode) (\.ii\' . c++-mode) (\.i\' . c-mode) (\.lex\' . c-mode) (\.y\(acc\)?\' . c-mode) (\.h\' . c-or-c++-mode) (\.c\' . c-mode) (\.\(CC?\|HH?\)\' . c++-mode) (\.[ch]\(pp\|xx\|\+\+\)\' . c++-mode) (\.\(cc\|hh\)\' . c++-mode) (\.\(bat\|cmd\)\' . bat-mode) (\.[sx]?html?\(\.[a-zA-Z_]+\)?\' . mhtml-mode) (\.svgz?\' . image-mode) (\.svgz?\' . xml-mode) (\.x[bp]m\' . image-mode) (\.x[bp]m\' . c-mode) (\.p[bpgn]m\' . image-mode) (\.tiff?\' . image-mode) (\.gif\' . image-mode) (\.png\' . image-mode) (\.jpe?g\' . image-mode) (\.webp\' . image-mode) (\.te?xt\' . text-mode) (\.[tT]e[xX]\' . tex-mode) (\.ins\' . tex-mode) (\.ltx\' . latex-mode) (\.dtx\' . doctex-mode) (\.org\' . org-mode) (\.dir-locals\(?:-2\)?\.el\' . lisp-data-mode) (\.eld\' . lisp-data-mode) (eww-bookmarks\' . lisp-data-mode) (tramp\' . lisp-data-mode) (/archive-contents\' . lisp-data-mode) (places\' . lisp-data-mode) (\.emacs-places\' . lisp-data-mode) (\.el\' . emacs-lisp-mode) (Project\.ede\' . emacs-lisp-mode) (\(?:\.\(?:scm\|sls\|sld\|stk\|ss\|sch\)\|/\.guile\)\' . scheme-mode) (\.l\' . lisp-mode) (\.li?sp\' . lisp-mode) (\.[fF]\' . fortran-mode) (\.for\' . fortran-mode) (\.p\' . pascal-mode) (\.pas\' . pascal-mode) (\.\(dpr\|DPR\)\' . delphi-mode) (\.\([pP]\([Llm]\|erl\|od\)\|al\)\' . perl-mode) (Imakefile\' . makefile-imake-mode) (Makeppfile\(?:\.mk\)?\' . makefile-makepp-mode) (\.makepp\' . makefile-makepp-mode) (\.mk\' . makefile-gmake-mode) (\.make\' . makefile-gmake-mode) ([Mm]akefile\' . makefile-gmake-mode) (\.am\' . makefile-automake-mode) (\.texinfo\' . texinfo-mode) (\.te?xi\' . texinfo-mode) (\.[sS]\' . asm-mode) (\.asm\' . asm-mode) (\.css\' . css-mode) (\.mixal\' . mixal-mode) (\.gcov\' . compilation-mode) (/\.[a-z0-9-]*gdbinit . gdb-script-mode) (-gdb\.gdb . gdb-script-mode) ([cC]hange\.?[lL]og?\' . change-log-mode) ([cC]hange[lL]og[-.][0-9]+\' . change-log-mode) (\$CHANGE_LOG\$\.TXT . change-log-mode) (\.scm\.[0-9]*\' . scheme-mode) (\.[ckz]?sh\'\|\.shar\'\|/\.z?profile\' . sh-mode) (\.bash\' . sh-mode) (/PKGBUILD\' . sh-mode) (\(/\|\`\)\.\(bash_\(profile\|history\|log\(in\|out\)\)\|z?log\(in\|out\)\)\' . sh-mode) (\(/\|\`\)\.\(shrc\|zshrc\|m?kshrc\|bashrc\|t?cshrc\|esrc\)\' . sh-mode) (\(/\|\`\)\.\([kz]shenv\|xinitrc\|startxrc\|xsession\)\' . sh-mode) (\.m?spec\' . sh-mode) (\.m[mes]\' . nroff-mode) (\.man\' . nroff-mode) (\.sty\' . latex-mode) (\.cl[so]\' . latex-mode) (\.bbl\' . latex-mode) (\.bib\' . bibtex-mode) (\.bst\' . bibtex-style-mode) (\.sql\' . sql-mode) (\(acinclude\|aclocal\|acsite\)\.m4\' . autoconf-mode) (\.m[4c]\' . m4-mode) (\.mf\' . metafont-mode) (\.mp\' . metapost-mode) (\.vhdl?\' . vhdl-mode) (\.article\' . text-mode) (\.letter\' . text-mode) (\.i?tcl\' . tcl-mode) (\.exp\' . tcl-mode) (\.itk\' . tcl-mode) (\.icn\' . icon-mode) (\.sim\' . simula-mode) (\.mss\' . scribe-mode) (\.f9[05]\' . f90-mode) (\.f0[38]\' . f90-mode) (\.indent\.pro\' . fundamental-mode) (\.\(pro\|PRO\)\' . idlwave-mode) (\.srt\' . srecode-template-mode) (\.prolog\' . prolog-mode) (\.tar\' . tar-mode) (\.\(arc\|zip\|lzh\|lha\|zoo\|[jew]ar\|xpi\|rar\|cbr\|7z\|squashfs\|ARC\|ZIP\|LZH\|LHA\|ZOO\|[JEW]AR\|XPI\|RAR\|CBR\|7Z\|SQUASHFS\)\' . archive-mode) (\.oxt\' . archive-mode) (\.\(deb\|[oi]pk\)\' . archive-mode) (\`/tmp/Re . text-mode) (/Message[0-9]*\' . text-mode) (\`/tmp/fol/ . text-mode) (\.oak\' . scheme-mode) (\.sgml?\' . sgml-mode) (\.x[ms]l\' . xml-mode) (\.dbk\' . xml-mode) (\.dtd\' . sgml-mode) (\.ds\(ss\)?l\' . dsssl-mode) (\.js[mx]?\' . javascript-mode) (\.har\' . javascript-mode) (\.json\' . js-json-mode) (\.[ds]?va?h?\' . verilog-mode) (\.by\' . bovine-grammar-mode) (\.wy\' . wisent-grammar-mode) (\.erts\' . erts-mode) ([:/\]\..*\(emacs\|gnus\|viper\)\' . emacs-lisp-mode) (\`\..*emacs\' . emacs-lisp-mode) ([:/]_emacs\' . emacs-lisp-mode) (/crontab\.X*[0-9]+\' . shell-script-mode) (\.ml\' . lisp-mode) (\.ld[si]?\' . ld-script-mode) (ld\.?script\' . ld-script-mode) (\.xs\' . c-mode) (\.x[abdsru]?[cnw]?\' . ld-script-mode) (\.zone\' . dns-mode) (\.soa\' . dns-mode) (\.asd\' . lisp-mode) (\.\(asn\|mib\|smi\)\' . snmp-mode) (\.\(as\|mi\|sm\)2\' . snmpv2-mode) (\.\(diffs?\|patch\|rej\)\' . diff-mode) (\.\(dif\|pat\)\' . diff-mode) (\.[eE]?[pP][sS]\' . ps-mode) (\.\(?:PDF\|EPUB\|CBZ\|FB2\|O?XPS\|DVI\|OD[FGPST]\|DOCX\|XLSX?\|PPTX?\|pdf\|epub\|cbz\|fb2\|o?xps\|djvu\|dvi\|od[fgpst]\|docx\|xlsx?\|pptx?\)\' . doc-view-mode-maybe) (configure\.\(ac\|in\)\' . autoconf-mode) (\.s\(v\|iv\|ieve\)\' . sieve-mode) (BROWSE\' . ebrowse-tree-mode) (\.ebrowse\' . ebrowse-tree-mode) (#\*mail\* . mail-mode) (\.g\' . antlr-mode) (\.mod\' . m2-mode) (\.ses\' . ses-mode) (\.docbook\' . sgml-mode) (\.com\' . dcl-mode) (/config\.\(?:bat\|log\)\' . fundamental-mode) (/\.?\(authinfo\|netrc\)\' . authinfo-mode) (\.\(?:[iI][nN][iI]\|[lL][sS][tT]\|[rR][eE][gG]\|[sS][yY][sS]\)\' . conf-mode) (\.la\' . conf-unix-mode) (\.ppd\' . conf-ppd-mode) (java.+\.conf\' . conf-javaprop-mode) (\.properties\(?:\.[a-zA-Z0-9._-]+\)?\' . conf-javaprop-mode) (\.toml\' . conf-toml-mode) (\.desktop\' . conf-desktop-mode) (/\.redshift\.conf\' . conf-windows-mode) (\`/etc/\(?:DIR_COLORS\|ethers\|.?fstab\|.*hosts\|lesskey\|login\.?de\(?:fs\|vperm\)\|magic\|mtab\|pam\.d/.*\|permissions\(?:\.d/.+\)?\|protocols\|rpc\|services\)\' . conf-space-mode) (\`/etc/\(?:acpid?/.+\|aliases\(?:\.d/.+\)?\|default/.+\|group-?\|hosts\..+\|inittab\|ksysguarddrc\|opera6rc\|passwd-?\|shadow-?\|sysconfig/.+\)\' . conf-mode) ([cC]hange[lL]og[-.][-0-9a-z]+\' . change-log-mode) (/\.?\(?:gitconfig\|gnokiirc\|hgrc\|kde.*rc\|mime\.types\|wgetrc\)\' . conf-mode) (/\.mailmap\' . conf-unix-mode) (/\.\(?:asound\|enigma\|fetchmail\|gltron\|gtk\|hxplayer\|mairix\|mbsync\|msmtp\|net\|neverball\|nvidia-settings-\|offlineimap\|qt/.+\|realplayer\|reportbug\|rtorrent\.\|screen\|scummvm\|sversion\|sylpheed/.+\|xmp\)rc\' . conf-mode) (/\.\(?:gdbtkinit\|grip\|mpdconf\|notmuch-config\|orbital/.+txt\|rhosts\|tuxracer/options\)\' . conf-mode) (/\.?X\(?:default\|resource\|re\)s\> . conf-xdefaults-mode) (/X11.+app-defaults/\|\.ad\' . conf-xdefaults-mode) (/X11.+locale/.+/Compose\' . conf-colon-mode) (/X11.+locale/compose\.dir\' . conf-javaprop-mode) (\.~?[0-9]+\.[0-9][-.0-9]*~?\' nil t) (\.\(?:orig\|in\|[bB][aA][kK]\)\' nil t) ([/.]c\(?:on\)?f\(?:i?g\)?\(?:\.[a-zA-Z0-9._-]+\)?\' . conf-mode-maybe) (\.[1-9]\' . nroff-mode) (\.art\' . image-mode) (\.avs\' . image-mode) (\.bmp\' . image-mode) (\.cmyk\' . image-mode) (\.cmyka\' . image-mode) (\.crw\' . image-mode) (\.dcr\' . image-mode) (\.dcx\' . image-mode) (\.dng\' . image-mode) (\.dpx\' . image-mode) (\.fax\' . image-mode) (\.heic\' . image-mode) (\.hrz\' . image-mode) (\.icb\' . image-mode) (\.icc\' . image-mode) (\.icm\' . image-mode) (\.ico\' . image-mode) (\.icon\' . image-mode) (\.jbg\' . image-mode) (\.jbig\' . image-mode) (\.jng\' . image-mode) (\.jnx\' . image-mode) (\.miff\' . image-mode) (\.mng\' . image-mode) (\.mvg\' . image-mode) (\.otb\' . image-mode) (\.p7\' . image-mode) (\.pcx\' . image-mode) (\.pdb\' . image-mode) (\.pfa\' . image-mode) (\.pfb\' . image-mode) (\.picon\' . image-mode) (\.pict\' . image-mode) (\.rgb\' . image-mode) (\.rgba\' . image-mode) (\.tga\' . image-mode) (\.wbmp\' . image-mode) (\.webp\' . image-mode) (\.wmf\' . image-mode) (\.wpg\' . image-mode) (\.xcf\' . image-mode) (\.xmp\' . image-mode) (\.xwd\' . image-mode) (\.yuv\' . image-mode) (\.tgz\' . tar-mode) (\.tbz2?\' . tar-mode) (\.txz\' . tar-mode) (\.tzst\' . tar-mode))
-
 ** PHP
 #+begin_src emacs-lisp
   (use-package php-mode)
 #+end_src
-
-#+RESULTS:
 
 ** SQL
 #+begin_src emacs-lisp
@@ -1526,9 +1403,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (add-hook 'sql-mode-hook 'sqlup-mode))
 #+end_src
 
-#+RESULTS:
-: t
-
 ** SQLite
 #+begin_src emacs-lisp
   (use-package sqlite-mode-extras
@@ -1536,25 +1410,18 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     :hook ((sqlite-mode . sqlite-extras-minor-mode)))
 #+end_src
 
-#+RESULTS:
-| sqlite-extras-minor-mode |
-
 ** Jest
 #+begin_src emacs-lisp
   (use-package jest-test-mode
     :commands jest-test-mode
     :hook (typescript-mode typescript-ts-mode js-mode js-ts-mode typescript-tsx-mode)
     :config
-    (setq display-buffer-alist '())
     (add-to-list
      'display-buffer-alist
      '("\\*jest-test-compilation\\*"
        (display-buffer-reuse-window display-buffer-pop-up-frame)
        (reusable-frames . visible))))
 #+end_src
-
-#+RESULTS:
-| jest-test-mode |
 
 ** Apheleia
 #+BEGIN_SRC emacs-lisp
@@ -1570,9 +1437,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (apheleia-global-mode t))
 #+END_SRC
 
-#+RESULTS:
-: t
-
 ** Tree-sitter
 #+BEGIN_SRC emacs-lisp
   (use-package treesit-auto
@@ -1582,9 +1446,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (treesit-auto-add-to-auto-mode-alist 'all)
     (global-treesit-auto-mode))
 #+END_SRC
-
-#+RESULTS:
-: t
 
 ** Flycheck
 #+BEGIN_SRC emacs-lisp
@@ -1600,9 +1461,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     :config
     (flycheck-title-mode))
 #+END_SRC
-
-#+RESULTS:
-: t
 
 ** lsp-mode
 #+BEGIN_SRC emacs-lisp
@@ -1620,10 +1478,10 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (setq lsp-headerline-breadcrumb-enable nil
           lsp-completion-provider :none
           lsp-log-io nil
-          lsp-idle-delay 0.5               ; Debounce LSP updates
-          lsp-enable-file-watchers nil     ; Disable file watchers (expensive)
-          lsp-enable-folding nil           ; Disable if not using
-          lsp-enable-symbol-highlighting nil  ; Reduces visual noise & CPU
+          lsp-idle-delay 0.5
+          lsp-enable-file-watchers t
+          lsp-enable-folding nil
+          lsp-enable-symbol-highlighting t
           lsp-enable-on-type-formatting nil)
 
     (defun add-yasnippet-enable-company ()
@@ -1670,8 +1528,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     :commands (dap-debug dap-debug-edit-template))
 #+END_SRC
 
-#+RESULTS:
-
 ** Expand Region
 #+BEGIN_SRC emacs-lisp
   (use-package expreg
@@ -1680,9 +1536,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     :bind (("C-=" . expreg-expand)
            ("C-`" . expreg-contract)))
 #+END_SRC
-
-#+RESULTS:
-: expreg-contract
 
 * Shells & terminals
 ** exec-path-from-shell
@@ -1693,12 +1546,10 @@ As bookmarks are at the center of my workflow, this is a crucial option.
       (exec-path-from-shell-initialize)))
   
   (defun shell/hook ()
-    (display-line-numbers-mode 0))
+    (display-line-numbers-mode 0)
+    (visual-line-mode 1))
   (add-hook 'shell-mode-hook #'shell/hook)
 #+end_src
-
-#+RESULTS:
-| detached-shell-save-history-on-kill | detached-shell-mode | shell/hook |
 
 ** Eshell
 #+begin_src emacs-lisp
@@ -1781,50 +1632,76 @@ Reuses an existing eshell buffer for the target directory if one exists."
     :ensure nil)
 #+end_src
 
-#+RESULTS:
-
 *** Eat
 #+begin_src emacs-lisp
-        (use-package eat
-          :vc (:url "https://codeberg.org/akib/emacs-eat" :rev :newest)
-          :config
-          (setq eshell-visual-commands '())
+  (use-package eat
+    :vc (:url "https://codeberg.org/akib/emacs-eat" :rev :newest)
+    :config
+    (setq eshell-visual-commands '()
+          eat-enable-blinking-text nil)
 
-      ;; (eat-exec buffer name "bash" nil (list "-ilc" command))
-          (defun start-file-process-shell-command-using-eat-exec
-              (name buffer command)
-            (require 'eat)
-            (with-current-buffer (eat-exec buffer name "nu" nil (list "-c" command))
-              (eat-emacs-mode)
-              (setq eat--synchronize-scroll-function #'eat--synchronize-scroll)
-              (get-buffer-process (current-buffer))))
-          
-          (advice-add #'compilation-start :around
-                      (defun hijack-start-file-process-shell-command (o &rest args)
-                        (advice-add #'start-file-process-shell-command :override
-                                    #'start-file-process-shell-command-using-eat-exec)
-                        (unwind-protect
-                            (apply o args)
-                          (advice-remove
-                           #'start-file-process-shell-command
-                           #'start-file-process-shell-command-using-eat-exec))))
+    (defun fix-char-width-for-spinners ()
+      "Fix character width for common spinner/animation characters."
+      (setq use-default-font-for-symbols nil)
 
-          (add-hook #'compilation-start-hook
-                    (defun revert-to-eat-setup (proc)
-                      (set-process-filter proc #'eat--filter)
-                      (add-function :after (process-sentinel proc) #'eat--sentinel)))
-          
-          (advice-add #'kill-compilation :override
-                      (defun kill-compilation-by-sending-C-c ()
-                        (interactive)
-                        (let ((buffer (compilation-find-buffer)))
-                          (if (get-buffer-process buffer)
-        	                  ;; interrupt-process does not work
-                              (process-send-string (get-buffer-process buffer) (kbd "C-c"))
-                            (error "The %s process is not running" (downcase mode-name))))))
+      (set-fontset-font t 'symbol "DejaVu Sans Mono" nil 'prepend)
 
-          (add-hook 'eat-mode-hook #'shell/hook)
-            (with-eval-after-load 'eat                                                                                                                          
+      (set-fontset-font t 'emoji "DejaVuSans" nil 'prepend)
+
+      (set-fontset-font t '(#x2800 . #x28FF) "DejaVu Sans Mono")
+      (set-fontset-font t '(#x2500 . #x257F) "DejaVu Sans Mono")
+      (set-fontset-font t '(#x2580 . #x259F) "DejaVu Sans Mono")
+      (set-fontset-font t '(#x2190 . #x21FF) "DejaVu Sans Mono")
+      (set-fontset-font t '(#x2700 . #x27BF) "DejaVu Sans Mono")
+      (set-fontset-font t #x00B7 "DejaVu Sans Mono")
+
+      (set-char-table-range char-width-table '(#x2800 . #x28FF) 1)  ;; Braille
+      (set-char-table-range char-width-table '(#x2500 . #x257F) 1)  ;; Box drawing
+      (set-char-table-range char-width-table '(#x2580 . #x259F) 1)  ;; Block elements
+      (set-char-table-range char-width-table '(#x25A0 . #x25FF) 1)  ;; Geometric shapes
+      (set-char-table-range char-width-table '(#x2190 . #x21FF) 1)  ;; Arrows
+      (set-char-table-range char-width-table '(#x2700 . #x27BF) 1)  ;; Dingbats (✢ ✶ ✻ ✽)
+      (set-char-table-range char-width-table #x00B7 1))             ;; Middle dot (· ✢ ✶ ✻ ✽)
+
+    ;; (eat-exec buffer name "bash" nil (list "-ilc" command))
+    (defun start-file-process-shell-command-using-eat-exec
+        (name buffer command)
+      (require 'eat)
+      (with-current-buffer (eat-exec buffer name "nu" nil (list "-c" command))
+        (eat-emacs-mode)
+        (setq eat--synchronize-scroll-function #'eat--synchronize-scroll)
+        (get-buffer-process (current-buffer))))
+
+    (advice-add #'compilation-start :around
+                (defun hijack-start-file-process-shell-command (o &rest args)
+                  (advice-add #'start-file-process-shell-command :override
+                              #'start-file-process-shell-command-using-eat-exec)
+                  (unwind-protect
+                      (apply o args)
+                    (advice-remove
+                     #'start-file-process-shell-command
+                     #'start-file-process-shell-command-using-eat-exec))))
+
+    (add-hook #'compilation-start-hook
+              (defun revert-to-eat-setup (proc)
+                (set-process-filter proc #'eat--filter)
+                (add-function :after (process-sentinel proc) #'eat--sentinel)))
+
+    (advice-add #'kill-compilation :override
+                (defun kill-compilation-by-sending-C-c ()
+                  (interactive)
+                  (let ((buffer (compilation-find-buffer)))
+                    (if (get-buffer-process buffer)
+    	                  ;; interrupt-process does not work
+                        (process-send-string (get-buffer-process buffer) (kbd "C-c"))
+                      (error "The %s process is not running" (downcase mode-name))))))
+
+    (add-hook 'eat-mode-hook #'shell/hook)
+    ;; Auto-scroll eat buffers even when window doesn't have focus
+    (add-hook 'eat-mode-hook
+              (lambda ()
+                (setq-local eat--synchronize-scroll-function #'eat--synchronize-scroll)))
+    (with-eval-after-load 'eat
       ;; Couleurs standard (0-7)                                                                                                                        
       (set-face-foreground 'eat-term-color-0 "#282a36")  ; black                                                                                        
       (set-face-foreground 'eat-term-color-1 "#ff5555")  ; red                                                                                          
@@ -1834,7 +1711,7 @@ Reuses an existing eshell buffer for the target directory if one exists."
       (set-face-foreground 'eat-term-color-5 "#ff79c6")  ; magenta                                                                                      
       (set-face-foreground 'eat-term-color-6 "#8be9fd")  ; cyan                                                                                         
       (set-face-foreground 'eat-term-color-7 "#f8f8f2")  ; white                                                                                        
-                                                                                                                                                        
+
       ;; Couleurs bright (8-15)                                                                                                                         
       (set-face-foreground 'eat-term-color-8 "#6272a4")   ; bright black (gris)                                                                         
       (set-face-foreground 'eat-term-color-9 "#ff6e6e")   ; bright red                                                                                  
@@ -1843,21 +1720,18 @@ Reuses an existing eshell buffer for the target directory if one exists."
       (set-face-foreground 'eat-term-color-12 "#d6acff")  ; bright blue                                                                                 
       (set-face-foreground 'eat-term-color-13 "#ff92df")  ; bright magenta                                                                              
       (set-face-foreground 'eat-term-color-14 "#a4ffff")  ; bright cyan                                                                                 
-      (set-face-foreground 'eat-term-color-15 "#ffffff")) ; bright white
-            )
-#+end_src
+      (set-face-foreground 'eat-term-color-15 "#ffffff")
 
-#+RESULTS:
-: t
+      (setq eat-term-scrollback-size 400000
+            eat--synchronize-scroll-function #'eat--synchronize-scroll)) ; bright white
+    )
+#+end_src
               
 *** Aliases
 #+begin_src emacs-lisp
   (defun eshell/emacs (file)
     (find-file file))
 #+end_src
-
-#+RESULTS:
-: eshell/emacs
 
 ** Better term
 #+begin_src emacs-lisp
@@ -1877,9 +1751,6 @@ Reuses an existing eshell buffer for the target directory if one exists."
     (add-to-list 'term-bind-key-alist '("s-<escape>" . term-line-mode)))
 #+end_src
 
-#+RESULTS:
-: term-char-mode
-
 ** Coterm
 #+begin_src emacs-lisp
   (use-package coterm
@@ -1887,9 +1758,6 @@ Reuses an existing eshell buffer for the target directory if one exists."
     :config
     (coterm-mode))
 #+end_src
-
-#+RESULTS:
-: t
 
 ** Detached
 #+begin_src emacs-lisp
@@ -1907,9 +1775,6 @@ Reuses an existing eshell buffer for the target directory if one exists."
              (detached-terminal-data-command system-type)))
 #+end_src
 
-#+RESULTS:
-: detached-consult-session
-
 ** Fancy compilation
 #+begin_src emacs-lisp
   (use-package fancy-compilation
@@ -1920,9 +1785,6 @@ Reuses an existing eshell buffer for the target directory if one exists."
   (with-eval-after-load 'compile
     (fancy-compilation-mode))
 #+end_src
-
-#+RESULTS:
-: t
 
 * Dired
 #+BEGIN_SRC emacs-lisp
@@ -1953,9 +1815,6 @@ Reuses an existing eshell buffer for the target directory if one exists."
     (end-of-buffer)
     (dired-next-line -1))
 #+END_SRC
-
-#+RESULTS:
-: dired/last-file
 
 #+BEGIN_SRC emacs-lisp
   (use-package dired
@@ -1991,9 +1850,6 @@ Reuses an existing eshell buffer for the target directory if one exists."
     (dired-mode . nerd-icons-dired-mode))
 #+END_SRC
 
-#+RESULTS:
-| nerd-icons-dired-mode | dired-hide-dotfiles-mode | dired-hide-details-mode |
-
 * Internet
 ** Default browser
 #+BEGIN_SRC emacs-lisp
@@ -2007,9 +1863,6 @@ Reuses an existing eshell buffer for the target directory if one exists."
 
   (setq browse-url-browser-function 'browse/url-vivaldi-open)
 #+END_SRC
-
-#+RESULTS:
-: browse/url-vivaldi-open
 
 ** HTML viewer
 #+BEGIN_SRC emacs-lisp
@@ -2030,9 +1883,6 @@ Reuses an existing eshell buffer for the target directory if one exists."
     (add-to-list 'shr-external-rendering-functions
                  '(pre . shr-tag-pre-highlight)))
 #+END_SRC
-
-#+RESULTS:
-: t
 
 ** Emacs Web Wowser
 #+BEGIN_SRC emacs-lisp
@@ -2074,9 +1924,6 @@ Reuses an existing eshell buffer for the target directory if one exists."
       (add-hook 'eww-after-render-hook (lambda () (visual-line-mode 1)))))
 #+END_SRC
 
-#+RESULTS:
-: eww-reload
-
 * Local settings
 Sometimes, settings are specific to one of my computers. Those settings are stored in a local.el file. This file is not under a version control system.
 #+BEGIN_SRC emacs-lisp
@@ -2085,8 +1932,6 @@ Sometimes, settings are specific to one of my computers. Those settings are stor
   	(let ((local-settings "~/.emacs.d/local.el"))
   	  (when (file-exists-p local-settings)
   	    (load-file local-settings)))
-      (lsp)))
+      (lsp)
+      (fix-char-width-for-spinners)))
 #+END_SRC
-
-#+RESULTS:
-| #[nil ((let ((local-settings ~/.emacs.d/local.el)) (when (file-exists-p local-settings) (load-file local-settings))) (lsp)) nil] | #[nil ((load-file ~/.emacs.d/custom_packages/dracula-theme.el) (load-theme 'dracula t) (fringe-mode '(24 . 12)) (defun theme/minibuffer-echo-area nil (interactive) (dolist (buf '( *Minibuf-1*)) (with-current-buffer (get-buffer-create buf) (face-remap-add-relative 'default :background #44475a) (face-remap-add-relative 'fringe :background #44475a))) (dolist (buf '( *Minibuf-0*  *Echo Area 0*  *Echo Area 1*)) (with-current-buffer (get-buffer-create buf) (when (= (buffer-size) 0) (insert  )) (add-hook 'kill-buffer-query-functions #'ignore nil 'local) (set-window-scroll-bars (minibuffer-window) nil nil) (face-remap-add-relative 'default :background #282a36) (face-remap-add-relative 'fringe :background #282a36))))) nil] | org-persist-load-all | #[nil ((let ((local-settings ~/.emacs.d/local.el)) (if (file-exists-p local-settings) (progn (load-file local-settings)))) (lsp)) nil] | doom-modeline-mode | #[nil ((load-file ~/.emacs.d/custom_packages/dracula-theme.el) (load-theme 'dracula t) (fringe-mode '(24 . 12)) (defalias 'theme/minibuffer-echo-area #'(lambda nil (interactive) (let ((tail '( *Minibuf-1*))) (while tail (let ((buf (car tail))) (save-current-buffer (set-buffer (get-buffer-create buf)) (face-remap-add-relative 'default :background #44475a) (face-remap-add-relative 'fringe :background #44475a)) (setq tail (cdr tail))))) (let ((tail '( *Minibuf-0*  *Echo Area 0*  *Echo Area 1*))) (while tail (let ((buf (car tail))) (save-current-buffer (set-buffer (get-buffer-create buf)) (if (= (buffer-size) 0) (progn (insert  ))) (add-hook 'kill-buffer-query-functions #'ignore nil 'local) (set-window-scroll-bars (minibuffer-window) nil nil) (face-remap-add-relative 'default :background #282a36) (face-remap-add-relative 'fringe :background #282a36)) (setq tail (cdr tail)))))))) nil] | pgtk-use-im-context-handler | tramp-register-archive-autoload-file-name-handler | magit-maybe-define-global-key-bindings | table--make-cell-map |

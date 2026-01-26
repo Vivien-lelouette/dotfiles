@@ -52,6 +52,7 @@
 (define-key minibuffer-local-completion-map "?" nil)
 (define-key minibuffer-local-must-match-map "?" nil)
 (define-key minibuffer-local-map (kbd "S-<return>") (lambda () (interactive) (insert "\n")))
+(add-hook 'minibuffer-setup-hook #'subword-mode)
 
 (setq backup-directory-alist `(("." . ,(expand-file-name "tmp/backups/" user-emacs-directory))))
 ;; auto-save-mode doesn't create the path automatically!
@@ -243,7 +244,7 @@
   :config
   (spacious-padding-mode 1))
 
-(setq-default fill-column 120)
+(setq-default fill-column 148)
 
 (defun fonts/set-fonts ()
   (interactive)
@@ -255,7 +256,8 @@
   ;; Set the variable pitch face
   (set-face-attribute 'variable-pitch nil :font "Cantarell-11" :weight 'regular)
   (dolist (face '(default fixed-pitch))
-    (set-face-attribute `,face nil :font "SauceCodePro NF-11")))
+    (set-face-attribute `,face nil :font "SauceCodePro NF-11"))
+  (fix-char-width-for-spinners))
 (add-hook 'server-after-make-frame-hook #'fonts/set-fonts)
 
 (setq auth-sources '("~/.authinfo.gpg"))
@@ -265,7 +267,14 @@
       (format "%s\\|%s"
               vc-ignore-dir-regexp
               tramp-file-name-regexp)
-      tramp-verbose 1)
+      tramp-verbose 1
+      tramp-default-method "ssh"
+      tramp-use-ssh-controlmaster-options nil
+      tramp-chunksize 500
+      tramp-auto-save-directory "~/.emacs.d/var/tramp-autosave/")
+
+(with-eval-after-load 'tramp
+  (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
 
 (add-hook 'after-init-hook
           #'(lambda ()
@@ -329,7 +338,7 @@
 
 (use-package helm
   :config
-  (setq helm-input-idle-delay                     0.01
+  (setq helm-input-idle-delay                     0.1
         helm-reuse-last-window-split-state        nil
         helm-always-two-windows                   nil
         helm-split-window-default-side            'below
@@ -350,9 +359,9 @@
         helm-kill-real-or-display-selection       'real
         helm-truncate-lines                       t
         helm-net-prefer-curl                      t
-        helm-split-window-in-side-p               t
+        helm-split-window-inside-p                t
         helm-grep-git-grep-command "git --no-pager grep -n%cH --color=always --full-name -e %p"
-        helm-buffers-show-icons t
+        helm-buffers-show-icons nil
         helm-buffer-max-length 35)
 
   (defun helm--show-action-window-other-window-p ()
@@ -436,6 +445,8 @@
   (helm-autoresize-mode 1))
 
 (use-package helm-xref)
+
+(use-package helm-tramp)
 
 (use-package company
   :defer 1  ; Delay loading by 1 second
@@ -667,7 +678,8 @@
   (setq perfect-margin-only-set-left-margin nil
         perfect-margin-ignore-regexps '("*docker-container*" "*Ibuffer*" "* docker")
         perfect-margin-ignore-filters nil
-        perfect-margin-visible-width 148)
+        perfect-margin-visible-width 148
+        perfect-margin-disable-in-splittable-check nil)
 
   (defun perfect-margin-minibuffer-setup ()
     "Apply perfect-margin to minibuffer window."
@@ -678,7 +690,7 @@
         (set-window-margins win margin margin))))
   (add-hook 'minibuffer-setup-hook #'perfect-margin-minibuffer-setup)
 
-  (perfect-margin-mode 1))
+  (perfect-margin-mode 0))
 
 (use-package pgmacs
   :vc (:url "https://github.com/emarsden/pgmacs" :rev :newest)
@@ -955,14 +967,69 @@ when reading files and the other way around when writing contents."
    gptel-prompt-prefix-alist '((markdown-mode . "## ") (org-mode . "** ") (text-mode . "## "))
    gptel-display-buffer-action '((display-buffer-pop-up-frame))))
 
-(use-package claude-code
-          :vc (:url "https://github.com/stevemolitor/claude-code.el"
-               :rev :newest
-               :branch "main")
-          :bind-keymap
-          ("C-c c" . claude-code-command-map)
-          :hook                                             
-          (claude-code-start . claude-code-read-only-mode))
+(use-package claudemacs
+  :vc (:url "https://github.com/cpoile/claudemacs"
+            :rev :newest
+            :branch "main")
+  :config
+  (setq claudemacs-use-shell-env t
+        claudemacs-switch-to-buffer-on-create nil
+        claudemacs-switch-to-buffer-on-toggle nil
+        claudemacs-switch-to-buffer-on-file-add nil
+        claudemacs-switch-to-buffer-on-send-error nil
+        claudemacs-switch-to-buffer-on-add-context nil)
+
+  (add-to-list 'display-buffer-alist
+               '("^\\*claudemacs"
+                 (display-buffer-reuse-window display-buffer-pop-up-frame)
+                 (reusable-frames . visible)))
+
+  (defvar claudemacs--scroll-timer nil)
+
+  (defun claudemacs/scroll-to-bottom ()
+    "Scroll all claudemacs windows to the bottom."
+    (dolist (buf (buffer-list))
+      (when (and (buffer-live-p buf)
+                 (string-prefix-p "*claudemacs" (buffer-name buf)))
+        (dolist (window (get-buffer-window-list buf nil t))
+          (with-selected-window window
+            (goto-char (point-max))
+            (recenter -1))))))
+
+  (defun claudemacs/start-scroll-timer ()
+    "Start auto-scroll timer for claudemacs."
+    (unless claudemacs--scroll-timer
+      (setq claudemacs--scroll-timer
+            (run-with-timer 0 0.5 #'claudemacs/scroll-to-bottom))))
+
+  (defun claudemacs/stop-scroll-timer ()
+    "Stop auto-scroll timer."
+    (when claudemacs--scroll-timer
+      (cancel-timer claudemacs--scroll-timer)
+      (setq claudemacs--scroll-timer nil)))
+
+  (defun claudemacs/toggle-follow ()
+    "Toggle auto-scroll for claudemacs buffers."
+    (interactive)
+    (if claudemacs--scroll-timer
+        (progn
+          (claudemacs/stop-scroll-timer)
+          (message "Claudemacs follow: OFF"))
+      (claudemacs/start-scroll-timer)
+      (message "Claudemacs follow: ON")))
+
+  (transient-append-suffix 'claudemacs-transient-menu '(-1)
+    ["Quick"
+     ("c" "Claude" transient:claudemacs-start-menu::0)
+     ("f" "Toggle follow" claudemacs/toggle-follow)])
+
+  (defun claudemacs/startup-hook ()
+    (claudemacs/start-scroll-timer)
+    (run-with-timer 0.5 nil #'eat-emacs-mode))
+
+  (add-hook 'claudemacs-startup-hook #'claudemacs/startup-hook)
+
+  (global-set-key (kbd "C-c c") #'claudemacs-transient-menu))
 
 (load-file "~/.emacs.d/custom_packages/structured-log-mode.el")
 
@@ -1098,7 +1165,6 @@ when reading files and the other way around when writing contents."
   :commands jest-test-mode
   :hook (typescript-mode typescript-ts-mode js-mode js-ts-mode typescript-tsx-mode)
   :config
-  (setq display-buffer-alist '())
   (add-to-list
    'display-buffer-alist
    '("\\*jest-test-compilation\\*"
@@ -1149,10 +1215,10 @@ when reading files and the other way around when writing contents."
   (setq lsp-headerline-breadcrumb-enable nil
         lsp-completion-provider :none
         lsp-log-io nil
-        lsp-idle-delay 0.5               ; Debounce LSP updates
-        lsp-enable-file-watchers nil     ; Disable file watchers (expensive)
-        lsp-enable-folding nil           ; Disable if not using
-        lsp-enable-symbol-highlighting nil  ; Reduces visual noise & CPU
+        lsp-idle-delay 0.5
+        lsp-enable-file-watchers t
+        lsp-enable-folding nil
+        lsp-enable-symbol-highlighting t
         lsp-enable-on-type-formatting nil)
 
   (defun add-yasnippet-enable-company ()
@@ -1210,7 +1276,8 @@ when reading files and the other way around when writing contents."
     (exec-path-from-shell-initialize)))
 
 (defun shell/hook ()
-  (display-line-numbers-mode 0))
+  (display-line-numbers-mode 0)
+  (visual-line-mode 1))
 (add-hook 'shell-mode-hook #'shell/hook)
 
 (defun utils/get-project-root-if-wanted ()
@@ -1292,65 +1359,96 @@ Reuses an existing eshell buffer for the target directory if one exists."
     :ensure nil)
 
 (use-package eat
-    :vc (:url "https://codeberg.org/akib/emacs-eat" :rev :newest)
-    :config
-    (setq eshell-visual-commands '())
+  :vc (:url "https://codeberg.org/akib/emacs-eat" :rev :newest)
+  :config
+  (setq eshell-visual-commands '()
+        eat-enable-blinking-text nil)
 
-;; (eat-exec buffer name "bash" nil (list "-ilc" command))
-    (defun start-file-process-shell-command-using-eat-exec
-        (name buffer command)
-      (require 'eat)
-      (with-current-buffer (eat-exec buffer name "nu" nil (list "-c" command))
-        (eat-emacs-mode)
-        (setq eat--synchronize-scroll-function #'eat--synchronize-scroll)
-        (get-buffer-process (current-buffer))))
-    
-    (advice-add #'compilation-start :around
-                (defun hijack-start-file-process-shell-command (o &rest args)
-                  (advice-add #'start-file-process-shell-command :override
-                              #'start-file-process-shell-command-using-eat-exec)
-                  (unwind-protect
-                      (apply o args)
-                    (advice-remove
-                     #'start-file-process-shell-command
-                     #'start-file-process-shell-command-using-eat-exec))))
+  (defun fix-char-width-for-spinners ()
+    "Fix character width for common spinner/animation characters."
+    (setq use-default-font-for-symbols nil)
 
-    (add-hook #'compilation-start-hook
-              (defun revert-to-eat-setup (proc)
-                (set-process-filter proc #'eat--filter)
-                (add-function :after (process-sentinel proc) #'eat--sentinel)))
-    
-    (advice-add #'kill-compilation :override
-                (defun kill-compilation-by-sending-C-c ()
-                  (interactive)
-                  (let ((buffer (compilation-find-buffer)))
-                    (if (get-buffer-process buffer)
+    (set-fontset-font t 'symbol "DejaVu Sans Mono" nil 'prepend)
+
+    (set-fontset-font t 'emoji "DejaVuSans" nil 'prepend)
+
+    (set-fontset-font t '(#x2800 . #x28FF) "DejaVu Sans Mono")
+    (set-fontset-font t '(#x2500 . #x257F) "DejaVu Sans Mono")
+    (set-fontset-font t '(#x2580 . #x259F) "DejaVu Sans Mono")
+    (set-fontset-font t '(#x2190 . #x21FF) "DejaVu Sans Mono")
+    (set-fontset-font t '(#x2700 . #x27BF) "DejaVu Sans Mono")
+    (set-fontset-font t #x00B7 "DejaVu Sans Mono")
+
+    (set-char-table-range char-width-table '(#x2800 . #x28FF) 1)  ;; Braille
+    (set-char-table-range char-width-table '(#x2500 . #x257F) 1)  ;; Box drawing
+    (set-char-table-range char-width-table '(#x2580 . #x259F) 1)  ;; Block elements
+    (set-char-table-range char-width-table '(#x25A0 . #x25FF) 1)  ;; Geometric shapes
+    (set-char-table-range char-width-table '(#x2190 . #x21FF) 1)  ;; Arrows
+    (set-char-table-range char-width-table '(#x2700 . #x27BF) 1)  ;; Dingbats (✢ ✶ ✻ ✽)
+    (set-char-table-range char-width-table #x00B7 1))             ;; Middle dot (· ✢ ✶ ✻ ✽)
+
+  ;; (eat-exec buffer name "bash" nil (list "-ilc" command))
+  (defun start-file-process-shell-command-using-eat-exec
+      (name buffer command)
+    (require 'eat)
+    (with-current-buffer (eat-exec buffer name "nu" nil (list "-c" command))
+      (eat-emacs-mode)
+      (setq eat--synchronize-scroll-function #'eat--synchronize-scroll)
+      (get-buffer-process (current-buffer))))
+
+  (advice-add #'compilation-start :around
+              (defun hijack-start-file-process-shell-command (o &rest args)
+                (advice-add #'start-file-process-shell-command :override
+                            #'start-file-process-shell-command-using-eat-exec)
+                (unwind-protect
+                    (apply o args)
+                  (advice-remove
+                   #'start-file-process-shell-command
+                   #'start-file-process-shell-command-using-eat-exec))))
+
+  (add-hook #'compilation-start-hook
+            (defun revert-to-eat-setup (proc)
+              (set-process-filter proc #'eat--filter)
+              (add-function :after (process-sentinel proc) #'eat--sentinel)))
+
+  (advice-add #'kill-compilation :override
+              (defun kill-compilation-by-sending-C-c ()
+                (interactive)
+                (let ((buffer (compilation-find-buffer)))
+                  (if (get-buffer-process buffer)
   	                  ;; interrupt-process does not work
-                        (process-send-string (get-buffer-process buffer) (kbd "C-c"))
-                      (error "The %s process is not running" (downcase mode-name))))))
+                      (process-send-string (get-buffer-process buffer) (kbd "C-c"))
+                    (error "The %s process is not running" (downcase mode-name))))))
 
-    (add-hook 'eat-mode-hook #'shell/hook)
-      (with-eval-after-load 'eat                                                                                                                          
-;; Couleurs standard (0-7)                                                                                                                        
-(set-face-foreground 'eat-term-color-0 "#282a36")  ; black                                                                                        
-(set-face-foreground 'eat-term-color-1 "#ff5555")  ; red                                                                                          
-(set-face-foreground 'eat-term-color-2 "#50fa7b")  ; green                                                                                        
-(set-face-foreground 'eat-term-color-3 "#f1fa8c")  ; yellow                                                                                       
-(set-face-foreground 'eat-term-color-4 "#bd93f9")  ; blue                                                                                         
-(set-face-foreground 'eat-term-color-5 "#ff79c6")  ; magenta                                                                                      
-(set-face-foreground 'eat-term-color-6 "#8be9fd")  ; cyan                                                                                         
-(set-face-foreground 'eat-term-color-7 "#f8f8f2")  ; white                                                                                        
-                                                                                                                                                  
-;; Couleurs bright (8-15)                                                                                                                         
-(set-face-foreground 'eat-term-color-8 "#6272a4")   ; bright black (gris)                                                                         
-(set-face-foreground 'eat-term-color-9 "#ff6e6e")   ; bright red                                                                                  
-(set-face-foreground 'eat-term-color-10 "#69ff94")  ; bright green                                                                                
-(set-face-foreground 'eat-term-color-11 "#ffffa5")  ; bright yellow                                                                               
-(set-face-foreground 'eat-term-color-12 "#d6acff")  ; bright blue                                                                                 
-(set-face-foreground 'eat-term-color-13 "#ff92df")  ; bright magenta                                                                              
-(set-face-foreground 'eat-term-color-14 "#a4ffff")  ; bright cyan                                                                                 
-(set-face-foreground 'eat-term-color-15 "#ffffff")) ; bright white
-      )
+  (add-hook 'eat-mode-hook #'shell/hook)
+  ;; Auto-scroll eat buffers even when window doesn't have focus
+  (add-hook 'eat-mode-hook
+            (lambda ()
+              (setq-local eat--synchronize-scroll-function #'eat--synchronize-scroll)))
+  (with-eval-after-load 'eat
+    ;; Couleurs standard (0-7)                                                                                                                        
+    (set-face-foreground 'eat-term-color-0 "#282a36")  ; black                                                                                        
+    (set-face-foreground 'eat-term-color-1 "#ff5555")  ; red                                                                                          
+    (set-face-foreground 'eat-term-color-2 "#50fa7b")  ; green                                                                                        
+    (set-face-foreground 'eat-term-color-3 "#f1fa8c")  ; yellow                                                                                       
+    (set-face-foreground 'eat-term-color-4 "#bd93f9")  ; blue                                                                                         
+    (set-face-foreground 'eat-term-color-5 "#ff79c6")  ; magenta                                                                                      
+    (set-face-foreground 'eat-term-color-6 "#8be9fd")  ; cyan                                                                                         
+    (set-face-foreground 'eat-term-color-7 "#f8f8f2")  ; white                                                                                        
+
+    ;; Couleurs bright (8-15)                                                                                                                         
+    (set-face-foreground 'eat-term-color-8 "#6272a4")   ; bright black (gris)                                                                         
+    (set-face-foreground 'eat-term-color-9 "#ff6e6e")   ; bright red                                                                                  
+    (set-face-foreground 'eat-term-color-10 "#69ff94")  ; bright green                                                                                
+    (set-face-foreground 'eat-term-color-11 "#ffffa5")  ; bright yellow                                                                               
+    (set-face-foreground 'eat-term-color-12 "#d6acff")  ; bright blue                                                                                 
+    (set-face-foreground 'eat-term-color-13 "#ff92df")  ; bright magenta                                                                              
+    (set-face-foreground 'eat-term-color-14 "#a4ffff")  ; bright cyan                                                                                 
+    (set-face-foreground 'eat-term-color-15 "#ffffff")
+
+    (setq eat-term-scrollback-size 400000
+          eat--synchronize-scroll-function #'eat--synchronize-scroll)) ; bright white
+  )
 
 (defun eshell/emacs (file)
   (find-file file))
@@ -1524,4 +1622,5 @@ Reuses an existing eshell buffer for the target directory if one exists."
 	(let ((local-settings "~/.emacs.d/local.el"))
 	  (when (file-exists-p local-settings)
 	    (load-file local-settings)))
-    (lsp)))
+    (lsp)
+    (fix-char-width-for-spinners)))
