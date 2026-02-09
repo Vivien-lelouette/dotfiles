@@ -1,7 +1,42 @@
+;; Ensure Emacs loads the most recent byte-compiled files.
+(setq load-prefer-newer t)
+
+;; Make Emacs Native-compile .elc files asynchronously by setting
+;; `native-comp-jit-compilation' to t.
+(setq native-comp-jit-compilation t)
+(setq native-comp-deferred-compilation native-comp-jit-compilation)  ; Deprecated
+
 (setq use-package-always-ensure t)
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 (package-initialize)
+
+;; Ensure compilation of all elisp packages
+(use-package compile-angel
+  :ensure t
+  :demand t
+  :config
+  ;; Set `compile-angel-verbose' to nil to disable compile-angel messages.
+  ;; (When set to nil, compile-angel won't show which file is being compiled.)
+  (setq compile-angel-verbose t)
+
+  ;; Uncomment the line below to compile automatically when an Elisp file is saved
+  (add-hook 'emacs-lisp-mode-hook #'compile-angel-on-save-local-mode)
+
+  ;; The following directive prevents compile-angel from compiling your init
+  ;; files. If you choose to remove this push to `compile-angel-excluded-files'
+  ;; and compile your pre/post-init files, ensure you understand the
+  ;; implications and thoroughly test your code. For example, if you're using
+  ;; the `use-package' macro, you'll need to explicitly add:
+  ;; (eval-when-compile (require 'use-package))
+  ;; at the top of your init file.
+  (push "/init.el" compile-angel-excluded-files)
+  (push "/local.el" compile-angel-excluded-files)
+  (push "/desktop.el" compile-angel-excluded-files)
+
+  ;; A global mode that compiles .el files before they are loaded
+  ;; using `load' or `require'.
+  (compile-angel-on-load-mode 1))
 
 ;; Raise GC threshold during init for faster startup
 (setq gc-cons-threshold most-positive-fixnum
@@ -32,8 +67,36 @@
 (setq read-process-output-max (* 5 1024 1024)
     process-adaptive-read-buffering nil)
 
+(set-language-environment "UTF-8")
 (prefer-coding-system 'utf-8)
 (set-selection-coding-system 'utf-8)
+(set-clipboard-coding-system 'utf-8)
+
+(defun wl/setup-clipboard ()
+  "Set up Wayland clipboard integration on first graphical frame."
+  (when (and (display-graphic-p)
+             (getenv "WAYLAND_DISPLAY"))
+    (defvar wl-copy-process nil)
+    (defun wl-copy (text)
+      (setq wl-copy-process
+            (make-process :name "wl-copy"
+                          :buffer nil
+                          :command '("wl-copy" "-f" "-n")
+                          :connection-type 'pipe
+                          :noquery t))
+      (process-send-string wl-copy-process text)
+      (process-send-eof wl-copy-process))
+    (defun wl-paste ()
+      (if (and wl-copy-process (process-live-p wl-copy-process))
+          nil
+        (shell-command-to-string "wl-paste -n | tr -d \r")))
+    (setq interprogram-cut-function #'wl-copy
+          interprogram-paste-function #'wl-paste))
+  (remove-hook 'server-after-make-frame-hook #'wl/setup-clipboard))
+
+(if (daemonp)
+    (add-hook 'server-after-make-frame-hook #'wl/setup-clipboard)
+  (wl/setup-clipboard))
 
 (use-package ultra-scroll
   :init
@@ -52,6 +115,12 @@
 (define-key minibuffer-local-completion-map "?" nil)
 (define-key minibuffer-local-must-match-map "?" nil)
 (define-key minibuffer-local-map (kbd "S-<return>") (lambda () (interactive) (insert "\n")))
+(define-key minibuffer-local-map (kbd "M-\\")
+  (lambda () (interactive)
+    (save-excursion
+      (goto-char (minibuffer-prompt-end))
+      (while (search-forward " " nil t)
+        (replace-match "\\\\ ")))))
 (add-hook 'minibuffer-setup-hook #'subword-mode)
 
 (setq backup-directory-alist `(("." . ,(expand-file-name "tmp/backups/" user-emacs-directory))))
@@ -223,7 +292,7 @@
 (add-hook 'completion-list-mode-hook (lambda () (display-line-numbers-mode 0)))
 (line-number-mode 0)
 (column-number-mode 0)
-(global-hl-line-mode 0)
+(global-hl-line-mode 1)
 
 (setq warning-minimum-level :error)
 
@@ -243,6 +312,8 @@
 (use-package spacious-padding
   :config
   (spacious-padding-mode 1))
+
+(setq initial-scratch-message nil)
 
 (setq-default fill-column 148)
 
@@ -360,7 +431,7 @@
         helm-truncate-lines                       t
         helm-net-prefer-curl                      t
         helm-split-window-inside-p                t
-        helm-grep-git-grep-command "git --no-pager grep -n%cH --color=always --full-name -e %p"
+        helm-grep-git-grep-command "git --no-pager grep -n%cH --color=always --full-name -e \"%p\" -- %f"
         helm-buffers-show-icons nil
         helm-buffer-max-length 35)
 
@@ -384,19 +455,19 @@
            (default-directory (or (helm-browse-project-get--root-dir (helm-current-directory))
                                   default-directory)))
       (helm-grep-git-1 default-directory nil nil (list "-F" "-e" pattern))))
-  
+
   (defun helm/do-grep-ag ()
     (interactive)
     (let* ((helm-candidate-number-limit nil))
       (call-interactively 'helm-do-grep-ag)
       ))
-  
+
   (defun helm/do-grep-ag-project ()
     (interactive)
     (let* ((helm-candidate-number-limit nil))
       (call-interactively 'helm-do-grep-ag-project)
       ))
-  
+
   (defadvice helm-display-mode-line (after undisplay-header activate)
     (setq header-line-format nil))
 
@@ -506,13 +577,13 @@
       ;; Dynamic scoping to the rescue
       (let ((org-confirm-babel-evaluate nil))
         (org-babel-tangle))))
-  (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'org/org-babel-tangle-config)))
-  (custom-set-faces
-   '(org-level-1 ((t (:inherit outline-1 :height 2.5))))
-   '(org-level-2 ((t (:inherit outline-2 :height 1.8))))
-   '(org-level-3 ((t (:inherit outline-3 :height 1.4))))
-   '(org-level-4 ((t (:inherit outline-4 :height 1.2))))
-   '(org-level-5 ((t (:inherit outline-5 :height 1.0))))))
+  (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'org/org-babel-tangle-config))))
+  ;; (custom-set-faces
+  ;;  '(org-level-1 ((t (:inherit outline-1 :height 2.5))))
+  ;;  '(org-level-2 ((t (:inherit outline-2 :height 1.8))))
+  ;;  '(org-level-3 ((t (:inherit outline-3 :height 1.4))))
+  ;;  '(org-level-4 ((t (:inherit outline-4 :height 1.2))))
+  ;;  '(org-level-5 ((t (:inherit outline-5 :height 1.0))))))
 
 ;; (make-directory "~/RoamNotes")
 (use-package org-roam
@@ -917,7 +988,7 @@ when reading files and the other way around when writing contents."
           (vterm-same-window
            (apply #'docker-utils-generate-new-buffer-name program process-args)))
       (error "The vterm package is not installed")))
-  
+
   (defun docker-run-async-with-buffer-shell (program &rest args)
     "Execute \"PROGRAM ARGS\" and display output in a new `shell' buffer."
     (let* ((process (apply #'docker-run-start-file-process-shell-command program args))
@@ -926,7 +997,7 @@ when reading files and the other way around when writing contents."
       (with-current-buffer buffer (shell-mode))
       (set-process-filter process 'comint-output-filter)
       (display-buffer-same-window buffer nil)))
-  
+
   (defun run-with-local-timer (secs repeat function &rest args)
     "Like `run-with-idle-timer', but always runs in the `current-buffer'.
 
@@ -1031,7 +1102,146 @@ when reading files and the other way around when writing contents."
 
   (global-set-key (kbd "C-c c") #'claudemacs-transient-menu))
 
+(use-package joplin-mode
+  :vc (:url "https://github.com/cinsk/joplin-mode" :rev :newest)
+  :defer t
+  :commands (joplin)
+  :config
+  (setq joplin-token (auth-source-pick-first-password :host "joplin"))
+  (global-set-key (kbd "M-s j") 'joplin-search)
+  (global-set-key (kbd "M-s M-j") 'joplin-search)
+  (global-set-key (kbd "C-c j") 'joplin))
+
 (load-file "~/.emacs.d/custom_packages/structured-log-mode.el")
+
+(use-package stripspace
+  :ensure t
+
+  ;; Enable for prog-mode-hook, text-mode-hook, conf-mode-hook
+  :hook ((prog-mode . stripspace-local-mode)
+         (text-mode . stripspace-local-mode)
+         (conf-mode . stripspace-local-mode))
+
+  :custom
+  ;; The `stripspace-only-if-initially-clean' option:
+  ;; - nil to always delete trailing whitespace.
+  ;; - Non-nil to only delete whitespace when the buffer is clean initially.
+  ;; (The initial cleanliness check is performed when `stripspace-local-mode'
+  ;; is enabled.)
+  (stripspace-only-if-initially-clean t)
+
+  ;; Enabling `stripspace-restore-column' preserves the cursor's column position
+  ;; even after stripping spaces. This is useful in scenarios where you add
+  ;; extra spaces and then save the file. Although the spaces are removed in the
+  ;; saved file, the cursor remains in the same position, ensuring a consistent
+  ;; editing experience without affecting cursor placement.
+  (stripspace-restore-column t))
+
+(use-package easysession
+  :vc (:url "https://github.com/jamescherti/easysession.el" :rev :newest)
+  :ensure t
+  :custom
+  (easysession-save-interval (* 10 60))  ; Save every 10 minutes
+
+  ;; Display the active session name in the mode-line lighter.
+  (easysession-save-mode-lighter-show-session-name t)
+
+  ;; Optionally, the session name can be shown in the modeline info area:
+  ;; (easysession-mode-line-misc-info t)
+
+  :config
+  ;; Key mappings
+  (global-set-key (kbd "C-c sl") #'easysession-switch-to) ; Load session
+  (global-set-key (kbd "C-c ss") #'easysession-save) ; Save session
+  (global-set-key (kbd "C-c sL") #'easysession-switch-to-and-restore-geometry)
+  (global-set-key (kbd "C-c sr") #'easysession-rename)
+  (global-set-key (kbd "C-c sR") #'easysession-reset)
+  (global-set-key (kbd "C-c sd") #'easysession-delete)
+
+  ;; Non-nil: `easysession-setup' loads the session automatically.
+  ;; Nil: session is not loaded automatically; the user can load it manually.
+  (setq easysession-setup-load-session t)
+
+  ;; Priority depth used when `easysession-setup' adds `easysession' hooks.
+  ;; 102 ensures that the session is loaded after all other packages.
+  (setq easysession-setup-add-hook-depth 102)
+
+  ;; The `easysession-setup' function adds hooks:
+  ;; - To automatically load the session during `emacs-startup-hook'.
+  ;; - To automatically save the session at regular intervals, and when Emacs
+  ;; exits.
+  (easysession-setup))
+
+(use-package jira
+  :vc (:url "https://github.com/unmonoqueteclea/jira.el" :rev :newest)
+  :config
+  (defun jira/detail-find-issue-by-key ()
+      (interactive)
+    (jira-detail-find-issue-by-key))
+
+  (global-set-key (kbd "M-s j") #'jira/detail-find-issue-by-key)
+  (global-set-key (kbd "M-s M-j") #'jira/detail-find-issue-by-key)
+
+  (setq jira-token-is-personal-access-token nil
+        jira-api-version 3
+        jira-issues-max-results 200
+        jira-issues-sort-key (cons "Status" t)
+        jira-issues-table-fields '(:key :issue-type-name :status-name :assignee-name :summary)
+        jira-issues-fields '((:key (:path key) (:columns . 12) (:name . "Key") (:formatter . jira-fmt-issue-key))
+                             (:priority-name (:path fields priority name) (:columns . 10) (:name . "Priority"))
+                             (:priority-icon. ((:path fields priority iconUrl) (:columns . 10) (:name . "Priority")))
+                             (:labels (:path fields labels) (:columns . 10) (:name . "Labels"))
+                             (:original-estimate (:path fields aggregatetimeoriginalestimate) (:columns . 10) (:name . "Estimate") (:formatter . jira-fmt-time-from-secs))
+                             (:work-ratio (:path fields workratio) (:columns . 6) (:name . "WR") (:formatter . jira-fmt-issue-progress))
+                             (:remaining-time (:path fields timeestimate) (:columns . 10) (:name . "Remaining") (:formatter . jira-fmt-time-from-secs))
+                             (:assignee-name (:path fields assignee displayName) (:columns . 18) (:name . "Assignee"))
+                             (:reporter-name (:path fields reporter displayName) (:columns . 14) (:name . "Reporter"))
+                             (:components (:path fields components) (:columns . 10) (:name . "Components") (:formatter . jira-fmt-issue-components))
+                             (:fix-versions (:path fields fixVersions) (:columns . 10) (:name . "Fix Versions") (:formatter . jira-fmt-issue-fix-versions))
+                             (:status-name (:path fields status) (:columns . 22) (:name . "Status") (:formatter . jira-fmt-issue-status))
+                             (:status-category-name (:path fields status statusCategory name) (:columns . 10) (:name . "Status Category"))
+                             (:creator-name (:path (fields creator displayName)) (:columns . 10) (:name . "Creator"))
+                             (:progress-percent (:path fields progress percent) (:columns . 10) (:name . "Progress") (:formatter . jira-fmt-issue-progress))
+                             (:issue-type-name (:path fields issuetype name) (:columns . 5) (:name . "Type") (:formatter . jira-fmt-issue-type-name))
+                             (:issue-type-id (:path fields issuetype id) (:columns . 15) (:name . "Type"))
+                             (:issue-type-icon (:path fields issuetype iconUrl) (:columns . 10) (:name . "Type"))
+                             (:project-key (:path fields project key) (:columns . 10) (:name . "Project"))
+                             (:project-name (:path fields project name) (:columns . 10) (:name . "Project"))
+                             (:parent-type-name (:path fields parent fields issuetype name) (:columns . 10) (:name . "Parent Type") (:formatter . jira-fmt-issue-type-name))
+                             (:parent-status (:path fields parent fields status) (:columns . 10) (:name . "Parent Status") (:formatter . jira-fmt-issue-status))
+                             (:parent-key (:path fields parent key) (:columns . 10) (:name . "Parent Key") (:formatter . jira-fmt-issue-key))
+                             (:parent-summary (:path fields parent fields summary) (:columns . 40) (:name . "Parent Summary"))
+                             (:created (:path fields created) (:columns . 10) (:name . "Created") (:formatter . jira-fmt-datetime))
+                             (:updated (:path fields updated) (:columns . 10) (:name . "Updated") (:formatter . jira-fmt-datetime))
+                             (:description (:path fields description) (:columns . 10) (:name . "Description"))
+                             (:summary (:path fields summary) (:columns . 10) (:name . "Summary"))
+                             (:due-date (:path fields duedate) (:columns . 10) (:name . "Due Date") (:formatter . jira-fmt-date))
+                             (:sprints (:path fields (custom "Sprint")) (:columns . 10) (:name . "Sprints") (:formatter . jira-fmt-issue-sprints))
+                             (:line (:path fields (custom "Business line")) (:columns . 10) (:name . "Business Line") (:formatter . jira-fmt-business-line))
+                             (:cost-center (:path fields (custom "Cost center")) (:columns . 10) (:name . "Const Center") (:formatter . jira-fmt-cost-center))
+                             (:resolution (:path fields resolution name) (:columns . 10) (:name . "Resolution"))
+                             (:issuelinks (:path fields issuelinks) (:columns . 15) (:name . "Linked Issues") (:formatter . jira-fmt-issuelinks))))
+
+  ;; Display a Jira buffer in the same window when the current
+  ;; window already shows a *Jira buffer, otherwise pop a new frame.
+  (defun jira/display-reuse-window (buffer alist)
+    "Display BUFFER in the same window if it already shows a *Jira buffer."
+    (when (string-prefix-p "*Jira" (buffer-name (window-buffer (selected-window))))
+      (display-buffer-same-window buffer alist)))
+
+  (add-to-list 'display-buffer-alist
+               '("\\*Jira"
+                 (jira/display-reuse-window
+                  display-buffer-pop-up-frame)
+                 (reusable-frames . visible)))
+  ;; jira-issues and jira-tempo use switch-to-buffer which ignores
+  ;; display-buffer-alist; let-bind switch-to-buffer-obey-display-actions
+  ;; around them so they also open in a new frame.
+  (dolist (fn '(jira-issues jira-tempo))
+    (advice-add fn :around
+                (lambda (orig-fn &rest args)
+                  (let ((switch-to-buffer-obey-display-actions t))
+                    (apply orig-fn args))))))
 
 (use-package nix-mode
   :mode "\\.nix\\'")
@@ -1117,21 +1327,35 @@ when reading files and the other way around when writing contents."
 
 (use-package yasnippet
   :defer 2
+  :bind (:map yas-keymap
+              ("C-<right>" . yas-next-field)
+              ("C-<left>" . yas-prev-field)
+              ("<tab>" . nil)
+              ("TAB" . nil))
   :config
-  (setq yas-inhibit-overlay-modification-protection nil)
   (yas-global-mode 1))
 
 (with-eval-after-load 'company
   (with-eval-after-load 'yasnippet
-    (defun my/yas-company-complete-selection (fn)
-      "Let company complete without breaking yasnippet fields."
-      (if (and (bound-and-true-p yas-minor-mode)
-               (let ((field (condition-case nil (yas-current-field) (error nil))))
-                 field))
-          (let ((inhibit-modification-hooks t))
-            (funcall fn))
-        (funcall fn)))
-    (advice-add 'company-complete-selection :around #'my/yas-company-complete-selection)))
+    ;; Make RET only complete Company when popup is visible, not exit yas field
+    (define-key company-active-map (kbd "RET") nil)
+    (define-key company-active-map (kbd "<return>") nil)
+    ;; Use C-y as alternative to complete selection without affecting yas
+    (define-key company-active-map (kbd "C-y") #'company-complete-selection)
+
+    (defun my/yas-company-complete-and-stay (fn &rest args)
+      "Complete company selection and update yasnippet mirrors."
+      (let ((field (and (bound-and-true-p yas-minor-mode)
+                        (ignore-errors (yas-current-field)))))
+        (if field
+            (let ((yas--inhibit-overlay-hooks t))
+              (apply fn args)
+              ;; Force mirror update after Company insertion
+              (let ((snippet (yas--field-snippet field)))
+                (when snippet
+                  (yas--update-mirrors snippet))))
+          (apply fn args))))
+    (advice-add 'company-complete-selection :around #'my/yas-company-complete-and-stay)))
 
 (use-package yasnippet-snippets
   :after yasnippet)
@@ -1310,7 +1534,7 @@ when reading files and the other way around when writing contents."
     (define-key eshell-mode-map (kbd "M-m") #'eshell-bol)
     (define-key eshell-hist-mode-map (kbd "M-s") nil)
     (define-key eshell-hist-mode-map (kbd "M-r") #'helm-eshell-history)
-    (setq 
+    (setq
      eshell-where-to-jump 'begin
      eshell-review-quick-commands nil
      eshell-smart-space-goes-to-end t
@@ -1323,8 +1547,6 @@ when reading files and the other way around when writing contents."
     (eat-eshell-mode 1)
     (eat-eshell-visual-command-mode 1)
     (display-line-numbers-mode 0)
-    ;; Disable automatic company completion, only complete on Tab
-    (setq-local company-idle-delay nil)
     (define-key eshell-mode-map (kbd "<tab>") #'company-complete))
   (add-hook 'eshell-mode-hook #'eshell/hook)
 
@@ -1426,24 +1648,24 @@ Reuses an existing eshell buffer for the target directory if one exists."
             (lambda ()
               (setq-local eat--synchronize-scroll-function #'eat--synchronize-scroll)))
   (with-eval-after-load 'eat
-    ;; Couleurs standard (0-7)                                                                                                                        
-    (set-face-foreground 'eat-term-color-0 "#282a36")  ; black                                                                                        
-    (set-face-foreground 'eat-term-color-1 "#ff5555")  ; red                                                                                          
-    (set-face-foreground 'eat-term-color-2 "#50fa7b")  ; green                                                                                        
-    (set-face-foreground 'eat-term-color-3 "#f1fa8c")  ; yellow                                                                                       
-    (set-face-foreground 'eat-term-color-4 "#bd93f9")  ; blue                                                                                         
-    (set-face-foreground 'eat-term-color-5 "#ff79c6")  ; magenta                                                                                      
-    (set-face-foreground 'eat-term-color-6 "#8be9fd")  ; cyan                                                                                         
-    (set-face-foreground 'eat-term-color-7 "#f8f8f2")  ; white                                                                                        
+    ;; Couleurs standard (0-7)
+    (set-face-foreground 'eat-term-color-0 "#282a36")  ; black
+    (set-face-foreground 'eat-term-color-1 "#ff5555")  ; red
+    (set-face-foreground 'eat-term-color-2 "#50fa7b")  ; green
+    (set-face-foreground 'eat-term-color-3 "#f1fa8c")  ; yellow
+    (set-face-foreground 'eat-term-color-4 "#bd93f9")  ; blue
+    (set-face-foreground 'eat-term-color-5 "#ff79c6")  ; magenta
+    (set-face-foreground 'eat-term-color-6 "#8be9fd")  ; cyan
+    (set-face-foreground 'eat-term-color-7 "#f8f8f2")  ; white
 
-    ;; Couleurs bright (8-15)                                                                                                                         
-    (set-face-foreground 'eat-term-color-8 "#6272a4")   ; bright black (gris)                                                                         
-    (set-face-foreground 'eat-term-color-9 "#ff6e6e")   ; bright red                                                                                  
-    (set-face-foreground 'eat-term-color-10 "#69ff94")  ; bright green                                                                                
-    (set-face-foreground 'eat-term-color-11 "#ffffa5")  ; bright yellow                                                                               
-    (set-face-foreground 'eat-term-color-12 "#d6acff")  ; bright blue                                                                                 
-    (set-face-foreground 'eat-term-color-13 "#ff92df")  ; bright magenta                                                                              
-    (set-face-foreground 'eat-term-color-14 "#a4ffff")  ; bright cyan                                                                                 
+    ;; Couleurs bright (8-15)
+    (set-face-foreground 'eat-term-color-8 "#6272a4")   ; bright black (gris)
+    (set-face-foreground 'eat-term-color-9 "#ff6e6e")   ; bright red
+    (set-face-foreground 'eat-term-color-10 "#69ff94")  ; bright green
+    (set-face-foreground 'eat-term-color-11 "#ffffa5")  ; bright yellow
+    (set-face-foreground 'eat-term-color-12 "#d6acff")  ; bright blue
+    (set-face-foreground 'eat-term-color-13 "#ff92df")  ; bright magenta
+    (set-face-foreground 'eat-term-color-14 "#a4ffff")  ; bright cyan
     (set-face-foreground 'eat-term-color-15 "#ffffff")
 
     (setq eat-term-scrollback-size 400000
@@ -1600,7 +1822,7 @@ Reuses an existing eshell buffer for the target directory if one exists."
         (eww (completing-read "Eww URL or search " eww/input-history nil nil (eww-current-url) 'eww/input-history))
       (eww (completing-read "Eww URL or search " eww/input-history nil nil nil 'eww/input-history))))
 
-  (setq eww-search-prefix "https://duckduckgo.com/html/?q=")
+  (setq eww-search-prefix "https://html.duckduckgo.com/html/?q=")
   (with-eval-after-load 'eww
     (defun eww/rename-buffer ()
       "Rename `eww-mode' buffer so sites open in new page.
@@ -1613,7 +1835,6 @@ Reuses an existing eshell buffer for the target directory if one exists."
               (rename-buffer (concat "Eww: " $title) t)
             (rename-buffer "Eww" t)))))
 
-    (add-hook 'eww-after-render-hook #'mixed-pitch-mode)
     (add-hook 'eww-after-render-hook 'eww/rename-buffer)
     (add-hook 'eww-after-render-hook (lambda () (visual-line-mode 1)))))
 

@@ -120,3 +120,7 @@ emacs/.emacs.d/etc/transient/*
 /emacs/.emacs.d/lsp-cache/
 /emacs/.emacs.d/org-roam.db
 /emacs/.emacs.d/projects
+/emacs/.emacs.d/*.token
+*.elc
+/emacs/.emacs.d/easysession/
+emacs/.emacs.d/etc/transient/values.el
