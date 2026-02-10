@@ -1,6 +1,6 @@
+;;; init.el --- -*- lexical-binding: t; -*-
 ;; Ensure Emacs loads the most recent byte-compiled files.
 (setq load-prefer-newer t)
-
 ;; Make Emacs Native-compile .elc files asynchronously by setting
 ;; `native-comp-jit-compilation' to t.
 (setq native-comp-jit-compilation t)
@@ -608,6 +608,9 @@
         org-roam-ui-update-on-save t
         org-roam-ui-open-on-start t))
 
+(use-package markdown-mode
+  :hook (markdown-mode . visual-line-mode))
+
 (use-package time
   :ensure nil
   :commands world-clock
@@ -744,7 +747,6 @@
 (use-package perfect-margin
   :vc (:url "https://github.com/mpwang/perfect-margin" :rev :newest)
   :defer 2
-  :bind (("C-c m" . perfect-margin-mode))
   :config
   (setq perfect-margin-only-set-left-margin nil
         perfect-margin-ignore-regexps '("*docker-container*" "*Ibuffer*" "* docker")
@@ -1104,13 +1106,489 @@ when reading files and the other way around when writing contents."
 
 (use-package joplin-mode
   :vc (:url "https://github.com/cinsk/joplin-mode" :rev :newest)
-  :defer t
-  :commands (joplin)
+  :commands (joplin joplin-search joplin-create-note joplin-create-notebook
+                    joplin-journal joplin-delete-note-dwim joplin-delete-notebook-dwim)
+  :bind (("M-s m"   . joplin-find-note)
+         ("M-s M-m" . joplin-find-note)
+         ("C-c m"   . joplin-transient-menu))
   :config
   (setq joplin-token (auth-source-pick-first-password :host "joplin"))
-  (global-set-key (kbd "M-s j") 'joplin-search)
-  (global-set-key (kbd "M-s M-j") 'joplin-search)
-  (global-set-key (kbd "C-c j") 'joplin))
+
+  (defun joplin--find-folder (name &optional parent-id)
+    "Find a folder with NAME under PARENT-ID.
+  When multiple folders match, return the most recently modified one.
+  Returns folder ID or nil."
+    (let ((candidates nil))
+      (cl-loop for (_ . folder) in joplin-folders
+               when (and (string-equal (JFOLDER-title folder) name)
+                         (or (null parent-id)
+                             (string-equal (JFOLDER-parent_id folder) parent-id)))
+               do (push (JFOLDER-id folder) candidates))
+      (if (<= (length candidates) 1)
+          (car candidates)
+        (car (sort candidates
+                   (lambda (a b)
+                     (> (or (alist-get 'updated_time
+                                       (joplin--http-get (format "/folders/%s" a))) 0)
+                        (or (alist-get 'updated_time
+                                       (joplin--http-get (format "/folders/%s" b))) 0))))))))
+
+  (defun joplin--find-or-create-folder (name &optional parent-id)
+    "Find or create a folder with NAME under PARENT-ID. Returns folder ID."
+    (or (joplin--find-folder name parent-id)
+        (let* ((args `((title . ,name)))
+               (args (if parent-id (cons `(parent_id . ,parent-id) args) args))
+               (resp (joplin--http-post "/folders" args)))
+          (joplin--init-folders)
+          (alist-get 'id resp))))
+
+  (defun joplin--find-note-in-folder (title folder-id)
+    "Find a note with TITLE in FOLDER-ID. Returns note ID or nil."
+    (let* ((notes (joplin--http-get (format "/folders/%s/notes" folder-id)
+                                    '((fields . "id,title"))))
+           (items (if (vectorp notes) notes
+                    (alist-get 'items notes))))
+      (cl-loop for note across items
+               when (string-equal (alist-get 'title note) title)
+               return (alist-get 'id note))))
+
+  (defun joplin--folder-by-id (folder-id)
+    "Return the JFOLDER struct for FOLDER-ID, or nil."
+    (cl-loop for (_ . folder) in joplin-folders
+             when (string-equal (JFOLDER-id folder) folder-id)
+             return folder))
+
+  (defun joplin--folder-path (folder-id)
+    "Return the full path for FOLDER-ID (e.g. \"Journal/2026/02-Feb\")."
+    (let ((path nil) (id folder-id))
+      (while id
+        (let ((folder (joplin--folder-by-id id)))
+          (if folder
+              (progn
+                (push (JFOLDER-title folder) path)
+                (let ((pid (JFOLDER-parent_id folder)))
+                  (setq id (if (and pid (not (string-empty-p pid))) pid nil))))
+            (setq id nil))))
+      (string-join path "/")))
+
+  (defun joplin--resolve-folder-path (segments)
+    "Resolve a list of folder name SEGMENTS, creating missing folders.
+  Returns the folder ID of the last segment."
+    (let ((parent-id nil))
+      (dolist (name segments parent-id)
+        (setq parent-id (joplin--find-or-create-folder name parent-id)))))
+
+  (defun joplin--context-folder-id ()
+    "Return the folder ID from the current joplin-mode context, or nil.
+  In a folder browser, returns the folder under cursor.
+  In a note list or note buffer, returns the note's parent folder."
+    (cond
+     ((joplin--folder-at-point)
+      (JFOLDER-id (joplin--folder-at-point)))
+     ((joplin--search-note-at-point)
+      (JNOTE-parent_id (joplin--search-note-at-point)))
+     ((bound-and-true-p joplin-note)
+      (JNOTE-parent_id joplin-note))))
+
+  (defun joplin--context-folder-path ()
+    "Return the folder path from the current Joplin context, with trailing slash."
+    (let ((folder-id (joplin--context-folder-id)))
+      (if folder-id
+          (concat (joplin--folder-path folder-id) "/")
+        "")))
+
+  (defun joplin--folder-children (parent-id)
+    "Return sorted list of child folder names under PARENT-ID (nil for root)."
+    (sort
+     (cl-loop for (_ . folder) in joplin-folders
+              when (if parent-id
+                       (string-equal (JFOLDER-parent_id folder) parent-id)
+                     (or (null (JFOLDER-parent_id folder))
+                         (string-empty-p (JFOLDER-parent_id folder))))
+              collect (JFOLDER-title folder))
+     #'string<))
+
+  (defun joplin--folder-notes (folder-id)
+    "Return sorted list of note titles in FOLDER-ID."
+    (when folder-id
+      (let* ((resp (joplin--http-get (format "/folders/%s/notes" folder-id)
+                                     '((fields . "id,title") (limit . "100"))))
+             (items (if (vectorp resp) resp (alist-get 'items resp))))
+        (sort (cl-loop for note across items
+                       collect (alist-get 'title note))
+              #'string<))))
+
+  (defun joplin--folder-contents (folder-id)
+    "Return candidates for FOLDER-ID: subfolders with trailing /, then notes."
+    (append (mapcar (lambda (f) (concat f "/")) (joplin--folder-children folder-id))
+            (joplin--folder-notes folder-id)))
+
+  (defun joplin--read-path (prompt)
+    "Read a Joplin path with iterative Helm folder navigation.
+  Each step shows subfolders (suffixed with /) and notes of the
+  current folder.  Selecting a subfolder navigates into it;
+  selecting a note or typing a new name returns the full path."
+    (let* ((init (joplin--context-folder-path))
+           (segments (split-string init "/" t))
+           (folder-id nil)
+           (path ""))
+      ;; Resolve initial context path
+      (dolist (s segments)
+        (let ((id (joplin--find-folder s folder-id)))
+          (when id
+            (setq folder-id id
+                  path (concat path s "/")))))
+      ;; Iterative navigation
+      (catch 'done
+        (while t
+          (let* ((candidates (joplin--folder-contents folder-id))
+                 (sel (helm-comp-read (concat prompt path) candidates
+                                      :must-match nil)))
+            (cond
+             ((and (> (length sel) 0) (string-suffix-p "/" sel))
+              (let ((name (substring sel 0 -1)))
+                (setq folder-id (joplin--find-folder name folder-id)
+                      path (concat path name "/"))))
+             ((> (length sel) 0)
+              (throw 'done (concat path sel)))
+             (t
+              (throw 'done (string-trim-right path "/")))))))))
+
+  (defun joplin-create-notebook (path)
+    "Create a Joplin notebook at PATH (e.g. \"Parent/Child/New\").
+  Missing notebooks in the path are created automatically.
+  In a Joplin view, the path is pre-filled from the notebook at point."
+    (interactive
+     (progn
+       (unless joplin-folders (joplin--init-folders))
+       (list (joplin--read-path "Notebook path: "))))
+    (let ((parts (split-string path "/" t)))
+      (joplin--resolve-folder-path parts)
+      (message "Notebook ready: %s" path)))
+
+  (defun joplin-create-note (path)
+    "Create or open a Joplin note at PATH (e.g. \"Folder/Sub/My Note\").
+  The last segment is the note title, everything before is the notebook path.
+  Missing notebooks are created automatically.  If the note already exists,
+  it is opened directly.
+  In a Joplin view, the path is pre-filled from the notebook at point."
+    (interactive
+     (progn
+       (unless joplin-folders (joplin--init-folders))
+       (list (joplin--read-path "Note path: "))))
+    (let* ((parts (split-string path "/" t))
+           (title (car (last parts)))
+           (folder-parts (butlast parts))
+           (folder-id (when folder-parts
+                        (joplin--resolve-folder-path folder-parts)))
+           (existing (when folder-id
+                       (joplin--find-note-in-folder title folder-id)))
+           (note-id (or existing
+                        (alist-get 'id (joplin--http-post
+                                        "/notes/"
+                                        `((title . ,title)
+                                          ,@(when folder-id
+                                              `((parent_id . ,folder-id)))
+                                          (body . ""))))))
+           (buf (joplin--note-buffer note-id)))
+      (switch-to-buffer buf)))
+
+  (defun joplin--journal-note-id (date-str)
+    "Return the note ID for journal entry DATE-STR, creating it if needed.
+  Ensures the Journal/YYYY/MM-Xxx notebook hierarchy exists."
+    (unless joplin-folders (joplin--init-folders))
+    (let* ((date (parse-time-string date-str))
+           (month (nth 4 date))
+           (year (nth 5 date))
+           (month-abbrevs ["" "Jan" "Feb" "Mar" "Apr" "May" "Jun"
+                           "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"])
+           (year-str (number-to-string year))
+           (month-str (format "%02d-%s" month (aref month-abbrevs month)))
+           (journal-id (joplin--find-or-create-folder "Journal"))
+           (year-id (joplin--find-or-create-folder year-str journal-id))
+           (month-id (joplin--find-or-create-folder month-str year-id))
+           (existing (joplin--find-note-in-folder date-str month-id)))
+      (or existing
+          (alist-get 'id (joplin--http-post
+                          "/notes/"
+                          `((title . ,date-str)
+                            (parent_id . ,month-id)
+                            (body . "")))))))
+
+  (defun joplin-journal (date-str)
+    "Create or open a Joplin journal note for DATE-STR (YYYY-MM-DD).
+  Creates the Journal/YYYY/MM-Xxx notebook hierarchy as needed."
+    (interactive
+     (list (read-from-minibuffer "Journal date (YYYY-MM-DD): "
+                                 (format-time-string "%Y-%m-%d"))))
+    (switch-to-buffer (joplin--note-buffer (joplin--journal-note-id date-str))))
+
+  (defun joplin-delete-note-dwim ()
+    "Delete a Joplin note.  Uses note at point, current note buffer,
+  or prompts for a path via Helm navigation."
+    (interactive)
+    (unless joplin-folders (joplin--init-folders))
+    (let (title id)
+      (cond
+       ((joplin--search-note-at-point)
+        (let ((note (joplin--search-note-at-point)))
+          (setq title (JNOTE-title note)
+                id (JNOTE-id note))))
+       ((bound-and-true-p joplin-note)
+        (setq title (JNOTE-title joplin-note)
+              id (JNOTE-id joplin-note)))
+       (t
+        (let* ((path (joplin--read-path "Delete note: "))
+               (parts (split-string path "/" t))
+               (note-title (car (last parts)))
+               (folder-parts (butlast parts))
+               (folder-id (when folder-parts
+                            (let ((fid nil))
+                              (dolist (s folder-parts fid)
+                                (setq fid (joplin--find-folder s fid)))))))
+          (setq title note-title
+                id (when folder-id
+                     (joplin--find-note-in-folder note-title folder-id))))))
+      (unless id (user-error "Note not found"))
+      (when (yes-or-no-p (format "Delete note \"%s\"? " title))
+        (joplin-delete-note id)
+        (cond
+         ((eq major-mode 'joplin-search-mode)
+          (joplin-search-revert))
+         ((bound-and-true-p joplin-note-mode)
+          (set-buffer-modified-p nil)
+          (kill-buffer)))
+        (message "Deleted note: %s" title))))
+
+  (defun joplin-delete-notebook-dwim ()
+    "Delete a Joplin notebook.  Uses notebook at point in the folder
+  browser, or prompts for a path via Helm navigation."
+    (interactive)
+    (unless joplin-folders (joplin--init-folders))
+    (let (name id)
+      (if-let ((folder (joplin--folder-at-point)))
+          (setq name (JFOLDER-title folder)
+                id (JFOLDER-id folder))
+        (let* ((path (joplin--read-path "Delete notebook: "))
+               (parts (split-string path "/" t)))
+          (setq name (car (last parts))
+                id (let ((fid nil))
+                     (dolist (s parts fid)
+                       (setq fid (joplin--find-folder s fid)))))))
+      (unless id (user-error "Notebook not found"))
+      (when (yes-or-no-p (format "Delete notebook \"%s\" and all its contents? " name))
+        (joplin--http-del (concat "/folders/" id))
+        (joplin--init-folders)
+        (when (eq major-mode 'joplin-mode)
+          (joplin-sync-folders))
+        (message "Deleted notebook: %s" name))))
+
+  ;; Find note buffers by note ID, not by buffer name
+  (defun joplin--note-buffer-by-id (id &optional parent _buf-name)
+    "Find or create a Joplin note buffer by note ID."
+    (let ((buf (cl-loop for b in (buffer-list)
+                        when (and (buffer-live-p b)
+                                  (with-current-buffer b
+                                    (and (bound-and-true-p joplin-note)
+                                         (string= (JNOTE-id joplin-note) id))))
+                        return b)))
+      (unless buf
+        (setq buf (joplin--note-fill-buffer
+                   id (generate-new-buffer "*JoplinNote*") parent))
+        (with-current-buffer buf
+          (when view-mode (view-mode -1))
+          (joplin--rename-buffer-from-note)
+          (setq-local revert-buffer-function #'joplin--revert-note-buffer)
+          (add-hook 'after-revert-hook
+                    (lambda ()
+                      (setq buffer-read-only nil)
+                      (when view-mode (view-mode -1)))
+                    90 t)))
+      (with-current-buffer buf
+        (setq-local joplin-parent-buffer parent))
+      buf))
+
+  (advice-add 'joplin--note-buffer :override #'joplin--note-buffer-by-id)
+
+  (defun joplin--rename-buffer-from-note ()
+    "Rename current buffer to match the Joplin note title."
+    (when (bound-and-true-p joplin-note)
+      (rename-buffer
+       (format "*Joplin: %s (%s)*"
+               (or (JNOTE-title joplin-note) "Untitled")
+               (substring (JNOTE-id joplin-note) 0
+                          (min 7 (length (JNOTE-id joplin-note)))))
+       t)
+      ;; Force doom-modeline to use buffer name instead of temp file path
+      (setq doom-modeline--buffer-file-name
+            (propertize (buffer-name)
+                        'face 'doom-modeline-buffer-file
+                        'mouse-face 'doom-modeline-highlight
+                        'help-echo "Buffer name
+mouse-1: Previous buffer\nmouse-3: Next buffer"
+                        'local-map mode-line-buffer-identification-keymap))))
+
+  ;; Linkify YYYY-MM-DD dates to journal notes on save
+  (defun joplin--linkify-dates ()
+    "Replace bare YYYY-MM-DD dates with Joplin journal links in the whole buffer."
+    (when (bound-and-true-p joplin-note-mode)
+      (save-excursion
+        (goto-char (point-min))
+        (while (re-search-forward
+                "\\b\\([0-9]\\{4\\}-[01][0-9]-[0-3][0-9]\\)\\b"
+                nil t)
+          (unless (and (> (match-beginning 0) (point-min))
+                       (= (char-before (match-beginning 0)) ?\[))
+            (let* ((date-str (match-string 1))
+                   (mb (match-beginning 0))
+                   (me (match-end 0))
+                   (note-id (joplin--journal-note-id date-str))
+                   (inhibit-modification-hooks t)
+                   (link (format "[%s](:/%s)" date-str note-id)))
+              (delete-region mb me)
+              (goto-char mb)
+              (insert link)))))))
+
+  (defun joplin--before-save-note (&rest _)
+    "Linkify dates before saving a Joplin note."
+    (joplin--linkify-dates))
+
+  (advice-add 'joplin-save-note :before #'joplin--before-save-note)
+
+  (defun joplin--after-save-note (&rest _)
+    "Rename buffer to match note title after save."
+    (when (bound-and-true-p joplin-note)
+      (let ((title (JNOTE-title joplin-note)))
+        (unless title
+          (setq-local joplin-note (joplin-get-note (JNOTE-id joplin-note))))))
+    (joplin--rename-buffer-from-note))
+
+  (advice-add 'joplin-save-note :after #'joplin--after-save-note)
+
+  (defun joplin--revert-note-buffer (_ignore-auto _noconfirm)
+    "Revert the current buffer from the Joplin API."
+    (let ((id (JNOTE-id joplin-note))
+          (pos (point))
+          (buf (current-buffer)))
+      (let ((inhibit-read-only t))
+        (erase-buffer)
+        (insert (alist-get 'body
+                           (joplin--http-get
+                            (concat "/notes/" id)
+                            '((fields . "body")))))
+        (goto-char (min pos (point-max))))
+      (setq-local joplin-note (joplin-get-note id))
+      (joplin--rename-buffer-from-note)
+      (set-buffer-modified-p nil)
+      (setq buffer-read-only nil)
+      (when view-mode (view-mode -1))
+      ;; Ensure edit mode after all revert hooks complete
+      (run-with-timer 0 nil
+                      (lambda (b)
+                        (when (buffer-live-p b)
+                          (with-current-buffer b
+                            (setq buffer-read-only nil)
+                            (when view-mode (view-mode -1)))))
+                      buf)
+      (message "Reverted note from Joplin")))
+
+  (advice-remove 'joplin--note-fill-buffer #'joplin--after-note-fill-buffer)
+
+  (defun joplin-backlinks ()
+    "List notes that link to the current Joplin note."
+    (interactive)
+    (unless (bound-and-true-p joplin-note)
+      (user-error "Not in a Joplin note buffer"))
+    (joplin-search nil (JNOTE-id joplin-note)))
+
+  (defun joplin-follow-link-at-point ()
+    "Follow link at point: open Joplin notes in Emacs, others externally."
+    (interactive)
+    (if-let ((url (markdown-link-url)))
+        (if (string-prefix-p ":/" url)
+            (switch-to-buffer (joplin--note-buffer (substring url 2)))
+          (browse-url url))
+      (user-error "No link at point")))
+
+  (defun joplin--search-notes-candidates ()
+    "Fetch Joplin notes matching current `helm-pattern'."
+    (when (>= (length helm-pattern) 2)
+      (let* ((resp (joplin--http-get "/search"
+                                     `((query . ,(url-hexify-string helm-pattern))
+                                       (type . note)
+                                       (fields . "id,title")
+                                       (limit . "30"))))
+             (items (alist-get 'items resp)))
+        (cl-loop for item across items
+                 collect (cons (alist-get 'title item)
+                               (alist-get 'id item))))))
+
+  (defvar joplin--insert-link-candidates nil
+    "Last candidates from `joplin--search-notes-candidates'.")
+
+  (defun joplin-insert-link ()
+    "Search for a Joplin note with live Helm and insert a link at point."
+    (interactive)
+    (unless (bound-and-true-p joplin-note-mode)
+      (user-error "Not in a Joplin note buffer"))
+    (joplin--init)
+    (let ((id (helm :sources
+                    (helm-build-sync-source "Joplin notes"
+                      :candidates (lambda ()
+                                    (setq joplin--insert-link-candidates
+                                          (joplin--search-notes-candidates))
+                                    joplin--insert-link-candidates)
+                      :volatile t
+                      :match #'identity
+                      :requires-pattern 2)
+                    :buffer "*helm joplin link*"
+                    :prompt "Note: ")))
+      (when id
+        (let ((title (car (rassoc id joplin--insert-link-candidates))))
+          (insert (format "[%s](:/%s)" (or title "Untitled") id))))))
+
+  (defun joplin-find-note ()
+    "Search for a Joplin note with live Helm and open it."
+    (interactive)
+    (joplin--init)
+    (let ((id (helm :sources
+                    (helm-build-sync-source "Joplin notes"
+                      :candidates #'joplin--search-notes-candidates
+                      :volatile t
+                      :match #'identity
+                      :requires-pattern 2)
+                    :buffer "*helm joplin find*"
+                    :prompt "Note: ")))
+      (when id
+        (switch-to-buffer (joplin--note-buffer id)))))
+
+  (transient-define-prefix joplin-transient-menu ()
+    "Joplin"
+    ["Navigate"
+     ("m" "Notebooks"       joplin)
+     ("f" "Find note"       joplin-find-note)
+     ("s" "Search"          joplin-search)
+     ("j" "Journal"         joplin-journal)]
+    ["Create"
+     ("n" "New note"        joplin-create-note)
+     ("b" "New notebook"    joplin-create-notebook)]
+    ["Delete"
+     ("d" "Delete note"     joplin-delete-note-dwim)
+     ("D" "Delete notebook" joplin-delete-notebook-dwim)]
+    ["Note actions" :if (lambda () (bound-and-true-p joplin-note-mode))
+     ("l" "Insert link"     joplin-insert-link)
+     ("B" "Backlinks"       joplin-backlinks)
+     ("o" "Follow link"     joplin-follow-link-at-point)])
+
+  ;; Joplin view keybindings
+  (define-key joplin-mode-map [?c] #'joplin-create-note)
+  (define-key joplin-mode-map [?C] #'joplin-create-notebook)
+  (define-key joplin-mode-map [?D] #'joplin-delete-notebook-dwim)
+  (define-key joplin-search-mode-map [?c] #'joplin-create-note)
+  (define-key joplin-search-mode-map [?C] #'joplin-create-notebook)
+  (define-key joplin-search-mode-map [?D] #'joplin-delete-note-dwim)
+  (define-key joplin-note-mode-map [(meta ?o)] #'joplin-follow-link-at-point)
+  )
 
 (load-file "~/.emacs.d/custom_packages/structured-log-mode.el")
 
@@ -1176,7 +1654,7 @@ when reading files and the other way around when writing contents."
   :vc (:url "https://github.com/unmonoqueteclea/jira.el" :rev :newest)
   :config
   (defun jira/detail-find-issue-by-key ()
-      (interactive)
+    (interactive)
     (jira-detail-find-issue-by-key))
 
   (global-set-key (kbd "M-s j") #'jira/detail-find-issue-by-key)
@@ -1241,7 +1719,86 @@ when reading files and the other way around when writing contents."
     (advice-add fn :around
                 (lambda (orig-fn &rest args)
                   (let ((switch-to-buffer-obey-display-actions t))
-                    (apply orig-fn args))))))
+                    (apply orig-fn args)))))
+
+  (defun jira/attachment-id-by-name (issue filename)
+    "Find the attachment content ID for FILENAME in ISSUE data."
+    (let ((attachments (append (alist-get 'attachment (alist-get 'fields issue)) nil)))
+      (cl-loop for att in attachments
+               when (string= (alist-get 'filename att) filename)
+               return (file-name-nondirectory
+                       (url-filename
+                        (url-generic-parse-url (alist-get 'content att)))))))
+
+  (defvar jira/auto-inline-images t
+    "When non-nil, automatically fetch and inline images when opening a Jira issue.")
+
+  (defun jira/inline-images ()
+    "Replace <file:...> image placeholders with inline images in jira-detail buffer."
+    (interactive)
+    (unless jira-detail--current
+      (user-error "Not in a jira-detail buffer"))
+    (let ((issue jira-detail--current)
+          (count 0)
+          (done 0))
+      (save-excursion
+        (goto-char (point-min))
+        (while (re-search-forward
+                "<file:\\(?:[^:>]+:\\)?\\([^>]+\\.\\(?:png\\|jpe?g\\|gif\\|webp\\)\\)>"
+                nil t)
+          (let* ((filename (match-string-no-properties 1))
+                 (placeholder (match-string-no-properties 0))
+                 (id (jira/attachment-id-by-name issue filename)))
+            (when id
+              (cl-incf count)
+              ;; capture loop variables for the async callback
+              ;; key must be a lexical binding (not defvar-local) so the
+              ;; closure sees the value captured here, not a dynamic lookup
+              ;; in whatever buffer request.el uses for the callback.
+              (let ((ph placeholder)
+                    (fname filename)
+                    (key jira-detail--current-key))
+                (jira-api-call
+                 "GET" (format "attachment/content/%s" id)
+                 :parser (lambda ()
+                          (set-buffer-multibyte nil)
+                          (buffer-string))
+                 :callback
+                 (lambda (data _response)
+                   (when-let* ((buf (jira-detail--get-issue-buffer key)))
+                     (with-current-buffer buf
+                       (let ((inhibit-read-only t))
+                         (save-excursion
+                           (goto-char (point-min))
+                           (when (search-forward ph nil t)
+                             (replace-match "")
+                             (insert-image
+                              (create-image data nil t
+                                            :max-width (min 1000 (- (window-pixel-width) 50)))
+                              (format "[%s]" fname))
+                             (insert "\n"))))
+                      (cl-incf done)
+                      (when (= done count)
+                        (goto-char (point-min)))))))))))))
+      (if (> count 0)
+          (message "Fetching %d image(s)..." count)
+        (message "No image placeholders found"))))
+
+  (defun jira/toggle-auto-inline-images ()
+    "Toggle automatic image inlining for Jira issues."
+    (interactive)
+    (setq jira/auto-inline-images (not jira/auto-inline-images))
+    (message "Jira auto inline images: %s" (if jira/auto-inline-images "ON" "OFF")))
+
+  (with-eval-after-load 'jira-detail
+    (define-key jira-detail-mode-map (kbd "I") #'jira/toggle-auto-inline-images)
+    (advice-add 'jira-detail--issue :after
+                (lambda (key &rest _)
+                  (when-let* ((buf (jira-detail--get-issue-buffer key)))
+                    (with-current-buffer buf
+                      (when jira/auto-inline-images
+                        (jira/inline-images))))))
+  )
 
 (use-package nix-mode
   :mode "\\.nix\\'")
