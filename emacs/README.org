@@ -1600,6 +1600,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
       (interactive
        (list (read-from-minibuffer "Journal date (YYYY-MM-DD): "
                                    (format-time-string "%Y-%m-%d"))))
+      (unless joplin-folders (joplin--init-folders))
       (switch-to-buffer (joplin--note-buffer (joplin--journal-note-id date-str))))
 
     (defun joplin-delete-note-dwim ()
@@ -1683,16 +1684,16 @@ As bookmarks are at the center of my workflow, this is a crucial option.
                         (setq buffer-read-only nil)
                         (when view-mode (view-mode -1)))
                       90 t)
-            (joplin--insert-backlinks-section)
+            (joplin--insert-metadata-section)
             (add-hook 'before-save-hook
                       (lambda ()
                         (setq-local joplin--saving-via-hook t)
-                        (joplin--remove-backlinks-section))
+                        (joplin--remove-metadata-section))
                       -100 t)
             (add-hook 'after-save-hook
                       (lambda ()
                         (unwind-protect
-                            (joplin--insert-backlinks-section)
+                            (joplin--insert-metadata-section)
                           (setq-local joplin--saving-via-hook nil)))
                       100 t)))
         (with-current-buffer buf
@@ -1722,13 +1723,13 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     ;; Linkify YYYY-MM-DD dates to journal notes on save
     (defun joplin--linkify-dates ()
       "Replace bare YYYY-MM-DD dates with Joplin journal links in the note body.
-    Stops before the backlinks section to avoid modifying read-only text."
+    Stops before the metadata section to avoid modifying read-only text."
       (when (bound-and-true-p joplin-note-mode)
         (save-excursion
           (goto-char (point-min))
-          (let ((search-end (when (and (markerp joplin--backlinks-start)
-                                       (marker-position joplin--backlinks-start))
-                              joplin--backlinks-start)))
+          (let ((search-end (when (and (markerp joplin--metadata-start)
+                                       (marker-position joplin--metadata-start))
+                              joplin--metadata-start)))
             (while (re-search-forward
                     "\\b\\([0-9]\\{4\\}-[01][0-9]-[0-3][0-9]\\)\\b"
                     search-end t)
@@ -1745,16 +1746,16 @@ As bookmarks are at the center of my workflow, this is a crucial option.
                   (insert link))))))))
 
     (defun joplin--before-save-note (&rest _)
-      "Remove backlinks and linkify dates before saving a Joplin note."
-      (joplin--remove-backlinks-section)
+      "Remove metadata section and linkify dates before saving a Joplin note."
+      (joplin--remove-metadata-section)
       (joplin--linkify-dates))
 
     (advice-add 'joplin-save-note :before #'joplin--before-save-note)
 
     (defun joplin--after-save-note (&rest _)
-      "Rename buffer and restore backlinks after save.
+      "Rename buffer and restore metadata section after save.
     When called from `write-file-functions' (inside `save-buffer'),
-    skip backlinks insertion — `after-save-hook' will handle it,
+    skip metadata insertion — `after-save-hook' will handle it,
     avoiding read-only errors from premature re-insertion."
       (when (bound-and-true-p joplin-note)
         (let ((title (JNOTE-title joplin-note)))
@@ -1762,7 +1763,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
             (setq-local joplin-note (joplin-get-note (JNOTE-id joplin-note))))))
       (joplin--rename-buffer-from-note)
       (unless joplin--saving-via-hook
-        (joplin--insert-backlinks-section)))
+        (joplin--insert-metadata-section)))
 
     (advice-add 'joplin-save-note :after #'joplin--after-save-note)
 
@@ -1791,7 +1792,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
                               (setq buffer-read-only nil)
                               (when view-mode (view-mode -1)))))
                         buf)
-        (joplin--insert-backlinks-section)
+        (joplin--insert-metadata-section)
         (message "Reverted note from Joplin")))
 
     (advice-remove 'joplin--note-fill-buffer #'joplin--after-note-fill-buffer)
@@ -1803,8 +1804,8 @@ As bookmarks are at the center of my workflow, this is a crucial option.
         (user-error "Not in a Joplin note buffer"))
       (joplin-search nil (JNOTE-id joplin-note)))
 
-    (defvar-local joplin--backlinks-start nil
-      "Marker for the start of the backlinks section in a Joplin note buffer.")
+    (defvar-local joplin--metadata-start nil
+      "Marker for the start of the metadata section in a Joplin note buffer.")
 
     (defvar-local joplin--saving-via-hook nil
       "Non-nil while `save-buffer' is in progress, to prevent the :after
@@ -1829,41 +1830,81 @@ As bookmarks are at the center of my workflow, this is a crucial option.
         (error (message "Joplin backlinks: %s" (error-message-string err))
                nil)))
 
-    (defun joplin--remove-backlinks-section ()
-      "Remove the backlinks section from the current buffer."
-      (when (and (markerp joplin--backlinks-start)
-                 (marker-position joplin--backlinks-start))
+    (defun joplin--remove-metadata-section ()
+      "Remove the metadata section from the current buffer."
+      (when (and (markerp joplin--metadata-start)
+                 (marker-position joplin--metadata-start))
         (let ((inhibit-read-only t)
               (buffer-undo-list t))
-          (delete-region joplin--backlinks-start (point-max))
-          (set-marker joplin--backlinks-start nil))))
+          (delete-region joplin--metadata-start (point-max))
+          (set-marker joplin--metadata-start nil))))
 
-    (defun joplin--insert-backlinks-section ()
-      "Insert a read-only backlinks section at the end of the current buffer."
-      (joplin--remove-backlinks-section)
-      (let ((backlinks (joplin--fetch-backlinks-for-note)))
-        (when backlinks
+    (defun joplin--format-joplin-time (ms)
+      "Format a Joplin timestamp MS (milliseconds since epoch) as a readable string."
+      (when (and ms (numberp ms) (> ms 0))
+        (format-time-string "%Y-%m-%d %H:%M" (seconds-to-time (/ ms 1000.0)))))
+
+    (defun joplin--insert-metadata-section ()
+      "Insert a read-only metadata section at the end of the current buffer.
+    Includes note path, author, dates, and backlinks."
+      (joplin--remove-metadata-section)
+      (when (bound-and-true-p joplin-note)
+        (let* ((note joplin-note)
+               (folder-path (joplin--folder-path (JNOTE-parent_id note)))
+               (full-path (concat folder-path "/" (or (JNOTE-title note) "Untitled")))
+               (author (JNOTE-author note))
+               (created (joplin--format-joplin-time (JNOTE-user_created_time note)))
+               (updated (joplin--format-joplin-time (JNOTE-user_updated_time note)))
+               (tags (JNOTE-_tags note))
+               (backlinks (joplin--fetch-backlinks-for-note)))
           (save-excursion
             (let ((inhibit-read-only t)
                   (buffer-undo-list t))
               (goto-char (point-max))
-              (setq-local joplin--backlinks-start (point-marker))
+              (setq-local joplin--metadata-start (point-marker))
               (let ((start (point)))
-                (insert "\n\n# ──────────── Backlinks ────────────\n")
-                (dolist (bl backlinks)
-                  (insert (format "[%s](:/%s)\n" (car bl) (cdr bl))))
+                (insert "\n\n# ──────────── Metadata ────────────\n")
+                (insert (format "## %s\n" full-path))
+                (when (and author (not (string-empty-p author)))
+                  (insert (format "- Author: %s\n" author)))
+                (when created
+                  (insert (format "- Created: %s\n" created)))
+                (when updated
+                  (insert (format "- Updated: %s\n" updated)))
+                (when tags
+                  (insert "\n## Tags\n")
+
+                  (insert (format "Tags: %s\n"
+                                  (mapconcat #'JTAG-title tags ", "))))
+                (when backlinks
+                  (insert "\n## Backlinks\n")
+                  (dolist (bl backlinks)
+                    (insert (format "[%s](:/%s)\n" (car bl) (cdr bl)))))
                 (add-text-properties start (point-max)
-                                     '(read-only t joplin-backlinks t face shadow)))))))
+                                     '(read-only t front-sticky (read-only)
+                                       joplin-metadata t face shadow)))))))
       (set-buffer-modified-p nil))
 
-    ;; Backlinks removal/restoration during save:
-    ;; - before-save-hook (-100): sets `joplin--saving-via-hook', removes backlinks
+    (defun joplin--clamp-to-before-metadata (&rest _)
+      "If point is inside the metadata section, move it just before it."
+      (when (and (bound-and-true-p joplin-note)
+                 (markerp joplin--metadata-start)
+                 (marker-position joplin--metadata-start)
+                 (>= (point) joplin--metadata-start))
+        (goto-char joplin--metadata-start)
+          (forward-line -1)
+          (end-of-line)))
+
+    (advice-add 'end-of-buffer :after #'joplin--clamp-to-before-metadata)
+
+    ;; Metadata section removal/restoration during save:
+    ;; - before-save-hook (-100): sets `joplin--saving-via-hook', removes metadata
     ;; - write-file-functions: `joplin-save-note' (with :before/:after advice)
-    ;;   The :after advice skips backlinks insertion when the flag is set,
+    ;;   The :after advice skips metadata insertion when the flag is set,
     ;;   avoiding read-only text in the buffer during basic-save-buffer processing
-    ;; - after-save-hook (100): re-inserts backlinks, clears flag
+    ;; - after-save-hook (100): re-inserts metadata, clears flag
     ;; For direct `joplin-save-note' calls (C-c j s), the flag is nil so
-    ;; the :after advice handles backlinks insertion directly.
+    ;; the :after advice handles metadata insertion directly.
 
     (defun joplin-follow-link-at-point ()
       "Follow link at point: open Joplin notes in Emacs, others externally."
