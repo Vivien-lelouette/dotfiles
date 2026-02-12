@@ -632,10 +632,11 @@
   ((multiple-cursors-mode . (lambda ()
                               (set-face-attribute 'mc/cursor-bar-face nil :height 1 :background nil :inherit 'cursor))))
   :config
+  (define-key mc/keymap (kbd "<return>") nil)
   (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
   (global-set-key (kbd "C-}") 'mc/mark-next-like-this)
   (global-set-key (kbd "C-{") 'mc/mark-previous-like-this)
-  (global-set-key (kbd "C-;") 'mc/mark-all-like-this)
+  (global-set-key (kbd "C-'") 'mc/mark-all-like-this)
   (global-set-key (kbd "C-S-<mouse-1>") 'mc/add-cursor-on-click)
   (setq mc/black-list-prefer t))
 
@@ -767,7 +768,27 @@
 
 (use-package pgmacs
   :vc (:url "https://github.com/emarsden/pgmacs" :rev :newest)
-  :defer t)
+  :defer t
+  :custom
+  (pgmacs-row-limit 100)
+  (pgmacs-large-database-threshold 0)
+  :config
+  (defun pgmacs-open-sql-connection ()
+    "Open PGmacs using a connection from `sql-connection-alist'."
+    (interactive)
+    (require 'sql)
+    (let* ((name (completing-read "SQL connection: "
+                                  (mapcar #'car sql-connection-alist) nil t))
+           (conn (cdr (assoc-string name sql-connection-alist)))
+           (get (lambda (sym) (cadr (assoc sym conn))))
+           (host (funcall get 'sql-server))
+           (port (funcall get 'sql-port))
+           (db   (funcall get 'sql-database))
+           (user (funcall get 'sql-user))
+           (pass (funcall get 'sql-password))
+           (str  (format "host=%s port=%s dbname=%s user=%s password=%s"
+                         host (or port 5432) db user pass)))
+      (pgmacs-open-string str))))
 
 (use-package string-inflection
   :defer t
@@ -1403,7 +1424,19 @@ when reading files and the other way around when writing contents."
                     (lambda ()
                       (setq buffer-read-only nil)
                       (when view-mode (view-mode -1)))
-                    90 t)))
+                    90 t)
+          (joplin--insert-backlinks-section)
+          (add-hook 'before-save-hook
+                    (lambda ()
+                      (setq-local joplin--saving-via-hook t)
+                      (joplin--remove-backlinks-section))
+                    -100 t)
+          (add-hook 'after-save-hook
+                    (lambda ()
+                      (unwind-protect
+                          (joplin--insert-backlinks-section)
+                        (setq-local joplin--saving-via-hook nil)))
+                    100 t)))
       (with-current-buffer buf
         (setq-local joplin-parent-buffer parent))
       buf))
@@ -1430,38 +1463,48 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
 
   ;; Linkify YYYY-MM-DD dates to journal notes on save
   (defun joplin--linkify-dates ()
-    "Replace bare YYYY-MM-DD dates with Joplin journal links in the whole buffer."
+    "Replace bare YYYY-MM-DD dates with Joplin journal links in the note body.
+  Stops before the backlinks section to avoid modifying read-only text."
     (when (bound-and-true-p joplin-note-mode)
       (save-excursion
         (goto-char (point-min))
-        (while (re-search-forward
-                "\\b\\([0-9]\\{4\\}-[01][0-9]-[0-3][0-9]\\)\\b"
-                nil t)
-          (unless (and (> (match-beginning 0) (point-min))
-                       (= (char-before (match-beginning 0)) ?\[))
-            (let* ((date-str (match-string 1))
-                   (mb (match-beginning 0))
-                   (me (match-end 0))
-                   (note-id (joplin--journal-note-id date-str))
-                   (inhibit-modification-hooks t)
-                   (link (format "[%s](:/%s)" date-str note-id)))
-              (delete-region mb me)
-              (goto-char mb)
-              (insert link)))))))
+        (let ((search-end (when (and (markerp joplin--backlinks-start)
+                                     (marker-position joplin--backlinks-start))
+                            joplin--backlinks-start)))
+          (while (re-search-forward
+                  "\\b\\([0-9]\\{4\\}-[01][0-9]-[0-3][0-9]\\)\\b"
+                  search-end t)
+            (unless (and (> (match-beginning 0) (point-min))
+                         (= (char-before (match-beginning 0)) ?\[))
+              (let* ((date-str (match-string 1))
+                     (mb (match-beginning 0))
+                     (me (match-end 0))
+                     (note-id (joplin--journal-note-id date-str))
+                     (inhibit-modification-hooks t)
+                     (link (format "[%s](:/%s)" date-str note-id)))
+                (delete-region mb me)
+                (goto-char mb)
+                (insert link))))))))
 
   (defun joplin--before-save-note (&rest _)
-    "Linkify dates before saving a Joplin note."
+    "Remove backlinks and linkify dates before saving a Joplin note."
+    (joplin--remove-backlinks-section)
     (joplin--linkify-dates))
 
   (advice-add 'joplin-save-note :before #'joplin--before-save-note)
 
   (defun joplin--after-save-note (&rest _)
-    "Rename buffer to match note title after save."
+    "Rename buffer and restore backlinks after save.
+  When called from `write-file-functions' (inside `save-buffer'),
+  skip backlinks insertion — `after-save-hook' will handle it,
+  avoiding read-only errors from premature re-insertion."
     (when (bound-and-true-p joplin-note)
       (let ((title (JNOTE-title joplin-note)))
         (unless title
           (setq-local joplin-note (joplin-get-note (JNOTE-id joplin-note))))))
-    (joplin--rename-buffer-from-note))
+    (joplin--rename-buffer-from-note)
+    (unless joplin--saving-via-hook
+      (joplin--insert-backlinks-section)))
 
   (advice-add 'joplin-save-note :after #'joplin--after-save-note)
 
@@ -1490,6 +1533,7 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
                             (setq buffer-read-only nil)
                             (when view-mode (view-mode -1)))))
                       buf)
+      (joplin--insert-backlinks-section)
       (message "Reverted note from Joplin")))
 
   (advice-remove 'joplin--note-fill-buffer #'joplin--after-note-fill-buffer)
@@ -1500,6 +1544,68 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
     (unless (bound-and-true-p joplin-note)
       (user-error "Not in a Joplin note buffer"))
     (joplin-search nil (JNOTE-id joplin-note)))
+
+  (defvar-local joplin--backlinks-start nil
+    "Marker for the start of the backlinks section in a Joplin note buffer.")
+
+  (defvar-local joplin--saving-via-hook nil
+    "Non-nil while `save-buffer' is in progress, to prevent the :after
+  advice on `joplin-save-note' from re-inserting read-only backlinks
+  during `write-file-functions'.")
+
+  (defun joplin--fetch-backlinks-for-note ()
+    "Return a list of (TITLE . ID) for notes that link to the current note."
+    (condition-case err
+        (when (bound-and-true-p joplin-note)
+          (let* ((id (JNOTE-id joplin-note))
+                 (resp (joplin--http-get "/search"
+                                         `((query . ,id)
+                                           (type . note)
+                                           (fields . "id,title")
+                                           (limit . "50"))))
+                 (items (alist-get 'items resp)))
+            (cl-loop for item across items
+                     unless (string= (alist-get 'id item) id)
+                     collect (cons (alist-get 'title item)
+                                   (alist-get 'id item)))))
+      (error (message "Joplin backlinks: %s" (error-message-string err))
+             nil)))
+
+  (defun joplin--remove-backlinks-section ()
+    "Remove the backlinks section from the current buffer."
+    (when (and (markerp joplin--backlinks-start)
+               (marker-position joplin--backlinks-start))
+      (let ((inhibit-read-only t)
+            (buffer-undo-list t))
+        (delete-region joplin--backlinks-start (point-max))
+        (set-marker joplin--backlinks-start nil))))
+
+  (defun joplin--insert-backlinks-section ()
+    "Insert a read-only backlinks section at the end of the current buffer."
+    (joplin--remove-backlinks-section)
+    (let ((backlinks (joplin--fetch-backlinks-for-note)))
+      (when backlinks
+        (save-excursion
+          (let ((inhibit-read-only t)
+                (buffer-undo-list t))
+            (goto-char (point-max))
+            (setq-local joplin--backlinks-start (point-marker))
+            (let ((start (point)))
+              (insert "\n\n# ──────────── Backlinks ────────────\n")
+              (dolist (bl backlinks)
+                (insert (format "[%s](:/%s)\n" (car bl) (cdr bl))))
+              (add-text-properties start (point-max)
+                                   '(read-only t joplin-backlinks t face shadow)))))))
+    (set-buffer-modified-p nil))
+
+  ;; Backlinks removal/restoration during save:
+  ;; - before-save-hook (-100): sets `joplin--saving-via-hook', removes backlinks
+  ;; - write-file-functions: `joplin-save-note' (with :before/:after advice)
+  ;;   The :after advice skips backlinks insertion when the flag is set,
+  ;;   avoiding read-only text in the buffer during basic-save-buffer processing
+  ;; - after-save-hook (100): re-inserts backlinks, clears flag
+  ;; For direct `joplin-save-note' calls (C-c j s), the flag is nil so
+  ;; the :after advice handles backlinks insertion directly.
 
   (defun joplin-follow-link-at-point ()
     "Follow link at point: open Joplin notes in Emacs, others externally."
@@ -1588,6 +1694,7 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
   (define-key joplin-search-mode-map [?C] #'joplin-create-notebook)
   (define-key joplin-search-mode-map [?D] #'joplin-delete-note-dwim)
   (define-key joplin-note-mode-map [(meta ?o)] #'joplin-follow-link-at-point)
+  (define-key joplin-note-mode-map (kbd "C-x C-s") #'joplin-save-note)
   )
 
 (load-file "~/.emacs.d/custom_packages/structured-log-mode.el")
@@ -1660,7 +1767,8 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
   (global-set-key (kbd "M-s j") #'jira/detail-find-issue-by-key)
   (global-set-key (kbd "M-s M-j") #'jira/detail-find-issue-by-key)
 
-  (setq jira-token-is-personal-access-token nil
+  (setq jira-detail-show-announcements nil
+        jira-token-is-personal-access-token nil
         jira-api-version 3
         jira-issues-max-results 200
         jira-issues-sort-key (cons "Status" t)
@@ -1782,7 +1890,7 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
                         (goto-char (point-min)))))))))))))
       (if (> count 0)
           (message "Fetching %d image(s)..." count)
-        (message "No image placeholders found"))))
+        (message "No image placeholders found")))
 
   (defun jira/toggle-auto-inline-images ()
     "Toggle automatic image inlining for Jira issues."
@@ -1790,14 +1898,52 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
     (setq jira/auto-inline-images (not jira/auto-inline-images))
     (message "Jira auto inline images: %s" (if jira/auto-inline-images "ON" "OFF")))
 
+  (defun jira/copy-issue-link ()
+    "Copy the Jira URL of the issue at point to the kill ring."
+    (interactive)
+    (if-let* ((key (jira-utils-marked-item))
+              (url (format "%s/browse/%s" (jira-api--get-current-url) key)))
+        (progn (kill-new url)
+               (message "Copied: %s" url))
+      (user-error "No issue at point")))
+
+  (defun jira/browse-url-at-point-or-issue (issue-key)
+    "Open the link at point in a browser, or fall back to opening ISSUE-KEY."
+    (if-let* ((btn (button-at (point)))
+              (url (or (button-get btn 'href)
+                       (let ((data (button-get btn 'button-data)))
+                         (and (stringp data) (string-match-p "\\`https?://" data) data)))))
+        (browse-url url)
+      (jira-actions-open-issue issue-key)))
+
+  (defun jira/inhibit-ret-on-buttons (orig-fun &rest args)
+    "In jira modes, make RET run the mode binding instead of following buttons."
+    (if (and (memq last-command-event '(13 return))
+             (derived-mode-p 'jira-issues-mode 'jira-detail-mode))
+        (when-let* ((cmd (lookup-key (current-local-map) (kbd "RET"))))
+          (call-interactively cmd))
+      (apply orig-fun args)))
+  (advice-add 'push-button :around #'jira/inhibit-ret-on-buttons)
+
   (with-eval-after-load 'jira-detail
     (define-key jira-detail-mode-map (kbd "I") #'jira/toggle-auto-inline-images)
+    (define-key jira-detail-mode-map (kbd "c") #'jira/copy-issue-link)
+    (define-key jira-detail-mode-map (kbd "M-o")
+      (lambda () "Open link at point or issue in browser" (interactive)
+        (jira/browse-url-at-point-or-issue jira-detail--current-key)))
     (advice-add 'jira-detail--issue :after
                 (lambda (key &rest _)
                   (when-let* ((buf (jira-detail--get-issue-buffer key)))
                     (with-current-buffer buf
                       (when jira/auto-inline-images
-                        (jira/inline-images))))))
+                        (jira/inline-images)))))))
+
+  (with-eval-after-load 'jira-issues
+    (define-key jira-issues-mode-map (kbd "c") #'jira/copy-issue-link)
+    (define-key jira-issues-mode-map (kbd "M-o")
+      (lambda () "Open link at point or issue in browser" (interactive)
+        (jira/browse-url-at-point-or-issue (jira-utils-marked-item)))))
+
   )
 
 (use-package nix-mode
@@ -1934,9 +2080,29 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
 
 (use-package php-mode)
 
+(use-package sql
+  :ensure nil
+  :config
+  ;; Give password to PG sql connection
+  (advice-add 'sql-comint-postgres :around
+              (lambda (orig-fun product options &rest args)
+                (setenv "PGPASSWORD" sql-password)
+                (unwind-protect
+                    (apply orig-fun product options args)
+                  (setenv "PGPASSWORD" nil)))))
+
 (use-package sqlup-mode
   :config
   (add-hook 'sql-mode-hook 'sqlup-mode))
+
+(use-package ejc-sql
+  :defer t
+  :config
+  (defun ejc/sql-mode-setup ()
+    (ejc-eldoc-setup)
+    (setq-local company-backends
+                (cons 'ejc-company-backend company-backends)))
+  (add-hook 'ejc-sql-minor-mode-hook #'ejc/sql-mode-setup))
 
 (use-package sqlite-mode-extras
   :vc (:url "https://github.com/xenodium/sqlite-mode-extras" :rev :newest)
