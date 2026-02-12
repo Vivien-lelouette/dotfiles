@@ -83,7 +83,7 @@ read it before opening a new issue about your will.")
                 (dracula-bg           "#232530" "unspecified-bg" "unspecified-bg") ; official background
                 (dracula-bg-alternate "#282a36" "unspecified-bg" "unspecified-bg") ; alternate background
                 (dracula-fg           "#f8f8f2" "#ffffff" "brightwhite") ; official foreground
-                (dracula-current      "#44475a" "#303030" "brightblack") ; official current-line/selection
+                (dracula-current      "#282a36" "#282a36" "brightblack") ; official current-line/selection
                 (dracula-comment      "#6272a4" "#5f5faf" "blue")        ; official comment
                 (dracula-cyan         "#8be9fd" "#87d7ff" "brightcyan")  ; official cyan
                 (dracula-green        "#50fa7b" "#5fff87" "green")       ; official green
@@ -92,7 +92,7 @@ read it before opening a new issue about your will.")
                 (dracula-purple       "#bd93f9" "#af87ff" "brightmagenta") ; official purple
                 (dracula-red          "#ff5555" "#ff8787" "red")         ; official red
                 (dracula-yellow       "#f1fa8c" "#ffff87" "yellow")      ; official yellow
-                (dracula-selection    "#7c60a3" "#7c60a3" "selection")
+                (dracula-selection    "#44475a" "#303030" "selection")
                 (dracula-selection-alternate    "#BD93F9" "#BD93F9" "selection")
                 (dracula-gtk-scrollbar "#a1a1a2" "unspecified" "unspecified")
                 ;; Other colors
@@ -420,8 +420,8 @@ read it before opening a new issue about your will.")
                (helm-grep-running :foreground ,dracula-green :background ,dracula-bg)
                (helm-header :foreground ,fg2 :background ,dracula-bg :underline nil :box nil)
                (helm-moccur-buffer :foreground ,dracula-green :background ,dracula-bg)
-               (helm-selection :background ,bg2 :underline nil)
-               (helm-selection-line :background ,bg2)
+               (helm-selection :background ,dracula-current :underline nil :weight bold)
+               (helm-selection-line :background ,dracula-current :weight bold)
                (helm-separator :foreground ,dracula-purple :background ,dracula-bg)
                (helm-source-go-package-godoc-description :foreground ,dracula-selection)
                (helm-source-header :foreground ,dracula-pink :background ,dracula-bg :underline nil :weight bold)
