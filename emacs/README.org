@@ -17,6 +17,9 @@
   (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
   (package-initialize)
 
+  (defconst *is-windows* (eq system-type 'windows-nt))
+  (defconst *is-linux* (eq system-type 'gnu/linux))
+
   ;; Ensure compilation of all elisp packages
   (use-package compile-angel
     :ensure t
@@ -204,7 +207,7 @@
   (bind-key* "C-x k" #'kill-buffer-and-window)
   (bind-key* "C-x K" #'kill-buffer)
   (global-set-key (kbd "C-<tab>") 'next-buffer)
-  (global-set-key (kbd "C-<iso-lefttab>") 'previous-buffer)
+  (global-set-key (kbd (if *is-linux* "C-<iso-lefttab>" "C-S-<tab>")) 'previous-buffer)
 
   (delete-selection-mode 1)
   (set-default 'truncate-lines t)
@@ -237,6 +240,61 @@
     (other-window -1))
 
   (global-hl-line-mode 1)
+#+END_SRC
+
+** Window rules
+
+Variable controlling whether window rules open buffers in new frames (ideal with tiling WMs) or keep them in the current frame.
+Set at daemon launch: =emacs --daemon --eval '(setq frame-centric t)'=
+
+#+BEGIN_SRC emacs-lisp
+  (defvar frame-centric nil
+    "When non-nil, window rules prefer opening buffers in new frames.
+  Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'")
+
+  (defun vv/display-buffer-pop-up-frame-maybe (buffer alist)
+    "Display BUFFER in a new frame only when `frame-centric' is non-nil."
+    (when frame-centric
+      (display-buffer-pop-up-frame buffer alist)))
+
+  ;; --- Docker ---
+  (with-eval-after-load 'docker
+    (setq docker-pop-to-buffer-action '((vv/display-buffer-pop-up-frame-maybe))))
+
+  ;; --- gptel ---
+  (with-eval-after-load 'gptel
+    (setq gptel-display-buffer-action '((vv/display-buffer-pop-up-frame-maybe))))
+
+  ;; --- Claudemacs ---
+  (add-to-list 'display-buffer-alist
+               '("^\\*claudemacs"
+                 (display-buffer-reuse-window vv/display-buffer-pop-up-frame-maybe)
+                 (reusable-frames . visible)))
+
+  ;; --- Jira ---
+  (with-eval-after-load 'jira
+    (defun jira/display-reuse-window (buffer alist)
+      "Display BUFFER in the same window if it already shows a *Jira buffer."
+      (when (string-prefix-p "*Jira" (buffer-name (window-buffer (selected-window))))
+        (display-buffer-same-window buffer alist)))
+
+    (dolist (fn '(jira-issues jira-tempo))
+      (advice-add fn :around
+                  (lambda (orig-fn &rest args)
+                    (let ((switch-to-buffer-obey-display-actions t))
+                      (apply orig-fn args))))))
+
+  (add-to-list 'display-buffer-alist
+               '("\\*Jira"
+                 (jira/display-reuse-window
+                  vv/display-buffer-pop-up-frame-maybe)
+                 (reusable-frames . visible)))
+
+  ;; --- Jest ---
+  (add-to-list 'display-buffer-alist
+               '("\\*jest-test-compilation\\*"
+                 (display-buffer-reuse-window vv/display-buffer-pop-up-frame-maybe)
+                 (reusable-frames . visible)))
 #+END_SRC
 
 ** Bookmarks
@@ -396,7 +454,9 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (dolist (face '(default fixed-pitch))
       (set-face-attribute `,face nil :font "SauceCodePro NF-11"))
     (fix-char-width-for-spinners))
-  (add-hook 'server-after-make-frame-hook #'fonts/set-fonts)
+  (if (daemonp)
+      (add-hook 'server-after-make-frame-hook #'fonts/set-fonts)
+    (add-hook 'window-setup-hook #'fonts/set-fonts))
 #+END_SRC
 
 ** Auth source encrypted
@@ -816,10 +876,12 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     :bind (
            :map prog-mode-map
            ("C-M-<tab>" . hs-cycle)
-           ("C-M-<iso-lefttab>" . hs-global-cycle)
            :map hs-minor-mode-map
-           ("C-M-<tab>" . hs-cycle)
-           ("C-M-<iso-lefttab>" . hs-global-cycle))
+           ("C-M-<tab>" . hs-cycle))
+    :init
+    (with-eval-after-load 'hideshow
+      (define-key prog-mode-map (kbd (if *is-linux* "C-M-<iso-lefttab>" "C-M-S-<tab>")) #'hs-global-cycle)
+      (define-key hs-minor-mode-map (kbd (if *is-linux* "C-M-<iso-lefttab>" "C-M-S-<tab>")) #'hs-global-cycle))
     :config
     (defun hs-cycle (&optional level)
       (interactive "p")
@@ -1170,6 +1232,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 #+begin_src emacs-lisp
   (use-package jinx
     :ensure nil
+    :if (or *is-linux* (executable-find "enchant-2"))
     :hook (emacs-startup . global-jinx-mode)
     :bind (("M-$" . jinx-correct)
            ("C-M-$" . jinx-languages)))
@@ -1181,8 +1244,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     :config
     (global-set-key (kbd "C-c d") 'docker)
     (setq docker-show-messages nil
-          docker-container-default-sort-key '("Names")
-          docker-pop-to-buffer-action '((display-buffer-pop-up-frame)))
+          docker-container-default-sort-key '("Names"))
 
     (defun docker-run-async-with-buffer-shell (program &rest args)
       "Execute \"PROGRAM ARGS\" and display output in a new `shell' buffer."
@@ -1254,8 +1316,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     :config
     (setq
      gptel-default-mode 'org-mode
-     gptel-prompt-prefix-alist '((markdown-mode . "## ") (org-mode . "** ") (text-mode . "## "))
-     gptel-display-buffer-action '((display-buffer-pop-up-frame))))
+     gptel-prompt-prefix-alist '((markdown-mode . "## ") (org-mode . "** ") (text-mode . "## "))))
 #+END_SRC
 
 ** Claude
@@ -1271,11 +1332,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
           claudemacs-switch-to-buffer-on-file-add nil
           claudemacs-switch-to-buffer-on-send-error nil
           claudemacs-switch-to-buffer-on-add-context nil)
-
-    (add-to-list 'display-buffer-alist
-                 '("^\\*claudemacs"
-                   (display-buffer-reuse-window display-buffer-pop-up-frame)
-                   (reusable-frames . visible)))
 
     (defvar claudemacs--scroll-timer nil)
 
@@ -2022,27 +2078,6 @@ As bookmarks are at the center of my workflow, this is a crucial option.
                                (:resolution (:path fields resolution name) (:columns . 10) (:name . "Resolution"))
                                (:issuelinks (:path fields issuelinks) (:columns . 15) (:name . "Linked Issues") (:formatter . jira-fmt-issuelinks))))
 
-    ;; Display a Jira buffer in the same window when the current
-    ;; window already shows a *Jira buffer, otherwise pop a new frame.
-    (defun jira/display-reuse-window (buffer alist)
-      "Display BUFFER in the same window if it already shows a *Jira buffer."
-      (when (string-prefix-p "*Jira" (buffer-name (window-buffer (selected-window))))
-        (display-buffer-same-window buffer alist)))
-
-    (add-to-list 'display-buffer-alist
-                 '("\\*Jira"
-                   (jira/display-reuse-window
-                    display-buffer-pop-up-frame)
-                   (reusable-frames . visible)))
-    ;; jira-issues and jira-tempo use switch-to-buffer which ignores
-    ;; display-buffer-alist; let-bind switch-to-buffer-obey-display-actions
-    ;; around them so they also open in a new frame.
-    (dolist (fn '(jira-issues jira-tempo))
-      (advice-add fn :around
-                  (lambda (orig-fn &rest args)
-                    (let ((switch-to-buffer-obey-display-actions t))
-                      (apply orig-fn args)))))
-
     (defun jira/attachment-id-by-name (issue filename)
       "Find the attachment content ID for FILENAME in ISSUE data."
       (let ((attachments (append (alist-get 'attachment (alist-get 'fields issue)) nil)))
@@ -2367,13 +2402,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 #+begin_src emacs-lisp
   (use-package jest-test-mode
     :commands jest-test-mode
-    :hook (typescript-mode typescript-ts-mode js-mode js-ts-mode typescript-tsx-mode)
-    :config
-    (add-to-list
-     'display-buffer-alist
-     '("\\*jest-test-compilation\\*"
-       (display-buffer-reuse-window display-buffer-pop-up-frame)
-       (reusable-frames . visible))))
+    :hook (typescript-mode typescript-ts-mode js-mode js-ts-mode typescript-tsx-mode))
 #+end_src
 
 ** Apheleia
@@ -2614,11 +2643,13 @@ Reuses an existing eshell buffer for the target directory if one exists."
       (set-char-table-range char-width-table '(#x2700 . #x27BF) 1)  ;; Dingbats (✢ ✶ ✻ ✽)
       (set-char-table-range char-width-table #x00B7 1))             ;; Middle dot (· ✢ ✶ ✻ ✽)
 
-    ;; (eat-exec buffer name "bash" nil (list "-ilc" command))
+    (defvar vv/eat-shell (or (executable-find "nu") (getenv "SHELL") "bash"))
+    (defvar vv/eat-shell-flag (if (string-match-p "nu\\|bash\\|zsh\\|sh" vv/eat-shell) "-c" "-Command"))
+
     (defun start-file-process-shell-command-using-eat-exec
         (name buffer command)
       (require 'eat)
-      (with-current-buffer (eat-exec buffer name "nu" nil (list "-c" command))
+      (with-current-buffer (eat-exec buffer name vv/eat-shell nil (list vv/eat-shell-flag command))
         (eat-emacs-mode)
         (setq eat--synchronize-scroll-function #'eat--synchronize-scroll)
         (get-buffer-process (current-buffer))))
@@ -2695,7 +2726,7 @@ Reuses an existing eshell buffer for the target directory if one exists."
       (interactive)
       (term-send-raw-string "\t"))
 
-    (setq multi-term-program "bash")
+    (setq multi-term-program (if *is-windows* "powershell" "bash"))
 
     (add-to-list 'term-bind-key-alist '("<backtab>" . term-send-up))
     (add-to-list 'term-bind-key-alist '("TAB" . term-send-tab))
@@ -2712,18 +2743,19 @@ Reuses an existing eshell buffer for the target directory if one exists."
 
 ** Detached
 #+begin_src emacs-lisp
-  (use-package detached
-    :init
-    (detached-init)
-    :bind (;; Replace `async-shell-command' with `detached-shell-command'
-           ([remap async-shell-command] . detached-shell-command)
-           ;; Replace `compile' with `detached-compile'
-           ([remap compile] . detached-compile)
-           ([remap recompile] . detached-compile-recompile)
-           ;; Replace built in completion of sessions with `consult'
-           ([remap detached-open-session] . detached-consult-session))
-    :custom ((detached-show-output-on-attach t)
-             (detached-terminal-data-command system-type)))
+  (unless *is-windows*
+    (use-package detached
+      :init
+      (detached-init)
+      :bind (;; Replace `async-shell-command' with `detached-shell-command'
+             ([remap async-shell-command] . detached-shell-command)
+             ;; Replace `compile' with `detached-compile'
+             ([remap compile] . detached-compile)
+             ([remap recompile] . detached-compile-recompile)
+             ;; Replace built in completion of sessions with `consult'
+             ([remap detached-open-session] . detached-consult-session))
+      :custom ((detached-show-output-on-attach t)
+               (detached-terminal-data-command system-type))))
 #+end_src
 
 ** Fancy compilation
@@ -2744,7 +2776,9 @@ Reuses an existing eshell buffer for the target directory if one exists."
     (interactive)
     (let* ((file (dired-get-filename nil t)))
       (message "Opening %s..." file)
-      (call-process "xdg-open" nil 0 nil file)
+      (if *is-windows*
+          (w32-shell-execute "open" file)
+        (call-process "xdg-open" nil 0 nil file))
       (message "Opening %s done" file)))
 
   (defun dired/open-home-dir ()
@@ -2812,7 +2846,10 @@ Reuses an existing eshell buffer for the target directory if one exists."
     (interactive (browse-url-interactive-arg "URL: "))
     (call-process "vivaldi" nil 0 nil "--new-window" url))
 
-  (setq browse-url-browser-function 'browse/url-vivaldi-open)
+  (setq browse-url-browser-function
+        (if *is-windows*
+            'browse-url-default-windows-browser
+          'browse/url-vivaldi-open))
 #+END_SRC
 
 ** HTML viewer
@@ -2883,5 +2920,6 @@ Sometimes, settings are specific to one of my computers. Those settings are stor
   	  (when (file-exists-p local-settings)
   	    (load-file local-settings)))
       (lsp)
-      (fix-char-width-for-spinners)))
+      (when (display-graphic-p)
+        (fix-char-width-for-spinners))))
 #+END_SRC
