@@ -1771,41 +1771,6 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
   ;; editing experience without affecting cursor placement.
   (stripspace-restore-column t))
 
-(use-package easysession
-  :vc (:url "https://github.com/jamescherti/easysession.el" :rev :newest)
-  :ensure t
-  :custom
-  (easysession-save-interval (* 10 60))  ; Save every 10 minutes
-
-  ;; Display the active session name in the mode-line lighter.
-  (easysession-save-mode-lighter-show-session-name t)
-
-  ;; Optionally, the session name can be shown in the modeline info area:
-  ;; (easysession-mode-line-misc-info t)
-
-  :config
-  ;; Key mappings
-  (global-set-key (kbd "C-c sl") #'easysession-switch-to) ; Load session
-  (global-set-key (kbd "C-c ss") #'easysession-save) ; Save session
-  (global-set-key (kbd "C-c sL") #'easysession-switch-to-and-restore-geometry)
-  (global-set-key (kbd "C-c sr") #'easysession-rename)
-  (global-set-key (kbd "C-c sR") #'easysession-reset)
-  (global-set-key (kbd "C-c sd") #'easysession-delete)
-
-  ;; Non-nil: `easysession-setup' loads the session automatically.
-  ;; Nil: session is not loaded automatically; the user can load it manually.
-  (setq easysession-setup-load-session t)
-
-  ;; Priority depth used when `easysession-setup' adds `easysession' hooks.
-  ;; 102 ensures that the session is loaded after all other packages.
-  (setq easysession-setup-add-hook-depth 102)
-
-  ;; The `easysession-setup' function adds hooks:
-  ;; - To automatically load the session during `emacs-startup-hook'.
-  ;; - To automatically save the session at regular intervals, and when Emacs
-  ;; exits.
-  (easysession-setup))
-
 (use-package jira
   :vc (:url "https://github.com/unmonoqueteclea/jira.el" :rev :newest)
   :config
