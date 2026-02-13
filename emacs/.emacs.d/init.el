@@ -1652,6 +1652,10 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
           (let ((inhibit-read-only t)
                 (buffer-undo-list t))
             (goto-char (point-max))
+            ;; Ensure there is at least one editable line before metadata
+            ;; so the user can type in an empty (new) note.
+            (when (= (point-min) (point-max))
+              (insert "\n"))
             (setq-local joplin--metadata-start (point-marker))
             (let ((start (point)))
               (insert "\n\n# ──────────── Metadata ────────────\n")
