@@ -444,15 +444,15 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 
   (defun fonts/set-fonts ()
     (interactive)
-    (set-face-attribute 'default nil :font "SauceCodePro NF-11")
+    (set-face-attribute 'default nil :font "JetBrains Mono")
 
     ;; Set the fixed pitch face
-    (set-face-attribute 'fixed-pitch nil :font "SauceCodePro NF-11")
+    (set-face-attribute 'fixed-pitch nil :font "JetBrains Mono")
 
     ;; Set the variable pitch face
-    (set-face-attribute 'variable-pitch nil :font "Cantarell-11" :weight 'regular)
+    (set-face-attribute 'variable-pitch nil :font "Cantarell" :weight 'regular)
     (dolist (face '(default fixed-pitch))
-      (set-face-attribute `,face nil :font "SauceCodePro NF-11"))
+      (set-face-attribute `,face nil :font "JetBrains Mono"))
     (fix-char-width-for-spinners))
   (if (daemonp)
       (add-hook 'server-after-make-frame-hook #'fonts/set-fonts)
@@ -2631,16 +2631,16 @@ Reuses an existing eshell buffer for the target directory if one exists."
       "Fix character width for common spinner/animation characters."
       (setq use-default-font-for-symbols nil)
 
-      (set-fontset-font t 'symbol "DejaVu Sans Mono" nil 'prepend)
+      (set-fontset-font t 'symbol "JetBrains Mono" nil 'prepend)
 
-      (set-fontset-font t 'emoji "DejaVuSans" nil 'prepend)
+      (set-fontset-font t 'emoji "JetBrains Mono" nil 'prepend)
 
-      (set-fontset-font t '(#x2800 . #x28FF) "DejaVu Sans Mono")
-      (set-fontset-font t '(#x2500 . #x257F) "DejaVu Sans Mono")
-      (set-fontset-font t '(#x2580 . #x259F) "DejaVu Sans Mono")
-      (set-fontset-font t '(#x2190 . #x21FF) "DejaVu Sans Mono")
-      (set-fontset-font t '(#x2700 . #x27BF) "DejaVu Sans Mono")
-      (set-fontset-font t #x00B7 "DejaVu Sans Mono")
+      (set-fontset-font t '(#x2800 . #x28FF) "JetBrains Mono")
+      (set-fontset-font t '(#x2500 . #x257F) "JetBrains Mono")
+      (set-fontset-font t '(#x2580 . #x259F) "JetBrains Mono")
+      (set-fontset-font t '(#x2190 . #x21FF) "JetBrains Mono")
+      (set-fontset-font t '(#x2700 . #x27BF) "JetBrains Mono")
+      (set-fontset-font t #x00B7 "JetBrains Mono")
 
       (set-char-table-range char-width-table '(#x2800 . #x28FF) 1)  ;; Braille
       (set-char-table-range char-width-table '(#x2500 . #x257F) 1)  ;; Box drawing

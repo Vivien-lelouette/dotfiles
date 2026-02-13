@@ -2271,15 +2271,20 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
               (replace-regexp-in-string "^[Directory ]*" "" (pwd)))
             default-directory))))
 
-  (custom-set-faces
-   `(ansi-color-black ((t (:foreground "#282a36"))))
-   `(ansi-color-red ((t (:foreground "#ff5555"))))
-   `(ansi-color-green ((t (:foreground "#50fa7b"))))
-   `(ansi-color-yellow ((t (:foreground "#f1fa8c"))))
-   `(ansi-color-blue ((t (:foreground "#bd93f9"))))
-   `(ansi-color-magenta ((t (:foreground "#ff79c6"))))
-   `(ansi-color-cyan ((t (:foreground "#8be9fd"))))
-   `(ansi-color-gray ((t (:foreground "#f8f8f2")))))
+  
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(ansi-color-black ((t (:foreground "#282a36"))))
+ '(ansi-color-blue ((t (:foreground "#bd93f9"))))
+ '(ansi-color-cyan ((t (:foreground "#8be9fd"))))
+ '(ansi-color-gray ((t (:foreground "#f8f8f2"))))
+ '(ansi-color-green ((t (:foreground "#50fa7b"))))
+ '(ansi-color-magenta ((t (:foreground "#ff79c6"))))
+ '(ansi-color-red ((t (:foreground "#ff5555"))))
+ '(ansi-color-yellow ((t (:foreground "#f1fa8c")))))
 
   (setq eshell-banner-message "")
 
@@ -2609,3 +2614,16 @@ Reuses an existing eshell buffer for the target directory if one exists."
     (lsp)
     (when (display-graphic-p)
       (fix-char-width-for-spinners))))
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages nil)
+ '(package-vc-selected-packages
+   '((eat :url "https://codeberg.org/akib/emacs-eat") (expreg :url "https://github.com/casouri/expreg")
+     (joplin-mode :url "https://github.com/cinsk/joplin-mode") (claudemacs :url "https://github.com/cpoile/claudemacs" :branch "main")
+     (ob-d2 :url "https://github.com/dmacvicar/ob-d2") (csv-mode :url "https://github.com/emacsmirror/csv-mode")
+     (explain-pause-mode :url "https://github.com/lastquestion/explain-pause-mode") (blist :url "https://github.com/emacs-straight/blist")
+     (pgmacs :url "https://github.com/emarsden/pgmacs") (vundo :url "https://github.com/casouri/vundo")
+     (combobulate :url "https://github.com/mickeynp/combobulate"))))
