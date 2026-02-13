@@ -1539,7 +1539,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     In a Joplin view, the path is pre-filled from the notebook at point."
       (interactive
        (progn
-         (unless joplin-folders (joplin--init-folders))
+         (joplin--init)
          (list (joplin--read-path "Notebook path: "))))
       (let ((parts (split-string path "/" t)))
         (joplin--resolve-folder-path parts)
@@ -1553,7 +1553,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     In a Joplin view, the path is pre-filled from the notebook at point."
       (interactive
        (progn
-         (unless joplin-folders (joplin--init-folders))
+         (joplin--init)
          (list (joplin--read-path "Note path: "))))
       (let* ((parts (split-string path "/" t))
              (title (car (last parts)))
@@ -1575,7 +1575,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
     (defun joplin--journal-note-id (date-str)
       "Return the note ID for journal entry DATE-STR, creating it if needed.
     Ensures the Journal/YYYY/MM-Xxx notebook hierarchy exists."
-      (unless joplin-folders (joplin--init-folders))
+      (joplin--init)
       (let* ((date (parse-time-string date-str))
              (month (nth 4 date))
              (year (nth 5 date))
@@ -1600,14 +1600,14 @@ As bookmarks are at the center of my workflow, this is a crucial option.
       (interactive
        (list (read-from-minibuffer "Journal date (YYYY-MM-DD): "
                                    (format-time-string "%Y-%m-%d"))))
-      (unless joplin-folders (joplin--init-folders))
+      (joplin--init)
       (switch-to-buffer (joplin--note-buffer (joplin--journal-note-id date-str))))
 
     (defun joplin-delete-note-dwim ()
       "Delete a Joplin note.  Uses note at point, current note buffer,
     or prompts for a path via Helm navigation."
       (interactive)
-      (unless joplin-folders (joplin--init-folders))
+      (joplin--init)
       (let (title id)
         (cond
          ((joplin--search-note-at-point)
@@ -1644,7 +1644,7 @@ As bookmarks are at the center of my workflow, this is a crucial option.
       "Delete a Joplin notebook.  Uses notebook at point in the folder
     browser, or prompts for a path via Helm navigation."
       (interactive)
-      (unless joplin-folders (joplin--init-folders))
+      (joplin--init)
       (let (name id)
         (if-let ((folder (joplin--folder-at-point)))
             (setq name (JFOLDER-title folder)

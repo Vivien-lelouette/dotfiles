@@ -370,15 +370,15 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
 
 (defun fonts/set-fonts ()
   (interactive)
-  (set-face-attribute 'default nil :font "SauceCodePro NF-11")
+  (set-face-attribute 'default nil :font "JetBrains Mono")
 
   ;; Set the fixed pitch face
-  (set-face-attribute 'fixed-pitch nil :font "SauceCodePro NF-11")
+  (set-face-attribute 'fixed-pitch nil :font "JetBrains Mono")
 
   ;; Set the variable pitch face
-  (set-face-attribute 'variable-pitch nil :font "Cantarell-11" :weight 'regular)
+  (set-face-attribute 'variable-pitch nil :font "Cantarell" :weight 'regular)
   (dolist (face '(default fixed-pitch))
-    (set-face-attribute `,face nil :font "SauceCodePro NF-11"))
+    (set-face-attribute `,face nil :font "JetBrains Mono"))
   (fix-char-width-for-spinners))
 (if (daemonp)
     (add-hook 'server-after-make-frame-hook #'fonts/set-fonts)
@@ -1330,7 +1330,7 @@ when reading files and the other way around when writing contents."
   In a Joplin view, the path is pre-filled from the notebook at point."
     (interactive
      (progn
-       (unless joplin-folders (joplin--init-folders))
+       (joplin--init)
        (list (joplin--read-path "Notebook path: "))))
     (let ((parts (split-string path "/" t)))
       (joplin--resolve-folder-path parts)
@@ -1344,7 +1344,7 @@ when reading files and the other way around when writing contents."
   In a Joplin view, the path is pre-filled from the notebook at point."
     (interactive
      (progn
-       (unless joplin-folders (joplin--init-folders))
+       (joplin--init)
        (list (joplin--read-path "Note path: "))))
     (let* ((parts (split-string path "/" t))
            (title (car (last parts)))
@@ -1366,7 +1366,7 @@ when reading files and the other way around when writing contents."
   (defun joplin--journal-note-id (date-str)
     "Return the note ID for journal entry DATE-STR, creating it if needed.
   Ensures the Journal/YYYY/MM-Xxx notebook hierarchy exists."
-    (unless joplin-folders (joplin--init-folders))
+    (joplin--init)
     (let* ((date (parse-time-string date-str))
            (month (nth 4 date))
            (year (nth 5 date))
@@ -1391,14 +1391,14 @@ when reading files and the other way around when writing contents."
     (interactive
      (list (read-from-minibuffer "Journal date (YYYY-MM-DD): "
                                  (format-time-string "%Y-%m-%d"))))
-    (unless joplin-folders (joplin--init-folders))
+    (joplin--init)
     (switch-to-buffer (joplin--note-buffer (joplin--journal-note-id date-str))))
 
   (defun joplin-delete-note-dwim ()
     "Delete a Joplin note.  Uses note at point, current note buffer,
   or prompts for a path via Helm navigation."
     (interactive)
-    (unless joplin-folders (joplin--init-folders))
+    (joplin--init)
     (let (title id)
       (cond
        ((joplin--search-note-at-point)
@@ -1435,7 +1435,7 @@ when reading files and the other way around when writing contents."
     "Delete a Joplin notebook.  Uses notebook at point in the folder
   browser, or prompts for a path via Helm navigation."
     (interactive)
-    (unless joplin-folders (joplin--init-folders))
+    (joplin--init)
     (let (name id)
       (if-let ((folder (joplin--folder-at-point)))
           (setq name (JFOLDER-title folder)
@@ -2271,20 +2271,15 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
               (replace-regexp-in-string "^[Directory ]*" "" (pwd)))
             default-directory))))
 
-  
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(ansi-color-black ((t (:foreground "#282a36"))))
- '(ansi-color-blue ((t (:foreground "#bd93f9"))))
- '(ansi-color-cyan ((t (:foreground "#8be9fd"))))
- '(ansi-color-gray ((t (:foreground "#f8f8f2"))))
- '(ansi-color-green ((t (:foreground "#50fa7b"))))
- '(ansi-color-magenta ((t (:foreground "#ff79c6"))))
- '(ansi-color-red ((t (:foreground "#ff5555"))))
- '(ansi-color-yellow ((t (:foreground "#f1fa8c")))))
+  (custom-set-faces
+   `(ansi-color-black ((t (:foreground "#282a36"))))
+   `(ansi-color-red ((t (:foreground "#ff5555"))))
+   `(ansi-color-green ((t (:foreground "#50fa7b"))))
+   `(ansi-color-yellow ((t (:foreground "#f1fa8c"))))
+   `(ansi-color-blue ((t (:foreground "#bd93f9"))))
+   `(ansi-color-magenta ((t (:foreground "#ff79c6"))))
+   `(ansi-color-cyan ((t (:foreground "#8be9fd"))))
+   `(ansi-color-gray ((t (:foreground "#f8f8f2")))))
 
   (setq eshell-banner-message "")
 
@@ -2350,16 +2345,16 @@ Reuses an existing eshell buffer for the target directory if one exists."
     "Fix character width for common spinner/animation characters."
     (setq use-default-font-for-symbols nil)
 
-    (set-fontset-font t 'symbol "DejaVu Sans Mono" nil 'prepend)
+    (set-fontset-font t 'symbol "JetBrains Mono" nil 'prepend)
 
-    (set-fontset-font t 'emoji "DejaVuSans" nil 'prepend)
+    (set-fontset-font t 'emoji "JetBrains Mono" nil 'prepend)
 
-    (set-fontset-font t '(#x2800 . #x28FF) "DejaVu Sans Mono")
-    (set-fontset-font t '(#x2500 . #x257F) "DejaVu Sans Mono")
-    (set-fontset-font t '(#x2580 . #x259F) "DejaVu Sans Mono")
-    (set-fontset-font t '(#x2190 . #x21FF) "DejaVu Sans Mono")
-    (set-fontset-font t '(#x2700 . #x27BF) "DejaVu Sans Mono")
-    (set-fontset-font t #x00B7 "DejaVu Sans Mono")
+    (set-fontset-font t '(#x2800 . #x28FF) "JetBrains Mono")
+    (set-fontset-font t '(#x2500 . #x257F) "JetBrains Mono")
+    (set-fontset-font t '(#x2580 . #x259F) "JetBrains Mono")
+    (set-fontset-font t '(#x2190 . #x21FF) "JetBrains Mono")
+    (set-fontset-font t '(#x2700 . #x27BF) "JetBrains Mono")
+    (set-fontset-font t #x00B7 "JetBrains Mono")
 
     (set-char-table-range char-width-table '(#x2800 . #x28FF) 1)  ;; Braille
     (set-char-table-range char-width-table '(#x2500 . #x257F) 1)  ;; Box drawing
@@ -2614,16 +2609,3 @@ Reuses an existing eshell buffer for the target directory if one exists."
     (lsp)
     (when (display-graphic-p)
       (fix-char-width-for-spinners))))
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(package-selected-packages nil)
- '(package-vc-selected-packages
-   '((eat :url "https://codeberg.org/akib/emacs-eat") (expreg :url "https://github.com/casouri/expreg")
-     (joplin-mode :url "https://github.com/cinsk/joplin-mode") (claudemacs :url "https://github.com/cpoile/claudemacs" :branch "main")
-     (ob-d2 :url "https://github.com/dmacvicar/ob-d2") (csv-mode :url "https://github.com/emacsmirror/csv-mode")
-     (explain-pause-mode :url "https://github.com/lastquestion/explain-pause-mode") (blist :url "https://github.com/emacs-straight/blist")
-     (pgmacs :url "https://github.com/emarsden/pgmacs") (vundo :url "https://github.com/casouri/vundo")
-     (combobulate :url "https://github.com/mickeynp/combobulate"))))
