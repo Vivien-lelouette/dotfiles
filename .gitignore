@@ -124,3 +124,4 @@ emacs/.emacs.d/etc/transient/*
 *.elc
 /emacs/.emacs.d/easysession/
 emacs/.emacs.d/etc/transient/values.el
+/emacs/.emacs.d/.agent-shell/

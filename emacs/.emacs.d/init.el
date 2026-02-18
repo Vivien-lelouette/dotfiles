@@ -198,6 +198,19 @@
   (other-window -1))
 
 (global-hl-line-mode 1)
+(setq hl-line-overlay-priority -50)
+
+(use-package winpulse
+  :vc (:url "https://github.com/xenodium/winpulse"
+            :rev :newest)
+  :config
+  (winpulse-mode +1))
+
+(use-package hiwin-mode
+  :vc
+  (:url "https://github.com/fenril058/hiwin-mode")
+  :config
+  (hiwin-mode 0))
 
 (defvar frame-centric nil
   "When non-nil, window rules prefer opening buffers in new frames.
@@ -215,6 +228,10 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
 ;; --- gptel ---
 (with-eval-after-load 'gptel
   (setq gptel-display-buffer-action '((vv/display-buffer-pop-up-frame-maybe))))
+
+;; --- Agent Shell ---
+(with-eval-after-load 'agent-shell
+  (setq agent-shell-display-action '((vv/display-buffer-pop-up-frame-maybe))))
 
 ;; --- Claudemacs ---
 (add-to-list 'display-buffer-alist
@@ -384,6 +401,14 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
     (add-hook 'server-after-make-frame-hook #'fonts/set-fonts)
   (add-hook 'window-setup-hook #'fonts/set-fonts))
 
+(use-package textsize
+  :vc (:url "https://github.com/WJCFerguson/textsize" :rev :newest)
+  :custom
+  (textsize-default-points 10)
+  (textsize-monitor-size-thresholds '((0 . -3) (280 . 0) (500 . 3) (1000 . 6) (1500 . 9)))
+  (textsize-pixel-pitch-thresholds '((0 . 3) (0.12 . 0) (0.18 . -3) (0.22 . -6) (0.40 . 12)))
+  :init (textsize-mode))
+
 (setq auth-sources '("~/.authinfo.gpg"))
 
 (setq remote-file-name-inhibit-cache nil
@@ -474,7 +499,7 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
         helm-show-action-window-other-window      'right
         helm-allow-mouse                          t
         helm-move-to-line-cycle-in-source         nil
-        helm-echo-input-in-header-line            nil
+        helm-echo-input-in-header-line            t
         helm-autoresize-max-height                30   ; it is %.
         helm-autoresize-min-height                5   ; it is %.
         helm-follow-mode-persistent               t
@@ -498,7 +523,7 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
   (defun helm/grep-do-git-grep ()
     (interactive)
     (let* ((helm-candidate-number-limit nil))
-      (call-interactively 'helm-grep-do-git-grep)))
+      (helm-grep-do-git-grep '(4))))
 
   (defun helm/grep-do-git-grep-literal ()
     "Git grep with literal string matching (handles spaces and parentheses)."
@@ -521,8 +546,20 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
       (call-interactively 'helm-do-grep-ag-project)
       ))
 
-  (defadvice helm-display-mode-line (after undisplay-header activate)
-    (setq header-line-format nil))
+  (defun helm/prompt-display-with-region (pos)
+    "Like `helm-set-default-prompt-display' but also shows the region."
+    (helm-set-default-prompt-display pos)
+    (with-selected-window (minibuffer-window)
+      (when (and mark-active (region-active-p))
+        (let* ((beg (save-excursion (vertical-motion 0 (helm-window)) (point)))
+               (rbeg (- (region-beginning) beg))
+               (rend (- (region-end) beg)))
+          ;; Offset by 1 for the pref space
+          (with-helm-buffer
+            (put-text-property (+ 1 rbeg) (+ 1 rend)
+                               'face 'region
+                               header-line-format))))))
+  (setq helm-default-prompt-display-function #'helm/prompt-display-with-region)
 
   (global-set-key (kbd "C-h r")                        'helm-info-emacs)
   (global-set-key (kbd "M-x")                          'undefined)
@@ -631,12 +668,17 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
       (let ((org-confirm-babel-evaluate nil))
         (org-babel-tangle))))
   (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'org/org-babel-tangle-config))))
-  ;; (custom-set-faces
-  ;;  '(org-level-1 ((t (:inherit outline-1 :height 2.5))))
-  ;;  '(org-level-2 ((t (:inherit outline-2 :height 1.8))))
-  ;;  '(org-level-3 ((t (:inherit outline-3 :height 1.4))))
-  ;;  '(org-level-4 ((t (:inherit outline-4 :height 1.2))))
-  ;;  '(org-level-5 ((t (:inherit outline-5 :height 1.0))))))
+;; (custom-set-faces
+;;  '(org-level-1 ((t (:inherit outline-1 :height 2.5))))
+;;  '(org-level-2 ((t (:inherit outline-2 :height 1.8))))
+;;  '(org-level-3 ((t (:inherit outline-3 :height 1.4))))
+;;  '(org-level-4 ((t (:inherit outline-4 :height 1.2))))
+;;  '(org-level-5 ((t (:inherit outline-5 :height 1.0))))))
+
+(use-package org-tree-slide
+  :config
+  (define-key org-tree-slide-mode-map (kbd "M-p") 'org-tree-slide-move-previous-tree)
+  (define-key org-tree-slide-mode-map (kbd "M-n") 'org-tree-slide-move-next-tree))
 
 ;; (make-directory "~/RoamNotes")
 (use-package org-roam
@@ -1115,72 +1157,103 @@ when reading files and the other way around when writing contents."
    gptel-default-mode 'org-mode
    gptel-prompt-prefix-alist '((markdown-mode . "## ") (org-mode . "** ") (text-mode . "## "))))
 
-(use-package claudemacs
-  :vc (:url "https://github.com/cpoile/claudemacs"
-            :rev :newest
-            :branch "main")
+(use-package agent-shell
+  :ensure t
   :config
-  (setq claudemacs-use-shell-env t
-        claudemacs-switch-to-buffer-on-create nil
-        claudemacs-switch-to-buffer-on-toggle nil
-        claudemacs-switch-to-buffer-on-file-add nil
-        claudemacs-switch-to-buffer-on-send-error nil
-        claudemacs-switch-to-buffer-on-add-context nil)
+  (setq agent-shell-prefer-viewport-interaction nil
+        agent-shell-preferred-agent-config 'claude-code)
 
-  (defvar claudemacs--scroll-timer nil)
+  ;; Auto-scroll pour les buffers agent-shell via agent-shell-section-functions
+  ;; (defun agent-shell--auto-scroll (_range)
+  ;;   "Scroll agent-shell buffer to bottom in all windows displaying it."
+  ;;   (let ((buf (current-buffer)))
+  ;;     (dolist (window (get-buffer-window-list buf nil t))
+  ;;       (with-selected-window window
+  ;;         (goto-char (point-max))
+  ;;         (recenter -1)))))
 
-  (defun claudemacs/scroll-to-bottom ()
-    "Scroll all claudemacs windows to the bottom."
-    (dolist (buf (buffer-list))
-      (when (and (buffer-live-p buf)
-                 (string-prefix-p "*claudemacs" (buffer-name buf)))
-        (dolist (window (get-buffer-window-list buf nil t))
-          (with-selected-window window
-            (goto-char (point-max))
-            (recenter -1))))))
+  ;; (add-hook 'agent-shell-section-functions #'agent-shell--auto-scroll)
 
-  (defun claudemacs/start-scroll-timer ()
-    "Start auto-scroll timer for claudemacs."
-    (unless claudemacs--scroll-timer
-      (setq claudemacs--scroll-timer
-            (run-with-timer 0 0.5 #'claudemacs/scroll-to-bottom))))
-
-  (defun claudemacs/stop-scroll-timer ()
-    "Stop auto-scroll timer."
-    (when claudemacs--scroll-timer
-      (cancel-timer claudemacs--scroll-timer)
-      (setq claudemacs--scroll-timer nil)))
-
-  (defun claudemacs/toggle-follow ()
-    "Toggle auto-scroll for claudemacs buffers."
+  (defun agent/shell ()
+    "Start agent shell or reuse existing shell for current project.
+If the shell buffer is visible in another frame, focus that frame.
+Preserves context (region, files, etc.) like the default behavior."
     (interactive)
-    (if claudemacs--scroll-timer
-        (progn
-          (claudemacs/stop-scroll-timer)
-          (message "Claudemacs follow: OFF"))
-      (claudemacs/start-scroll-timer)
-      (message "Claudemacs follow: ON")))
+    (let* ((shell-buffer (agent-shell--shell-buffer :no-error t :no-create t))
+           (shell-window (when shell-buffer
+                           (get-buffer-window shell-buffer t)))
+           (context (when shell-window
+                      (agent-shell--context :shell-buffer shell-buffer))))
+      (if shell-window
+          (progn
+            (select-frame-set-input-focus (window-frame shell-window))
+            (select-window shell-window)
+            (when context
+              (let* ((prompt-point (point-max)))
+                (goto-char prompt-point)
+                (insert "\n\n" context)
+                (goto-char prompt-point))))
+        (agent-shell))))
 
-  (transient-append-suffix 'claudemacs-transient-menu '(-1)
+  (defun agent-shell-reply (text)
+    "Send TEXT as a quick reply to the agent from any buffer."
+    (let ((shell-buffer (agent-shell--shell-buffer :no-error t :no-create t)))
+      (if shell-buffer
+          (with-current-buffer shell-buffer
+            (agent-shell-insert :text text :submit t))
+        (user-error "No agent-shell buffer found"))))
+
+  (defun agent-shell-reply-yes ()
+    "Reply 'yes' to the agent."
+    (interactive)
+    (agent-shell-reply "yes"))
+
+  (defun agent-shell-reply-no ()
+    "Reply 'no' to the agent."
+    (interactive)
+    (agent-shell-reply "no"))
+
+  (defun agent-shell-reply-yes-all ()
+    "Reply 'yes for the rest of the session' to the agent."
+    (interactive)
+    (agent-shell-reply "yes, for the rest of the session"))
+
+  (defun agent-shell-reply-stop ()
+    "Reply 'stop' to the agent."
+    (interactive)
+    (agent-shell-reply "stop"))
+
+  (defun agent-shell-reply-continue ()
+    "Reply 'continue' to the agent."
+    (interactive)
+    (agent-shell-reply "continue"))
+
+  (transient-append-suffix 'agent-shell-help-menu '(-1)
     ["Quick"
-     ("c" "Claude" transient:claudemacs-start-menu::0)
-     ("f" "Toggle follow" claudemacs/toggle-follow)])
+     ("a" "Agent shell" agent/shell)]
+    ["Reply"
+     ("y" "Yes" agent-shell-reply-yes)
+     ("n" "No" agent-shell-reply-no)
+     ("Y" "Yes (session)" agent-shell-reply-yes-all)
+     ("s" "Stop" agent-shell-reply-stop)
+     ("c" "Continue" agent-shell-reply-continue)])
 
-  (defun claudemacs/startup-hook ()
-    (claudemacs/start-scroll-timer)
-    (run-with-timer 0.5 nil #'eat-emacs-mode))
+  ;; Navigation avec M-n / M-p pour les pages du viewport
+  (with-eval-after-load 'agent-shell-viewport
+    (define-key agent-shell-viewport-view-mode-map (kbd "M-n") #'agent-shell-viewport-next-page)
+    (define-key agent-shell-viewport-view-mode-map (kbd "M-p") #'agent-shell-viewport-previous-page)
+    (define-key agent-shell-viewport-edit-mode-map (kbd "M-n") #'agent-shell-viewport-next-page)
+    (define-key agent-shell-viewport-edit-mode-map (kbd "M-p") #'agent-shell-viewport-previous-page))
 
-  (add-hook 'claudemacs-startup-hook #'claudemacs/startup-hook)
-
-  (global-set-key (kbd "C-c c") #'claudemacs-transient-menu))
+  (global-set-key (kbd "C-c a") #'agent-shell-help-menu))
 
 (use-package joplin-mode
   :vc (:url "https://github.com/cinsk/joplin-mode" :rev :newest)
   :commands (joplin joplin-search joplin-create-note joplin-create-notebook
                     joplin-journal joplin-delete-note-dwim joplin-delete-notebook-dwim)
-  :bind (("M-s m"   . joplin-find-note)
-         ("M-s M-m" . joplin-find-note)
-         ("C-c m"   . joplin-transient-menu))
+  :bind (("M-s j"   . joplin-find-note)
+         ("M-s M-j" . joplin-find-note)
+         ("C-c j"   . joplin-transient-menu))
   :config
   (setq joplin-token (auth-source-pick-first-password :host "joplin"))
 
@@ -1692,6 +1765,16 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
 
   (advice-add 'end-of-buffer :after #'joplin--clamp-to-before-metadata)
 
+  (defun joplin-mark-whole-buffer ()
+    "Select only the editable part of the buffer, excluding metadata."
+    (interactive)
+    (push-mark (point-min) nil t)
+    (if (and (bound-and-true-p joplin-note)
+             (markerp joplin--metadata-start)
+             (marker-position joplin--metadata-start))
+        (goto-char joplin--metadata-start)
+      (goto-char (point-max))))
+
   ;; Metadata section removal/restoration during save:
   ;; - before-save-hook (-100): sets `joplin--saving-via-hook', removes metadata
   ;; - write-file-functions: `joplin-save-note' (with :before/:after advice)
@@ -1789,6 +1872,8 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
   (define-key joplin-search-mode-map [?D] #'joplin-delete-note-dwim)
   (define-key joplin-note-mode-map [(meta ?o)] #'joplin-follow-link-at-point)
   (define-key joplin-note-mode-map (kbd "C-x C-s") #'joplin-save-note)
+  (define-key joplin-note-mode-map (kbd "C-x h") #'joplin-mark-whole-buffer)
+  (define-key joplin-note-mode-map (kbd "C-c j") #'joplin-transient-menu)
   )
 
 (load-file "~/.emacs.d/custom_packages/structured-log-mode.el")
@@ -1823,8 +1908,8 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
     (interactive)
     (jira-detail-find-issue-by-key))
 
-  (global-set-key (kbd "M-s j") #'jira/detail-find-issue-by-key)
-  (global-set-key (kbd "M-s M-j") #'jira/detail-find-issue-by-key)
+  (global-set-key (kbd "M-s J") #'jira/detail-find-issue-by-key)
+  (global-set-key (kbd "M-s M-J") #'jira/detail-find-issue-by-key)
 
   (setq jira-detail-show-announcements nil
         jira-token-is-personal-access-token nil
@@ -1907,8 +1992,8 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
                 (jira-api-call
                  "GET" (format "attachment/content/%s" id)
                  :parser (lambda ()
-                          (set-buffer-multibyte nil)
-                          (buffer-string))
+                           (set-buffer-multibyte nil)
+                           (buffer-string))
                  :callback
                  (lambda (data _response)
                    (when-let* ((buf (jira-detail--get-issue-buffer key)))
@@ -1923,12 +2008,12 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
                                             :max-width (min 1000 (- (window-pixel-width) 50)))
                               (format "[%s]" fname))
                              (insert "\n"))))
-                      (cl-incf done)
-                      (when (= done count)
-                        (goto-char (point-min)))))))))))))
-      (if (> count 0)
-          (message "Fetching %d image(s)..." count)
-        (message "No image placeholders found")))
+                       (cl-incf done)
+                       (when (= done count)
+                         (goto-char (point-min)))))))))))))
+    (if (> count 0)
+        (message "Fetching %d image(s)..." count)
+      (message "No image placeholders found")))
 
   (defun jira/toggle-auto-inline-images ()
     "Toggle automatic image inlining for Jira issues."
@@ -1963,12 +2048,233 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
       (apply orig-fun args)))
   (advice-add 'push-button :around #'jira/inhibit-ret-on-buttons)
 
+  (defun jira/list-jql (jql)
+    "Ouvre la vue jira-issues avec le filtre JQL donné."
+    (interactive "sJQL: ")
+    (oset (get 'jira-issues-menu 'transient--prefix)
+          value (list (concat "--jql=" jql)))
+    (jira-issues))
+
+  (defun jira/org--fetch-issues (jql &optional max-results)
+    "Récupère les issues Jira correspondant à JQL."
+    (require 'jira-api)
+    (let* ((max-results (or max-results 50))
+           (params `(("jql" . ,jql)
+                     ("maxResults" . ,max-results)
+                     ("fields" . "key,status,summary,issuetype,assignee")))
+           (response nil))
+      (jira-api-search
+       :params params
+       :sync t
+       :callback (lambda (data _response) (setq response data)))
+      (when response
+        (append (alist-get 'issues response) nil))))
+
+  (defun jira/org--insert-issues (issues)
+    "Insère les ISSUES formatées avec faces au point actuel."
+    (require 'jira-fmt)
+    ;; Header
+    (insert (propertize (format "%-12s" "Id") 'face 'bold))
+    (insert "  ")
+    (insert (propertize (format "%-22s" "Status") 'face 'bold))
+    (insert "  ")
+    (insert (propertize "Titre" 'face 'bold))
+    (insert "\n")
+    ;; Séparateur
+    (insert (make-string 80 ?─))
+    (insert "\n")
+    ;; Issues groupées par status
+    (let ((last-status nil))
+      (dolist (issue issues)
+        (let* ((key (alist-get 'key issue))
+               (fields (alist-get 'fields issue))
+               (status (alist-get 'status fields))
+               (status-name (alist-get 'name status))
+               (status-fmt (jira-fmt-issue-status status))
+               (summary (or (alist-get 'summary fields) "")))
+          ;; Ligne vide entre groupes de status différents
+          (when (and last-status (not (equal last-status status-name)))
+            (insert "\n"))
+          (setq last-status status-name)
+          (insert (jira-fmt-set-face key 'jira-face-link))
+          (insert (make-string (max 0 (- 12 (length key))) ? ))
+          (insert "  ")
+          (insert status-fmt)
+          (insert (make-string (max 0 (- 22 (length status-fmt))) ? ))
+          (insert "  ")
+          (insert summary)
+          (insert "\n"))))
+    (when issues (delete-char -1)))
+
+  (defun jira/org-refresh-block ()
+    "Rafraîchit le bloc Jira sous le curseur ou dans la section courante."
+    (interactive)
+    (save-excursion
+      (let ((case-fold-search t))
+        ;; Chercher le marqueur BEGIN dans la section courante
+        (unless (looking-at "^#\\+JIRA_BEGIN:")
+          (if (re-search-backward "^#\\+JIRA_BEGIN:" nil t)
+              (goto-char (match-beginning 0))
+            (user-error "Aucun bloc Jira trouvé")))
+        (let* ((begin-line (line-beginning-position))
+               (jql (progn
+                      (looking-at "^#\\+JIRA_BEGIN: \\(.*\\)$")
+                      (match-string 1)))
+               (content-start (progn (forward-line 1) (point)))
+               (content-end (progn
+                              (if (re-search-forward "^#\\+JIRA_END" nil t)
+                                  (line-beginning-position)
+                                (user-error "Marqueur JIRA_END manquant")))))
+          ;; Supprimer l'ancien contenu
+          (delete-region content-start content-end)
+          (goto-char content-start)
+          ;; Insérer les nouvelles données
+          (let ((issues (jira/org--fetch-issues jql)))
+            (if issues
+                (progn
+                  (jira/org--insert-issues issues)
+                  (insert "\n"))
+              (insert "(Aucune issue)\n")))
+          (message "Bloc Jira rafraîchi: %d issues" (length (jira/org--fetch-issues jql)))))))
+
+  (defun jira/org-refresh-buffer ()
+    "Rafraîchit tous les blocs Jira du buffer."
+    (interactive)
+    (save-excursion
+      (goto-char (point-min))
+      (let ((count 0))
+        (while (re-search-forward "^#\\+JIRA_BEGIN:" nil t)
+          (goto-char (match-beginning 0))
+          (jira/org-refresh-block)
+          (cl-incf count)
+          (forward-line 1))
+        (message "Rafraîchi %d bloc(s) Jira" count))))
+
+  (defun jira/org-insert-block (jql)
+    "Insère un nouveau bloc Jira avec JQL."
+    (interactive "sJQL: ")
+    (insert (format "#+JIRA_BEGIN: %s\n" jql))
+    (let ((issues (jira/org--fetch-issues jql)))
+      (if issues
+          (jira/org--insert-issues issues)
+        (insert "(Aucune issue)"))
+      (insert "\n#+JIRA_END\n")))
+
+  ;; Liste des statuts connus avec leur catégorie pour la fontification
+  (defvar jira/org-status-faces
+    '(;; To Do
+      ("À analyser" . jira-face-status-todo)
+      ("To Do" . jira-face-status-todo)
+      ("Backlog" . jira-face-status-todo)
+      ("Open" . jira-face-status-todo)
+      ("Reopened" . jira-face-status-todo)
+      ("READY TO DO" . jira-face-status-todo)
+      ;; In Progress
+      ("In Progress" . jira-face-status-inprogress)
+      ("En cours" . jira-face-status-inprogress)
+      ("In Review" . jira-face-status-inprogress)
+      ("MERGE REQUEST REVIEW" . jira-face-status-inprogress)
+      ("En revue" . jira-face-status-inprogress)
+      ("À valider" . jira-face-status-inprogress)
+      ("En attente" . jira-face-status-inprogress)
+      ;; Done
+      ("Done" . jira-face-status-done)
+      ("Terminé" . jira-face-status-done)
+      ("Closed" . jira-face-status-done)
+      ("Resolved" . jira-face-status-done)
+      ("DEPLOYED" . jira-face-status-done)
+      ("Validé" . jira-face-status-done))
+    "Alist mapping status names to their faces.")
+
+  (defun jira/org-clear-overlays ()
+    "Supprime tous les overlays Jira du buffer."
+    (remove-overlays (point-min) (point-max) 'jira-overlay t))
+
+  (defun jira/org-fontify-block (start end)
+    "Fontifie un bloc Jira entre START et END avec des overlays."
+    (save-excursion
+      (goto-char start)
+      ;; Fontifier les IDs Jira (pattern: PROJET-1234)
+      (while (re-search-forward "^\\([A-Z][A-Z0-9]+-[0-9]+\\)" end t)
+        (let ((ov (make-overlay (match-beginning 1) (match-end 1))))
+          (overlay-put ov 'jira-overlay t)
+          (overlay-put ov 'face 'jira-face-link)))
+      ;; Fontifier les statuts
+      (goto-char start)
+      (dolist (status-face jira/org-status-faces)
+        (let ((status (car status-face))
+              (face (cdr status-face)))
+          (goto-char start)
+          (while (re-search-forward (concat "  \\(" (regexp-quote status) "\\)  ") end t)
+            (let ((ov (make-overlay (match-beginning 1) (match-end 1))))
+              (overlay-put ov 'jira-overlay t)
+              (overlay-put ov 'face face)))))))
+
+  (defun jira/org-fontify-buffer ()
+    "Fontifie tous les blocs Jira du buffer."
+    (interactive)
+    (require 'jira-fmt)
+    (jira/org-clear-overlays)
+    (save-excursion
+      (goto-char (point-min))
+      (while (re-search-forward "^#\\+JIRA_BEGIN:" nil t)
+        (let ((block-start (line-beginning-position 2)))
+          (when (re-search-forward "^#\\+JIRA_END" nil t)
+            (let ((block-end (line-beginning-position)))
+              (jira/org-fontify-block block-start block-end)))))))
+
+  (defun jira/org-maybe-fontify ()
+    "Fontifie les blocs Jira si jira-fmt est chargé."
+    (when (featurep 'jira-fmt)
+      (jira/org-fontify-buffer)))
+
+  (defun jira/init-org-buffer ()
+    (jira/org-setup-keys)
+    (add-hook 'after-save-hook #'jira/org-maybe-fontify nil t)
+    ;; Fontifier après un court délai pour laisser le buffer se charger
+    (run-with-idle-timer 0.5 nil #'jira/org-maybe-fontify))
+
+  (defun jira/org-issue-at-point ()
+    "Retourne l'ID Jira sous le curseur, ou nil."
+    (save-excursion
+      (let ((line-start (line-beginning-position))
+            (line-end (line-end-position)))
+        ;; Chercher un ID Jira sur la ligne courante
+        (goto-char line-start)
+        (when (re-search-forward "\\([A-Z][A-Z0-9]+-[0-9]+\\)" line-end t)
+          (let ((match-start (match-beginning 1))
+                (match-end (match-end 1)))
+            ;; Vérifier si le curseur est sur ou avant l'ID
+            (when (<= (point) match-end)
+              (match-string 1)))))))
+
+  (defun jira/org-open-issue-at-point ()
+    "Ouvre l'issue Jira sous le curseur dans jira.el."
+    (interactive)
+    (if-let ((key (jira/org-issue-at-point)))
+        (jira-detail-show-issue key)
+      (user-error "Aucun ID Jira trouvé sur cette ligne")))
+
+  (defun jira/org-RET-dwim ()
+    "Ouvre l'issue Jira si sur un ID, sinon exécute l'action org par défaut."
+    (interactive)
+    (if (jira/org-issue-at-point)
+        (jira/org-open-issue-at-point)
+      (org-return)))
+
+  (defun jira/org-setup-keys ()
+    "Configure les raccourcis clavier pour les blocs Jira dans org-mode."
+    (local-set-key (kbd "<return>") #'jira/org-RET-dwim))
+
+  ;; Hook pour fontifier à l'ouverture des fichiers Org
+  (add-hook 'org-mode-hook 'jira/init-org-buffer)
+
   (with-eval-after-load 'jira-detail
     (define-key jira-detail-mode-map (kbd "I") #'jira/toggle-auto-inline-images)
     (define-key jira-detail-mode-map (kbd "c") #'jira/copy-issue-link)
     (define-key jira-detail-mode-map (kbd "M-o")
-      (lambda () "Open link at point or issue in browser" (interactive)
-        (jira/browse-url-at-point-or-issue jira-detail--current-key)))
+                (lambda () "Open link at point or issue in browser" (interactive)
+                  (jira/browse-url-at-point-or-issue jira-detail--current-key)))
     (advice-add 'jira-detail--issue :after
                 (lambda (key &rest _)
                   (when-let* ((buf (jira-detail--get-issue-buffer key)))
@@ -1979,8 +2285,8 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
   (with-eval-after-load 'jira-issues
     (define-key jira-issues-mode-map (kbd "c") #'jira/copy-issue-link)
     (define-key jira-issues-mode-map (kbd "M-o")
-      (lambda () "Open link at point or issue in browser" (interactive)
-        (jira/browse-url-at-point-or-issue (jira-utils-marked-item)))))
+                (lambda () "Open link at point or issue in browser" (interactive)
+                  (jira/browse-url-at-point-or-issue (jira-utils-marked-item)))))
 
   )
 
@@ -2030,7 +2336,87 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
     (interactive)
     (let ((magit-display-buffer-function 'magit-display-buffer-same-window-except-diff-v1))
       (magit-status)))
-  (setq magit-bury-buffer-function 'magit-mode-quit-window))
+  (setq magit-bury-buffer-function 'magit-mode-quit-window)
+
+  (defun magit/jira-key-from-branch ()
+    "Extract a Jira issue key (e.g. PROJ-123) from the current branch name."
+    (when-let* ((branch (magit-get-current-branch)))
+      (when (string-match "\\b\\([A-Z][A-Z0-9]+-[0-9]+\\)" branch)
+        (match-string 1 branch))))
+
+  (defvar-local magit/jira-issue-cache nil
+    "Cached Jira issue data for the current magit-status buffer.")
+
+  (defvar-local magit/jira-issue-cache-branch nil
+    "Branch name associated with `magit/jira-issue-cache'.")
+
+  (defun magit/jira-fetch-issue (key)
+    "Fetch Jira issue KEY synchronously and return the response data."
+    (let ((result nil))
+      (jira-api-call
+       "GET" (concat "issue/" key)
+       :sync t
+       :callback (lambda (data _response) (setq result data)))
+      result))
+
+  (defun magit/insert-jira-issue ()
+    "Insert a Magit section showing the Jira issue associated with the branch."
+    (when-let* ((key (magit/jira-key-from-branch)))
+      (require 'jira-api nil t)
+      (require 'jira-doc nil t)
+      (when (fboundp 'jira-api-call)
+        (condition-case nil
+            (let* ((current-branch (magit-get-current-branch))
+                   (_cache-check (unless (equal current-branch magit/jira-issue-cache-branch)
+                                   (setq magit/jira-issue-cache nil
+                                         magit/jira-issue-cache-branch current-branch)))
+                   (issue (or magit/jira-issue-cache
+                             (setq magit/jira-issue-cache
+                                   (magit/jira-fetch-issue key))))
+                   (fields (alist-get 'fields issue))
+                   (summary (alist-get 'summary fields))
+                   (status (alist-get 'name (alist-get 'status fields)))
+                   (type (alist-get 'name (alist-get 'issuetype fields)))
+                   (assignee (or (alist-get 'displayName (alist-get 'assignee fields)) "Unassigned"))
+                   (priority (alist-get 'name (alist-get 'priority fields)))
+                   (labels (alist-get 'labels fields))
+                   (components (mapcar (lambda (c) (alist-get 'name c))
+                                       (append (alist-get 'components fields) nil)))
+                   (description (alist-get 'description fields)))
+              (when (and issue summary)
+                (magit-insert-section (jira-issue key)
+                  (magit-insert-heading
+                    (format "Jira: %s [%s] %s" key status summary))
+                  (insert (format "  Type:     %s\n" type))
+                  (insert (format "  Priority: %s\n" (or priority "None")))
+                  (insert (format "  Assignee: %s\n" assignee))
+                  (insert (format "  Status:   %s\n" status))
+                  (when components
+                    (insert (format "  Components: %s\n" (string-join components ", "))))
+                  (when description
+                    (insert "\n")
+                    (magit-insert-section (jira-description nil t)
+                      (magit-insert-heading "  Description")
+                      (insert (replace-regexp-in-string
+                               "^" "    "
+                               (jira-doc-format description))
+                              "\n")))
+                  (insert "\n"))))
+          (error nil)))))
+
+  (defvar-keymap jira-issue-section-map
+    :doc "Keymap for the Jira issue section in magit-status."
+    "RET" (lambda () (interactive)
+            (when-let* ((key (magit-section-value-if 'jira-issue)))
+              (jira-detail-show-issue key))))
+
+  (defclass jira-issue (magit-section)
+    ((keymap :initform 'jira-issue-section-map)))
+
+  (magit-add-section-hook 'magit-status-sections-hook
+                          #'magit/insert-jira-issue
+                          #'magit-insert-status-headers
+                          'append))
 
 (use-package magit-todos
   :after magit

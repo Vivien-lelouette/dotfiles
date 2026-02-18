@@ -82,6 +82,7 @@ read it before opening a new issue about your will.")
 (let ((colors '(;; Upstream theme color
                 (dracula-bg           "#232530" "unspecified-bg" "unspecified-bg") ; official background
                 (dracula-bg-alternate "#282a36" "unspecified-bg" "unspecified-bg") ; alternate background
+                (dracula-disabled-bg  "#1f212c" "unspecified-bg" "unspecified-bg") ; official background
                 (dracula-fg           "#f8f8f2" "#ffffff" "brightwhite") ; official foreground
                 (dracula-current      "#282a36" "#282a36" "brightblack") ; official current-line/selection
                 (dracula-comment      "#6272a4" "#5f5faf" "blue")        ; official comment
@@ -808,6 +809,37 @@ read it before opening a new issue about your will.")
                (shr-h4 :foreground ,dracula-selection)
                (shr-h5 :foreground ,dracula-cyan)
                (shr-h6 :foreground ,dracula-orange)
+               ;; jira
+               (jira-face-link :foreground ,dracula-cyan :underline t)
+               (jira-face-date :foreground ,dracula-comment)
+               (jira-face-date-today :foreground ,dracula-green :weight bold)
+               (jira-face-time :foreground ,dracula-purple)
+               (jira-face-mention :foreground ,dracula-cyan :weight bold)
+               (jira-face-blockquote :foreground ,dracula-comment :slant italic)
+               (jira-face-emoji-reference :foreground ,dracula-yellow)
+               (jira-face-h1 :foreground ,dracula-pink :weight bold
+                             ,@(when dracula-enlarge-headings
+                                 (list :height dracula-height-title-1)))
+               (jira-face-h2 :foreground ,dracula-purple :weight bold
+                             ,@(when dracula-enlarge-headings
+                                 (list :height dracula-height-title-2)))
+               (jira-face-h3 :foreground ,dracula-green
+                             ,@(when dracula-enlarge-headings
+                                 (list :height dracula-height-title-3)))
+               (jira-face-h4 :foreground ,dracula-cyan)
+               (jira-face-h5 :foreground ,dracula-orange)
+               (jira-face-h6 :foreground ,dracula-yellow)
+               (jira-face-status-todo :foreground ,dracula-orange :weight bold)
+               (jira-face-status-inprogress :foreground ,dracula-purple :weight bold)
+               (jira-face-status-done :foreground ,dracula-green :weight bold)
+               (jira-face-code :inherit fixed-pitch :foreground ,dracula-green :background ,bg2)
+               (jira-face-deleted :foreground ,dracula-red :strike-through t)
+               (jira-face-inserted :foreground ,dracula-green :underline t)
+               (jira-face-placeholder :foreground ,dracula-comment :slant italic)
+
+               ;; hiwin-mode
+               (hiwin-face :background ,dracula-disabled-bg)
+
                ;; slime
                (slime-repl-inputed-output-face :foreground ,dracula-purple)
                ;; spam
