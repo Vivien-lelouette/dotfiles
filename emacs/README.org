@@ -196,63 +196,161 @@
 
 ** Buffers, frames & windows
 #+BEGIN_SRC emacs-lisp
-  ;; Auto-revert with performance optimizations
-  (setq auto-revert-interval 1           ; Check every 1 second (not continuously)
-        auto-revert-check-vc-info nil    ; Don't check VC info (expensive)
-        auto-revert-verbose nil          ; Don't show messages
-        auto-revert-use-notify t         ; Use file notifications when available
-        auto-revert-avoid-polling t)     ; Prefer notifications over polling
-  (global-auto-revert-mode 1)
-  (require 'bind-key)
-  (bind-key* "C-x k" #'kill-buffer-and-window)
-  (bind-key* "C-x K" #'kill-buffer)
-  (global-set-key (kbd "C-<tab>") 'next-buffer)
-  (global-set-key (kbd (if *is-linux* "C-<iso-lefttab>" "C-S-<tab>")) 'previous-buffer)
+    ;; Auto-revert with performance optimizations
+    (setq auto-revert-interval 1           ; Check every 1 second (not continuously)
+          auto-revert-check-vc-info nil    ; Don't check VC info (expensive)
+          auto-revert-verbose nil          ; Don't show messages
+          auto-revert-use-notify t         ; Use file notifications when available
+          auto-revert-avoid-polling t)     ; Prefer notifications over polling
+    (global-auto-revert-mode 1)
+    (require 'bind-key)
+    (bind-key* "C-x K" #'kill-buffer-and-window)
+    (bind-key* "C-x k" #'kill-current-buffer)
+    (global-set-key (kbd "C-<tab>") 'next-buffer)
+    (global-set-key (kbd (if *is-linux* "C-<iso-lefttab>" "C-S-<tab>")) 'previous-buffer)
 
-  (delete-selection-mode 1)
-  (set-default 'truncate-lines t)
+    (delete-selection-mode 1)
+    (set-default 'truncate-lines t)
 
-  (defun next-code-buffer ()
-    (interactive)
-    (let (( bread-crumb (buffer-name) ))
-      (next-buffer)
-      (while
-          (and
-           (string-match-p "^\*" (buffer-name))
-           (not ( equal bread-crumb (buffer-name) )) )
-        (next-buffer))))
+    (defun next-code-buffer ()
+      (interactive)
+      (let (( bread-crumb (buffer-name) ))
+        (next-buffer)
+        (while
+            (and
+             (string-match-p "^\*" (buffer-name))
+             (not ( equal bread-crumb (buffer-name) )) )
+          (next-buffer))))
 
-  (defun previous-code-buffer ()
-    (interactive)
-    (let (( bread-crumb (buffer-name) ))
-      (previous-buffer)
-      (while
-          (and
-           (string-match-p "^\*" (buffer-name))
-           (not ( equal bread-crumb (buffer-name) )) )
-        (previous-buffer))))
+    (defun previous-code-buffer ()
+      (interactive)
+      (let (( bread-crumb (buffer-name) ))
+        (previous-buffer)
+        (while
+            (and
+             (string-match-p "^\*" (buffer-name))
+             (not ( equal bread-crumb (buffer-name) )) )
+          (previous-buffer))))
 
-  (global-set-key (kbd "C-M-o") 'next-code-buffer)
-  (global-set-key (kbd "C-M-O") 'previous-code-buffer)
+    (global-set-key (kbd "C-M-o") 'next-code-buffer)
+    (global-set-key (kbd "C-M-O") 'previous-code-buffer)
 
-  (defun reverse-other-window ()
-    (interactive)
-    (other-window -1))
+    (defun reverse-other-window ()
+      (interactive)
+      (other-window -1))
 
-  (global-hl-line-mode 1)
-  (setq hl-line-overlay-priority -50)
+    (global-hl-line-mode 1)
+    (setq hl-line-overlay-priority -50)
 
-  (use-package winpulse
-    :vc (:url "https://github.com/xenodium/winpulse"
-              :rev :newest)
-    :config
-    (winpulse-mode +1))
+    (use-package winpulse
+      :vc (:url "https://github.com/xenodium/winpulse"
+                :rev :newest)
+      :config
+      (winpulse-mode 0))
 
-  (use-package hiwin-mode
-    :vc
-    (:url "https://github.com/fenril058/hiwin-mode")
-    :config
-    (hiwin-mode 0))
+    (use-package window-dim
+      :vc
+      (:url "https://github.com/alvgaona/window-dim.el")
+      :config
+      ;; Dimming intensity (0.0 to 1.0, default 0.3)
+      (setq window-dim-fraction 0.4)
+
+      ;; Keep last window highlighted when Emacs loses focus
+      (setq window-dim-dim-on-focus-out nil)
+
+      (setq window-dim-exclude-buffer-regexp
+            "\\`\\( \\|\\*Minibuf\\|\\*which-key\\|\\*transient\\|\\*helm\\)")
+
+      (setq window-dim-exclude-modes nil)
+
+      ;; Add magit faces so window-dim can dim them in inactive windows
+      (with-eval-after-load 'magit
+        (dolist (face '(magit-section-heading
+                        magit-section-highlight
+                        magit-branch-local
+                        magit-branch-remote
+                        magit-tag
+                        magit-hash
+                        magit-dimmed
+                        magit-refname
+                        magit-diff-context
+                        magit-diff-context-highlight
+                        magit-diff-added
+                        magit-diff-added-highlight
+                        magit-diff-removed
+                        magit-diff-removed-highlight
+                        magit-diff-file-heading
+                        magit-diff-file-heading-highlight
+                        magit-diff-hunk-heading
+                        magit-diff-hunk-heading-highlight
+                        magit-diff-revision-summary
+                        magit-diff-revision-summary-highlight))
+          (cl-pushnew face window-dim--faces))
+        (window-dim--refresh-all-remaps))
+
+      ;; Add org-mode faces so window-dim can dim them in inactive windows
+      (with-eval-after-load 'org
+        (dolist (face '(org-level-1
+                        org-level-2
+                        org-level-3
+                        org-level-4
+                        org-level-5
+                        org-level-6
+                        org-level-7
+                        org-level-8
+                        org-document-title
+                        org-document-info
+                        org-code
+                        org-verbatim
+                        org-block
+                        org-block-begin-line
+                        org-block-end-line
+                        org-meta-line
+                        org-link
+                        org-tag
+                        org-todo
+                        org-done
+                        org-date
+                        org-table
+                        org-formula
+                        org-special-keyword
+                        org-property-value
+                        org-drawer))
+          (cl-pushnew face window-dim--faces))
+        (window-dim--refresh-all-remaps))
+
+      ;; Add agent-shell status faces so window-dim can dim them in inactive windows
+      (with-eval-after-load 'agent-shell
+        (dolist (face '(success
+                        warning
+                        error))
+          (cl-pushnew face window-dim--faces))
+        (window-dim--refresh-all-remaps))
+
+      ;; Add comint faces so window-dim can dim them in inactive windows
+      (with-eval-after-load 'comint
+        (dolist (face '(comint-highlight-prompt
+                        comint-highlight-input))
+          (cl-pushnew face window-dim--faces))
+        (window-dim--refresh-all-remaps))
+
+      ;; Add dired faces so window-dim can dim them in inactive windows
+      (with-eval-after-load 'dired
+        (dolist (face '(dired-directory
+                        dired-symlink
+                        dired-mark
+                        dired-marked
+                        dired-flagged
+                        dired-header
+                        dired-ignored
+                        dired-perm-write
+                        dired-warning))
+          (cl-pushnew face window-dim--faces))
+        (window-dim--refresh-all-remaps))
+
+      (window-dim-mode 1)
+      (add-hook 'window-configuration-change-hook
+                (lambda () (window-dim--on-window-change (selected-frame)))))
 #+END_SRC
 
 ** Window rules
@@ -280,7 +378,10 @@ Set at daemon launch: =emacs --daemon --eval '(setq frame-centric t)'=
 
   ;; --- Agent Shell ---
   (with-eval-after-load 'agent-shell
-    (setq agent-shell-display-action '((vv/display-buffer-pop-up-frame-maybe))))
+    (setq agent-shell-display-action
+          '((vv/display-buffer-pop-up-frame-maybe display-buffer-in-side-window)
+            (side . right)
+            (slot . 0))))
 
   ;; --- Claudemacs ---
   (add-to-list 'display-buffer-alist
@@ -461,15 +562,13 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 
   (defun fonts/set-fonts ()
     (interactive)
-    (set-face-attribute 'default nil :font "JetBrains Mono")
+    (set-face-attribute 'default nil :family "JetBrains Mono")
 
     ;; Set the fixed pitch face
-    (set-face-attribute 'fixed-pitch nil :font "JetBrains Mono")
+    (set-face-attribute 'fixed-pitch nil :family "JetBrains Mono" :height 1.0)
 
     ;; Set the variable pitch face
-    (set-face-attribute 'variable-pitch nil :font "Cantarell" :weight 'regular)
-    (dolist (face '(default fixed-pitch))
-      (set-face-attribute `,face nil :font "JetBrains Mono"))
+    (set-face-attribute 'variable-pitch nil :family "Cantarell" :weight 'regular :height 1.0)
     (fix-char-width-for-spinners))
   (if (daemonp)
       (add-hook 'server-after-make-frame-hook #'fonts/set-fonts)
@@ -879,7 +978,11 @@ As bookmarks are at the center of my workflow, this is a crucial option.
      (json-ts-mode . combobulate-mode)
      (tsx-ts-mode . combobulate-mode))
     :config
-    (setq combobulate-flash-node nil))
+    (setq combobulate-flash-node nil)
+    (with-eval-after-load 'combobulate-js-ts
+      (setq combobulate-javascript-highlight-queries-default nil
+            combobulate-typescript-highlight-queries-default nil
+            combobulate-tsx-highlight-queries-default nil)))
 #+end_src
 
 ** Goto last change
@@ -1367,7 +1470,8 @@ Pour l'usage avec Claude, il faut avoir `claude-code` d'installé et `claude-cod
   (use-package agent-shell
     :ensure t
     :config
-    (setq agent-shell-prefer-viewport-interaction nil
+    (setq agent-shell-show-welcome-message nil
+          agent-shell-prefer-viewport-interaction nil
           agent-shell-preferred-agent-config 'claude-code)
 
     ;; Auto-scroll pour les buffers agent-shell via agent-shell-section-functions
@@ -1383,24 +1487,32 @@ Pour l'usage avec Claude, il faut avoir `claude-code` d'installé et `claude-cod
 
     (defun agent/shell ()
       "Start agent shell or reuse existing shell for current project.
+  If the shell buffer is visible in a side window, close that window.
   If the shell buffer is visible in another frame, focus that frame.
   Preserves context (region, files, etc.) like the default behavior."
       (interactive)
-      (let* ((shell-buffer (agent-shell--shell-buffer :no-error t :no-create t))
+      (let* ((context (agent-shell--context))
+             (shell-buffer (agent-shell--shell-buffer :no-error t :no-create t))
              (shell-window (when shell-buffer
-                             (get-buffer-window shell-buffer t)))
-             (context (when shell-window
-                        (agent-shell--context :shell-buffer shell-buffer))))
-        (if shell-window
-            (progn
-              (select-frame-set-input-focus (window-frame shell-window))
-              (select-window shell-window)
-              (when context
-                (let* ((prompt-point (point-max)))
-                  (goto-char prompt-point)
-                  (insert "\n\n" context)
-                  (goto-char prompt-point))))
-          (agent-shell))))
+                             (get-buffer-window shell-buffer t))))
+        (cond
+         ((and shell-window
+               (window-parameter shell-window 'window-side)
+               (eq (current-buffer) shell-buffer))
+          (delete-window shell-window))
+         (shell-window
+          (select-frame-set-input-focus (window-frame shell-window))
+          (select-window shell-window))
+         (t
+          (agent-shell)))
+        (when (and context
+                   shell-buffer
+                   (not (with-current-buffer shell-buffer
+                          shell-maker--busy)))
+          (let ((prompt-point (point-max)))
+            (goto-char prompt-point)
+            (insert "\n\n" context)
+            (goto-char prompt-point)))))
 
     (defun agent-shell-reply (text)
       "Send TEXT as a quick reply to the agent from any buffer."
@@ -2489,6 +2601,9 @@ Pour l'usage avec Claude, il faut avoir `claude-code` d'installé et `claude-cod
     (add-hook 'org-mode-hook 'jira/init-org-buffer)
 
     (with-eval-after-load 'jira-detail
+      (add-hook 'jira-detail-mode-hook
+                (lambda ()
+                  (face-remap-add-relative 'magit-section-highlight :background nil)))
       (define-key jira-detail-mode-map (kbd "I") #'jira/toggle-auto-inline-images)
       (define-key jira-detail-mode-map (kbd "c") #'jira/copy-issue-link)
       (define-key jira-detail-mode-map (kbd "M-o")
@@ -2564,10 +2679,14 @@ Pour l'usage avec Claude, il faut avoir `claude-code` d'installé et `claude-cod
     :config
     (require 'ilist)
     (defun magit/magit-status-no-split ()
-      "Don't split window."
+      "Switch to existing Magit status buffer and refresh, or create one."
       (interactive)
-      (let ((magit-display-buffer-function 'magit-display-buffer-same-window-except-diff-v1))
-        (magit-status)))
+      (if-let* ((buf (magit-get-mode-buffer 'magit-status-mode)))
+          (progn
+            (pop-to-buffer-same-window buf)
+            (magit-refresh))
+        (let ((magit-display-buffer-function 'magit-display-buffer-same-window-except-diff-v1))
+          (magit-status))))
     (setq magit-bury-buffer-function 'magit-mode-quit-window)
 
     (defun magit/jira-key-from-branch ()
@@ -2627,12 +2746,11 @@ Pour l'usage avec Claude, il faut avoir `claude-code` d'installé et `claude-cod
                       (insert (format "  Components: %s\n" (string-join components ", "))))
                     (when description
                       (insert "\n")
-                      (magit-insert-section (jira-description nil t)
-                        (magit-insert-heading "  Description")
-                        (insert (replace-regexp-in-string
-                                 "^" "    "
-                                 (jira-doc-format description))
-                                "\n")))
+                      (insert (propertize "  Description\n" 'font-lock-face 'magit-section-heading))
+                      (insert (replace-regexp-in-string
+                               "^" "    "
+                               (jira-doc-format description))
+                              "\n"))
                     (insert "\n"))))
             (error nil)))))
 
@@ -2860,7 +2978,8 @@ Pour l'usage avec Claude, il faut avoir `claude-code` d'installé et `claude-cod
           lsp-enable-file-watchers t
           lsp-enable-folding nil
           lsp-enable-symbol-highlighting t
-          lsp-enable-on-type-formatting nil)
+          lsp-enable-on-type-formatting nil
+          lsp-signature-auto-activate nil)
 
     (defun add-yasnippet-enable-company ()
       (setq-local company-backends '((:separate company-yasnippet company-capf)))
@@ -2898,13 +3017,26 @@ Pour l'usage avec Claude, il faut avoir `claude-code` d'installé et `claude-cod
           orig-result)))
     (advice-add 'lsp-resolve-final-command :around #'lsp-booster--advice-final-command))
 
-  ;; (use-package lsp-ui :commands lsp-ui-mode)
+  (use-package lsp-ui
+    :commands lsp-ui-mode
+    :hook (lsp-mode . lsp-ui-mode)
+    :config
+    (setq lsp-ui-doc-enable t
+          lsp-ui-doc-position 'at-point
+          lsp-ui-doc-show-with-cursor t
+          lsp-ui-sideline-enable nil
+          lsp-ui-sideline-show-hover nil
+          lsp-ui-doc-delay 0.6)
+    (add-hook 'helm-minibuffer-set-up-hook #'lsp-ui-doc-hide))
+
   (use-package helm-lsp :commands helm-lsp-workspace-symbol)
 
   (use-package dap-mode
     :defer t
     :commands (dap-debug dap-debug-edit-template))
 #+END_SRC
+
+#+RESULTS:
 
 ** Expand Region
 #+BEGIN_SRC emacs-lisp
