@@ -68,7 +68,7 @@
 (setq large-file-warning-threshold 100000000)
 
 (setq read-process-output-max (* 5 1024 1024)
-      process-adaptive-read-buffering nil)
+    process-adaptive-read-buffering nil)
 
 (set-language-environment "UTF-8")
 (prefer-coding-system 'utf-8)
@@ -119,11 +119,11 @@
 (define-key minibuffer-local-must-match-map "?" nil)
 (define-key minibuffer-local-map (kbd "S-<return>") (lambda () (interactive) (insert "\n")))
 (define-key minibuffer-local-map (kbd "M-\\")
-            (lambda () (interactive)
-              (save-excursion
-                (goto-char (minibuffer-prompt-end))
-                (while (search-forward " " nil t)
-                  (replace-match "\\\\ ")))))
+  (lambda () (interactive)
+    (save-excursion
+      (goto-char (minibuffer-prompt-end))
+      (while (search-forward " " nil t)
+        (replace-match "\\\\ ")))))
 (add-hook 'minibuffer-setup-hook #'subword-mode)
 
 (setq backup-directory-alist `(("." . ,(expand-file-name "tmp/backups/" user-emacs-directory))))
@@ -199,6 +199,12 @@
 
 (global-hl-line-mode 1)
 (setq hl-line-overlay-priority -50)
+
+(use-package winpulse
+  :vc (:url "https://github.com/xenodium/winpulse"
+            :rev :newest)
+  :config
+  (winpulse-mode 0))
 
 (use-package window-dim
   :vc
@@ -300,6 +306,44 @@
       (cl-pushnew face window-dim--faces))
     (window-dim--refresh-all-remaps))
 
+  ;; Add eat faces so window-dim can dim them in inactive windows
+  (with-eval-after-load 'eat
+    (dolist (face '(eat-term-color-0
+                    eat-term-color-1
+                    eat-term-color-2
+                    eat-term-color-3
+                    eat-term-color-4
+                    eat-term-color-5
+                    eat-term-color-6
+                    eat-term-color-7
+                    eat-term-color-8
+                    eat-term-color-9
+                    eat-term-color-10
+                    eat-term-color-11
+                    eat-term-color-12
+                    eat-term-color-13
+                    eat-term-color-14
+                    eat-term-color-15))
+      (cl-pushnew face window-dim--faces))
+    (window-dim--refresh-all-remaps))
+
+  ;; Add eshell faces so window-dim can dim them in inactive windows
+  (with-eval-after-load 'eshell
+    (dolist (face '(eshell-prompt
+                    eshell-ls-directory
+                    eshell-ls-executable
+                    eshell-ls-symlink
+                    eshell-ls-archive
+                    eshell-ls-backup
+                    eshell-ls-clutter
+                    eshell-ls-missing
+                    eshell-ls-product
+                    eshell-ls-readonly
+                    eshell-ls-special
+                    eshell-ls-unreadable))
+      (cl-pushnew face window-dim--faces))
+    (window-dim--refresh-all-remaps))
+
   (window-dim-mode 1)
   (add-hook 'window-configuration-change-hook
             (lambda () (window-dim--on-window-change (selected-frame)))))
@@ -326,7 +370,8 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
   (setq agent-shell-display-action
         '((vv/display-buffer-pop-up-frame-maybe display-buffer-in-side-window)
           (side . right)
-          (slot . 0))))
+          (slot . 0)
+          (window-width . 0.25))))
 
 ;; --- Claudemacs ---
 (add-to-list 'display-buffer-alist
@@ -497,7 +542,7 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
 (use-package textsize
   :vc (:url "https://github.com/WJCFerguson/textsize" :rev :newest)
   :custom
-  (textsize-default-points 10)
+  (textsize-default-points 8)
   (textsize-monitor-size-thresholds '((0 . -3) (280 . 0) (500 . 3) (1000 . 6) (1500 . 9)))
   (textsize-pixel-pitch-thresholds '((0 . 3) (0.12 . 0) (0.18 . -3) (0.22 . -6) (0.40 . 12)))
   :init (textsize-mode))
@@ -719,8 +764,8 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
 (use-package orderless
   :init
   (setq completion-styles '(orderless)
-        completion-category-defaults nil
-        completion-category-overrides '((file (styles partial-completion)))))
+  completion-category-defaults nil
+  completion-category-overrides '((file (styles partial-completion)))))
 
 (use-package org
   :config
@@ -843,7 +888,8 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
    (json-ts-mode . combobulate-mode)
    (tsx-ts-mode . combobulate-mode))
   :config
-  (setq combobulate-flash-node nil)
+  (setq combobulate-flash-node nil
+        combobulate-message-node-highlighted nil)
   (with-eval-after-load 'combobulate-js-ts
     (setq combobulate-javascript-highlight-queries-default nil
           combobulate-typescript-highlight-queries-default nil
@@ -934,10 +980,10 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
 (add-hook 'prog-mode-hook #'custom/coding-faces)
 
 (use-package ediff
-  :ensure nil
-  :config
-  (setq ediff-window-setup-function 'ediff-setup-windows-plain
-        ediff-split-window-function 'split-window-horizontally))
+    :ensure nil
+    :config
+    (setq ediff-window-setup-function 'ediff-setup-windows-plain
+          ediff-split-window-function 'split-window-horizontally))
 
 (use-package perfect-margin
   :vc (:url "https://github.com/mpwang/perfect-margin" :rev :newest)
@@ -1053,21 +1099,21 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
          (cons "Default" #'blist-default-p)))
 
   (blist-define-criterion "pdf" "PDF"
-    (eq (bookmark-get-handler bookmark)
-        #'pdf-view-bookmark-jump))
+                          (eq (bookmark-get-handler bookmark)
+                              #'pdf-view-bookmark-jump))
 
   (blist-define-criterion "info" "Info"
-    (eq (bookmark-get-handler bookmark)
-        #'Info-bookmark-jump))
+                          (eq (bookmark-get-handler bookmark)
+                              #'Info-bookmark-jump))
 
   (blist-define-criterion "elisp" "ELisp"
-    (string-match-p
-     "\\.el$"
-     (bookmark-get-filename bookmark)))
+                          (string-match-p
+                           "\\.el$"
+                           (bookmark-get-filename bookmark)))
 
   (blist-define-criterion "chrome" "Chrome"
-    (eq (bookmark-get-handler bookmark)
-        #'bookmark/chrome-bookmark-handler)))
+                          (eq (bookmark-get-handler bookmark)
+                              #'bookmark/chrome-bookmark-handler)))
 
 (use-package wgrep
   :defer t
@@ -1274,7 +1320,8 @@ when reading files and the other way around when writing contents."
 
   (defun agent/shell ()
     "Start agent shell or reuse existing shell for current project.
-If the shell buffer is visible in a side window, close that window.
+If the shell buffer is focused in a side window, return focus to the
+main window without closing the side window.
 If the shell buffer is visible in another frame, focus that frame.
 Preserves context (region, files, etc.) like the default behavior."
     (interactive)
@@ -1286,20 +1333,21 @@ Preserves context (region, files, etc.) like the default behavior."
        ((and shell-window
              (window-parameter shell-window 'window-side)
              (eq (current-buffer) shell-buffer))
-        (delete-window shell-window))
+        (select-window (get-mru-window nil nil t)))
        (shell-window
         (select-frame-set-input-focus (window-frame shell-window))
         (select-window shell-window))
        (t
         (agent-shell)))
-      (when (and context
-                 shell-buffer
-                 (not (with-current-buffer shell-buffer
-                        shell-maker--busy)))
-        (let ((prompt-point (point-max)))
-          (goto-char prompt-point)
-          (insert "\n\n" context)
-          (goto-char prompt-point)))))
+      (when-let* ((context context)
+                  (buf (or shell-buffer
+                          (agent-shell--shell-buffer :no-error t :no-create t))))
+        (when (not (with-current-buffer buf shell-maker--busy))
+          (with-current-buffer buf
+            (let ((prompt-point (point-max)))
+              (goto-char prompt-point)
+              (insert "\n\n" context)
+              (agent-shell-previous-item)))))))
 
   (defun agent-shell-reply (text)
     "Send TEXT as a quick reply to the agent from any buffer."
@@ -1351,7 +1399,7 @@ Preserves context (region, files, etc.) like the default behavior."
     (define-key agent-shell-viewport-edit-mode-map (kbd "M-n") #'agent-shell-viewport-next-page)
     (define-key agent-shell-viewport-edit-mode-map (kbd "M-p") #'agent-shell-viewport-previous-page))
 
-  (global-set-key (kbd "C-c a") #'agent-shell-help-menu))
+  (global-set-key (kbd "C-c a") #'agent/shell))
 
 (use-package joplin-mode
   :vc (:url "https://github.com/cinsk/joplin-mode" :rev :newest)
@@ -1672,6 +1720,89 @@ Preserves context (region, files, etc.) like the default behavior."
 
   (advice-add 'joplin--note-buffer :override #'joplin--note-buffer-by-id)
 
+  (defun joplin--journal-date-p (title)
+    "Return non-nil if TITLE matches YYYY-MM-DD format."
+    (and (stringp title)
+         (string-match-p "\\`[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}\\'" title)))
+
+  (defun joplin--journal-find-adjacent (date-str direction &optional max-days)
+    "Find the nearest journal note in DIRECTION (-1 or +1) from DATE-STR.
+  Search up to MAX-DAYS days (default 90).  Returns (TITLE . ID) or nil."
+    (let* ((date (parse-time-string date-str))
+           (time (encode-time 0 0 12 (nth 3 date) (nth 4 date) (nth 5 date)))
+           (max-days (or max-days 90))
+           (month-abbrevs ["" "Jan" "Feb" "Mar" "Apr" "May" "Jun"
+                           "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"])
+           (journal-id (joplin--find-folder "Journal"))
+           (cache (make-hash-table :test 'equal))
+           result)
+      (when journal-id
+        (cl-dotimes (i max-days)
+          (unless result
+            (let* ((offset (* direction (1+ i)))
+                   (candidate (format-time-string
+                               "%Y-%m-%d"
+                               (time-add time (days-to-time offset))))
+                   (cdate (parse-time-string candidate))
+                   (cyear (number-to-string (nth 5 cdate)))
+                   (cmonth (format "%02d-%s" (nth 4 cdate)
+                                   (aref month-abbrevs (nth 4 cdate))))
+                   (cache-key (concat cyear "/" cmonth))
+                   (notes (or (gethash cache-key cache)
+                              (let* ((yid (joplin--find-folder cyear journal-id))
+                                     (mid (and yid (joplin--find-folder cmonth yid)))
+                                     (ns (when mid
+                                           (let* ((resp (joplin--http-get
+                                                         (format "/folders/%s/notes" mid)
+                                                         '((fields . "id,title") (limit . "100"))))
+                                                  (items (if (vectorp resp) resp
+                                                           (alist-get 'items resp))))
+                                             (cl-loop for n across items
+                                                      collect (cons (alist-get 'title n)
+                                                                    (alist-get 'id n)))))))
+                                (puthash cache-key (or ns 'empty) cache)
+                                ns))))
+              (unless (eq notes 'empty)
+                (when-let ((hit (assoc candidate notes)))
+                  (setq result hit)))))))
+      result))
+
+  (defun joplin--journal-nav-link (label date-str note-id)
+    "Return a propertized string for a journal nav link."
+    (let ((map (make-sparse-keymap))
+          (id note-id))
+      (define-key map [header-line mouse-1]
+        `(lambda (e)
+           (interactive "e")
+           (switch-to-buffer (joplin--note-buffer ,id))))
+      (propertize label
+                  'face '(:foreground "#6272a4")
+                  'mouse-face '(:foreground "#bd93f9" :underline t)
+                  'help-echo date-str
+                  'keymap map)))
+
+  (defun joplin--journal-nav-header (title)
+    "Return header-line navigation elements if TITLE is a journal date."
+    (if (joplin--journal-date-p title)
+        (let ((prev (joplin--journal-find-adjacent title -1))
+              (next (joplin--journal-find-adjacent title  1)))
+          (list
+           "  "
+           (propertize "|" 'face '(:foreground "#44475a"))
+           "  "
+           (if prev
+               (joplin--journal-nav-link
+                (concat "<< " (car prev))
+                (car prev) (cdr prev))
+             (propertize "<< ···" 'face '(:foreground "#44475a")))
+           "    "
+           (if next
+               (joplin--journal-nav-link
+                (concat (car next) " >>")
+                (car next) (cdr next))
+             (propertize "··· >>" 'face '(:foreground "#44475a")))))
+      ""))
+
   (defun joplin--rename-buffer-from-note ()
     "Rename current buffer to match the Joplin note title."
     (when (bound-and-true-p joplin-note)
@@ -1688,7 +1819,16 @@ Preserves context (region, files, etc.) like the default behavior."
                         'mouse-face 'doom-modeline-highlight
                         'help-echo "Buffer name
 mouse-1: Previous buffer\nmouse-3: Next buffer"
-                        'local-map mode-line-buffer-identification-keymap))))
+                        'local-map mode-line-buffer-identification-keymap))
+      ;; Show note title in header-line
+      (let* ((title (or (JNOTE-title joplin-note) "Untitled"))
+             (folder (joplin--folder-path (JNOTE-parent_id joplin-note))))
+        (setq header-line-format
+              (list " "
+                    (propertize folder 'face 'shadow)
+                    (propertize "/" 'face 'shadow)
+                    (propertize title 'face '(:weight bold))
+                    (joplin--journal-nav-header title))))))
 
   ;; Linkify YYYY-MM-DD dates to journal notes on save
   (defun joplin--linkify-dates ()
@@ -1856,7 +1996,7 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
                   (insert (format "[%s](:/%s)\n" (car bl) (cdr bl)))))
               (add-text-properties start (point-max)
                                    '(read-only t front-sticky (read-only)
-                                               joplin-metadata t face shadow)))))))
+                                     joplin-metadata t face shadow)))))))
     (set-buffer-modified-p nil))
 
   (defun joplin--clamp-to-before-metadata (&rest _)
@@ -1866,8 +2006,8 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
                (marker-position joplin--metadata-start)
                (>= (point) joplin--metadata-start))
       (goto-char joplin--metadata-start)
-      (forward-line -1)
-      (end-of-line)))
+        (forward-line -1)
+        (end-of-line)))
 
   (advice-add 'end-of-buffer :after #'joplin--clamp-to-before-metadata)
 
@@ -2403,11 +2543,11 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
   :mode "\\.nix\\'")
 
 (setq electric-pair-pairs
-      '(
-        (?\' . ?\')
-        (?\" . ?\")
-        (?\[ . ?\])
-        (?\{ . ?\})))
+  '(
+    (?\' . ?\')
+    (?\" . ?\")
+    (?\[ . ?\])
+    (?\{ . ?\})))
 
 (defun electric-pair/activate ()
   (interactive)
@@ -2484,8 +2624,8 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
                                    (setq magit/jira-issue-cache nil
                                          magit/jira-issue-cache-branch current-branch)))
                    (issue (or magit/jira-issue-cache
-                              (setq magit/jira-issue-cache
-                                    (magit/jira-fetch-issue key))))
+                             (setq magit/jira-issue-cache
+                                   (magit/jira-fetch-issue key))))
                    (fields (alist-get 'fields issue))
                    (summary (alist-get 'summary fields))
                    (status (alist-get 'name (alist-get 'status fields)))
@@ -2697,7 +2837,8 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
         lsp-enable-folding nil
         lsp-enable-symbol-highlighting t
         lsp-enable-on-type-formatting nil
-        lsp-signature-auto-activate nil)
+        lsp-signature-auto-activate nil
+        lsp-eldoc-enable-hover nil)
 
   (defun add-yasnippet-enable-company ()
     (setq-local company-backends '((:separate company-yasnippet company-capf)))
@@ -2741,10 +2882,12 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
   :config
   (setq lsp-ui-doc-enable t
         lsp-ui-doc-position 'at-point
-        lsp-ui-doc-show-with-cursor t
+        lsp-ui-doc-show-with-cursor nil
+        lsp-ui-doc-show-with-mouse nil
         lsp-ui-sideline-enable nil
-        lsp-ui-sideline-show-hover nil
-        lsp-ui-doc-delay 0.6)
+        lsp-ui-sideline-show-hover nil)
+  (define-key lsp-ui-mode-map (kbd "C-h h") #'lsp-ui-doc-glance)
+  (define-key lsp-ui-mode-map (kbd "C-h C-h") #'lsp-ui-doc-glance)
   (add-hook 'helm-minibuffer-set-up-hook #'lsp-ui-doc-hide))
 
 (use-package helm-lsp :commands helm-lsp-workspace-symbol)
@@ -2770,80 +2913,98 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
 (add-hook 'shell-mode-hook #'shell/hook)
 
 (defun utils/get-project-root-if-wanted ()
-  (interactive)
-  (let ((cur-buffer (window-buffer (selected-window))))
-    (with-current-buffer cur-buffer
-      (or (and (fboundp 'project-current)
-               (project-current)
-               (project-root (project-current)))
-          (vc-root-dir)
-          (when (derived-mode-p 'dired-mode)
-            (replace-regexp-in-string "^[Directory ]*" "" (pwd)))
-          default-directory))))
+    (interactive)
+    (let ((cur-buffer (window-buffer (selected-window))))
+      (with-current-buffer cur-buffer
+        (or (and (fboundp 'project-current)
+                 (project-current)
+                 (project-root (project-current)))
+            (vc-root-dir)
+            (when (derived-mode-p 'dired-mode)
+              (replace-regexp-in-string "^[Directory ]*" "" (pwd)))
+            default-directory))))
 
-(custom-set-faces
- `(ansi-color-black ((t (:foreground "#282a36"))))
- `(ansi-color-red ((t (:foreground "#ff5555"))))
- `(ansi-color-green ((t (:foreground "#50fa7b"))))
- `(ansi-color-yellow ((t (:foreground "#f1fa8c"))))
- `(ansi-color-blue ((t (:foreground "#bd93f9"))))
- `(ansi-color-magenta ((t (:foreground "#ff79c6"))))
- `(ansi-color-cyan ((t (:foreground "#8be9fd"))))
- `(ansi-color-gray ((t (:foreground "#f8f8f2")))))
+  (custom-set-faces
+   `(ansi-color-black ((t (:foreground "#282a36"))))
+   `(ansi-color-red ((t (:foreground "#ff5555"))))
+   `(ansi-color-green ((t (:foreground "#50fa7b"))))
+   `(ansi-color-yellow ((t (:foreground "#f1fa8c"))))
+   `(ansi-color-blue ((t (:foreground "#bd93f9"))))
+   `(ansi-color-magenta ((t (:foreground "#ff79c6"))))
+   `(ansi-color-cyan ((t (:foreground "#8be9fd"))))
+   `(ansi-color-gray ((t (:foreground "#f8f8f2")))))
 
-(setq eshell-banner-message "")
+  (setq eshell-banner-message "")
 
-(defun eshell/hook ()
-  (require 'eshell)
-  (require 'em-smart)
-  (define-key eshell-mode-map (kbd "M-m") #'eshell-bol)
-  (define-key eshell-hist-mode-map (kbd "M-s") nil)
-  (define-key eshell-hist-mode-map (kbd "M-r") #'helm-eshell-history)
-  (setq
-   eshell-where-to-jump 'begin
-   eshell-review-quick-commands nil
-   eshell-smart-space-goes-to-end t
-   eshell-prompt-function
-   (lambda ()
-     (concat (format-time-string " %Y-%m-%d %H:%M" (current-time))
-             (if (= (user-uid) 0) " # " " $ ")))
-   eshell-highlight-prompt t)
-  (set-face-attribute 'eshell-prompt nil :weight 'ultra-bold :inherit 'minibuffer-prompt)
-  (eat-eshell-mode 1)
-  (eat-eshell-visual-command-mode 1)
-  (display-line-numbers-mode 0)
-  (define-key eshell-mode-map (kbd "<tab>") #'company-complete))
-(add-hook 'eshell-mode-hook #'eshell/hook)
+  (defun eshell/hook ()
+    (require 'eshell)
+    (require 'em-smart)
+    (define-key eshell-mode-map (kbd "M-m") #'eshell-bol)
+    (define-key eshell-hist-mode-map (kbd "M-s") nil)
+    (define-key eshell-hist-mode-map (kbd "M-r") #'helm-eshell-history)
+    (setq
+     eshell-where-to-jump 'begin
+     eshell-review-quick-commands nil
+     eshell-smart-space-goes-to-end t
+     eshell-prompt-function
+     (lambda ()
+       (concat (format-time-string " %Y-%m-%d %H:%M" (current-time))
+               (if (= (user-uid) 0) " # " " $ ")))
+     eshell-highlight-prompt t)
+    (set-face-attribute 'eshell-prompt nil :weight 'ultra-bold :inherit 'minibuffer-prompt)
+    (eat-eshell-mode 1)
+    (eat-eshell-visual-command-mode 1)
+    (display-line-numbers-mode 0)
+    (define-key eshell-mode-map (kbd "<tab>") #'company-complete))
+  (add-hook 'eshell-mode-hook #'eshell/hook)
 
-(defun eshell/rename-with-current-path ()
-  (interactive)
-  (rename-buffer (concat "Eshell: " (replace-regexp-in-string "^[Directory ]*" "" (pwd))) t))
-(add-hook 'eshell-directory-change-hook #'eshell/rename-with-current-path)
-(add-hook 'eshell-mode-hook #'eshell/rename-with-current-path)
+  (defun eshell/rename-with-current-path ()
+    (interactive)
+    (rename-buffer (concat "Eshell: " (replace-regexp-in-string "^[Directory ]*" "" (pwd))) t))
+  (add-hook 'eshell-directory-change-hook #'eshell/rename-with-current-path)
+  (add-hook 'eshell-mode-hook #'eshell/rename-with-current-path)
 
-(defun eshell/get-relevant-buffer (path)
-  (message path)
-  (get-buffer (concat "Eshell: " (replace-regexp-in-string "/$" "" path))))
+  (defun eshell/get-relevant-buffer (path)
+    (message path)
+    (get-buffer (concat "Eshell: " (replace-regexp-in-string "/$" "" path))))
 
-(defun eshell/new-or-current ()
-  "Open a new instance of eshell.
+  (defun eshell/new-or-current ()
+    "Open a new instance of eshell.
 If in a dired buffer, open eshell in the current directory.
 Otherwise, open in the project root.
-Reuses an existing eshell buffer for the target directory if one exists."
-  (interactive)
-  (let* ((default-directory (replace-regexp-in-string "/$" ""
-                                                      (if (derived-mode-p 'dired-mode)
-                                                          default-directory
-                                                        (utils/get-project-root-if-wanted))))
-         (eshell-buffer (eshell/get-relevant-buffer default-directory)))
-    (if eshell-buffer
-        (switch-to-buffer eshell-buffer)
-      (eshell 'N))))
+Reuses an existing eshell buffer for the target directory if one exists.
+When not in frame-centric mode and not in a dired buffer, display
+in a left side window.
+If already focused on an eshell side window, return focus to the
+main window without closing the side window."
+    (interactive)
+    (if (and (derived-mode-p 'eshell-mode)
+             (window-parameter (selected-window) 'window-side))
+        (select-window (get-mru-window nil nil t))
+      (let* ((in-dired (derived-mode-p 'dired-mode))
+             (default-directory (replace-regexp-in-string "/$" ""
+                                  (if in-dired
+                                      default-directory
+                                    (utils/get-project-root-if-wanted))))
+             (eshell-buffer (eshell/get-relevant-buffer default-directory))
+             (use-side-window (and (not frame-centric) (not in-dired)))
+             (buf (or eshell-buffer
+                      (let ((b (generate-new-buffer eshell-buffer-name)))
+                        (with-current-buffer b (eshell-mode)) b))))
+        (if use-side-window
+            (pop-to-buffer buf
+                           '((display-buffer-in-side-window)
+                             (side . left)
+                             (slot . 0)
+                             (window-width . 0.25)))
+          (switch-to-buffer buf)))))
 
-(global-set-key (kbd "C-s-<return>") #'eshell/new-or-current)
+  (global-set-key (kbd "C-s-<return>") #'eshell/new-or-current)
+  (global-set-key (kbd "C-c <return>") #'eshell/new-or-current)
+  (global-set-key (kbd "C-c C-<return>") #'eshell/new-or-current)
 
-(use-package eshell
-  :ensure nil)
+  (use-package eshell
+    :ensure nil)
 
 (use-package eat
   :vc (:url "https://codeberg.org/akib/emacs-eat" :rev :newest)
@@ -3112,10 +3273,10 @@ Reuses an existing eshell buffer for the target directory if one exists."
     (add-hook 'eww-after-render-hook (lambda () (visual-line-mode 1)))))
 
 (add-hook 'after-init-hook
-          #'(lambda ()
-	          (let ((local-settings "~/.emacs.d/local.el"))
-	            (when (file-exists-p local-settings)
-	              (load-file local-settings)))
-              (lsp)
-              (when (display-graphic-p)
-                (fix-char-width-for-spinners))))
+    #'(lambda ()
+	(let ((local-settings "~/.emacs.d/local.el"))
+	  (when (file-exists-p local-settings)
+	    (load-file local-settings)))
+    (lsp)
+    (when (display-graphic-p)
+      (fix-char-width-for-spinners))))
