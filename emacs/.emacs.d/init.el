@@ -369,9 +369,10 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
 (with-eval-after-load 'agent-shell
   (setq agent-shell-display-action
         '((vv/display-buffer-pop-up-frame-maybe display-buffer-in-side-window)
-          (side . right)
-          (slot . 0)
-          (window-width . 0.25))))
+          (side . left)
+          (slot . 1)
+          (window-width . 80)
+          (preserve-size . (t . nil)))))
 
 ;; --- Claudemacs ---
 (add-to-list 'display-buffer-alist
@@ -582,9 +583,13 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
                       (insert " "))
                     ;; Don't allow users to kill these buffers, as it destroys the hack
                     (add-hook 'kill-buffer-query-functions #'ignore nil 'local)
-                    (set-window-scroll-bars (minibuffer-window) nil nil)
                     (face-remap-add-relative 'default :background "#282a36")
-                    (face-remap-add-relative 'fringe :background "#282a36"))))))
+                    (face-remap-add-relative 'fringe :background "#282a36"))))
+
+            (defun theme/hide-minibuffer-scrollbar (&optional frame)
+              (set-window-scroll-bars (minibuffer-window frame) 0 nil))
+            (theme/hide-minibuffer-scrollbar)
+            (add-hook 'after-make-frame-functions #'theme/hide-minibuffer-scrollbar)))
 
 (use-package doom-modeline
   :hook (after-init . doom-modeline-mode)
@@ -624,128 +629,142 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
       (choose-completion nil no-exit no-quit))))
 
 (use-package helm
-  :config
-  (setq helm-input-idle-delay                     0.1
-        helm-reuse-last-window-split-state        nil
-        helm-always-two-windows                   nil
-        helm-split-window-default-side            'below
-        helm-commands-using-frame                 '()
-        helm-actions-inherit-frame-settings       t
-        helm-use-frame-when-more-than-two-windows nil
-        helm-use-frame-when-no-suitable-window    nil
-        helm-persistent-action-display-window     t
-        helm-show-action-window-other-window      'right
-        helm-allow-mouse                          t
-        helm-move-to-line-cycle-in-source         nil
-        helm-echo-input-in-header-line            t
-        helm-autoresize-max-height                30   ; it is %.
-        helm-autoresize-min-height                5   ; it is %.
-        helm-follow-mode-persistent               t
-        helm-candidate-number-limit               300
-        helm-visible-mark-prefix                  "✓"
-        helm-kill-real-or-display-selection       'real
-        helm-truncate-lines                       t
-        helm-net-prefer-curl                      t
-        helm-split-window-inside-p                t
-        helm-grep-git-grep-command "git --no-pager grep -n%cH --color=always --full-name -e \"%p\" -- %f"
-        helm-buffers-show-icons nil
-        helm-buffer-max-length 35)
+    :config
+    (setq helm-input-idle-delay                     0.1
+          helm-reuse-last-window-split-state        nil
+          helm-always-two-windows                   nil
+          helm-split-window-default-side            'below
+          helm-commands-using-frame                 '()
+          helm-actions-inherit-frame-settings       t
+          helm-use-frame-when-more-than-two-windows nil
+          helm-use-frame-when-no-suitable-window    nil
+          helm-persistent-action-display-window     t
+          helm-show-action-window-other-window      'right
+          helm-allow-mouse                          t
+          helm-move-to-line-cycle-in-source         nil
+          helm-echo-input-in-header-line            t
+          helm-autoresize-max-height                30   ; it is %.
+          helm-autoresize-min-height                5   ; it is %.
+          helm-follow-mode-persistent               t
+          helm-candidate-number-limit               300
+          helm-visible-mark-prefix                  "✓"
+          helm-kill-real-or-display-selection       'real
+          helm-truncate-lines                       t
+          helm-net-prefer-curl                      t
+          helm-split-window-inside-p                t
+          helm-grep-git-grep-command "git --no-pager grep -n%cH --color=always --full-name -e \"%p\" -- %f"
+          helm-buffers-show-icons nil
+          helm-buffer-max-length 35)
 
-  (defun helm--show-action-window-other-window-p ()
-    helm-show-action-window-other-window)
+    (defun helm--show-action-window-other-window-p ()
+      helm-show-action-window-other-window)
 
-  (defun helm/hook ()
-    (display-line-numbers-mode 0))
-  (add-hook 'helm-major-mode-hook 'helm/hook)
+    (defun helm/display-buffer (buffer &optional resume)
+      "Display helm BUFFER, allowing split inside side windows.
+When the selected window is a side window, temporarily remove its
+side parameter so that `helm-default-display-buffer' can split it."
+      (let* ((win (selected-window))
+             (side (window-parameter win 'window-side)))
+        (when side
+          (set-window-parameter win 'window-side nil))
+        (unwind-protect
+            (helm-default-display-buffer buffer resume)
+          (when side
+            (set-window-parameter win 'window-side side)))))
+    (setq helm-display-function #'helm/display-buffer)
 
-  (defun helm/grep-do-git-grep ()
-    (interactive)
-    (let* ((helm-candidate-number-limit nil))
-      (helm-grep-do-git-grep '(4))))
+    (defun helm/hook ()
+      (display-line-numbers-mode 0))
+    (add-hook 'helm-major-mode-hook 'helm/hook)
 
-  (defun helm/grep-do-git-grep-literal ()
-    "Git grep with literal string matching (handles spaces and parentheses)."
-    (interactive)
-    (let* ((helm-candidate-number-limit nil)
-           (pattern (read-string "Git grep literal: " (thing-at-point 'symbol)))
-           (default-directory (or (helm-browse-project-get--root-dir (helm-current-directory))
-                                  default-directory)))
-      (helm-grep-git-1 default-directory nil nil (list "-F" "-e" pattern))))
+    (defun helm/grep-do-git-grep ()
+      (interactive)
+      (let* ((helm-candidate-number-limit nil))
+        (helm-grep-do-git-grep '(4))))
 
-  (defun helm/do-grep-ag ()
-    (interactive)
-    (let* ((helm-candidate-number-limit nil))
-      (call-interactively 'helm-do-grep-ag)
-      ))
+    (defun helm/grep-do-git-grep-literal ()
+      "Git grep with literal string matching (handles spaces and parentheses)."
+      (interactive)
+      (let* ((helm-candidate-number-limit nil)
+             (pattern (read-string "Git grep literal: " (thing-at-point 'symbol)))
+             (default-directory (or (helm-browse-project-get--root-dir (helm-current-directory))
+                                    default-directory)))
+        (helm-grep-git-1 default-directory nil nil (list "-F" "-e" pattern))))
 
-  (defun helm/do-grep-ag-project ()
-    (interactive)
-    (let* ((helm-candidate-number-limit nil))
-      (call-interactively 'helm-do-grep-ag-project)
-      ))
+    (defun helm/do-grep-ag ()
+      (interactive)
+      (let* ((helm-candidate-number-limit nil))
+        (call-interactively 'helm-do-grep-ag)
+        ))
 
-  (defun helm/prompt-display-with-region (pos)
-    "Like `helm-set-default-prompt-display' but also shows the region."
-    (helm-set-default-prompt-display pos)
-    (with-selected-window (minibuffer-window)
-      (when (and mark-active (region-active-p))
-        (let* ((beg (save-excursion (vertical-motion 0 (helm-window)) (point)))
-               (rbeg (- (region-beginning) beg))
-               (rend (- (region-end) beg)))
-          ;; Offset by 1 for the pref space
-          (with-helm-buffer
-            (put-text-property (+ 1 rbeg) (+ 1 rend)
-                               'face 'region
-                               header-line-format))))))
-  (setq helm-default-prompt-display-function #'helm/prompt-display-with-region)
+    (defun helm/do-grep-ag-project ()
+      (interactive)
+      (let* ((helm-candidate-number-limit nil))
+        (call-interactively 'helm-do-grep-ag-project)
+        ))
 
-  (global-set-key (kbd "C-h r")                        'helm-info-emacs)
-  (global-set-key (kbd "M-x")                          'undefined)
-  (global-set-key (kbd "M-x")                          'helm-M-x)
-  (global-set-key (kbd "M-y")                          'helm-show-kill-ring)
-  (global-set-key (kbd "C-x C-f")                      'helm-find-files)
-  (global-set-key (kbd "C-x b")                        'helm-buffers-list)
-  (global-set-key (kbd "C-c <SPC>")                    'helm-mark-ring)
-  (global-set-key [remap bookmark-jump]                'helm-filtered-bookmarks)
-  (global-set-key (kbd "C-c i")                        'helm-imenu)
-  (global-set-key (kbd "C-c I")                        'helm-imenu-in-all-buffers)
-  (global-set-key (kbd "C-:")                          'helm-eval-expression-with-eldoc)
-  (global-set-key (kbd "C-,")                          'helm-calcul-expression)
-  (global-set-key (kbd "C-h d")                        'helm-info-at-point)
-  (global-set-key (kbd "C-h i")                        'helm-info)
-  (global-set-key (kbd "C-x C-d")                      'helm-browse-project)
-  (global-set-key (kbd "<f1>")                         'helm-resume)
-  (global-set-key (kbd "C-h C-f")                      'helm-apropos)
-  (global-set-key (kbd "C-h a")                        'helm-apropos)
-  (global-set-key (kbd "C-h C-d")                      'helm-debug-open-last-log)
-  (global-set-key (kbd "S-<f4>")                       'helm-execute-kmacro)
-  (global-set-key (kbd "M-s")                          nil)
-  (global-set-key (kbd "M-s M-s")                      'helm-occur-visible-buffers)
-  (global-set-key (kbd "M-s M-d")                      'helm-find)
-  (global-set-key (kbd "M-s M-o")                      'helm-org-agenda-files-headings)
-  (global-set-key (kbd "M-s M-i")                      'helm-google-suggest)
-  (global-set-key (kbd "C-x C-b")                      'helm-semantic-or-imenu)
+    (defun helm/prompt-display-with-region (pos)
+      "Like `helm-set-default-prompt-display' but also shows the region."
+      (helm-set-default-prompt-display pos)
+      (with-selected-window (minibuffer-window)
+        (when (and mark-active (region-active-p))
+          (let* ((beg (save-excursion (vertical-motion 0 (helm-window)) (point)))
+                 (rbeg (- (region-beginning) beg))
+                 (rend (- (region-end) beg)))
+            ;; Offset by 1 for the pref space
+            (with-helm-buffer
+              (put-text-property (+ 1 rbeg) (+ 1 rend)
+                                 'face 'region
+                                 header-line-format))))))
+    (setq helm-default-prompt-display-function #'helm/prompt-display-with-region)
 
-  (define-key global-map (kbd "M-s M-g")               'helm/grep-do-git-grep)
-  (define-key global-map (kbd "M-s M-G")               'helm/grep-do-git-grep-literal)
-  (define-key global-map [remap bookmark-bmenu-list]   'helm-register)
-  (define-key global-map [remap list-buffers]          'helm-buffers-list)
-  (define-key global-map [remap dabbrev-expand]        'helm-dabbrev)
-  (define-key global-map (kbd "M-g a")                 'helm/do-grep-ag)
-  (define-key global-map (kbd "M-s M-p")               'helm/do-grep-ag-project)
-  (define-key global-map (kbd "M-g l")                 'goto-line)
-  (define-key global-map (kbd "M-g M-g")               'helm-revert-next-error-last-buffer)
-  (define-key global-map (kbd "M-g i")                 'helm-gid)
-  (define-key global-map (kbd "C-x r p")               'helm-projects-history)
-  (define-key global-map (kbd "C-x r c")               'helm-addressbook-bookmarks)
-  (define-key global-map (kbd "C-c t r")               'helm-dictionary)
+    (global-set-key (kbd "C-h r")                        'helm-info-emacs)
+    (global-set-key (kbd "M-x")                          'undefined)
+    (global-set-key (kbd "M-x")                          'helm-M-x)
+    (global-set-key (kbd "M-y")                          'helm-show-kill-ring)
+    (global-set-key (kbd "C-x C-f")                      'helm-find-files)
+    (global-set-key (kbd "C-x b")                        'helm-buffers-list)
+    (global-set-key (kbd "C-c <SPC>")                    'helm-mark-ring)
+    (global-set-key [remap bookmark-jump]                'helm-filtered-bookmarks)
+    (global-set-key (kbd "C-c i")                        'helm-imenu)
+    (global-set-key (kbd "C-c I")                        'helm-imenu-in-all-buffers)
+    (global-set-key (kbd "C-:")                          'helm-eval-expression-with-eldoc)
+    (global-set-key (kbd "C-,")                          'helm-calcul-expression)
+    (global-set-key (kbd "C-h d")                        'helm-info-at-point)
+    (global-set-key (kbd "C-h i")                        'helm-info)
+    (global-set-key (kbd "C-x C-d")                      'helm-browse-project)
+    (global-set-key (kbd "<f1>")                         'helm-resume)
+    (global-set-key (kbd "C-h C-f")                      'helm-apropos)
+    (global-set-key (kbd "C-h a")                        'helm-apropos)
+    (global-set-key (kbd "C-h C-d")                      'helm-debug-open-last-log)
+    (global-set-key (kbd "S-<f4>")                       'helm-execute-kmacro)
+    (global-set-key (kbd "M-s")                          nil)
+    (global-set-key (kbd "M-s M-s")                      'helm-occur-visible-buffers)
+    (global-set-key (kbd "M-s M-d")                      'helm-find)
+    (global-set-key (kbd "M-s M-o")                      'helm-org-agenda-files-headings)
+    (global-set-key (kbd "M-s M-i")                      'helm-google-suggest)
+    (global-set-key (kbd "C-x C-b")                      'helm-semantic-or-imenu)
 
-  (helm-mode 1)
-  (helm-autoresize-mode 1))
+    (define-key global-map (kbd "M-s M-g")               'helm/grep-do-git-grep)
+    (define-key global-map (kbd "M-s M-G")               'helm/grep-do-git-grep-literal)
+    (define-key global-map [remap bookmark-bmenu-list]   'helm-register)
+    (define-key global-map [remap list-buffers]          'helm-buffers-list)
+    (define-key global-map [remap dabbrev-expand]        'helm-dabbrev)
+    (define-key global-map (kbd "M-g a")                 'helm/do-grep-ag)
+    (define-key global-map (kbd "M-s M-p")               'helm/do-grep-ag-project)
+    (define-key global-map (kbd "M-g l")                 'goto-line)
+    (define-key global-map (kbd "M-g M-g")               'helm-revert-next-error-last-buffer)
+    (define-key global-map (kbd "M-g i")                 'helm-gid)
+    (define-key global-map (kbd "C-x r p")               'helm-projects-history)
+    (define-key global-map (kbd "C-x r c")               'helm-addressbook-bookmarks)
+    (define-key global-map (kbd "C-c t r")               'helm-dictionary)
 
-(use-package helm-xref)
+    (helm-mode 1)
+    (helm-autoresize-mode 1))
 
-(use-package helm-tramp)
+  (use-package helm-xref)
+
+  (use-package helm-tramp)
 
 (use-package company
   :defer 1  ; Delay loading by 1 second
@@ -1030,6 +1049,12 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
                          host (or port 5432) db user pass)))
       (pgmacs-open-string str))))
 
+(use-package emms
+  :config
+  (emms-all)
+  (setq emms-player-list '(emms-player-vlc)
+        emms-info-functions '(emms-info-native)))
+
 (use-package string-inflection
   :defer t
   :bind (("C-c C-u C-u" . string-inflection-upcase)
@@ -1307,6 +1332,8 @@ when reading files and the other way around when writing contents."
         agent-shell-prefer-viewport-interaction nil
         agent-shell-preferred-agent-config 'claude-code)
 
+  (add-hook 'agent-shell-mode-hook (lambda () (display-line-numbers-mode -1)))
+
   ;; Auto-scroll pour les buffers agent-shell via agent-shell-section-functions
   ;; (defun agent-shell--auto-scroll (_range)
   ;;   "Scroll agent-shell buffer to bottom in all windows displaying it."
@@ -1330,24 +1357,36 @@ Preserves context (region, files, etc.) like the default behavior."
            (shell-window (when shell-buffer
                            (get-buffer-window shell-buffer t))))
       (cond
+       ;; Focused in side window: return to main window
        ((and shell-window
              (window-parameter shell-window 'window-side)
              (eq (current-buffer) shell-buffer))
         (select-window (get-mru-window nil nil t)))
+       ;; Visible: focus it and paste context ourselves
        (shell-window
         (select-frame-set-input-focus (window-frame shell-window))
-        (select-window shell-window))
+        (select-window shell-window)
+        (when (and context (not shell-maker--busy))
+          (goto-char (point-max))
+          (insert "\n\n" context)
+          (comint-previous-prompt 1)))
+       ;; Running but not visible: display it and paste context ourselves
+       (shell-buffer
+        (agent-shell--display-buffer shell-buffer)
+        (when (and context (not shell-maker--busy))
+          (with-current-buffer shell-buffer
+            (goto-char (point-max))
+            (insert "\n\n" context)
+            (comint-previous-prompt 1))))
+       ;; Not running: create shell and paste context ourselves
        (t
-        (agent-shell)))
-      (when-let* ((context context)
-                  (buf (or shell-buffer
-                          (agent-shell--shell-buffer :no-error t :no-create t))))
-        (when (not (with-current-buffer buf shell-maker--busy))
-          (with-current-buffer buf
-            (let ((prompt-point (point-max)))
-              (goto-char prompt-point)
+        (let ((new-buffer (agent-shell--shell-buffer)))
+          (agent-shell--display-buffer new-buffer)
+          (when (and context (not shell-maker--busy))
+            (with-current-buffer new-buffer
+              (goto-char (point-max))
               (insert "\n\n" context)
-              (agent-shell-previous-item)))))))
+              (comint-previous-prompt 1))))))))
 
   (defun agent-shell-reply (text)
     "Send TEXT as a quick reply to the agent from any buffer."
@@ -2913,63 +2952,63 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
 (add-hook 'shell-mode-hook #'shell/hook)
 
 (defun utils/get-project-root-if-wanted ()
-    (interactive)
-    (let ((cur-buffer (window-buffer (selected-window))))
-      (with-current-buffer cur-buffer
-        (or (and (fboundp 'project-current)
-                 (project-current)
-                 (project-root (project-current)))
-            (vc-root-dir)
-            (when (derived-mode-p 'dired-mode)
-              (replace-regexp-in-string "^[Directory ]*" "" (pwd)))
-            default-directory))))
+  (interactive)
+  (let ((cur-buffer (window-buffer (selected-window))))
+    (with-current-buffer cur-buffer
+      (or (and (fboundp 'project-current)
+               (project-current)
+               (project-root (project-current)))
+          (vc-root-dir)
+          (when (derived-mode-p 'dired-mode)
+            (replace-regexp-in-string "^[Directory ]*" "" (pwd)))
+          default-directory))))
 
-  (custom-set-faces
-   `(ansi-color-black ((t (:foreground "#282a36"))))
-   `(ansi-color-red ((t (:foreground "#ff5555"))))
-   `(ansi-color-green ((t (:foreground "#50fa7b"))))
-   `(ansi-color-yellow ((t (:foreground "#f1fa8c"))))
-   `(ansi-color-blue ((t (:foreground "#bd93f9"))))
-   `(ansi-color-magenta ((t (:foreground "#ff79c6"))))
-   `(ansi-color-cyan ((t (:foreground "#8be9fd"))))
-   `(ansi-color-gray ((t (:foreground "#f8f8f2")))))
+(custom-set-faces
+ `(ansi-color-black ((t (:foreground "#282a36"))))
+ `(ansi-color-red ((t (:foreground "#ff5555"))))
+ `(ansi-color-green ((t (:foreground "#50fa7b"))))
+ `(ansi-color-yellow ((t (:foreground "#f1fa8c"))))
+ `(ansi-color-blue ((t (:foreground "#bd93f9"))))
+ `(ansi-color-magenta ((t (:foreground "#ff79c6"))))
+ `(ansi-color-cyan ((t (:foreground "#8be9fd"))))
+ `(ansi-color-gray ((t (:foreground "#f8f8f2")))))
 
-  (setq eshell-banner-message "")
+(setq eshell-banner-message "")
 
-  (defun eshell/hook ()
-    (require 'eshell)
-    (require 'em-smart)
-    (define-key eshell-mode-map (kbd "M-m") #'eshell-bol)
-    (define-key eshell-hist-mode-map (kbd "M-s") nil)
-    (define-key eshell-hist-mode-map (kbd "M-r") #'helm-eshell-history)
-    (setq
-     eshell-where-to-jump 'begin
-     eshell-review-quick-commands nil
-     eshell-smart-space-goes-to-end t
-     eshell-prompt-function
-     (lambda ()
-       (concat (format-time-string " %Y-%m-%d %H:%M" (current-time))
-               (if (= (user-uid) 0) " # " " $ ")))
-     eshell-highlight-prompt t)
-    (set-face-attribute 'eshell-prompt nil :weight 'ultra-bold :inherit 'minibuffer-prompt)
-    (eat-eshell-mode 1)
-    (eat-eshell-visual-command-mode 1)
-    (display-line-numbers-mode 0)
-    (define-key eshell-mode-map (kbd "<tab>") #'company-complete))
-  (add-hook 'eshell-mode-hook #'eshell/hook)
+(defun eshell/hook ()
+  (require 'eshell)
+  (require 'em-smart)
+  (define-key eshell-mode-map (kbd "M-m") #'eshell-bol)
+  (define-key eshell-hist-mode-map (kbd "M-s") nil)
+  (define-key eshell-hist-mode-map (kbd "M-r") #'helm-eshell-history)
+  (setq
+   eshell-where-to-jump 'begin
+   eshell-review-quick-commands nil
+   eshell-smart-space-goes-to-end t
+   eshell-prompt-function
+   (lambda ()
+     (concat (format-time-string " %Y-%m-%d %H:%M" (current-time))
+             (if (= (user-uid) 0) " # " " $ ")))
+   eshell-highlight-prompt t)
+  (set-face-attribute 'eshell-prompt nil :weight 'ultra-bold :inherit 'minibuffer-prompt)
+  (eat-eshell-mode 1)
+  (eat-eshell-visual-command-mode 1)
+  (display-line-numbers-mode 0)
+  (define-key eshell-mode-map (kbd "<tab>") #'company-complete))
+(add-hook 'eshell-mode-hook #'eshell/hook)
 
-  (defun eshell/rename-with-current-path ()
-    (interactive)
-    (rename-buffer (concat "Eshell: " (replace-regexp-in-string "^[Directory ]*" "" (pwd))) t))
-  (add-hook 'eshell-directory-change-hook #'eshell/rename-with-current-path)
-  (add-hook 'eshell-mode-hook #'eshell/rename-with-current-path)
+(defun eshell/rename-with-current-path ()
+  (interactive)
+  (rename-buffer (concat "Eshell: " (replace-regexp-in-string "^[Directory ]*" "" (pwd))) t))
+(add-hook 'eshell-directory-change-hook #'eshell/rename-with-current-path)
+(add-hook 'eshell-mode-hook #'eshell/rename-with-current-path)
 
-  (defun eshell/get-relevant-buffer (path)
-    (message path)
-    (get-buffer (concat "Eshell: " (replace-regexp-in-string "/$" "" path))))
+(defun eshell/get-relevant-buffer (path)
+  (message path)
+  (get-buffer (concat "Eshell: " (replace-regexp-in-string "/$" "" path))))
 
-  (defun eshell/new-or-current ()
-    "Open a new instance of eshell.
+(defun eshell/new-or-current ()
+  "Open a new instance of eshell.
 If in a dired buffer, open eshell in the current directory.
 Otherwise, open in the project root.
 Reuses an existing eshell buffer for the target directory if one exists.
@@ -2977,34 +3016,35 @@ When not in frame-centric mode and not in a dired buffer, display
 in a left side window.
 If already focused on an eshell side window, return focus to the
 main window without closing the side window."
-    (interactive)
-    (if (and (derived-mode-p 'eshell-mode)
-             (window-parameter (selected-window) 'window-side))
-        (select-window (get-mru-window nil nil t))
-      (let* ((in-dired (derived-mode-p 'dired-mode))
-             (default-directory (replace-regexp-in-string "/$" ""
-                                  (if in-dired
-                                      default-directory
-                                    (utils/get-project-root-if-wanted))))
-             (eshell-buffer (eshell/get-relevant-buffer default-directory))
-             (use-side-window (and (not frame-centric) (not in-dired)))
-             (buf (or eshell-buffer
-                      (let ((b (generate-new-buffer eshell-buffer-name)))
-                        (with-current-buffer b (eshell-mode)) b))))
-        (if use-side-window
-            (pop-to-buffer buf
-                           '((display-buffer-in-side-window)
-                             (side . left)
-                             (slot . 0)
-                             (window-width . 0.25)))
-          (switch-to-buffer buf)))))
+  (interactive)
+  (if (and (derived-mode-p 'eshell-mode)
+           (window-parameter (selected-window) 'window-side))
+      (select-window (get-mru-window nil nil t))
+    (let* ((in-dired (derived-mode-p 'dired-mode))
+           (default-directory (replace-regexp-in-string "/$" ""
+                                                        (if in-dired
+                                                            default-directory
+                                                          (utils/get-project-root-if-wanted))))
+           (eshell-buffer (eshell/get-relevant-buffer default-directory))
+           (use-side-window (and (not frame-centric) (not in-dired)))
+           (buf (or eshell-buffer
+                    (let ((b (generate-new-buffer eshell-buffer-name)))
+                      (with-current-buffer b (eshell-mode)) b))))
+      (if use-side-window
+          (pop-to-buffer buf
+                         '((display-buffer-in-side-window)
+                           (side . left)
+                           (slot . 0)
+                           (window-width . 80)
+                           (preserve-size . (t . nil))))
+        (switch-to-buffer buf)))))
 
-  (global-set-key (kbd "C-s-<return>") #'eshell/new-or-current)
-  (global-set-key (kbd "C-c <return>") #'eshell/new-or-current)
-  (global-set-key (kbd "C-c C-<return>") #'eshell/new-or-current)
+(global-set-key (kbd "C-s-<return>") #'eshell/new-or-current)
+(global-set-key (kbd "C-c <return>") #'eshell/new-or-current)
+(global-set-key (kbd "C-c C-<return>") #'eshell/new-or-current)
 
-  (use-package eshell
-    :ensure nil)
+(use-package eshell
+  :ensure nil)
 
 (use-package eat
   :vc (:url "https://codeberg.org/akib/emacs-eat" :rev :newest)
@@ -3145,43 +3185,61 @@ main window without closing the side window."
 (with-eval-after-load 'compile
   (fancy-compilation-mode))
 
-(defun dired/open-file ()
-  "In dired, open the file named on this line."
-  (interactive)
-  (let* ((file (dired-get-filename nil t)))
-    (message "Opening %s..." file)
-    (if *is-windows*
-        (w32-shell-execute "open" file)
-      (call-process "xdg-open" nil 0 nil file))
-    (message "Opening %s done" file)))
+(defvar dired/video-extensions
+    '("mp4" "mkv" "avi" "mov" "webm" "flv" "ogv" "mpg" "mpeg" "wmv" "m4v" "divx" "vob" "rmvb")
+    "Video file extensions to open with EMMS.")
 
-(defun dired/open-home-dir ()
-  "Open the home directory in dired"
-  (interactive)
-  (dired "~"))
+  (defun dired/find-file ()
+    "In dired, open the file named on this line.
+Video files are played with EMMS, other files are visited normally."
+    (interactive)
+    (let* ((file (dired-get-filename nil t))
+           (ext (downcase (or (file-name-extension file) ""))))
+      (if (member ext dired/video-extensions)
+          (progn
+            (message "Playing %s with EMMS..." file)
+            (emms-play-file file))
+        (dired-find-file))))
 
-(defun dired/first-file ()
-  (interactive)
-  (beginning-of-buffer)
-  (while (and (not (eobp))
-              (or (bolp)
-                  (member (dired-get-filename 'no-dir t)
-                          '("." ".."))))
-    (dired-next-line 1)))
+  (defun dired/open-file ()
+    "In dired, open the file externally with xdg-open."
+    (interactive)
+    (let* ((file (dired-get-filename nil t)))
+      (message "Opening %s..." file)
+      (if *is-windows*
+          (w32-shell-execute "open" file)
+        (call-process "xdg-open" nil 0 nil file))
+      (message "Opening %s done" file)))
 
-(defun dired/last-file ()
-  (interactive)
-  (end-of-buffer)
-  (dired-next-line -1))
+  (defun dired/open-home-dir ()
+    "Open the home directory in dired"
+    (interactive)
+    (dired "~"))
+
+  (defun dired/first-file ()
+    (interactive)
+    (beginning-of-buffer)
+    (while (and (not (eobp))
+                (or (bolp)
+                    (member (dired-get-filename 'no-dir t)
+                            '("." ".."))))
+      (dired-next-line 1)))
+
+  (defun dired/last-file ()
+    (interactive)
+    (end-of-buffer)
+    (dired-next-line -1))
 
 (use-package dired
   :ensure nil
   :bind (
          :map dired-mode-map
          ("C-." . dired-hide-dotfiles-mode)
-         ("<C-return>" . dired/open-file)
+         ("RET" . dired/find-file)
+         ("<mouse-2>" . dired/find-file)
+         ("<M-return>" . dired/open-file)
          ("M-p" . dired-up-directory)
-         ("M-n" . dired-find-file)
+         ("M-n" . dired/find-file)
          ("s-<escape>" . dired-toggle-read-only)
          ("M-<" . dired/first-file)
          ("M->" . dired/last-file)

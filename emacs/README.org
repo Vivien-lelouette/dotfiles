@@ -418,9 +418,10 @@ Set at daemon launch: =emacs --daemon --eval '(setq frame-centric t)'=
   (with-eval-after-load 'agent-shell
     (setq agent-shell-display-action
           '((vv/display-buffer-pop-up-frame-maybe display-buffer-in-side-window)
-            (side . right)
-            (slot . 0)
-            (window-width . 0.25))))
+            (side . left)
+            (slot . 1)
+            (window-width . 80)
+            (preserve-size . (t . nil)))))
 
   ;; --- Claudemacs ---
   (add-to-list 'display-buffer-alist
@@ -665,9 +666,13 @@ As bookmarks are at the center of my workflow, this is a crucial option.
                         (insert " "))
                       ;; Don't allow users to kill these buffers, as it destroys the hack
                       (add-hook 'kill-buffer-query-functions #'ignore nil 'local)
-                      (set-window-scroll-bars (minibuffer-window) nil nil)
                       (face-remap-add-relative 'default :background "#282a36")
-                      (face-remap-add-relative 'fringe :background "#282a36"))))))
+                      (face-remap-add-relative 'fringe :background "#282a36"))))
+
+              (defun theme/hide-minibuffer-scrollbar (&optional frame)
+                (set-window-scroll-bars (minibuffer-window frame) 0 nil))
+              (theme/hide-minibuffer-scrollbar)
+              (add-hook 'after-make-frame-functions #'theme/hide-minibuffer-scrollbar)))
 #+END_SRC
 
 * Doom modeline
@@ -747,6 +752,20 @@ As bookmarks are at the center of my workflow, this is a crucial option.
 
     (defun helm--show-action-window-other-window-p ()
       helm-show-action-window-other-window)
+
+    (defun helm/display-buffer (buffer &optional resume)
+      "Display helm BUFFER, allowing split inside side windows.
+When the selected window is a side window, temporarily remove its
+side parameter so that `helm-default-display-buffer' can split it."
+      (let* ((win (selected-window))
+             (side (window-parameter win 'window-side)))
+        (when side
+          (set-window-parameter win 'window-side nil))
+        (unwind-protect
+            (helm-default-display-buffer buffer resume)
+          (when side
+            (set-window-parameter win 'window-side side)))))
+    (setq helm-display-function #'helm/display-buffer)
 
     (defun helm/hook ()
       (display-line-numbers-mode 0))
@@ -1186,6 +1205,15 @@ As bookmarks are at the center of my workflow, this is a crucial option.
         (pgmacs-open-string str))))
 #+END_SRC
 
+** EMMS
+#+BEGIN_SRC emacs-lisp
+  (use-package emms
+    :config
+    (emms-all)
+    (setq emms-player-list '(emms-player-vlc)
+          emms-info-functions '(emms-info-native)))
+#+END_SRC
+
 ** string-inflection
 #+BEGIN_SRC emacs-lisp
   (use-package string-inflection
@@ -1514,6 +1542,8 @@ Pour l'usage avec Claude, il faut avoir `claude-code` d'installé et `claude-cod
           agent-shell-prefer-viewport-interaction nil
           agent-shell-preferred-agent-config 'claude-code)
 
+    (add-hook 'agent-shell-mode-hook (lambda () (display-line-numbers-mode -1)))
+
     ;; Auto-scroll pour les buffers agent-shell via agent-shell-section-functions
     ;; (defun agent-shell--auto-scroll (_range)
     ;;   "Scroll agent-shell buffer to bottom in all windows displaying it."
@@ -1537,24 +1567,36 @@ Pour l'usage avec Claude, il faut avoir `claude-code` d'installé et `claude-cod
              (shell-window (when shell-buffer
                              (get-buffer-window shell-buffer t))))
         (cond
+         ;; Focused in side window: return to main window
          ((and shell-window
                (window-parameter shell-window 'window-side)
                (eq (current-buffer) shell-buffer))
           (select-window (get-mru-window nil nil t)))
+         ;; Visible: focus it and paste context ourselves
          (shell-window
           (select-frame-set-input-focus (window-frame shell-window))
-          (select-window shell-window))
+          (select-window shell-window)
+          (when (and context (not shell-maker--busy))
+            (goto-char (point-max))
+            (insert "\n\n" context)
+            (comint-previous-prompt 1)))
+         ;; Running but not visible: display it and paste context ourselves
+         (shell-buffer
+          (agent-shell--display-buffer shell-buffer)
+          (when (and context (not shell-maker--busy))
+            (with-current-buffer shell-buffer
+              (goto-char (point-max))
+              (insert "\n\n" context)
+              (comint-previous-prompt 1))))
+         ;; Not running: create shell and paste context ourselves
          (t
-          (agent-shell)))
-        (when-let* ((context context)
-                    (buf (or shell-buffer
-                            (agent-shell--shell-buffer :no-error t :no-create t))))
-          (when (not (with-current-buffer buf shell-maker--busy))
-            (with-current-buffer buf
-              (let ((prompt-point (point-max)))
-                (goto-char prompt-point)
+          (let ((new-buffer (agent-shell--shell-buffer)))
+            (agent-shell--display-buffer new-buffer)
+            (when (and context (not shell-maker--busy))
+              (with-current-buffer new-buffer
+                (goto-char (point-max))
                 (insert "\n\n" context)
-                (agent-shell-previous-item)))))))
+                (comint-previous-prompt 1))))))))
 
     (defun agent-shell-reply (text)
       "Send TEXT as a quick reply to the agent from any buffer."
@@ -3258,22 +3300,22 @@ Pour l'usage avec Claude, il faut avoir `claude-code` d'installé et `claude-cod
 
   (defun eshell/new-or-current ()
     "Open a new instance of eshell.
-If in a dired buffer, open eshell in the current directory.
-Otherwise, open in the project root.
-Reuses an existing eshell buffer for the target directory if one exists.
-When not in frame-centric mode and not in a dired buffer, display
-in a left side window.
-If already focused on an eshell side window, return focus to the
-main window without closing the side window."
+  If in a dired buffer, open eshell in the current directory.
+  Otherwise, open in the project root.
+  Reuses an existing eshell buffer for the target directory if one exists.
+  When not in frame-centric mode and not in a dired buffer, display
+  in a left side window.
+  If already focused on an eshell side window, return focus to the
+  main window without closing the side window."
     (interactive)
     (if (and (derived-mode-p 'eshell-mode)
              (window-parameter (selected-window) 'window-side))
         (select-window (get-mru-window nil nil t))
       (let* ((in-dired (derived-mode-p 'dired-mode))
              (default-directory (replace-regexp-in-string "/$" ""
-                                  (if in-dired
-                                      default-directory
-                                    (utils/get-project-root-if-wanted))))
+                                                          (if in-dired
+                                                              default-directory
+                                                            (utils/get-project-root-if-wanted))))
              (eshell-buffer (eshell/get-relevant-buffer default-directory))
              (use-side-window (and (not frame-centric) (not in-dired)))
              (buf (or eshell-buffer
@@ -3284,7 +3326,8 @@ main window without closing the side window."
                            '((display-buffer-in-side-window)
                              (side . left)
                              (slot . 0)
-                             (window-width . 0.25)))
+                             (window-width . 80)
+                             (preserve-size . (t . nil))))
           (switch-to-buffer buf)))))
 
   (global-set-key (kbd "C-s-<return>") #'eshell/new-or-current)
@@ -3454,8 +3497,24 @@ main window without closing the side window."
 
 * Dired
 #+BEGIN_SRC emacs-lisp
+  (defvar dired/video-extensions
+    '("mp4" "mkv" "avi" "mov" "webm" "flv" "ogv" "mpg" "mpeg" "wmv" "m4v" "divx" "vob" "rmvb")
+    "Video file extensions to open with EMMS.")
+
+  (defun dired/find-file ()
+    "In dired, open the file named on this line.
+Video files are played with EMMS, other files are visited normally."
+    (interactive)
+    (let* ((file (dired-get-filename nil t))
+           (ext (downcase (or (file-name-extension file) ""))))
+      (if (member ext dired/video-extensions)
+          (progn
+            (message "Playing %s with EMMS..." file)
+            (emms-play-file file))
+        (dired-find-file))))
+
   (defun dired/open-file ()
-    "In dired, open the file named on this line."
+    "In dired, open the file externally with xdg-open."
     (interactive)
     (let* ((file (dired-get-filename nil t)))
       (message "Opening %s..." file)
@@ -3490,9 +3549,11 @@ main window without closing the side window."
     :bind (
            :map dired-mode-map
            ("C-." . dired-hide-dotfiles-mode)
-           ("<C-return>" . dired/open-file)
+           ("RET" . dired/find-file)
+           ("<mouse-2>" . dired/find-file)
+           ("<M-return>" . dired/open-file)
            ("M-p" . dired-up-directory)
-           ("M-n" . dired-find-file)
+           ("M-n" . dired/find-file)
            ("s-<escape>" . dired-toggle-read-only)
            ("M-<" . dired/first-file)
            ("M->" . dired/last-file)
