@@ -1,4 +1,4 @@
-;;; dracula-theme.el --- Dracula Theme
+;;; dracula-theme.el --- Dracula Theme  -*- lexical-binding: t; -*-
 
 ;; Copyright 2015-present, All rights reserved
 ;;
@@ -619,7 +619,7 @@ read it before opening a new issue about your will.")
                 :foreground ,dracula-green
                 ,@(when dracula-enlarge-headings
                     (list :height dracula-height-title-3)))
-               (markdown-header-face-4 :foreground ,dracula-selection)
+               (markdown-header-face-4 :foreground ,dracula-yellow)
                (markdown-header-face-5 :foreground ,dracula-cyan)
                (markdown-header-face-6 :foreground ,dracula-orange)
                (markdown-header-face-7 :foreground ,dark-blue)

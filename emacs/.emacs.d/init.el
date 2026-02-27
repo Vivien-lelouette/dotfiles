@@ -371,7 +371,7 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
         '((vv/display-buffer-pop-up-frame-maybe display-buffer-in-side-window)
           (side . left)
           (slot . 1)
-          (window-width . 80)
+          (window-width . 100)
           (preserve-size . (t . nil)))))
 
 ;; --- Claudemacs ---
@@ -543,12 +543,12 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
 (use-package textsize
   :vc (:url "https://github.com/WJCFerguson/textsize" :rev :newest)
   :custom
-  (textsize-default-points 8)
+  (textsize-default-points 10)
   (textsize-monitor-size-thresholds '((0 . -3) (280 . 0) (500 . 3) (1000 . 6) (1500 . 9)))
   (textsize-pixel-pitch-thresholds '((0 . 3) (0.12 . 0) (0.18 . -3) (0.22 . -6) (0.40 . 12)))
   :init (textsize-mode))
 
-(setq auth-sources '("~/.authinfo.gpg"))
+(setq auth-sources '("~/.authinfo.json.gpg" "~/.authinfo.gpg"))
 
 (setq remote-file-name-inhibit-cache nil
       vc-ignore-dir-regexp
@@ -908,11 +908,10 @@ side parameter so that `helm-default-display-buffer' can split it."
    (tsx-ts-mode . combobulate-mode))
   :config
   (setq combobulate-flash-node nil
-        combobulate-message-node-highlighted nil)
-  (with-eval-after-load 'combobulate-js-ts
-    (setq combobulate-javascript-highlight-queries-default nil
-          combobulate-typescript-highlight-queries-default nil
-          combobulate-tsx-highlight-queries-default nil)))
+        combobulate-message-node-highlighted nil
+        combobulate-javascript-highlight-queries-default nil
+        combobulate-typescript-highlight-queries-default nil
+        combobulate-tsx-highlight-queries-default nil))
 
 (use-package goto-last-change
   :config
@@ -2599,149 +2598,161 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
 (add-hook 'activate-mark-hook #'electric-pair/activate)
 (add-hook 'deactivate-mark-hook #'electric-pair/deactivate)
 
-(electric-indent-mode 1)
+(electric-indent-mode 0)
 (defun electric-indent/inhibit ()
   (interactive)
   (setq-local electric-indent-inhibit t))
 
 (use-package ilist
-  :vc (:url "https://github.com/emacs-straight/ilist" :rev :newest)
-  :defer t)
+    :vc (:url "https://github.com/emacs-straight/ilist" :rev :newest)
+    :defer t)
 
-(use-package transient
-  :defer t)
+  (use-package transient
+    :defer t
+    :config
+    (defun transient/display-buffer (buffer alist)
+      "Display transient BUFFER below the selected window.
+Falls back to a bottom side-window when splitting is not possible."
+      (or (display-buffer-below-selected buffer alist)
+          (display-buffer-in-side-window buffer
+                                         (append alist '((side . bottom))))))
+    (setq transient-display-buffer-action
+          '(transient/display-buffer
+            (dedicated . t)
+            (inhibit-same-window . t)
+            (window-parameters (no-other-window . t)))))
 
-(use-package magit
-  :defer t
-  :commands (magit-status magit-clone magit-blame)
-  :bind (("C-x g g" . magit-status)
-         ("C-x g c" . magit-clone)
-         ("C-x g s" . magit/magit-status-no-split))
-  :config
-  (require 'ilist)
-  (defun magit/magit-status-no-split ()
-    "Switch to existing Magit status buffer and refresh, or create one."
-    (interactive)
-    (if-let* ((buf (magit-get-mode-buffer 'magit-status-mode)))
-        (progn
-          (pop-to-buffer-same-window buf)
-          (magit-refresh))
-      (let ((magit-display-buffer-function 'magit-display-buffer-same-window-except-diff-v1))
-        (magit-status))))
-  (setq magit-bury-buffer-function 'magit-mode-quit-window)
+  (use-package magit
+    :defer t
+    :commands (magit-status magit-clone magit-blame)
+    :bind (("C-x g g" . magit-status)
+           ("C-x g c" . magit-clone)
+           ("C-x g s" . magit/magit-status-no-split))
+    :config
+    (require 'ilist)
+    (defun magit/magit-status-no-split ()
+      "Switch to existing Magit status buffer and refresh, or create one."
+      (interactive)
+      (if-let* ((buf (magit-get-mode-buffer 'magit-status-mode)))
+          (progn
+            (pop-to-buffer-same-window buf)
+            (magit-refresh))
+        (let ((magit-display-buffer-function 'magit-display-buffer-same-window-except-diff-v1))
+          (magit-status))))
+    (setq magit-bury-buffer-function 'magit-mode-quit-window)
 
-  (defun magit/jira-key-from-branch ()
-    "Extract a Jira issue key (e.g. PROJ-123) from the current branch name."
-    (when-let* ((branch (magit-get-current-branch)))
-      (when (string-match "\\b\\([A-Z][A-Z0-9]+-[0-9]+\\)" branch)
-        (match-string 1 branch))))
+    (defun magit/jira-key-from-branch ()
+      "Extract a Jira issue key (e.g. PROJ-123) from the current branch name."
+      (when-let* ((branch (magit-get-current-branch)))
+        (when (string-match "\\b\\([A-Z][A-Z0-9]+-[0-9]+\\)" branch)
+          (match-string 1 branch))))
 
-  (defvar-local magit/jira-issue-cache nil
-    "Cached Jira issue data for the current magit-status buffer.")
+    (defvar-local magit/jira-issue-cache nil
+      "Cached Jira issue data for the current magit-status buffer.")
 
-  (defvar-local magit/jira-issue-cache-branch nil
-    "Branch name associated with `magit/jira-issue-cache'.")
+    (defvar-local magit/jira-issue-cache-branch nil
+      "Branch name associated with `magit/jira-issue-cache'.")
 
-  (defun magit/jira-fetch-issue (key)
-    "Fetch Jira issue KEY synchronously and return the response data."
-    (let ((result nil))
-      (jira-api-call
-       "GET" (concat "issue/" key)
-       :sync t
-       :callback (lambda (data _response) (setq result data)))
-      result))
+    (defun magit/jira-fetch-issue (key)
+      "Fetch Jira issue KEY synchronously and return the response data."
+      (let ((result nil))
+        (jira-api-call
+         "GET" (concat "issue/" key)
+         :sync t
+         :callback (lambda (data _response) (setq result data)))
+        result))
 
-  (defun magit/insert-jira-issue ()
-    "Insert a Magit section showing the Jira issue associated with the branch."
-    (when-let* ((key (magit/jira-key-from-branch)))
-      (require 'jira-api nil t)
-      (require 'jira-doc nil t)
-      (when (fboundp 'jira-api-call)
-        (condition-case nil
-            (let* ((current-branch (magit-get-current-branch))
-                   (_cache-check (unless (equal current-branch magit/jira-issue-cache-branch)
-                                   (setq magit/jira-issue-cache nil
-                                         magit/jira-issue-cache-branch current-branch)))
-                   (issue (or magit/jira-issue-cache
-                             (setq magit/jira-issue-cache
-                                   (magit/jira-fetch-issue key))))
-                   (fields (alist-get 'fields issue))
-                   (summary (alist-get 'summary fields))
-                   (status (alist-get 'name (alist-get 'status fields)))
-                   (type (alist-get 'name (alist-get 'issuetype fields)))
-                   (assignee (or (alist-get 'displayName (alist-get 'assignee fields)) "Unassigned"))
-                   (priority (alist-get 'name (alist-get 'priority fields)))
-                   (labels (alist-get 'labels fields))
-                   (components (mapcar (lambda (c) (alist-get 'name c))
-                                       (append (alist-get 'components fields) nil)))
-                   (description (alist-get 'description fields)))
-              (when (and issue summary)
-                (magit-insert-section (jira-issue key)
-                  (magit-insert-heading
-                    (format "Jira: %s [%s] %s" key status summary))
-                  (insert (format "  Type:     %s\n" type))
-                  (insert (format "  Priority: %s\n" (or priority "None")))
-                  (insert (format "  Assignee: %s\n" assignee))
-                  (insert (format "  Status:   %s\n" status))
-                  (when components
-                    (insert (format "  Components: %s\n" (string-join components ", "))))
-                  (when description
-                    (insert "\n")
-                    (insert (propertize "  Description\n" 'font-lock-face 'magit-section-heading))
-                    (insert (replace-regexp-in-string
-                             "^" "    "
-                             (jira-doc-format description))
-                            "\n"))
-                  (insert "\n"))))
-          (error nil)))))
+    (defun magit/insert-jira-issue ()
+      "Insert a Magit section showing the Jira issue associated with the branch."
+      (when-let* ((key (magit/jira-key-from-branch)))
+        (require 'jira-api nil t)
+        (require 'jira-doc nil t)
+        (when (fboundp 'jira-api-call)
+          (condition-case nil
+              (let* ((current-branch (magit-get-current-branch))
+                     (_cache-check (unless (equal current-branch magit/jira-issue-cache-branch)
+                                     (setq magit/jira-issue-cache nil
+                                           magit/jira-issue-cache-branch current-branch)))
+                     (issue (or magit/jira-issue-cache
+                               (setq magit/jira-issue-cache
+                                     (magit/jira-fetch-issue key))))
+                     (fields (alist-get 'fields issue))
+                     (summary (alist-get 'summary fields))
+                     (status (alist-get 'name (alist-get 'status fields)))
+                     (type (alist-get 'name (alist-get 'issuetype fields)))
+                     (assignee (or (alist-get 'displayName (alist-get 'assignee fields)) "Unassigned"))
+                     (priority (alist-get 'name (alist-get 'priority fields)))
+                     (labels (alist-get 'labels fields))
+                     (components (mapcar (lambda (c) (alist-get 'name c))
+                                         (append (alist-get 'components fields) nil)))
+                     (description (alist-get 'description fields)))
+                (when (and issue summary)
+                  (magit-insert-section (jira-issue key)
+                    (magit-insert-heading
+                      (format "Jira: %s [%s] %s" key status summary))
+                    (insert (format "  Type:     %s\n" type))
+                    (insert (format "  Priority: %s\n" (or priority "None")))
+                    (insert (format "  Assignee: %s\n" assignee))
+                    (insert (format "  Status:   %s\n" status))
+                    (when components
+                      (insert (format "  Components: %s\n" (string-join components ", "))))
+                    (when description
+                      (insert "\n")
+                      (insert (propertize "  Description\n" 'font-lock-face 'magit-section-heading))
+                      (insert (replace-regexp-in-string
+                               "^" "    "
+                               (jira-doc-format description))
+                              "\n"))
+                    (insert "\n"))))
+            (error nil)))))
 
-  (defvar-keymap jira-issue-section-map
-    :doc "Keymap for the Jira issue section in magit-status."
-    "RET" (lambda () (interactive)
-            (when-let* ((key (magit-section-value-if 'jira-issue)))
-              (jira-detail-show-issue key))))
+    (defvar-keymap jira-issue-section-map
+      :doc "Keymap for the Jira issue section in magit-status."
+      "RET" (lambda () (interactive)
+              (when-let* ((key (magit-section-value-if 'jira-issue)))
+                (jira-detail-show-issue key))))
 
-  (defclass jira-issue (magit-section)
-    ((keymap :initform 'jira-issue-section-map)))
+    (defclass jira-issue (magit-section)
+      ((keymap :initform 'jira-issue-section-map)))
 
-  (magit-add-section-hook 'magit-status-sections-hook
-                          #'magit/insert-jira-issue
-                          #'magit-insert-status-headers
-                          'append))
+    (magit-add-section-hook 'magit-status-sections-hook
+                            #'magit/insert-jira-issue
+                            #'magit-insert-status-headers
+                            'append))
 
-(use-package magit-todos
-  :after magit
-  :config (magit-todos-mode 1))
+  (use-package magit-todos
+    :after magit
+    :config (magit-todos-mode 1))
 
-(use-package forge
-  :after magit
-  :config
-  (global-set-key (kbd "M-o") #'forge-browse)
-  (defun forge--format-topic-title (topic)
-    (with-temp-buffer
-      (save-excursion
-        (with-slots (title status state) topic
-          (insert
-           (magit--propertize-face
-            title
-            `(,@(and (forge-pullreq-p topic)
-                     (oref topic draft-p)
-                     '(forge-pullreq-draft))
-              ,(pcase status
-                 ('unread  'forge-topic-unread)
-                 ('pending 'forge-topic-pending)
-                 ('done    'forge-topic-done))
-              ,(pcase (list (eieio-object-class topic) state)
-                 (`(forge-issue   open)      'forge-issue-open)
-                 (`(forge-issue   completed) 'forge-issue-completed)
-                 (`(forge-issue   unplanned) 'forge-issue-unplanned)
-                 (`(forge-pullreq open)      'forge-pullreq-open)
-                 (`(forge-pullreq merged)    'forge-pullreq-merged)
-                 (`(forge-pullreq rejected)  'forge-pullreq-rejected)))))))
-      (run-hook-wrapped 'forge-topic-wash-title-hook
-                        (lambda (fn) (prog1 nil (save-excursion (funcall fn)))))
-      (buffer-string)))
-  )
+  (use-package forge
+    :after magit
+    :config
+    (global-set-key (kbd "M-o") #'forge-browse)
+    (defun forge--format-topic-title (topic)
+      (with-temp-buffer
+        (save-excursion
+          (with-slots (title status state) topic
+            (insert
+             (magit--propertize-face
+              title
+              `(,@(and (forge-pullreq-p topic)
+                       (oref topic draft-p)
+                       '(forge-pullreq-draft))
+                ,(pcase status
+                   ('unread  'forge-topic-unread)
+                   ('pending 'forge-topic-pending)
+                   ('done    'forge-topic-done))
+                ,(pcase (list (eieio-object-class topic) state)
+                   (`(forge-issue   open)      'forge-issue-open)
+                   (`(forge-issue   completed) 'forge-issue-completed)
+                   (`(forge-issue   unplanned) 'forge-issue-unplanned)
+                   (`(forge-pullreq open)      'forge-pullreq-open)
+                   (`(forge-pullreq merged)    'forge-pullreq-merged)
+                   (`(forge-pullreq rejected)  'forge-pullreq-rejected)))))))
+        (run-hook-wrapped 'forge-topic-wash-title-hook
+                          (lambda (fn) (prog1 nil (save-excursion (funcall fn)))))
+        (buffer-string)))
+    )
 
 (use-package yasnippet
   :defer 2
@@ -3035,7 +3046,7 @@ main window without closing the side window."
                          '((display-buffer-in-side-window)
                            (side . left)
                            (slot . 0)
-                           (window-width . 80)
+                           (window-width . 100)
                            (preserve-size . (t . nil))))
         (switch-to-buffer buf)))))
 
@@ -3329,6 +3340,508 @@ Video files are played with EMMS, other files are visited normally."
 
     (add-hook 'eww-after-render-hook 'eww/rename-buffer)
     (add-hook 'eww-after-render-hook (lambda () (visual-line-mode 1)))))
+
+(use-package auth-source-xoauth2-plugin
+  :ensure t
+  :custom
+  (auth-source-xoauth2-plugin-mode t)
+  :config
+  (setq oauth2-token-file "~/gnus/oauth2.plstore"))
+
+(setq mail-user-agent 'gnus-user-agent)
+(setq read-mail-command 'gnus)
+(setq gnus-select-method '(nnnil ""))
+(setq gnus-use-full-window nil)
+(defun gnus/display-article ()
+  "Display article: split if single window, reuse other window otherwise."
+  (let ((article-buf (gnus-get-buffer-create gnus-article-buffer)))
+    (when article-buf
+      (display-buffer article-buf
+                      '((display-buffer-use-some-window
+                         display-buffer-pop-up-window)
+                        (inhibit-same-window . t))))))
+(advice-add 'gnus-configure-windows :override
+            (lambda (setting &optional _force)
+              (cond
+               ((eq setting 'summary)
+                (let ((sum-buf (gnus-get-buffer-create gnus-summary-buffer)))
+                  (when sum-buf
+                    (switch-to-buffer sum-buf))))
+               ((eq setting 'article)
+                (gnus/display-article)))))
+(keymap-global-set "C-c g" #'gnus)
+
+(setq gnus-message-archive-group nil
+      gnus-permanently-visible-groups ":INBOX$"
+      gnus-subscribe-newsgroup-method 'gnus-subscribe-killed
+      gnus-options-subscribe "^nnimap\\+work:INBOX$")
+
+(add-hook 'gnus-group-mode-hook #'gnus-topic-mode)
+
+(setq gnus-thread-sort-functions '((not gnus-thread-sort-by-date))
+        gnus-summary-line-format "%&user-date; %U%R%z %(%[%-23,23f%]%) %s\n"
+        gnus-user-date-format-alist '(((gnus-seconds-today) . "%H:%M")
+                                      ((+ 86400 (gnus-seconds-today)) . "hier %H:%M")
+                                      ((* 7 86400) . "%a %H:%M")
+                                      (t . "%d/%m/%Y")))
+
+  (defun gnus/kill-article-buffer ()
+    "Kill the article buffer."
+    (interactive)
+    (let ((buf (get-buffer gnus-article-buffer)))
+      (when buf
+        (kill-buffer buf))))
+
+  (defun gnus/summary-next ()
+    "Go to next article in summary.
+If at the last article, fetch 200 more and then move to the next one."
+    (interactive)
+    (if (gnus-summary-last-article-p)
+        (progn
+          (gnus-summary-insert-old-articles 200)
+          (gnus-summary-sort-by-date t)
+          (gnus-summary-next-subject 1)
+          (gnus-summary-select-article))
+      (gnus-summary-next-subject 1)
+      (gnus-summary-select-article)))
+
+  (defun gnus/summary-prev ()
+    "Go to previous article in summary."
+    (interactive)
+    (gnus-summary-next-subject -1)
+    (gnus-summary-select-article))
+
+(setq
+ gnus-sorted-header-list
+ '("^From:"
+   "^X-RT-Originator"
+   "^Newsgroups:"
+   "^Subject:"
+   "^Date:"
+   "^Envelope-To:"
+   "^Followup-To:"
+   "^Reply-To:"
+   "^Organization:"
+   "^Summary:"
+   "^Abstract:"
+   "^Keywords:"
+   "^To:"
+   "^[BGF]?Cc:"
+   "^Posted-To:"
+   "^Mail-Copies-To:"
+   "^Mail-Followup-To:"
+   "^Apparently-To:"
+   "^Resent-From:"
+   "^User-Agent:"
+   "^X-detected-operating-system:"
+   "^X-Spam_action:"
+   "^X-Spam_bar:"
+   "^Message-ID:"
+   ;; "^References:"
+   "^List-Id:"
+   "^Gnus-Warning:"))
+
+(setq gnus-gcc-mark-as-read t
+      message-confirm-send t
+      message-fill-column 80
+      message-forward-as-mime t
+      message-send-mail-function #'smtpmail-send-it)
+
+(setq gnus-save-newsrc-file nil
+      gnus-read-newsrc-file nil
+      gnus-home-directory "~/gnus/"
+      gnus-directory      "~/gnus/news/"
+      message-directory   "~/gnus/mail/"
+      nndraft-directory   "~/gnus/drafts/"
+      gnus-use-cache nil
+      gnus-agent nil)
+
+(setq gnus-demon-timestep 60)
+(require 'gnus)
+
+(gnus-demon-add-handler 'gnus-demon-scan-news 5 t)
+(gnus-demon-init)
+
+(setq doom-modeline-gnus t
+      doom-modeline-gnus-timer 5)
+(add-hook 'gnus-started-hook (lambda ()
+                               (setq doom-modeline--gnus-started t
+                                     shr-width nil)
+                               (keymap-set gnus-summary-mode-map "n" #'gnus/summary-next)
+                               (keymap-set gnus-summary-mode-map "p" #'gnus/summary-prev)
+                               (keymap-set gnus-summary-mode-map "q" #'gnus/kill-article-buffer)
+                               (keymap-set message-mode-map "C-c C-s" nil)))
+
+(use-package bbdb
+  :config
+  (bbdb-initialize 'gnus 'message)
+  (bbdb-mua-auto-update-init 'gnus 'message)
+  (setq bbdb-mua-auto-action nil
+        bbdb-mua-auto-update-p nil
+        bbdb-complete-mail-allow-cycling t
+        bbdb-pop-up-window-size 0
+        bbdb-mua-pop-up nil
+        bbdb-ignore-message-alist
+        '(("From" . "notifications@github\\.com")
+          ("From" . "noreply@.*\\.github\\.com")
+          ("From" . ".*noreply.*@.*")
+          ("From" . "info@e\\.atlassian\\.com")))
+  (add-hook 'message-mode-hook
+            (lambda ()
+              (setq-local company-backends
+                          (cons 'company-bbdb company-backends)))))
+
+(defvar gcal/ics-url nil
+    "Secret ICS URL for Google Calendar.")
+
+  (defvar gcal/org-file "~/org/gcal.org"
+    "Org file where Google Calendar events are stored.")
+
+  (defvar gcal/future-months 3
+    "Number of months into the future to expand recurring events.")
+
+  (defun gcal/parse-ics-datetime (dt)
+    "Parse an ICS datetime string DT into (SEC MIN HOUR DAY MON YEAR).
+Handles YYYYMMDDTHHMMSS, YYYYMMDDTHHMMSSZ (UTC), and YYYYMMDD formats.
+UTC times (ending with Z) are converted to local time."
+    (when (string-match (rx (group (= 4 digit)) (group (= 2 digit)) (group (= 2 digit))
+                            (? "T" (group (= 2 digit)) (group (= 2 digit)) (group (= 2 digit)))
+                            (? (group "Z")))
+                        dt)
+      (let ((year (string-to-number (match-string 1 dt)))
+            (mon (string-to-number (match-string 2 dt)))
+            (day (string-to-number (match-string 3 dt)))
+            (hour (if (match-string 4 dt) (string-to-number (match-string 4 dt)) 0))
+            (min (if (match-string 5 dt) (string-to-number (match-string 5 dt)) 0))
+            (sec (if (match-string 6 dt) (string-to-number (match-string 6 dt)) 0))
+            (utc-p (match-string 7 dt)))
+        (if utc-p
+            (let* ((utc-time (encode-time sec min hour day mon year t))
+                   (local (decode-time utc-time)))
+              (list (nth 0 local) (nth 1 local) (nth 2 local)
+                    (nth 3 local) (nth 4 local) (nth 5 local)))
+          (list sec min hour day mon year)))))
+
+  (defun gcal/time-to-absolute (parsed)
+    "Convert PARSED time list to Emacs time."
+    (encode-time (nth 0 parsed) (nth 1 parsed) (nth 2 parsed)
+                 (nth 3 parsed) (nth 4 parsed) (nth 5 parsed)))
+
+  (defun gcal/add-months (parsed n)
+    "Add N months to PARSED time, adjusting day if needed."
+    (let* ((year (nth 5 parsed))
+           (mon (+ (nth 4 parsed) n))
+           (day (nth 3 parsed)))
+      (while (> mon 12) (setq mon (- mon 12) year (1+ year)))
+      (while (< mon 1) (setq mon (+ mon 12) year (1- year)))
+      ;; Clamp day to valid range for target month
+      (let ((max-day (calendar-last-day-of-month mon year)))
+        (when (> day max-day) (setq day max-day)))
+      (list (nth 0 parsed) (nth 1 parsed) (nth 2 parsed) day mon year)))
+
+  (defun gcal/add-days (parsed n)
+    "Add N days to PARSED time."
+    (let ((time (gcal/time-to-absolute parsed)))
+      (let ((new-time (time-add time (days-to-time n))))
+        (let ((decoded (decode-time new-time)))
+          (list (nth 0 decoded) (nth 1 decoded) (nth 2 decoded)
+                (nth 3 decoded) (nth 4 decoded) (nth 5 decoded))))))
+
+  (defun gcal/add-weeks (parsed n)
+    "Add N weeks to PARSED time."
+    (gcal/add-days parsed (* n 7)))
+
+  (defun gcal/add-years (parsed n)
+    "Add N years to PARSED time."
+    (list (nth 0 parsed) (nth 1 parsed) (nth 2 parsed)
+          (nth 3 parsed) (nth 4 parsed) (+ (nth 5 parsed) n)))
+
+  (defun gcal/day-name-to-number (day-name)
+    "Convert ICS day abbreviation DAY-NAME to `calendar' day number (0=Sun, 1=Mon, ..., 6=Sat)."
+    (pcase day-name
+      ("SU" 0) ("MO" 1) ("TU" 2) ("WE" 3) ("TH" 4) ("FR" 5) ("SA" 6)))
+
+  (defun gcal/expand-rrule (dtstart duration-secs rrule)
+    "Expand RRULE starting from DTSTART, returning list of (start-parsed . end-parsed).
+DURATION-SECS is the event duration in seconds."
+    (let* ((freq (and (string-match "FREQ=\\([A-Z]+\\)" rrule) (match-string 1 rrule)))
+           (interval (if (string-match "INTERVAL=\\([0-9]+\\)" rrule)
+                         (string-to-number (match-string 1 rrule)) 1))
+           (count (and (string-match "COUNT=\\([0-9]+\\)" rrule)
+                       (string-to-number (match-string 1 rrule))))
+           (until (and (string-match "UNTIL=\\([0-9T]+Z?\\)" rrule)
+                       (gcal/parse-ics-datetime (match-string 1 rrule))))
+           (byday (when (string-match "BYDAY=\\([A-Z,]+\\)" rrule)
+                    (mapcar #'gcal/day-name-to-number
+                            (split-string (match-string 1 rrule) ","))))
+           (now (decode-time))
+           (today (list 0 0 0 (nth 3 now) (nth 4 now) (nth 5 now)))
+           (horizon (gcal/add-months today gcal/future-months))
+           (horizon-time (gcal/time-to-absolute horizon))
+           (until-time (when until (gcal/time-to-absolute until)))
+           (advance-fn (pcase freq
+                         ("DAILY" (lambda (d n) (gcal/add-days d (* n interval))))
+                         ("WEEKLY" (lambda (d n) (gcal/add-weeks d (* n interval))))
+                         ("MONTHLY" (lambda (d n) (gcal/add-months d (* n interval))))
+                         ("YEARLY" (lambda (d n) (gcal/add-years d (* n interval))))))
+           (occurrences nil)
+           (i 0)
+           (max-iter (or count 1000)))
+      (when advance-fn
+        (if (and byday (string= freq "WEEKLY"))
+            ;; WEEKLY with BYDAY: iterate week by week, emit each matching day
+            (let ((emitted 0))
+              (while (< i max-iter)
+                (let ((week-start (funcall advance-fn dtstart i)))
+                  ;; Find the Monday of this week (or Sunday, depending on start)
+                  ;; We use dtstart's weekday as the anchor for the week
+                  (let* ((anchor-time (gcal/time-to-absolute week-start))
+                         (anchor-dow (nth 6 (decode-time anchor-time))))
+                    (dolist (target-dow byday)
+                      (when (< emitted max-iter)
+                        (let* ((day-offset (- target-dow anchor-dow))
+                               (occ (gcal/add-days week-start day-offset))
+                               (occ-time (gcal/time-to-absolute occ))
+                               (past-until (and until-time (time-less-p until-time occ-time)))
+                               (past-horizon (time-less-p horizon-time occ-time)))
+                          (unless (or past-until past-horizon
+                                      (time-less-p occ-time (gcal/time-to-absolute dtstart)))
+                            (let* ((end-time (time-add occ-time duration-secs))
+                                   (end-decoded (decode-time end-time))
+                                   (end-parsed (list (nth 0 end-decoded) (nth 1 end-decoded)
+                                                     (nth 2 end-decoded) (nth 3 end-decoded)
+                                                     (nth 4 end-decoded) (nth 5 end-decoded))))
+                              (push (cons occ end-parsed) occurrences)
+                              (setq emitted (1+ emitted))))
+                          (when (or past-until past-horizon)
+                            (setq i max-iter)))))))
+                (setq i (1+ i))))
+          ;; No BYDAY or non-WEEKLY: simple iteration
+          (while (< i max-iter)
+            (let* ((occ (funcall advance-fn dtstart i))
+                   (occ-time (gcal/time-to-absolute occ)))
+              (when (and until-time (time-less-p until-time occ-time))
+                (setq i max-iter))
+              (when (time-less-p horizon-time occ-time)
+                (setq i max-iter))
+              (when (< i max-iter)
+                (let* ((end-time (time-add occ-time duration-secs))
+                       (end-decoded (decode-time end-time))
+                       (end-parsed (list (nth 0 end-decoded) (nth 1 end-decoded)
+                                         (nth 2 end-decoded) (nth 3 end-decoded)
+                                         (nth 4 end-decoded) (nth 5 end-decoded))))
+                  (push (cons occ end-parsed) occurrences))
+                (setq i (1+ i)))))))
+      (nreverse occurrences)))
+
+  (defun gcal/unfold-ics (text)
+    "Unfold ICS line continuations (RFC 5545: CRLF + space/tab)."
+    (replace-regexp-in-string "\r?\n[ \t]" "" text))
+
+  (defun gcal/extract-attendees (event)
+    "Extract attendee display names from EVENT string."
+    (let ((pos 0) attendees)
+      (while (string-match "^ATTENDEE\\([^:]*\\):\\(.+\\)$" event pos)
+        (let ((params (match-string 1 event))
+              (value (string-trim (match-string 2 event))))
+          (setq pos (match-end 0))
+          (if (string-match "CN=\\([^;:]+\\)" params)
+              (push (string-trim (match-string 1 params)) attendees)
+            (when (string-match "mailto:\\(.+\\)" value)
+              (push (string-trim (match-string 1 value)) attendees)))))
+      (nreverse attendees)))
+
+  (defun gcal/ics-to-org (ics-content)
+    "Parse ICS-CONTENT and return org entries for events up to `gcal/future-months' ahead."
+    (let ((entries nil)
+          (unfolded (gcal/unfold-ics ics-content))
+          (events nil))
+      (setq events (split-string unfolded "BEGIN:VEVENT" t))
+      (dolist (event events)
+        (when (string-match "END:VEVENT" event)
+          (let* ((field (lambda (name)
+                          (when (string-match (concat "^" name "\\(?:;[^:]*\\)?:\\(.+\\)$")
+                                              event)
+                            (string-trim (match-string 1 event)))))
+                 (dtstart-raw (or (funcall field "DTSTART") ""))
+                 (dtend-raw (funcall field "DTEND"))
+                 (summary (or (funcall field "SUMMARY") "No title"))
+                 (description (funcall field "DESCRIPTION"))
+                 (location (funcall field "LOCATION"))
+                 (rrule (funcall field "RRULE"))
+                 (attendees (gcal/extract-attendees event))
+                 (dtstart (gcal/parse-ics-datetime dtstart-raw))
+                 (dtend (and dtend-raw (gcal/parse-ics-datetime dtend-raw)))
+                 (all-day (not (string-match-p "T" dtstart-raw))))
+            (when dtstart
+              (let* ((duration-secs (if (and dtstart dtend)
+                                        (float-time
+                                         (time-subtract (gcal/time-to-absolute dtend)
+                                                        (gcal/time-to-absolute dtstart)))
+                                      3600))
+                     (occurrences (if rrule
+                                      (gcal/expand-rrule dtstart duration-secs rrule)
+                                    (list (cons dtstart (or dtend dtstart)))))
+                     ;; Unescape ICS description
+                     (desc (when description
+                             (replace-regexp-in-string
+                              "\\\\n" "\n"
+                              (replace-regexp-in-string "\\\\," "," description))))
+                     ;; Separate Meet info from description
+                     (meet-info (when desc
+                                  (let ((meet-lines nil)
+                                        (lines (split-string desc "\n")))
+                                    (dolist (line lines)
+                                      (when (string-match-p
+                                             "\\(?:Google Meet\\|meet\\.google\\.com\\|tel\\.meet/\\|composez le\\|numéros de téléphone\\)"
+                                             line)
+                                        (push line meet-lines)))
+                                    (nreverse meet-lines))))
+                     (clean-desc (when desc
+                                   (let ((lines (split-string desc "\n"))
+                                         (kept nil))
+                                     (dolist (line lines)
+                                       (unless (or (string-match-p
+                                                    "\\(?:Google Meet\\|meet\\.google\\.com\\|tel\\.meet/\\|composez le\\|numéros de téléphone\\)"
+                                                    line)
+                                                   (string-empty-p (string-trim line)))
+                                         (push line kept)))
+                                     (nreverse kept))))
+                     ;; Build body with metadata
+                     (body-parts nil))
+                (when (and attendees (> (length attendees) 0))
+                  (push (concat "** Participants\n"
+                                (mapconcat (lambda (a) (concat "- " a)) attendees "\n"))
+                        body-parts))
+                (when (and meet-info (> (length meet-info) 0))
+                  (push (concat "** Meet\n"
+                                (mapconcat #'identity meet-info "\n"))
+                        body-parts))
+                (when (and location (not (string-empty-p location)))
+                  (push (concat "** Lieu\n"
+                                (replace-regexp-in-string "\\\\," "," location))
+                        body-parts))
+                (when (and clean-desc (> (length clean-desc) 0))
+                  (push (concat "** Description\n"
+                                (mapconcat #'identity clean-desc "\n"))
+                        body-parts))
+                (let ((body (string-join (nreverse body-parts) "\n")))
+                  (dolist (occ occurrences)
+                    (let* ((start (car occ))
+                           (end (cdr occ))
+                           (year (nth 5 start)) (mon (nth 4 start)) (day (nth 3 start))
+                           (sort-key (format "%04d%02d%02d%02d%02d" year mon day
+                                             (nth 2 start) (nth 1 start)))
+                           (ts (if all-day
+                                   (format "<%04d-%02d-%02d>" year mon day)
+                                 (format "<%04d-%02d-%02d %02d:%02d-%02d:%02d>"
+                                         year mon day (nth 2 start) (nth 1 start)
+                                         (nth 2 end) (nth 1 end)))))
+                      (push (cons sort-key
+                                  (if (string-empty-p body)
+                                      (concat "* " summary "\n" ts)
+                                    (concat "* " summary "\n" ts "\n" body)))
+                            entries)))))))))
+      (mapconcat #'cdr (sort entries (lambda (a b) (string< (car a) (car b)))) "\n")))
+
+  (defun gcal/fetch ()
+    "Fetch Google Calendar ICS and convert to org."
+    (interactive)
+    (when gcal/ics-url
+      (url-retrieve gcal/ics-url
+        (lambda (_status)
+          (goto-char (point-min))
+          (re-search-forward "\n\n" nil t)
+          (delete-region (point-min) (point))
+          (set-buffer-multibyte t)
+          (decode-coding-region (point-min) (point-max) 'utf-8)
+          (let* ((ical-buf (current-buffer))
+                 (ics-content (buffer-string))
+                 (org-buf (find-file-noselect gcal/org-file)))
+            (with-current-buffer org-buf
+              (let ((inhibit-read-only t))
+                (erase-buffer)
+                (insert "#+TITLE: Google Calendar\n\n")
+                (insert (gcal/ics-to-org ics-content))
+                (save-buffer)
+                (when (fboundp 'org-element-cache-reset)
+                  (org-element-cache-reset))))
+            (kill-buffer ical-buf)
+            ;; Reset org-timeblock cache to avoid duplicates
+            (when (boundp 'org-timeblock-cache)
+              (setq org-timeblock-cache nil
+                    org-timeblock-buffers nil))))
+        nil t)))
+
+  (with-eval-after-load 'org
+    (add-to-list 'org-agenda-files gcal/org-file))
+
+(use-package org-timeblock
+  :ensure t
+  :bind ("C-c c" . org-timeblock)
+  :custom
+  (org-timeblock-span 1)
+  :config
+  (defun gcal/timeblock-show-entry ()
+    "Display the selected timeblock event in a dedicated read-only org buffer."
+    (interactive)
+    (let* ((node (org-timeblock-selected-block))
+           (id (and node (dom-attr node 'id)))
+           (cache-entry (and id
+                             (seq-find
+                              (lambda (x)
+                                (string= (get-text-property 0 'id x) (car (split-string (format "%s" id) "_"))))
+                              org-timeblock-cache))))
+      (unless cache-entry
+        (user-error "No event selected"))
+      (let* ((title (get-text-property 0 'title cache-entry))
+             (marker (get-text-property 0 'marker cache-entry))
+             (buf (and marker (marker-buffer marker)))
+             (content
+              (if buf
+                  ;; Marker is alive, use it directly
+                  (with-current-buffer buf
+                    (save-excursion
+                      (widen)
+                      (goto-char (marker-position marker))
+                      (org-back-to-heading-or-point-min t)
+                      (buffer-substring-no-properties
+                       (point)
+                       (org-end-of-subtree t t))))
+                ;; Marker dead, search by title in org files
+                (catch 'found
+                  (dolist (file (org-timeblock-files))
+                    (with-current-buffer (find-file-noselect file)
+                      (save-excursion
+                        (widen)
+                        (goto-char (point-min))
+                        (when (re-search-forward
+                               (concat "^\\*+ .*" (regexp-quote title)) nil t)
+                          (org-back-to-heading-or-point-min t)
+                          (throw 'found
+                                 (buffer-substring-no-properties
+                                  (point)
+                                  (org-end-of-subtree t t)))))))))))
+        (unless content
+          (user-error "Cannot find entry for: %s" title))
+        (with-current-buffer (get-buffer-create "*Org Timeblock Event*")
+          (let ((inhibit-read-only t))
+            (erase-buffer)
+            (insert content)
+            (org-mode)
+            (goto-char (point-min))
+            (org-fold-show-all)
+            (setq buffer-read-only t)
+            (local-set-key (kbd "q") #'kill-buffer-and-window))
+          (pop-to-buffer (current-buffer))))))
+  (defun gcal/open-google-calendar ()
+    "Open Google Calendar day view in the default browser."
+    (interactive)
+    (browse-url "https://calendar.google.com/calendar/u/0/r/day"))
+  (define-key org-timeblock-mode-map (kbd "RET") #'gcal/timeblock-show-entry)
+  (define-key org-timeblock-mode-map (kbd "<double-mouse-1>") #'gcal/timeblock-show-entry)
+  (define-key org-timeblock-mode-map (kbd "M-o") #'gcal/open-google-calendar)
+  (define-key org-timeblock-list-mode-map (kbd "M-o") #'gcal/open-google-calendar))
 
 (add-hook 'after-init-hook
     #'(lambda ()
