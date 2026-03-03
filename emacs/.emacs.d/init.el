@@ -112,36 +112,9 @@
   (ultra-scroll-mode 1))
 
 (defalias 'yes-or-no-p 'y-or-n-p)
-  (setq xref-prompt-for-identifier nil
-        comint-prompt-read-only t
-        use-dialog-box nil)
-
-;; When stdin is unavailable (daemon mode or EWM window manager), Emacs C code
-;; may fall back to reading from stdin instead of the minibuffer.
-;; Fix 1: Force noninteractive to nil so read-from-minibuffer uses the GUI minibuffer.
-;; Fix 2: Catch EOF errors in y-or-n-p and retry on a graphical frame.
-;; Named defuns are byte/native-compiled; inline lambdas stay interpreted.
-(defun minibuffer/force-gui (orig-fn &rest args)
-  "Advice to force read-from-minibuffer through the GUI minibuffer."
-  (let ((noninteractive nil))
-    (apply orig-fn args)))
-;;(advice-add 'read-from-minibuffer :around #'minibuffer/force-gui)
-
-(defun minibuffer/y-or-n-p-gui (orig-fn &rest args)
-  "Advice to catch EOF in y-or-n-p and retry on a graphical frame."
-  (condition-case nil
-      (let ((noninteractive nil))
-        (apply orig-fn args))
-    (end-of-file
-     (let ((frame (seq-find
-                   (lambda (f) (and (frame-live-p f) (display-graphic-p f)))
-                   (frame-list))))
-       (if frame
-           (with-selected-frame frame
-             (let ((noninteractive nil))
-               (apply orig-fn args)))
-         t)))))
-;;(advice-add 'y-or-n-p :around #'minibuffer/y-or-n-p-gui)
+(setq xref-prompt-for-identifier nil
+      comint-prompt-read-only t
+      use-dialog-box nil)
 
 (define-key minibuffer-local-completion-map " " nil)
 (define-key minibuffer-local-must-match-map " " nil)
