@@ -1,4 +1,4 @@
-#+title Destkop with exwm configuration
+#+title Desktop with EWM configuration
 #+PROPERTY: header-args:emacs-lisp :tangle .emacs.d/desktop.el :mkdirp yes
 
 * Desktop Environment
@@ -14,91 +14,14 @@
 
 ** Start applications
 #+begin_src emacs-lisp
-  (defun apps/chrome-browser (&optional url)
+  (defun apps/vivaldi-browser (&optional url)
     (interactive)
-    (shell/async-command-no-output (concat "google-chrome-stable --new-window " url)))
+    (shell/async-command-no-output (concat "vivaldi --new-window " url)))
 
-  (defun apps/konsole (&optional url)
+  (defun apps/cosmic-term ()
     (interactive)
-    (shell/async-command-no-output (concat "konsole" url)))
+    (shell/async-command-no-output "cosmic-term"))
 #+end_src
-
-** Start applications
-#+begin_src emacs-lisp
-  (defun internet/switch-browser ()
-    (interactive)
-    (cond ((derived-mode-p 'eww-mode) (let ((url (eww-current-url))) (kill-buffer) (apps/chrome-browser url)))
-          ((string= exwm-class-name "Google-chrome") (let ((url (chrome/get-url))) (kill-buffer) (eww url)))))
-#+end_src
-
-** Monitor management
-Those functions will organize 10 workspaces according to your monitors relative positions.
-Workspace 1 & 2 will be allocated to the most left monitor, the 3 & 4 to the one on its right, etc. The most right monitor will have the rest of the workspaces.
-
-#+begin_src emacs-lisp
-  (defun car-string-to-number (list-two-elements)
-    (append (list (string-to-number (car list-two-elements))) (cdr list-two-elements)))
-
-  (defun sort-from-car (a b)
-    (< (car a) (car b)))
-
-  (defun xrandr-active-monitors ()
-    (mapcar 'car-string-to-number
-            (remove nil
-                    (mapcar 'split-string
-                            (split-string
-                             (shell-command-to-string "xrandr --listactivemonitors | grep / | cut -d '/' -f3 | sed -e 's/^[0-9]\\++//g' -e 's/+[0-9]\\+//g'")
-                             "\n")))))
-
-  (defun order-monitors ()
-    (apply #'append
-           (mapcar 'cdr
-                   (sort
-                    (xrandr-active-monitors)
-                    'sort-from-car))))
-
-  (defun build-exwm-monitors ()
-    (setq 
-     index 0
-     exwm-monitor-workspaces (list ))
-
-    (let ((monitors (order-monitors)))
-      (while (< index (length monitors))
-        (progn
-          (setq index (1+ index))
-          (add-to-list 'exwm-monitor-workspaces index t)
-          (add-to-list 'exwm-monitor-workspaces (nth (1- index) monitors) t))))
-    exwm-monitor-workspaces)
-
-  ;; This defines a function to refresh the workspaces position and xrandr
-  (defun exwm/refresh-setup ()
-    (interactive)
-    (setq exwm-randr-workspace-monitor-plist (build-exwm-monitors))
-    (tab/setup)
-    (theme/minibuffer-echo-area)
-    (window/set-all-header-gaps)
-    (setup/input)
-    (menu/custom-menu))
-
-  (defun exwm/refresh-setup-and-monitors ()
-    (interactive)
-    (exwm/refresh-setup)
-    (exwm-randr-refresh))
-    #+end_src
-
-** Desktop Function & Key Bindings
-We use the [[https://github.com/DamienCassou/desktop-environment][desktop-environment]] package to automatically bind to well-known programs for controlling the volume, screen brightness, media playback, and doing other things like locking the screen and taking screenshots.  Make sure that you install the necessary programs to make this functionality work!  Check the [[https://github.com/DamienCassou/desktop-environment#default-configuration][default programs]] list to know what you need to install.
-
-#+begin_src emacs-lisp
-  (defun setup/input ()
-    (interactive)
-    (start-process-shell-command "trackball" nil "bash ~/.scripts/trackball-setup.sh"))
-#+end_src
-** Application runner
-#+BEGIN_SRC emacs-lisp
-  (elpaca (app-launcher :host github :repo "vivien-lelouette/app-launcher"))
-
-#+END_SRC
 
 ** Menu items
 *** Emacs menu separator
@@ -118,11 +41,11 @@ We use the [[https://github.com/DamienCassou/desktop-environment][desktop-enviro
   (defvar system-bar-menu (make-sparse-keymap "System"))
   (define-key global-map [menu-bar system-menu] (cons "System" system-bar-menu))
   (define-key system-bar-menu [shutdown]
-              '(menu-item "Shutdown" kde/shutdown :help "Shutdown the computer"))
+              '(menu-item "Shutdown" cosmic/shutdown :help "Shutdown the computer"))
   (define-key system-bar-menu [reboot]
-              '(menu-item "Reboot" kde/reboot :help "Reboot the computer"))
+              '(menu-item "Reboot" cosmic/reboot :help "Reboot the computer"))
   (define-key system-bar-menu [logout]
-              '(menu-item "Logout" kde/logout :help "Logout user"))
+              '(menu-item "Logout" cosmic/logout :help "Logout user"))
 #+END_SRC
 
 *** Application menu
@@ -137,632 +60,575 @@ We use the [[https://github.com/DamienCassou/desktop-environment][desktop-enviro
 (menu/custom-menu)
 #+END_SRC
 
+*** Dropdown menu system
+#+BEGIN_SRC emacs-lisp
+(defun menu/close-dropdown ()
+  (interactive)
+  (let ((buf (get-buffer " *dropdown-menu*")))
+    (when buf
+      (let ((win (get-buffer-window buf)))
+        (when win (delete-window win)))
+      (kill-buffer buf))))
+
+(defun menu/show-dropdown (keymap)
+  (if (get-buffer " *dropdown-menu*")
+      (menu/close-dropdown)
+    (let ((items '())
+          (buf (get-buffer-create " *dropdown-menu*")))
+      (map-keymap
+       (lambda (_key binding)
+         (when (and (consp binding) (eq (car binding) 'menu-item))
+           (push (cons (nth 1 binding) (nth 2 binding)) items)))
+       keymap)
+      (setq items (nreverse items))
+      (when (null items) (kill-buffer buf) (user-error "Menu is empty"))
+      (with-current-buffer buf
+        (let ((inhibit-read-only t))
+          (erase-buffer)
+          (dolist (item items)
+            (let ((cmd (cdr item)))
+              (insert-text-button
+               (concat "  " (car item) "  ")
+               'action (lambda (_btn)
+                         (let ((fn cmd))
+                           (menu/close-dropdown)
+                           (funcall fn)))
+               'follow-link t)
+              (insert "\n")))
+          (goto-char (point-min))
+          (setq-local cursor-type nil)
+          (read-only-mode 1)))
+      (display-buffer-in-side-window buf '((side . top) (window-height . fit-window-to-buffer))))))
+#+END_SRC
+
+*** Tab-bar menu buttons
+#+BEGIN_SRC emacs-lisp
+(defun tab-bar-system-menu ()
+  (interactive)
+  (menu/show-dropdown system-bar-menu))
+
+(defun tab-bar--raise-icon (icon)
+  "Vertically center ICON in the tab-bar."
+  (propertize icon 'display '(raise 0.1)))
+
+(defun tab-bar-format-system-menu ()
+  `((system-menu menu-item ,(concat " " (tab-bar--raise-icon (char-to-string #x23FB)) " ") tab-bar-system-menu)))
+
+(require 'battery)
+(defvar tab-bar--datetime-cache nil "Cached datetime tab-bar item.")
+(defvar tab-bar--battery-cache nil "Cached battery tab-bar item.")
+(defvar tab-bar--mail-count 0 "Cached unread mail count.")
+
+(defun tab-bar--update-status ()
+  "Update cached datetime, battery and mail tab-bar items."
+  (setq tab-bar--datetime-cache
+        `((datetime menu-item ,(concat " " (format-time-string "%a %d %b  %H:%M") " ") ignore)))
+  (when (bound-and-true-p battery-status-function)
+    (let* ((data (funcall battery-status-function))
+           (pct-str (cdr (assq ?p data)))
+           (pct (string-to-number (or pct-str "0")))
+           (status (cdr (assq ?L data)))
+           (charging (or (string= "AC" status) (string= "on-line" status)))
+           (level (cond ((>= pct 90) "") ((>= pct 80) "90") ((>= pct 70) "80")
+                        ((>= pct 60) "70") ((>= pct 50) "60") ((>= pct 40) "50")
+                        ((>= pct 30) "40") ((>= pct 20) "30") ((>= pct 10) "20")
+                        (t "10")))
+           (name (if charging
+                     (concat "nf-md-battery_charging" (if (string= level "") "_100" (concat "_" level)))
+                   (concat "nf-md-battery" (if (string= level "") "" (concat "_" level)))))
+           (icon (tab-bar--raise-icon (nerd-icons-mdicon name))))
+      (setq tab-bar--battery-cache
+            `((battery menu-item ,(format " %s %s%% " icon (string-trim (or pct-str ""))) ignore)))))
+  (when (bound-and-true-p gnus-newsrc-alist)
+    (let ((total 0))
+      (mapc (lambda (g)
+              (let ((unread (eval `(gnus-group-unread ,(car g)))))
+                (when (and (numberp unread) (> unread 0))
+                  (setq total (+ total unread)))))
+            gnus-newsrc-alist)
+      (setq tab-bar--mail-count total)))
+  (force-mode-line-update t))
+
+(run-with-timer (- 60 (decoded-time-second (decode-time))) 60 #'tab-bar--update-status)
+
+(defun tab-bar-format-datetime ()
+  tab-bar--datetime-cache)
+
+(defun tab-bar-format-battery ()
+  tab-bar--battery-cache)
+
+(defun tab-bar-format-mail ()
+  (when (> tab-bar--mail-count 0)
+    (let* ((color `(:foreground ,(face-background 'cursor)))
+           (icon (tab-bar--raise-icon (nerd-icons-mdicon "nf-md-email")))
+           (count (number-to-string tab-bar--mail-count))
+           (text (format " %s %s " icon count)))
+      (add-face-text-property 0 (length text) color nil text)
+      `((mail menu-item ,text gnus)))))
+#+END_SRC
+
+* Desktop Notifications
+#+BEGIN_SRC emacs-lisp
+  (defvar tab-bar--notification-cache nil "Cached notification tab-bar item.")
+
+  (defun tab-bar--update-notification (_old &optional new)
+    "Update the tab-bar notification item when a notification changes."
+    (setq tab-bar--notification-cache
+          (when-let ((n (or new (car (ednc-notifications)))))
+            (let* ((summary (ednc-notification-summary n))
+                   (app (ednc-notification-app-name n))
+                   (app-icon (alist-get 'icon (ednc-notification-amendments n)))
+                   (color `(:foreground ,(face-background 'cursor)))
+                   (icon (or app-icon
+                             (let ((bell (tab-bar--raise-icon (nerd-icons-mdicon "nf-md-bell"))))
+                               (add-face-text-property 0 (length bell) color nil bell)
+                               bell)))
+                   (count (length (ednc-notifications)))
+                   (badge (if (> count 1)
+                              (propertize (format "(%d) " count) 'face color)
+                            ""))
+                   (text (format " %s %s%s " icon badge
+                                 (propertize
+                                  (truncate-string-to-width
+                                   (format "%s: %s" app summary) 120 nil nil "...")
+                                  'face color))))
+              `((notification menu-item ,text ednc-pop-to-notification-in-log-buffer)))))
+    (force-mode-line-update t))
+
+  (defun tab-bar-format-notification ()
+    tab-bar--notification-cache)
+
+  (use-package ednc
+    :config
+    (add-hook 'ednc-notification-presentation-functions #'tab-bar--update-notification)
+    (ednc-mode 1))
+#+END_SRC
+
 * Window Management
-** Buffer management
-  The next functions are tools to easily switch buffer only switch to next relevant buffer.
+** Window layouts
+Persistent window layout slots: save/restore window arrangements across sessions using =window-state-get/put= and =savehist=.
 
 #+begin_src emacs-lisp
+  (defvar ewm/saved-layouts nil
+    "Alist of saved window layouts, keyed by slot number.")
 
-  (defcustom my-skippable-buffer-regexp
-    (rx bos (or (seq "*" (zero-or-more anything))
-                (seq "magit" (zero-or-more anything))
-                (seq "qutebrowser" (zero-or-more anything))
-                (seq "Firefox" (zero-or-more anything)))
-        eos)
-    "Matching buffer names are ignored by `my-next-buffer'
-          and `my-previous-buffer'."
-    :type 'regexp)
+  (eval-after-load "savehist"
+    '(add-to-list 'savehist-additional-variables 'ewm/saved-layouts))
 
-  ;; only switch to next relevant buffer
-  (defcustom my-browser-buffer-regexp
-    (rx bos (or (seq "qutebrowser" (zero-or-more anything))
-                (seq "Firefox" (zero-or-more anything)))
-        eos)
-    "Matching only browser windows"
-    :type 'regexp)
+  (defun ewm/save-layout (n)
+    "Save current window layout to slot N."
+    (setf (alist-get n ewm/saved-layouts)
+          (window-state-get (frame-root-window) t))
+    (message "Layout saved to slot %d" n))
 
-  (defun my-change-buffer (change-buffer buffer-to-skip)
-    "Call CHANGE-BUFFER until `buffer-to-skip' doesn't match."
-    (let ((initial (current-buffer)))
-      (funcall change-buffer)
-      (let ((first-change (current-buffer)))
-        (catch 'loop
-          (while (funcall buffer-to-skip)
-            (funcall change-buffer)
-            (when (eq (current-buffer) first-change)
-              (switch-to-buffer initial)
-              (throw 'loop t)))))))
-
-  (defun my-next-buffer ()
-    "Variant of `next-buffer' that skips `my-skippable-buffer-regexp'."
-    (interactive)
-    (my-change-buffer 'next-buffer (lambda () (string-match-p my-skippable-buffer-regexp (buffer-name)))))
-
-  (defun my-previous-buffer ()
-    "Variant of `previous-buffer' that skips `my-skippable-buffer-regexp'."
-    (interactive)
-    (my-change-buffer 'previous-buffer (lambda () (string-match-p my-skippable-buffer-regexp (buffer-name)))))
-
-  (defun my-next-browser ()
-    "Variant of `next-buffer' that skips `my-skippable-buffer-regexp'."
-    (interactive)
-    (my-change-buffer 'next-buffer (lambda () (not (string-match-p my-browser-buffer-regexp (buffer-name))))))
-
-  (defun my-previous-browser ()
-    "Variant of `previous-buffer' that skips `my-skippable-buffer-regexp'."
-    (interactive)
-    (my-change-buffer 'previous-buffer (lambda () (not (string-match-p my-browser-buffer-regexp (buffer-name))))))
-
+  (defun ewm/load-layout (n)
+    "Load window layout from slot N."
+    (if-let ((state (alist-get n ewm/saved-layouts)))
+        (progn
+          (window-state-put state (frame-root-window) t)
+          (message "Layout loaded from slot %d" n))
+      (message "No layout in slot %d" n)))
 #+end_src
 
-** Window split
-Functions to split and move to the new split.
+** EWM Configuration
+We use [[https://codeberg.org/ezemtsov/ewm][EWM]] (Emacs Wayland Manager) as the basis for our Emacs Desktop Environment.  EWM is a Wayland compositor that runs inside Emacs as a dynamic module, so applications never freeze waiting for Elisp evaluation.
 
 #+begin_src emacs-lisp
+  (defun helm-ag/noop-status ()
+    "No-op status function for helm-ag.")
+  (setq helm-ag-show-status-function #'helm-ag/noop-status)
 
-  (defun my-window-vsplit ()
+  (defun system/lock-screen ()
     (interactive)
-    (evil-window-vsplit)
-    (balance-windows)
-    (run-at-time "0.1 seconds" nil (lambda ()
-                                     (windmove-right))))
+    (shell/async-command-no-output "hyprlock"))
 
-  (defun my-window-split ()
+  (defun system/logout ()
     (interactive)
-    (evil-window-split)
-    (run-at-time "0.1 seconds" nil (lambda ()
-                                     (windmove-down))))
+    (shell/run-in-background "cosmic-session exit"))
 
-#+end_src
-
-** Window rules by class
-#+BEGIN_SRC emacs-lisp
-  (defun exwm/force-tiled-fullscreen-when-fullscreen ()
-    (interactive)
-    (with-current-buffer (window-buffer)
-      (exwm-layout-unset-fullscreen exwm--id))
-    (remove-hook 'exwm-input-input-mode-change-hook #'exwm/force-tiled-fullscreen-when-fullscreen))
-
-  (defun window/force-tiled-fullscreen ()
-    "Toggle fullscreen mode."
-    (interactive)
-    (execute-kbd-macro (kbd "<f11>"))
-    (add-hook 'exwm-input-input-mode-change-hook #'exwm/force-tiled-fullscreen-when-fullscreen)
-    (run-with-timer 0.1 nil (lambda ()
-                              (pcase exwm-class-name
-                                ("Google-chrome" (execute-kbd-macro (kbd "C-l"))))))
-    (run-with-timer 2 nil (lambda ()
-                            (remove-hook 'exwm-input-input-mode-change-hook #'exwm/force-tiled-fullscreen-when-fullscreen))))
-
-  (defun window/force-tile ()
-    (interactive)
-    (with-current-buffer (window-buffer)
-      (exwm-floating--unset-floating exwm--id)))
-
-  (defun window/force-tile-to-other-window ()
-    (interactive)
-    (window/force-tile)
-    (with-current-buffer (window-buffer)
-      (aw-move-window (next-window))))
-
-  (defun window/configure-window-by-class ()
-    (interactive)
-    (pcase exwm-class-name
-      ((rx (sequence "Ardour" (zero-or-more (any "ascii")))) (window/force-tile-to-other-window))
-      ("Google-chrome" (run-with-timer 0.4 nil (lambda () (execute-kbd-macro (kbd "<f11>")))))))
-
-  (defun window/force-chrome-tiled ()
-    (interactive)
-    (pcase exwm-class-name
-      ("Google-chrome" (with-current-buffer (window-buffer)
-                         (exwm-layout-unset-fullscreen exwm--id)))))
-
-  (add-hook 'exwm-input-input-mode-change-hook #'window/force-chrome-tiled)
-  (add-hook 'exwm-manage-finish-hook #'window/configure-window-by-class)
-#+END_SRC
-
-** Tab-line support
-#+BEGIN_SRC emacs-lisp
-  (add-hook 'exwm-init-hook (lambda ()
-                              (defun exwm-layout--show (id &optional window)
-                                "Show window ID exactly fit in the Emacs window WINDOW."
-                                (exwm--log "Show #x%x in %s" id window)
-                                (let* ((edges (window-inside-absolute-pixel-edges window))
-                                       (x (pop edges))
-                                       (y (pop edges))
-                                       (width (- (pop edges) x))
-                                       (height (- (pop edges) y))
-                                       frame-x frame-y frame-width frame-height)
-                                  (with-current-buffer (exwm--id->buffer id)
-                                    (setq y (+ y (window-tab-line-height window)))
-                                    (when exwm--floating-frame
-                                      (setq frame-width (frame-pixel-width exwm--floating-frame)
-                                            frame-height (+ (frame-pixel-height exwm--floating-frame)
-                                                            ;; Use `frame-outer-height' in the future.
-                                                            exwm-workspace--frame-y-offset))
-                                      (when exwm--floating-frame-position
-                                        (setq frame-x (elt exwm--floating-frame-position 0)
-                                              frame-y (elt exwm--floating-frame-position 1)
-                                              x (+ x frame-x (- exwm-layout--floating-hidden-position))
-                                              y (+ y frame-y (- exwm-layout--floating-hidden-position)))
-                                        (setq exwm--floating-frame-position nil))
-                                      (exwm--set-geometry (frame-parameter exwm--floating-frame
-                                                                           'exwm-container)
-                                                          frame-x frame-y frame-width frame-height))
-                                    (when (exwm-layout--fullscreen-p)
-                                      (with-slots ((x* x)
-                                                   (y* y)
-                                                   (width* width)
-                                                   (height* height))
-                                          (exwm-workspace--get-geometry exwm--frame)
-                                        (setq x x*
-                                              y y*
-                                              width width*
-                                              height height*)))
-                                    (exwm--set-geometry id x y width height)
-                                    (xcb:+request exwm--connection (make-instance 'xcb:MapWindow :window id))
-                                    (exwm-layout--set-state id xcb:icccm:WM_STATE:NormalState)
-                                    (setq exwm--ewmh-state
-                                          (delq xcb:Atom:_NET_WM_STATE_HIDDEN exwm--ewmh-state))
-                                    (exwm-layout--set-ewmh-state id)
-                                    (exwm-layout--auto-iconify)))
-                                (xcb:flush exwm--connection))))
-#+END_SRC
-
-** EXWM Configuration
-We use the excellent [[https://github.com/ch11ng/exwm][EXWM]] module as the basis for our Emacs Desktop Environment.  The [[https://github.com/ch11ng/exwm/wiki][EXWM Wiki]] is a great place to find tips about how to configure everything!
-
-*NOTE:* Make sure you've installed =nm-applet=, =pasystray= and =blueman= for the system tray apps to work!
-
-#+begin_src emacs-lisp
-  (setq helm-ag-show-status-function (lambda ()))
-  (defun exwm/exwm-init-hook ()
-    (exwm/refresh-setup))
-  ;; Launch apps that will run in the background
-  ;;(shell/run-in-background "gsettings set org.gnome.gnome-flashback.desktop.icons show-home false")
-  ;;(shell/run-in-background "gsettings set org.gnome.gnome-flashback.desktop.icons show-trash false"))
-
-  (defun exwm/win-title ()
-    (if exwm-title
-        exwm-title
-      ""))
-
-  (defun exwm/exwm-title-by-class (title class prefix)
-    (cond
-     ((string= class "Google-chrome") (concat prefix "Chrome: " (replace-regexp-in-string " . Google Chrome" " " (replace-regexp-in-string " - https://.*" " " (replace-regexp-in-string " - http://.*" " " title)))))
-     ((string= class "systemsettings") (concat prefix "System Settings: " (replace-regexp-in-string " . System Settings" " " title)))
-     ((string= class "DBeaver") (concat prefix "DBeaver: " (replace-regexp-in-string "DBeaver .* - " "" title)))
-     ((s-starts-with? "gimp" class t) (concat prefix "GIMP: " (replace-regexp-in-string " . GIMP" " " title)))
-     (t (concat prefix (s-capitalize class) ": " (replace-regexp-in-string (concat " . " exwm-class-name) " " title)))))
-
-  (defun exwm/exwm-update-title ()
-    (exwm-workspace-rename-buffer
-     (exwm/exwm-title-by-class (exwm/win-title) exwm-class-name (if (window-parameter (selected-window) 'split-window) " "  ""))))
-
-  (defun exwm/exwm-set-fringe ()
-    (setq left-fringe-width 1
-          right-fringe-width 1))
-
-  (defun exwm/kill-current-buffer-and-window ()
-    (interactive)
-    (kill-current-buffer)
-    (delete-window))
-
-  (defun kde/lock-screen ()
-    (interactive)
-    (shell/run-in-background "loginctl lock-session"))
-
-  (defun kde/logout ()
-    (interactive)
-    (shell/run-in-background "loginctl terminate-session"))
-
-  (defun kde/shutdown ()
+  (defun system/shutdown ()
     (interactive)
     (shell/run-in-background "shutdown -h 0"))
 
-  (defun kde/reboot ()
+  (defun system/reboot ()
     (interactive)
     (shell/run-in-background "reboot"))
 
-  (defun kwin/replace ()
-    (interactive)
-    (shell/run-in-background "kwin_x11 --replace"))
-
   (defun settings/manager ()
     (interactive)
-    (shell/run-in-background "systemsettings5"))
+    (shell/run-in-background "cosmic-settings"))
 
   (defun settings/appearance ()
     (interactive)
-    (shell/run-in-background "systemsettings5 kcm_lookandfeel"))
+    (shell/run-in-background "cosmic-settings appearance"))
 
   (defun settings/display ()
     (interactive)
-    (shell/run-in-background "systemsettings5 kcm_kscreen"))
+    (shell/run-in-background "cosmic-settings displays"))
 
   (defun settings/keyboard ()
     (interactive)
-    (shell/run-in-background "systemsettings5 kcm_keyboard"))
+    (shell/run-in-background "cosmic-settings keyboard"))
 
   (defun settings/mouse ()
     (interactive)
-    (shell/run-in-background "systemsettings5 kcm_mouse"))
+    (shell/run-in-background "cosmic-settings mouse"))
 
   (defun settings/network ()
     (interactive)
-    (shell/run-in-background "systemsettings5 kcm_networkmanagement"))
+    (shell/run-in-background "cosmic-settings network"))
 
   (defun settings/sound ()
     (interactive)
-    (shell/run-in-background "systemsettings5 kcm_pulseaudio"))
+    (shell/run-in-background "cosmic-settings sound"))
 
-  (defun warpd/hint ()
-    (interactive)
-    (shell/run-in-background "warpd --oneshot --foreground --hint"))
-
-  (use-package exwm
+  (use-package ewm
+    :ensure nil
     :config
-    (setq x-no-window-manager t)
     (winner-mode 1)
-    (setup/input)
 
-    ;; When window "class" updates, use it to set the buffer name
-    (add-hook 'exwm-update-class-hook #'exwm/exwm-update-title)
+    ;; Compose key (Caps Lock) for accented characters
+    (setq ewm-input-config '((keyboard :xkb-options "compose:caps")))
 
-    ;; When window title updates, use it to set the buffer name
-    (add-hook 'exwm-update-title-hook #'exwm/exwm-update-title)
+    ;; Disable text-input intercept so compose sequences reach Wayland clients
+    (ewm-text-input-auto-mode-disable)
 
-    ;; When EXWM starts up, do some extra confifuration
-    (add-hook 'exwm-init-hook #'exwm/exwm-init-hook)
+    ;; C-x C-x / C-c C-c: passthrough next keypress to surface
+    (defvar ewm--passthrough-timer nil)
 
-    (add-hook 'exwm-mode-hook #'exwm/exwm-set-fringe)
+    (defun ewm/passthrough-prefix (key)
+      "Temporarily stop intercepting C-KEY so the next press goes to the surface."
+      (let ((prefix (aref (kbd (concat "C-" key)) 0)))
+        (when ewm--passthrough-timer (cancel-timer ewm--passthrough-timer))
+        (setq ewm-intercept-prefixes (delq prefix ewm-intercept-prefixes))
+        (ewm--send-intercept-keys)
+        (message "C-%s passthrough — press it now" key)
+        (setq ewm--passthrough-timer
+              (run-at-time 1 nil
+                           (lambda (p)
+                             (add-to-list 'ewm-intercept-prefixes p)
+                             (ewm--send-intercept-keys)
+                             (setq ewm--passthrough-timer nil))
+                           prefix))))
 
-    ;; Automatically move EXWM buffer to current workspace when selected
-    (setq exwm-layout-show-all-buffers t)
+    ;; Intercept C-c from surfaces (like C-x) — must be set before ewm-mode enables
+    (add-to-list 'ewm-intercept-prefixes ?\C-c)
 
-    ;; Display all EXWM buffers in every workspace buffer list
-    (setq exwm-workspace-show-all-buffers t)
-
-    ;; Automatically send the mouse cursor to the selected workspace's display
-    (setq exwm-workspace-warp-cursor t)
-
-    ;; These keys should always pass through to Emacs
-    (add-to-list 'exwm-input-prefix-keys ?\s-d)
-
-    ;; Ctrl+Q will enable the next key to be sent directly
-    (define-key exwm-mode-map [?\s-,] 'exwm-input-send-next-key)
-
-    ;; god-mode integration
-    ;; (add-hook 'god-mode-enabled-hook (lambda () (setq exwm-input-line-mode-passthrough t)))
-    ;; (add-hook 'god-mode-disabled-hook (lambda () (setq exwm-input-line-mode-passthrough nil))
-
-    ;; Set up global key bindings.  These always work, no matter the input state!
-    ;; Keep in mind that changing this list after EXWM initializes has no effect.
-    (setq exwm-input-global-keys
-          `(
-            ;; mouse jump
-            ([?\s-\;] . warpd/hint)
-
-            ;; refresh setup
-            ([?\s-r] . exwm-reset)
-            ([?\s-R] . exwm/refresh-setup-and-monitors)
-
-            ([s-escape] . exwm-input-toggle-keyboard)
-
-            ([?\s-/] . winner-undo)
-            ([?\s-?] . winner-redo)
-
-            ([?\s-x] . execute-extended-command)
-
-            ;; move to another window using switch-window
-            ([?\s-j] . ace-window)
-            ([?\s-J] . ace-swap-window)
-
-            ([?\s-}] . enlarge-window)
-            ([?\s-{] . shrink-window)
-            ([?\s-\[] . shrink-window-horizontally)
-            ([?\s-\]] . enlarge-window-horizontally)
-            ([?\s-=] . balance-windows)
-            ([?\s-+] . zoom)
-
-            ([?\s-k] . kill-current-buffer)
-            ([?\s-K] . exwm/kill-current-buffer-and-window)
-
-            ([?\s-m] . exwm-layout-toggle-fullscreen)
-            ([?\s-M] . exwm-floating-toggle-floating)
-            ([?\s-n] . window/force-tiled-fullscreen)
-
-            ([?\s-p ?\s-l] . kde/lock-screen)
-            ([?\s-p ?\M-l] . kde/logout)
-            ([?\s-p ?\M-s] . kde/shutdown)
-            ([?\s-p ?\M-r] . kde/reboot)
-            ([?\s-p ?\M-w] . kwin/replace)
-
-            ([?\s-o ?\s-o] . settings/manager)
-            ([?\s-o ?\s-a] . settings/appearance)
-            ([?\s-o ?\s-d] . settings/display)
-            ([?\s-o ?\s-k] . settings/keyboard)
-            ([?\s-o ?\s-m] . settings/mouse)
-            ([?\s-o ?\s-n] . settings/network)
-            ([?\s-o ?\s-s] . settings/sound)
-
-            ([?\s-a ?\s-a] . app-launcher-run-app)
-            ([?\s-a ?\c] . apps/chrome-browser)
-            ([?\s-a ?\k] . apps/konsole)
-
-            ([?\s-b] . consult-buffer)
-            ([?\s-B] . ibuffer-jump)
-
-            ([?\s-f] . consult-bookmark)
-            ([?\s-F] . blist)
-
-            ([s-return] . eshell/new-or-current)
-            ([S-s-return] . eat)
-            ([C-s-return] . utils/x-terminal)
-
-            ([?\s-q] . delete-window)
-            ([?\s-Q] . delete-other-windows)
-            ([?\s-S] . split-window-below)
-            ([?\s-s] . split-window-right)
-
-            ;; Applications
-            ([?\s-i] . eww/do-start-with-url-or-search)
-            ([?\s-I] . internet/switch-browser)
-            ([?\s-\t] . chrome/do-start-with-url-or-search)
-
-            ;; 's-N': Switch to certain workspace with Super (Win) plus a number key (0 - 9)
-            ,@(mapcar (lambda (i)
-                        `(,(kbd (format "s-w s %d" i)) .
-                          (lambda ()
-                            (interactive)
-                            (exwm-workspace-switch-create ,i))))
-                      (number-sequence 0 9))
-
-            ,@(mapcar (lambda (i)
-                        `(,(kbd (format "s-w %d" i)) .
-                          (lambda ()
-                            (interactive)
-                            (tab-bar-select-tab ,i))))
-                      (number-sequence 0 9))
-
-            ([?\s-w ?\s-w] . tab-bar-new-tab)
-            ([?\s-w ?\s-W] . tab-bar-duplicate-tab)
-            ([?\s-w ?\s-k] . tab-bar-close-tab)
-
-            ([?\s-w ?\s-n] . tab-bar-switch-to-next-tab)
-            ([?\s-w ?\s-p] . tab-bar-switch-to-prev-tab)
-            ([s-tab] . tab-bar-switch-to-next-tab)
-            ([s-iso-lefttab] . tab-bar-switch-to-prev-tab)
-
-            ,@(mapcar (lambda (i)
-                        `(,(kbd (format "s-%d" i)) .
-                          (lambda ()
-                            (interactive)
-                            (select-window (nth (- ,i 1) (aw-window-list))))))
-                      (number-sequence 1 9))
-
-            ([?\s-0] . (lambda ()
-                         (interactive)
-                         (select-window (nth 9 (aw-window-list)))))
-
-            ([?\s-!] . (lambda ()
-                         (interactive)
-                         (aw-move-window (nth 0 (aw-window-list)))))
-
-            ([?\s-@] . (lambda ()
-                         (interactive)
-                         (aw-move-window (nth 1 (aw-window-list)))))
-
-            ([?\s-#] . (lambda ()
-                         (interactive)
-                         (aw-move-window (nth 2 (aw-window-list)))))
-
-            ([?\s-$] . (lambda ()
-                         (interactive)
-                         (aw-move-window (nth 3 (aw-window-list)))))
-
-            ([?\s-%] . (lambda ()
-                         (interactive)
-                         (aw-move-window (nth 4 (aw-window-list)))))
-
-            ([?\s-^] . (lambda ()
-                         (interactive)
-                         (aw-move-window (nth 5 (aw-window-list)))))
-
-            ([?\s-&] . (lambda ()
-                         (interactive)
-                         (aw-move-window (nth 6 (aw-window-list)))))
-
-            ([?\s-*] . (lambda ()
-                         (interactive)
-                         (aw-move-window (nth 7 (aw-window-list)))))
-
-            ([?\s-\(] . (lambda ()
-                          (interactive)
-                          (aw-move-window (nth 8 (aw-window-list)))))
-
-            ([?\s-\)] . (lambda ()
-                          (interactive)
-                          (aw-move-window (nth 9 (aw-window-list)))))
-
-            ,@(mapcar (lambda (i)
-                        `(,(kbd (format "M-s-%d" i)) .
-                          (lambda ()
-                            (interactive)
-                            (aw-swap-window (nth (- ,i 1) (aw-window-list))))))
-                      (number-sequence 1 9))
-
-            ([M-s-0] . (lambda ()
-                         (interactive)
-                         (aw-swap-window (nth 9 (aw-window-list)))))
-
-            ,@(mapcar (lambda (i)
-                        `(,(kbd (format "C-s-%d" i)) .
-                          (lambda ()
-                            (interactive)
-                            (aw-delete-window (nth (- ,i 1) (aw-window-list))))))
-                      (number-sequence 1 9))
-
-            ([C-s-0] . (lambda ()
-                         (interactive)
-                         (aw-delete-window (nth 9 (aw-window-list)))))
-            ))
-
-    ;; Send copy/paste easily
-    (setq exwm-input-simulation-keys
-          '(
-            ([?\M-b] . [C-left])
-            ([?\M-f] . [C-right])
-            ([?\C-b] . [left])
-            ([?\C-f] . [right])
-            ([?\C-p] . [up])
-            ([?\C-n] . [down])
-            ([?\C-a] . [home])
-            ([?\C-e] . [end])
-            ([?\M-<] . [C-home])
-            ([?\M->] . [C-end])
-
-            ([?\M-B] . [C-\S-left])
-            ([?\M-F] . [C-\S-right])
-            ([?\C-\S-b] . [S-left])
-            ([?\C-\S-f] . [S-right])
-            ([?\C-\S-p] . [S-up])
-            ([?\C-\S-n] . [S-down])
-            ([?\C-\S-a] . [S-home])
-            ([?\C-\S-e] . [S-end])
-
-            ([?\C-s] . [?\C-f])
-            ([?\C-x ?\C-s] . [?\C-s])
-            ([?\M-v] . [prior])
-            ([?\C-v] . [next])
-
-            ([?\C-c ?\C-c] . [C-return])
-
-            ([?\M-d] . [C-delete])
-            ([?\C-d] . [delete])
-            ([?\C-k] . [S-end ?\C-x])
-
-            ([?\C-y] . [?\C-v])
-            ([?\M-w] . [?\C-c])
-            ([?\C-w] . [?\C-x])
-            ([?\s-g] . [escape]))))
-
-  (elpaca-wait)
-
-  (setq exwm-manage-configurations '(((string-match-p "^Xfce4-" exwm-title)
-                                      floating nil)))
-
-  (setq exwm-replace t)
-
-  (exwm-enable)
-  ;; This is for multiscreen support
-  (require 'exwm-randr)
-  (add-hook 'exwm-randr-screen-change-hook 'exwm/refresh-setup)
-  (exwm-randr-enable)
-  (add-hook 'elpaca-after-init-hook
-            #'(lambda ()
-                (exwm/refresh-setup)))
-#+end_src
-
-* EXWM edit
-#+begin_src emacs-lisp
-  (use-package exwm-edit)
-
-    (setq exwm-edit-split  "below")
-
-    (defun exwm-edit--finish-and-press-return ()
+    ;; Passthrough bindings: C-x C-x / C-c C-c send next keypress to the surface
+    (defun ewm/passthrough-x ()
+      "Passthrough C-x to surface app."
       (interactive)
-      (exwm-edit--finish)
-      (run-with-timer 0.2 nil (lambda () (exwm-input--fake-key 'return))))
-    (defun exwm-edit--finish-and-press-control-return ()
+      (ewm/passthrough-prefix "x"))
+    (defun ewm/passthrough-c ()
+      "Passthrough C-c to surface app."
       (interactive)
-      (exwm-edit--finish)
-      (run-with-timer 0.2 nil (lambda () (exwm-input--fake-key 'C-return))))
+      (ewm/passthrough-prefix "c"))
+    (define-key ewm-surface-mode-map (kbd "C-x C-x") #'ewm/passthrough-x)
+    (define-key ewm-surface-mode-map (kbd "C-c C-c") #'ewm/passthrough-c)
 
-    (add-hook 'exwm-edit-mode-hook
-      (lambda ()
-        (define-key exwm-edit-mode-map (kbd "C-c <return>") 'exwm-edit--finish-and-press-return)
-        (define-key exwm-edit-mode-map (kbd "C-c C-<return>") 'exwm-edit--finish-and-press-control-return)))
+    ;; Dynamic application icons for EWM surfaces in doom-modeline
+    ;; Looks up real app icons via .desktop files and the hicolor icon theme
+    (defvar ewm-surface-icon-cache (make-hash-table :test 'equal)
+      "Cache mapping app-id to propertized icon string or `none'.")
+
+    (defun ewm-surface--xdg-data-dirs ()
+      "Return list of XDG data directories."
+      (let ((dirs (getenv "XDG_DATA_DIRS")))
+        (if dirs (split-string dirs ":" t)
+          '("/usr/share" "/usr/local/share"))))
+
+    (defun ewm-surface--find-desktop-file (app-id)
+      "Find .desktop file for APP-ID in XDG data dirs."
+      (let ((lowered (downcase app-id)))
+        (cl-loop for dir in (ewm-surface--xdg-data-dirs)
+                 for apps-dir = (expand-file-name "applications" dir)
+                 when (file-directory-p apps-dir)
+                 thereis
+                 (cl-loop for f in (directory-files apps-dir t "\\.desktop\\'")
+                          for base = (downcase (file-name-sans-extension
+                                                (file-name-nondirectory f)))
+                          when (or (string= base lowered)
+                                   (string-match-p (regexp-quote lowered) base))
+                          return f))))
+
+    (defun ewm-surface--desktop-icon-name (desktop-file)
+      "Extract Icon= value from DESKTOP-FILE."
+      (with-temp-buffer
+        (insert-file-contents desktop-file)
+        (when (re-search-forward "^Icon=\\(.+\\)$" nil t)
+          (match-string 1))))
+
+    (defun ewm-surface--find-icon-file (icon-name)
+      "Find icon file for ICON-NAME in hicolor icon theme or pixmaps."
+      (if (and (file-name-absolute-p icon-name) (file-exists-p icon-name))
+          icon-name
+        (let ((sizes '("scalable" "48x48" "32x32" "24x24" "64x64" "16x16" "22x22"))
+              (exts  '("svg" "png")))
+          (or (cl-loop for dir in (ewm-surface--xdg-data-dirs)
+                       for icons-dir = (expand-file-name "icons/hicolor" dir)
+                       when (file-directory-p icons-dir)
+                       thereis
+                       (cl-loop for size in sizes thereis
+                                (cl-loop for ext in exts
+                                         for path = (expand-file-name
+                                                     (format "%s/apps/%s.%s" size icon-name ext)
+                                                     icons-dir)
+                                         when (file-exists-p path) return path)))
+              ;; Fallback: pixmaps directory
+              (cl-loop for dir in (ewm-surface--xdg-data-dirs)
+                       for path = (expand-file-name (concat "pixmaps/" icon-name ".png") dir)
+                       when (file-exists-p path) return path)))))
+
+    (defun ewm-surface--make-icon-string (file)
+      "Create propertized string displaying icon image from FILE.
+    Includes a face plist so doom-modeline-propertize-icon processes it correctly;
+    the display property with the image takes precedence for rendering."
+      (propertize " " 'display
+                  (create-image file nil nil
+                                :height (frame-char-height)
+                                :ascent 'center)
+                  'face '(:inherit default :family "" :height 1.0)))
+
+    (defun ewm-surface--lookup-icon (app-id)
+      "Look up icon for APP-ID via .desktop files, with caching."
+      (let ((cached (gethash app-id ewm-surface-icon-cache)))
+        (if cached
+            (unless (eq cached 'none) cached)
+          (let* ((desktop   (ewm-surface--find-desktop-file app-id))
+                 (icon-name (and desktop (ewm-surface--desktop-icon-name desktop)))
+                 (icon-file (and icon-name (ewm-surface--find-icon-file icon-name)))
+                 (result    (and icon-file (ewm-surface--make-icon-string icon-file))))
+            (puthash app-id (or result 'none) ewm-surface-icon-cache)
+            result))))
+
+    (defun ewm-surface-icon-for-buffer (orig-fn &rest args)
+      "Return app icon for EWM surface buffers, fall back to ORIG-FN."
+      (if (and (bound-and-true-p ewm-surface-app)
+               (not (string-empty-p ewm-surface-app)))
+          (or (ewm-surface--lookup-icon ewm-surface-app)
+              (nerd-icons-mdicon "nf-md-application"))
+        (apply orig-fn args)))
+
+    (with-eval-after-load 'doom-modeline-core
+      (advice-add 'doom-modeline-icon-for-buffer :around #'ewm-surface-icon-for-buffer)
+
+      ;; Minimal modeline for Wayland surface buffers
+      (doom-modeline-def-modeline 'ewm-surface
+        '(window-number buffer-info)
+        '(misc-info major-mode bar))
+
+      ;; ewm-surface-app is set AFTER ewm-surface-mode activates, so
+      ;; doom-modeline's after-change-major-mode-hook fires too early.
+      ;; Re-trigger the icon update and set the minimal modeline.
+      (defun ewm-surface--on-app-set (_sym _val op where)
+        "Update doom-modeline icon and layout when ewm-surface-app is set."
+        (when (and (eq op 'set) (bufferp where))
+          (with-current-buffer where
+            (doom-modeline-update-buffer-file-icon)
+            (doom-modeline-set-modeline 'ewm-surface))))
+      (add-variable-watcher 'ewm-surface-app #'ewm-surface--on-app-set))
+
+    (defvar tab-bar--tabs-start-px nil "Cached pixel position where tabs area starts.")
+    (defvar tab-bar--right-reserved-px nil "Cached max pixel width of right-side elements.")
+
+    (defun tab-bar--tabs-start-px ()
+      (or tab-bar--tabs-start-px
+          (setq tab-bar--tabs-start-px
+                (let ((sep-w (string-pixel-width " ")))
+                  (+ sep-w ; left separator
+                     (string-pixel-width (concat " " (char-to-string #x23FB) " "))
+                     sep-w))))) ; separator after menu
+
+    (defun tab-bar--right-reserved-px ()
+      (or tab-bar--right-reserved-px
+          (setq tab-bar--right-reserved-px
+                (let ((sep-w (string-pixel-width " ")))
+                  (+ (string-pixel-width
+                      (concat " " (nerd-icons-mdicon "nf-md-bell") " (99) "
+                              (make-string 120 ?m) " "))
+                     sep-w
+                     (string-pixel-width
+                      (concat " " (nerd-icons-mdicon "nf-md-email") " 9999 "))
+                     sep-w
+                     (string-pixel-width
+                      (concat " " (format-time-string "%a %d %b  %H:%M") " "))
+                     sep-w
+                     (string-pixel-width
+                      (concat " " (nerd-icons-mdicon "nf-md-battery") " 100% "))
+                     sep-w))))) ; trailing separator
+
+    (defun tab-bar/format-tab-name (tab i)
+      "Format TAB name with index I, fixed pixel-width using align-to."
+      (let* ((current-p (eq (car tab) 'current-tab))
+             (tabs (frame-parameter nil 'tabs))
+             (tab-count (max 1 (length tabs)))
+             (name (alist-get 'name tab))
+             (prefix (if (> tab-count 1) (format "%d: " i) ""))
+             (face (if current-p 'tab-bar-tab 'tab-bar-tab-inactive))
+             (start (tab-bar--tabs-start-px))
+             (per-tab (max (* 10 (frame-char-width))
+                           (/ (- (frame-inner-width) start (tab-bar--right-reserved-px))
+                              tab-count)))
+             (tab-end (+ start (* i per-tab)))
+             (max-chars (max 5 (- (/ per-tab (frame-char-width)) 1)))
+             (content (concat " " prefix name " "))
+             (truncated (truncate-string-to-width content max-chars nil nil "..."))
+             (pad (propertize " " 'display `(space :align-to (,tab-end)) 'face face)))
+        (concat (propertize truncated 'face face) pad)))
+
+    (defun ewm/refresh-setup ()
+      (interactive)
+      (setopt epg-pinentry-mode 'loopback)
+      (setq agent-shell-display-action
+          (if (featurep 'ewm)
+              '((display-buffer-same-window))
+            '((vv/display-buffer-pop-up-frame-maybe display-buffer-in-side-window)
+              (side . left)
+              (slot . 1)
+              (window-width . 100)
+              (preserve-size . (t . nil)))))
+
+      (theme/apply)
+      (set-face-attribute 'window-divider nil :foreground "#282a36")
+      (set-face-attribute 'window-divider-first-pixel nil :foreground "#282a36")
+      (set-face-attribute 'window-divider-last-pixel nil :foreground "#282a36")
+      (modify-all-frames-parameters '((right-divider-width . 8)
+                                      (bottom-divider-width . 8)))
+
+      (menu/custom-menu)
+      (setq tab-bar-auto-width nil
+            tab-bar-close-button-show nil
+            tab-bar-format '(tab-bar-separator
+                             tab-bar-format-system-menu
+                             tab-bar-separator
+                             tab-bar-format-tabs
+                             tab-bar-format-align-right
+                             tab-bar-format-notification
+                             tab-bar-separator
+                             tab-bar-format-mail
+                             tab-bar-separator
+                             tab-bar-format-datetime
+                             tab-bar-separator
+                             tab-bar-format-battery
+                             tab-bar-separator))
+      (setq tab-bar-tab-name-format-function #'tab-bar/format-tab-name)
+      (tab-bar-mode -1)
+      (tab-bar-mode 1)
+      ;; Re-sync intercepted keys with compositor (useful for manual s-R refresh)
+      (when ewm--module-mode
+        (ewm--send-intercept-keys)))
+
+    (add-hook 'emacs-startup-hook #'ewm/refresh-setup)
+
+    ;; s-w prefix key: window & tab management
+    (define-prefix-command 'ewm/window-map)
+    (define-prefix-command 'ewm/layout-map)
+    (define-prefix-command 'ewm/layout-save-map)
+
+    (define-key ewm-mode-map (kbd "s-w") 'ewm/window-map)
+
+    ;; s-w (s-)n / s-w (s-)k: tab management
+    (define-key ewm/window-map (kbd "s-n") #'tab-bar-duplicate-tab)
+    (define-key ewm/window-map (kbd "n")   #'tab-bar-duplicate-tab)
+    (define-key ewm/window-map (kbd "s-k") #'tab-bar-close-tab)
+    (define-key ewm/window-map (kbd "k")   #'tab-bar-close-tab)
+
+    ;; s-w (s-)w: layout sub-prefix
+    (define-key ewm/window-map (kbd "s-w") 'ewm/layout-map)
+    (define-key ewm/window-map (kbd "w")   'ewm/layout-map)
+
+    ;; s-w s-w (s-)s <n>: save layout to slot n
+    (define-key ewm/layout-map (kbd "s-s") 'ewm/layout-save-map)
+    (define-key ewm/layout-map (kbd "s")   'ewm/layout-save-map)
+    ;; s-w s-w (s-)<n>: load layout from slot n
+    ;; s-w s-w (s-)w: load layout from slot 0 (quick access)
+    (dotimes (i 9)
+      (let ((n (1+ i)))
+        (define-key ewm/layout-save-map (kbd (number-to-string n))
+          `(lambda () (interactive) (ewm/save-layout ,n)))
+        (define-key ewm/layout-map (kbd (format "s-%d" n))
+          `(lambda () (interactive) (ewm/load-layout ,n)))
+        (define-key ewm/layout-map (kbd (number-to-string n))
+          `(lambda () (interactive) (ewm/load-layout ,n)))))
+    (defun ewm/save-layout-0 ()
+      "Save window layout to quick-access slot 0."
+      (interactive)
+      (ewm/save-layout 0))
+    (defun ewm/load-layout-0 ()
+      "Load window layout from quick-access slot 0."
+      (interactive)
+      (ewm/load-layout 0))
+    (define-key ewm/layout-save-map (kbd "w") #'ewm/save-layout-0)
+    (define-key ewm/layout-map (kbd "s-w") #'ewm/load-layout-0)
+    (define-key ewm/layout-map (kbd "w") #'ewm/load-layout-0)
+
+    ;; Keybindings in ewm-mode-map (always active, intercepted from surfaces)
+    :bind (:map ewm-mode-map
+                ;; refresh setup
+                ("s-R" . ewm/refresh-setup)
+
+                ("s-/" . winner-undo)
+                ("s-?" . winner-redo)
+
+                ("s-a" . ewm-launch-app)
+                ("s-d" . nil)
+                ("s-t" . nil)
+                ("s-l" . system/lock-screen)
+                ("s-x" . helm-M-x)
+
+                ;; Applications
+                ("s-i" . apps/vivaldi-browser)
+                ("s-I" . eww)
+
+                ("s-<return>" . eshell/new-or-current)
+                ("S-s-<return>" . eat)
+                ("C-s-<return>" . apps/cosmic-term)))
 #+end_src
 
 * Bookmark handlers
-** Chrome
-This requires the following Chrome extention: https://chrome.google.com/webstore/detail/url-in-title/ignpacbgnbnkaiooknalneoeladjnfgb?hl=en.
-#+BEGIN_SRC emacs-lisp
-  (defvar chrome/input-history nil)
+** Vivaldi
+  (defvar vivaldi/input-history nil)
   (eval-after-load "savehist"
-    '(add-to-list 'savehist-additional-variables 'chrome/input-history))
+    '(add-to-list 'savehist-additional-variables 'vivaldi/input-history))
 
-  (defun chrome/get-url ()
+  (defun vivaldi/get-url ()
     (interactive)
-    (if (string= exwm-class-name "Google-chrome")
-        (concat "http" (car (last (mapcar (lambda (str) (s-replace " - Google Chrome" "" str)) (split-string exwm-title " - http")))))))
+    (if (string= ewm-surface-app "Vivaldi-stable")
+        (concat "http" (car (last (mapcar (lambda (str) (s-replace " - Vivaldi" "" str)) (split-string ewm-surface-title " - http")))))))
 
-  (defun chrome/do-start-with-url-or-search ()
+  (defun vivaldi/do-start-with-url-or-search ()
     (interactive)
-    (if (string= exwm-class-name "Google-chrome")
-        (chrome/start-with-url-or-search (completing-read "Chrome URL or search " chrome/input-history nil nil (chrome/get-url) 'chrome/input-history))
-      (chrome/start-with-url-or-search (completing-read "Chrome URL or search " chrome/input-history nil nil nil 'chrome/input-history))))
+    (if (string= ewm-surface-app "Vivaldi-stable")
+        (vivaldi/start-with-url-or-search (completing-read "Vivaldi URL or search " vivaldi/input-history nil nil (vivaldi/get-url) 'vivaldi/input-history))
+      (vivaldi/start-with-url-or-search (completing-read "Vivaldi URL or search " vivaldi/input-history nil nil nil 'vivaldi/input-history))))
 
-  (defun chrome/start-with-url-or-search (input)
+  (defun vivaldi/start-with-url-or-search (input)
     (interactive)
     (let ((trimmed-input (string-trim input)))
       (if (string-match-p " " trimmed-input)
-          (shell/async-command-no-output (concat "google-chrome-stable --new-window '? " input "'"))
-        (shell/async-command-no-output (concat "google-chrome-stable --new-window '" input "'")))))
+          (shell/async-command-no-output (concat "vivaldi-stable --new-window '? " input "'"))
+        (shell/async-command-no-output (concat "vivaldi-stable --new-window '" input "'")))))
 
-  (defun bookmark/chrome-bookmark-handler (record)
-    "Jump to an chrome bookmarked location."
+  (defun bookmark/vivaldi-bookmark-handler (record)
+    "Jump to a Vivaldi bookmarked location."
     (with-current-buffer (window-buffer)
-      (chrome/start-with-url-or-search (bookmark-prop-get record 'location))))
+      (vivaldi/start-with-url-or-search (bookmark-prop-get record 'location))))
 
-  (defun bookmark/chrome-bookmark-make-record ()
-    "Return a bookmark record for the current chrome buffer."
+  (defun bookmark/vivaldi-bookmark-make-record ()
+    "Return a bookmark record for the current Vivaldi buffer."
     (interactive)
-    (let ((split-title (mapcar (lambda (str) (s-replace " - Google Chrome" "" str)) (split-string exwm-title " - http"))))
-      `(,(concat "chrome/" (car split-title))
+    (let ((split-title (mapcar (lambda (str) (s-replace " - Vivaldi" "" str)) (split-string ewm-surface-title " - http"))))
+      `(,(concat "vivaldi/" (car split-title))
         (location . ,(concat "http" (car (last split-title))))
-        (handler . bookmark/chrome-bookmark-handler))))
+        (handler . bookmark/vivaldi-bookmark-handler))))
 
-  (defun bookmark/chrome-set-bookmark-handler ()
+  (defun bookmark/vivaldi-set-bookmark-handler ()
     "This tells Emacs which function to use to create bookmarks."
     (interactive)
-    (if (string= exwm-class-name "Google-chrome")
+    (if (string= ewm-surface-app "Vivaldi-stable")
         (set (make-local-variable 'bookmark-make-record-function)
-             #'bookmark/chrome-bookmark-make-record)))
+             #'bookmark/vivaldi-bookmark-make-record)))
 
-  (add-hook 'exwm-manage-finish-hook #'bookmark/chrome-set-bookmark-handler)
-#+END_SRC
-
-* Helpers
-** Know the key chords
-#+begin_src emacs-lisp :tangle no
-  (key-description (vector (read-key)))
-#+end_src
-
-** Stream desktop
-
+  ;; (add-hook 'ewm-update-title-hook #'bookmark/vivaldi-set-bookmark-handler)
 #+BEGIN_SRC emacs-lisp
-  (defun stream/pointer-start ()
-    (interactive)
-    (shell/async-command-no-output "find-cursor -c#ff3300 --repeat 0 --follow --distance 0 --line-width 16 --size 16"))
-
-  (defun stream/pointer-stop ()
-    (interactive)
-    (shell/async-command-no-output "pkill find-cursor"))
-
-  (defun stream/start ()
-    (interactive)
-    (window/4k-streaming-layout)
-    (stream/pointer-start)
-    (shell/async-command-no-output "vlc --no-video-deco --no-embedded-video --screen-fps=30 --screen-top=20 --screen-left=3840 --screen-width=1920 --screen-height=1080 screen://")
-    (aw-move-window
-     (nth 0
-          (aw-window-list)))
-    (run-with-timer 0.5 nil (lambda () (with-current-buffer (window-buffer) (exwm-layout-toggle-fullscreen exwm--id) (select-window (get-mru-window t t t))))))
-
-  (defun stream/stop ()
-    (interactive)
-    (stream/pointer-stop)
-    (shell/async-command-no-output "pkill vlc"))
 #+END_SRC

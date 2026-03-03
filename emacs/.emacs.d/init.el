@@ -7,6 +7,7 @@
 (setq native-comp-deferred-compilation native-comp-jit-compilation)  ; Deprecated
 
 (setq use-package-always-ensure t)
+(setq package-install-upgrade-built-in t)
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 (package-initialize)
@@ -46,17 +47,19 @@
       gc-cons-percentage 0.6)
 
 ;; After init, lower to a reasonable value for interactive use
-(add-hook 'emacs-startup-hook
-          (lambda ()
-            (setq gc-cons-threshold (* 16 1024 1024)  ; 16MB
-                  gc-cons-percentage 0.1)))
+(defun gc/set-runtime-threshold ()
+  "Set GC threshold to a reasonable value after startup."
+  (setq gc-cons-threshold (* 16 1024 1024)  ; 16MB
+        gc-cons-percentage 0.1))
+(add-hook 'emacs-startup-hook #'gc/set-runtime-threshold)
 
 ;; GC when Emacs loses focus (debounced, skip during completion)
-(add-hook 'focus-out-hook
-          (lambda ()
-            (unless (or (active-minibuffer-window)
-                        (bound-and-true-p company-candidates))
-              (garbage-collect))))
+(defun gc/collect-on-focus-out ()
+  "Trigger GC when Emacs loses focus, unless minibuffer or company is active."
+  (unless (or (active-minibuffer-window)
+              (bound-and-true-p company-candidates))
+    (garbage-collect)))
+(add-hook 'focus-out-hook #'gc/collect-on-focus-out)
 
 ;; redisplay-dont-pause is obsolete since Emacs 24.5 - removed
 ;; Optimize jit-lock for better fontification performance
@@ -109,21 +112,54 @@
   (ultra-scroll-mode 1))
 
 (defalias 'yes-or-no-p 'y-or-n-p)
-(setq xref-prompt-for-identifier nil
-      comint-prompt-read-only t
-      use-dialog-box nil)
+  (setq xref-prompt-for-identifier nil
+        comint-prompt-read-only t
+        use-dialog-box nil)
+
+;; When stdin is unavailable (daemon mode or EWM window manager), Emacs C code
+;; may fall back to reading from stdin instead of the minibuffer.
+;; Fix 1: Force noninteractive to nil so read-from-minibuffer uses the GUI minibuffer.
+;; Fix 2: Catch EOF errors in y-or-n-p and retry on a graphical frame.
+;; Named defuns are byte/native-compiled; inline lambdas stay interpreted.
+(defun minibuffer/force-gui (orig-fn &rest args)
+  "Advice to force read-from-minibuffer through the GUI minibuffer."
+  (let ((noninteractive nil))
+    (apply orig-fn args)))
+;;(advice-add 'read-from-minibuffer :around #'minibuffer/force-gui)
+
+(defun minibuffer/y-or-n-p-gui (orig-fn &rest args)
+  "Advice to catch EOF in y-or-n-p and retry on a graphical frame."
+  (condition-case nil
+      (let ((noninteractive nil))
+        (apply orig-fn args))
+    (end-of-file
+     (let ((frame (seq-find
+                   (lambda (f) (and (frame-live-p f) (display-graphic-p f)))
+                   (frame-list))))
+       (if frame
+           (with-selected-frame frame
+             (let ((noninteractive nil))
+               (apply orig-fn args)))
+         t)))))
+;;(advice-add 'y-or-n-p :around #'minibuffer/y-or-n-p-gui)
 
 (define-key minibuffer-local-completion-map " " nil)
 (define-key minibuffer-local-must-match-map " " nil)
 (define-key minibuffer-local-completion-map "?" nil)
 (define-key minibuffer-local-must-match-map "?" nil)
-(define-key minibuffer-local-map (kbd "S-<return>") (lambda () (interactive) (insert "\n")))
-(define-key minibuffer-local-map (kbd "M-\\")
-  (lambda () (interactive)
-    (save-excursion
-      (goto-char (minibuffer-prompt-end))
-      (while (search-forward " " nil t)
-        (replace-match "\\\\ ")))))
+(defun minibuffer/insert-newline ()
+  "Insert a literal newline in the minibuffer."
+  (interactive)
+  (insert "\n"))
+(define-key minibuffer-local-map (kbd "S-<return>") #'minibuffer/insert-newline)
+(defun minibuffer/escape-spaces ()
+  "Escape all spaces in minibuffer input with backslashes."
+  (interactive)
+  (save-excursion
+    (goto-char (minibuffer-prompt-end))
+    (while (search-forward " " nil t)
+      (replace-match "\\\\ "))))
+(define-key minibuffer-local-map (kbd "M-\\") #'minibuffer/escape-spaces)
 (add-hook 'minibuffer-setup-hook #'subword-mode)
 
 (setq backup-directory-alist `(("." . ,(expand-file-name "tmp/backups/" user-emacs-directory))))
@@ -277,11 +313,17 @@
       (cl-pushnew face window-dim--faces))
     (window-dim--refresh-all-remaps))
 
-  ;; Add agent-shell status faces so window-dim can dim them in inactive windows
+  ;; Add agent-shell faces so window-dim can dim them in inactive windows
   (with-eval-after-load 'agent-shell
     (dolist (face '(success
                     warning
-                    error))
+                    error
+                    bold
+                    font-lock-doc-markup-face
+                    diff-added
+                    diff-removed
+                    diff-hunk-header
+                    mode-line-emphasis))
       (cl-pushnew face window-dim--faces))
     (window-dim--refresh-all-remaps))
 
@@ -345,8 +387,10 @@
     (window-dim--refresh-all-remaps))
 
   (window-dim-mode 1)
-  (add-hook 'window-configuration-change-hook
-            (lambda () (window-dim--on-window-change (selected-frame)))))
+  (defun window-dim/on-config-change ()
+    "Refresh window-dim remaps on window configuration change."
+    (window-dim--on-window-change (selected-frame)))
+  (add-hook 'window-configuration-change-hook #'window-dim/on-config-change))
 
 (defvar frame-centric nil
   "When non-nil, window rules prefer opening buffers in new frames.
@@ -368,11 +412,13 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
 ;; --- Agent Shell ---
 (with-eval-after-load 'agent-shell
   (setq agent-shell-display-action
-        '((vv/display-buffer-pop-up-frame-maybe display-buffer-in-side-window)
-          (side . left)
-          (slot . 1)
-          (window-width . 100)
-          (preserve-size . (t . nil)))))
+        (if (featurep 'ewm)
+            '((display-buffer-same-window))
+          '((vv/display-buffer-pop-up-frame-maybe display-buffer-in-side-window)
+            (side . left)
+            (slot . 1)
+            (window-width . 100)
+            (preserve-size . (t . nil))))))
 
 ;; --- Claudemacs ---
 (add-to-list 'display-buffer-alist
@@ -387,11 +433,12 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
     (when (string-prefix-p "*Jira" (buffer-name (window-buffer (selected-window))))
       (display-buffer-same-window buffer alist)))
 
+  (defun jira/force-display-actions (orig-fn &rest args)
+    "Advice to obey display-actions for Jira buffers."
+    (let ((switch-to-buffer-obey-display-actions t))
+      (apply orig-fn args)))
   (dolist (fn '(jira-issues jira-tempo))
-    (advice-add fn :around
-                (lambda (orig-fn &rest args)
-                  (let ((switch-to-buffer-obey-display-actions t))
-                    (apply orig-fn args))))))
+    (advice-add fn :around #'jira/force-display-actions)))
 
 (add-to-list 'display-buffer-alist
              '("\\*Jira"
@@ -498,7 +545,10 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
  display-line-numbers-type 'relative
  mode-line-percent-position nil)
 (global-display-line-numbers-mode 1)
-(add-hook 'completion-list-mode-hook (lambda () (display-line-numbers-mode 0)))
+(defun completion/disable-line-numbers ()
+  "Disable line numbers in completion list buffers."
+  (display-line-numbers-mode 0))
+(add-hook 'completion-list-mode-hook #'completion/disable-line-numbers)
 (line-number-mode 0)
 (column-number-mode 0)
 (global-hl-line-mode 1)
@@ -513,14 +563,10 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
 (menu-bar-mode -1)
 (cua-mode 1)
 (define-key isearch-mode-map (kbd "C-v") 'isearch-yank-kill)
-(setq window-divider-default-right-width 22
-      window-divider-default-bottom-width 22)
+(setq window-divider-default-right-width 8
+      window-divider-default-bottom-width 8)
 
 (window-divider-mode 1)
-
-(use-package spacious-padding
-  :config
-  (spacious-padding-mode 1))
 
 (setq initial-scratch-message nil)
 
@@ -564,47 +610,83 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
 (with-eval-after-load 'tramp
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
 
-(add-hook 'after-init-hook
-          #'(lambda ()
-              (load-file "~/.emacs.d/custom_packages/dracula-theme.el")
-              (load-theme 'dracula t)
+(defun theme/hide-minibuffer-scrollbar (&optional frame)
+  (set-window-scroll-bars (minibuffer-window frame) 0 nil))
 
-              (fringe-mode '(24 . 12))
+(defun theme/apply ()
+  (interactive)
+  (load-file "~/.emacs.d/custom_packages/dracula-theme.el")
+  (load-theme 'dracula t)
 
-              (defun theme/minibuffer-echo-area ()
-                (interactive)
-                (dolist (buf '( " *Minibuf-1*"))
-                  (with-current-buffer (get-buffer-create buf)
-                    (face-remap-add-relative 'default :background "#44475a")
-                    (face-remap-add-relative 'fringe :background "#44475a")))
-                (dolist (buf '(" *Minibuf-0*" " *Echo Area 0*" " *Echo Area 1*"))
-                  (with-current-buffer (get-buffer-create buf)
-                    (when (= (buffer-size) 0)
-                      (insert " "))
-                    ;; Don't allow users to kill these buffers, as it destroys the hack
-                    (add-hook 'kill-buffer-query-functions #'ignore nil 'local)
-                    (face-remap-add-relative 'default :background "#282a36")
-                    (face-remap-add-relative 'fringe :background "#282a36"))))
+  (modify-all-frames-parameters '((internal-border-width . 0)))
+  (fringe-mode '(24 . 12))
+  (theme/hide-minibuffer-scrollbar))
 
-            (defun theme/hide-minibuffer-scrollbar (&optional frame)
-              (set-window-scroll-bars (minibuffer-window frame) 0 nil))
-            (theme/hide-minibuffer-scrollbar)
-            (add-hook 'after-make-frame-functions #'theme/hide-minibuffer-scrollbar)))
+(add-hook 'after-make-frame-functions #'theme/hide-minibuffer-scrollbar)
+(add-hook 'after-init-hook #'theme/apply)
 
 (use-package doom-modeline
   :hook (after-init . doom-modeline-mode)
   :config
   (setq
    inhibit-compacting-font-caches t
-   mode-line-right-align-edge 'window
+   mode-line-right-align-edge 'right-margin
    doom-modeline-percent-position nil
    doom-modeline-enable-word-count t
    doom-modeline-continuous-word-count-modes nil
    doom-modeline-total-line-number t
    doom-modeline-position-line-format '("" " " "%l")
-   doom-modeline-position-column-line-format '("" " " "%cC %lL"))
+   doom-modeline-position-column-line-format '("" " " "%cC %lL")
+   doom-modeline-workspace-name nil
+   doom-modeline-height 30
+   doom-modeline-bar-width 1)
   (line-number-mode 1)
-  (column-number-mode 0))
+  (column-number-mode 0)
+
+  ;; Move bar to right side on all modelines to prevent layout shift on focus
+  (with-eval-after-load 'doom-modeline
+    (doom-modeline-def-modeline 'main
+      '(eldoc window-state workspace-name window-number modals matches follow buffer-info remote-host buffer-position word-count parrot selection-info)
+      '(compilation objed-state misc-info project-name persp-name battery grip irc mu4e gnus github debug repl lsp minor-modes input-method indent-info buffer-encoding major-mode process vcs check time bar))
+    (doom-modeline-def-modeline 'minimal
+      '(window-number modals matches buffer-info-simple)
+      '(media-info major-mode time bar))
+    (doom-modeline-def-modeline 'special
+      '(eldoc window-state window-number modals matches buffer-info remote-host buffer-position word-count parrot selection-info)
+      '(compilation objed-state misc-info battery irc-buffers debug minor-modes input-method indent-info buffer-encoding major-mode process time bar))
+    (doom-modeline-def-modeline 'project
+      '(window-number modals buffer-default-directory remote-host buffer-position)
+      '(compilation misc-info battery irc mu4e gnus github debug minor-modes input-method major-mode process time bar))
+    (doom-modeline-def-modeline 'dashboard
+      '(window-number modals buffer-default-directory-simple remote-host)
+      '(compilation misc-info battery irc mu4e gnus github debug minor-modes input-method major-mode process time bar))
+    (doom-modeline-def-modeline 'vcs
+      '(window-state window-number modals matches buffer-info remote-host buffer-position parrot selection-info)
+      '(compilation misc-info battery irc mu4e gnus github debug minor-modes buffer-encoding major-mode process time bar))
+    (doom-modeline-def-modeline 'package
+      '(window-number modals matches package buffer-position parrot)
+      '(compilation misc-info major-mode process time bar))
+    (doom-modeline-def-modeline 'info
+      '(window-number modals matches buffer-info info-nodes buffer-position parrot selection-info)
+      '(compilation misc-info buffer-encoding major-mode time bar))
+    (doom-modeline-def-modeline 'media
+      '(window-number modals buffer-size buffer-info)
+      '(compilation misc-info media-info major-mode process vcs time bar))
+    (doom-modeline-def-modeline 'message
+      '(eldoc window-state window-number modals matches buffer-info-simple buffer-position word-count parrot selection-info)
+      '(compilation objed-state misc-info battery debug minor-modes input-method indent-info buffer-encoding major-mode time bar))
+    (doom-modeline-def-modeline 'pdf
+      '(window-number modals matches buffer-info pdf-pages reader-pages)
+      '(compilation misc-info major-mode process vcs time bar))
+    (doom-modeline-def-modeline 'org-src
+      '(eldoc window-state window-number modals matches buffer-info buffer-position word-count parrot selection-info)
+      '(compilation objed-state misc-info debug lsp minor-modes input-method indent-info buffer-encoding major-mode process check time bar))
+    (doom-modeline-def-modeline 'git-timemachine
+      '(eldoc window-number modals matches git-timemachine buffer-position word-count parrot selection-info)
+      '(misc-info minor-modes indent-info buffer-encoding major-mode time bar))
+    (doom-modeline-def-modeline 'speedbar
+      '(" " major-mode)
+      '(speedbar-info bar))))
 
 (use-package hide-mode-line
   :config
@@ -643,8 +725,8 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
           helm-allow-mouse                          t
           helm-move-to-line-cycle-in-source         nil
           helm-echo-input-in-header-line            t
-          helm-autoresize-max-height                30   ; it is %.
-          helm-autoresize-min-height                5   ; it is %.
+          helm-autoresize-max-height                5
+          helm-autoresize-min-height                5
           helm-follow-mode-persistent               t
           helm-candidate-number-limit               300
           helm-visible-mark-prefix                  "✓"
@@ -652,9 +734,10 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
           helm-truncate-lines                       t
           helm-net-prefer-curl                      t
           helm-split-window-inside-p                t
+          helm-display-buffer-default-height        10
           helm-grep-git-grep-command "git --no-pager grep -n%cH --color=always --full-name -e \"%p\" -- %f"
           helm-buffers-show-icons nil
-          helm-buffer-max-length 35)
+          helm-buffer-max-length 20)
 
     (defun helm--show-action-window-other-window-p ()
       helm-show-action-window-other-window)
@@ -759,8 +842,15 @@ side parameter so that `helm-default-display-buffer' can split it."
     (define-key global-map (kbd "C-x r c")               'helm-addressbook-bookmarks)
     (define-key global-map (kbd "C-c t r")               'helm-dictionary)
 
+    ;; Fixed 5-candidate height (7 lines = header + 5 body + modeline)
+    (defun helm/fixed-resize-handler ()
+      "Override helm-autoresize to a fixed 5-candidate height."
+      (unless (helm-action-window)
+        (fit-window-to-buffer (helm-window) 7 7)))
+    (advice-add 'helm-autoresize-handler :override #'helm/fixed-resize-handler)
+
     (helm-mode 1)
-    (helm-autoresize-mode 1))
+    (helm-autoresize-mode 0))
 
   (use-package helm-xref)
 
@@ -824,7 +914,10 @@ side parameter so that `helm-default-display-buffer' can split it."
       ;; Dynamic scoping to the rescue
       (let ((org-confirm-babel-evaluate nil))
         (org-babel-tangle))))
-  (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'org/org-babel-tangle-config))))
+  (defun org/enable-auto-tangle ()
+    "Enable auto-tangle on save in org-mode buffers."
+    (add-hook 'after-save-hook #'org/org-babel-tangle-config))
+  (add-hook 'org-mode-hook #'org/enable-auto-tangle))
 ;; (custom-set-faces
 ;;  '(org-level-1 ((t (:inherit outline-1 :height 2.5))))
 ;;  '(org-level-2 ((t (:inherit outline-2 :height 1.8))))
@@ -871,18 +964,18 @@ side parameter so that `helm-default-display-buffer' can split it."
   (setq display-time-mail-directory nil)
   (setq display-time-default-load-average nil))
 
-(autoload 'exwm-enable "~/.emacs.d/desktop.el")
-
 (use-package avy
   :config
   (require 'bind-key)
   (bind-key "M-j" #'avy-goto-char-timer))
 
+(defun mc/setup-cursor-face ()
+  "Set up cursor face for multiple-cursors mode."
+  (set-face-attribute 'mc/cursor-bar-face nil :height 1 :background nil :inherit 'cursor))
 (use-package multiple-cursors
   :vc (:url "https://github.com/magnars/multiple-cursors.el" :rev :newest)
   :hook
-  ((multiple-cursors-mode . (lambda ()
-                              (set-face-attribute 'mc/cursor-bar-face nil :height 1 :background nil :inherit 'cursor))))
+  ((multiple-cursors-mode . mc/setup-cursor-face))
   :config
   (define-key mc/keymap (kbd "<return>") nil)
   (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
@@ -1069,8 +1162,25 @@ side parameter so that `helm-default-display-buffer' can split it."
 (use-package which-key
   :defer 2  ; Load after 2 seconds idle
   :config
-  (setq which-key-popup-type 'minibuffer
-        which-key-idle-delay 0.5)  ; Show after 0.5s
+  (defun which-key/popup-dimensions (_)
+    "Return custom dimensions for which-key popup."
+    (cons (round (* (window-height) 0.25)) (window-width)))
+  (defun which-key/show-popup (_act-popup-dim)
+    "Show which-key popup below the selected window."
+    (when-let* ((buf (get-buffer which-key-buffer-name)))
+      (display-buffer buf
+                      '((display-buffer-below-selected)
+                        (window-height . fit-window-to-buffer)))))
+  (defun which-key/hide-popup ()
+    "Hide the which-key popup window."
+    (when-let* ((buf (get-buffer which-key-buffer-name))
+                (win (get-buffer-window buf)))
+      (quit-window nil win)))
+  (setq which-key-popup-type 'custom
+        which-key-custom-popup-max-dimensions-function #'which-key/popup-dimensions
+        which-key-custom-show-popup-function #'which-key/show-popup
+        which-key-custom-hide-popup-function #'which-key/hide-popup
+        which-key-idle-delay 0.5)
   (which-key-mode 1))
 
 (use-package whole-line-or-region
@@ -1147,11 +1257,11 @@ side parameter so that `helm-default-display-buffer' can split it."
   (defun wgrep/hook ()
     (wgrep-change-to-wgrep-mode))
 
-  (add-hook 'helm-occur-mode-hook 'wgrep/hook)
-  (add-hook 'helm-grep-mode-hook 'wgrep/hook))
+ (add-hook 'helm-occur-mode-hook 'wgrep/hook)
+ (add-hook 'helm-grep-mode-hook 'wgrep/hook))
 
 (use-package wgrep-helm
-  :after (wgrep helm))
+ :after (wgrep helm))
 
 (use-package savehist
   :ensure nil
@@ -1300,9 +1410,15 @@ when reading files and the other way around when writing contents."
       (fset fns fn)
       fn))
 
+  (defvar-local docker/auto-refresh--timer nil
+    "Timer for auto-refreshing docker containers view.")
+
   (defun docker/auto-refresh ()
     "Auto-refresh docker containers view. Cancels itself, if this buffer was killed."
-    (run-with-local-timer 5 5 'revert-buffer))
+    (when docker/auto-refresh--timer
+      (cancel-timer docker/auto-refresh--timer))
+    (setq docker/auto-refresh--timer
+          (run-with-local-timer 5 5 'revert-buffer)))
 
   (add-hook 'docker-container-mode-hook #'docker/auto-refresh)
 
@@ -1331,18 +1447,8 @@ when reading files and the other way around when writing contents."
         agent-shell-prefer-viewport-interaction nil
         agent-shell-preferred-agent-config 'claude-code)
 
+  (add-to-list 'exec-path "~/.npm-packages/bin")
   (add-hook 'agent-shell-mode-hook (lambda () (display-line-numbers-mode -1)))
-
-  ;; Auto-scroll pour les buffers agent-shell via agent-shell-section-functions
-  ;; (defun agent-shell--auto-scroll (_range)
-  ;;   "Scroll agent-shell buffer to bottom in all windows displaying it."
-  ;;   (let ((buf (current-buffer)))
-  ;;     (dolist (window (get-buffer-window-list buf nil t))
-  ;;       (with-selected-window window
-  ;;         (goto-char (point-max))
-  ;;         (recenter -1)))))
-
-  ;; (add-hook 'agent-shell-section-functions #'agent-shell--auto-scroll)
 
   (defun agent/shell ()
     "Start agent shell or reuse existing shell for current project.
@@ -1436,6 +1542,20 @@ Preserves context (region, files, etc.) like the default behavior."
     (define-key agent-shell-viewport-view-mode-map (kbd "M-p") #'agent-shell-viewport-previous-page)
     (define-key agent-shell-viewport-edit-mode-map (kbd "M-n") #'agent-shell-viewport-next-page)
     (define-key agent-shell-viewport-edit-mode-map (kbd "M-p") #'agent-shell-viewport-previous-page))
+
+  (defun agent/display-below (buffer alist)
+    "Display BUFFER below, reusing existing window if present."
+    (let ((below (window-in-direction 'below)))
+      (if below
+          (window--display-buffer buffer below 'reuse alist)
+        (display-buffer-in-direction buffer
+                                     (append '((direction . below)
+                                               (window-height . 0.6))
+                                             alist)))))
+
+  (add-to-list 'display-buffer-alist
+               '("\\*agent-shell-diff\\*"
+                 (agent/display-below)))
 
   (global-set-key (kbd "C-c a") #'agent/shell))
 
@@ -1719,6 +1839,22 @@ Preserves context (region, files, etc.) like the default behavior."
           (joplin-sync-folders))
         (message "Deleted notebook: %s" name))))
 
+  (defun joplin/enable-edit-after-revert ()
+    "Enable editing after reverting a Joplin note buffer."
+    (setq buffer-read-only nil)
+    (when view-mode (view-mode -1)))
+
+  (defun joplin/remove-metadata-before-save ()
+    "Remove metadata section before saving a Joplin note."
+    (setq-local joplin--saving-via-hook t)
+    (joplin--remove-metadata-section))
+
+  (defun joplin/restore-metadata-after-save ()
+    "Restore metadata section after saving a Joplin note."
+    (unwind-protect
+        (joplin--insert-metadata-section)
+      (setq-local joplin--saving-via-hook nil)))
+
   ;; Find note buffers by note ID, not by buffer name
   (defun joplin--note-buffer-by-id (id &optional parent _buf-name)
     "Find or create a Joplin note buffer by note ID."
@@ -1735,23 +1871,10 @@ Preserves context (region, files, etc.) like the default behavior."
           (when view-mode (view-mode -1))
           (joplin--rename-buffer-from-note)
           (setq-local revert-buffer-function #'joplin--revert-note-buffer)
-          (add-hook 'after-revert-hook
-                    (lambda ()
-                      (setq buffer-read-only nil)
-                      (when view-mode (view-mode -1)))
-                    90 t)
+          (add-hook 'after-revert-hook #'joplin/enable-edit-after-revert 90 t)
           (joplin--insert-metadata-section)
-          (add-hook 'before-save-hook
-                    (lambda ()
-                      (setq-local joplin--saving-via-hook t)
-                      (joplin--remove-metadata-section))
-                    -100 t)
-          (add-hook 'after-save-hook
-                    (lambda ()
-                      (unwind-protect
-                          (joplin--insert-metadata-section)
-                        (setq-local joplin--saving-via-hook nil)))
-                    100 t)))
+          (add-hook 'before-save-hook #'joplin/remove-metadata-before-save -100 t)
+          (add-hook 'after-save-hook #'joplin/restore-metadata-after-save 100 t)))
       (with-current-buffer buf
         (setq-local joplin-parent-buffer parent))
       buf))
@@ -2093,6 +2216,12 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
   (defvar joplin--insert-link-candidates nil
     "Last candidates from `joplin--search-notes-candidates'.")
 
+  (defun joplin/search-note-candidates ()
+    "Generate live search candidates for Joplin notes."
+    (setq joplin--insert-link-candidates
+          (joplin--search-notes-candidates))
+    joplin--insert-link-candidates)
+
   (defun joplin-insert-link ()
     "Search for a Joplin note with live Helm and insert a link at point."
     (interactive)
@@ -2101,10 +2230,7 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
     (joplin--init)
     (let ((id (helm :sources
                     (helm-build-sync-source "Joplin notes"
-                      :candidates (lambda ()
-                                    (setq joplin--insert-link-candidates
-                                          (joplin--search-notes-candidates))
-                                    joplin--insert-link-candidates)
+                      :candidates #'joplin/search-note-candidates
                       :volatile t
                       :match #'identity
                       :requires-pattern 2)
@@ -2516,7 +2642,12 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
     (jira/org-setup-keys)
     (add-hook 'after-save-hook #'jira/org-maybe-fontify nil t)
     ;; Fontifier après un court délai pour laisser le buffer se charger
-    (run-with-idle-timer 0.5 nil #'jira/org-maybe-fontify))
+    (let ((buf (current-buffer)))
+      (run-with-idle-timer 0.5 nil
+                           (lambda ()
+                             (when (buffer-live-p buf)
+                               (with-current-buffer buf
+                                 (jira/org-maybe-fontify)))))))
 
   (defun jira/org-issue-at-point ()
     "Retourne l'ID Jira sous le curseur, ou nil."
@@ -2554,28 +2685,32 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
   (add-hook 'org-mode-hook 'jira/init-org-buffer)
 
   (with-eval-after-load 'jira-detail
-    (add-hook 'jira-detail-mode-hook
-              (lambda ()
-                (face-remap-add-relative 'magit-section-highlight :background nil)))
+    (defun jira/remove-section-highlight-bg ()
+      "Remove background from magit-section-highlight in Jira detail buffers."
+      (face-remap-add-relative 'magit-section-highlight :background nil))
+    (add-hook 'jira-detail-mode-hook #'jira/remove-section-highlight-bg)
     (define-key jira-detail-mode-map (kbd "I") #'jira/toggle-auto-inline-images)
     (define-key jira-detail-mode-map (kbd "c") #'jira/copy-issue-link)
-    (define-key jira-detail-mode-map (kbd "M-o")
-                (lambda () "Open link at point or issue in browser" (interactive)
-                  (jira/browse-url-at-point-or-issue jira-detail--current-key)))
-    (advice-add 'jira-detail--issue :after
-                (lambda (key &rest _)
-                  (when-let* ((buf (jira-detail--get-issue-buffer key)))
-                    (with-current-buffer buf
-                      (when jira/auto-inline-images
-                        (jira/inline-images)))))))
+    (defun jira/browse-issue-at-point ()
+      "Open link at point or issue in browser."
+      (interactive)
+      (jira/browse-url-at-point-or-issue jira-detail--current-key))
+    (define-key jira-detail-mode-map (kbd "M-o") #'jira/browse-issue-at-point)
+    (defun jira/auto-inline-images-after (key &rest _)
+      "After-advice to auto-inline images in Jira issue buffers."
+      (when-let* ((buf (jira-detail--get-issue-buffer key)))
+        (with-current-buffer buf
+          (when jira/auto-inline-images
+            (jira/inline-images)))))
+    (advice-add 'jira-detail--issue :after #'jira/auto-inline-images-after)))
 
   (with-eval-after-load 'jira-issues
     (define-key jira-issues-mode-map (kbd "c") #'jira/copy-issue-link)
-    (define-key jira-issues-mode-map (kbd "M-o")
-                (lambda () "Open link at point or issue in browser" (interactive)
-                  (jira/browse-url-at-point-or-issue (jira-utils-marked-item)))))
-
-  )
+    (defun jira/browse-marked-issue ()
+      "Open link at point or marked issue in browser."
+      (interactive)
+      (jira/browse-url-at-point-or-issue (jira-utils-marked-item)))
+    (define-key jira-issues-mode-map (kbd "M-o") #'jira/browse-marked-issue))
 
 (use-package nix-mode
   :mode "\\.nix\\'")
@@ -2608,6 +2743,7 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
     :defer t)
 
   (use-package transient
+    :ensure t
     :defer t
     :config
     (defun transient/display-buffer (buffer alist)
@@ -2620,26 +2756,31 @@ Falls back to a bottom side-window when splitting is not possible."
           '(transient/display-buffer
             (dedicated . t)
             (inhibit-same-window . t)
+            (window-height . fit-window-to-buffer)
+            (preserve-size . (nil . t))
             (window-parameters (no-other-window . t)))))
 
   (use-package magit
     :defer t
     :commands (magit-status magit-clone magit-blame)
     :bind (("C-x g g" . magit-status)
-           ("C-x g c" . magit-clone)
-           ("C-x g s" . magit/magit-status-no-split))
+           ("C-x g c" . magit-clone))
     :config
     (require 'ilist)
-    (defun magit/magit-status-no-split ()
-      "Switch to existing Magit status buffer and refresh, or create one."
-      (interactive)
-      (if-let* ((buf (magit-get-mode-buffer 'magit-status-mode)))
-          (progn
-            (pop-to-buffer-same-window buf)
-            (magit-refresh))
-        (let ((magit-display-buffer-function 'magit-display-buffer-same-window-except-diff-v1))
-          (magit-status))))
-    (setq magit-bury-buffer-function 'magit-mode-quit-window)
+
+    (defun magit/display-buffer (buffer)
+      "Display magit BUFFER: status in same window, others below."
+      (if (with-current-buffer buffer
+            (derived-mode-p 'magit-status-mode))
+          (display-buffer buffer '(display-buffer-same-window))
+        (let ((below (window-in-direction 'below)))
+          (if below
+              (window--display-buffer buffer below 'reuse)
+            (display-buffer buffer
+                            '(display-buffer-in-direction
+                              (direction . below)
+                              (window-height . 0.6)))))))
+    (setq magit-display-buffer-function #'magit/display-buffer)
 
     (defun magit/jira-key-from-branch ()
       "Extract a Jira issue key (e.g. PROJ-123) from the current branch name."
@@ -2706,11 +2847,14 @@ Falls back to a bottom side-window when splitting is not possible."
                     (insert "\n"))))
             (error nil)))))
 
+    (defun jira/open-issue-at-section ()
+      "Open Jira issue at point in magit-status."
+      (interactive)
+      (when-let* ((key (magit-section-value-if 'jira-issue)))
+        (jira-detail-show-issue key)))
     (defvar-keymap jira-issue-section-map
       :doc "Keymap for the Jira issue section in magit-status."
-      "RET" (lambda () (interactive)
-              (when-let* ((key (magit-section-value-if 'jira-issue)))
-                (jira-detail-show-issue key))))
+      "RET" #'jira/open-issue-at-section)
 
     (defclass jira-issue (magit-section)
       ((keymap :initform 'jira-issue-section-map)))
@@ -2810,12 +2954,13 @@ Falls back to a bottom side-window when splitting is not possible."
   :ensure nil
   :config
   ;; Give password to PG sql connection
-  (advice-add 'sql-comint-postgres :around
-              (lambda (orig-fun product options &rest args)
-                (setenv "PGPASSWORD" sql-password)
-                (unwind-protect
-                    (apply orig-fun product options args)
-                  (setenv "PGPASSWORD" nil)))))
+  (defun sql/inject-pgpassword (orig-fun product options &rest args)
+    "Around-advice to inject PGPASSWORD env var for PostgreSQL connections."
+    (setenv "PGPASSWORD" sql-password)
+    (unwind-protect
+        (apply orig-fun product options args)
+      (setenv "PGPASSWORD" nil)))
+  (advice-add 'sql-comint-postgres :around #'sql/inject-pgpassword))
 
 (use-package sqlup-mode
   :config
@@ -2986,6 +3131,11 @@ Falls back to a bottom side-window when splitting is not possible."
 
 (setq eshell-banner-message "")
 
+(defun eshell/prompt ()
+  "Custom eshell prompt with timestamp."
+  (concat (format-time-string " %Y-%m-%d %H:%M" (current-time))
+          (if (= (user-uid) 0) " # " " $ ")))
+
 (defun eshell/hook ()
   (require 'eshell)
   (require 'em-smart)
@@ -2996,10 +3146,7 @@ Falls back to a bottom side-window when splitting is not possible."
    eshell-where-to-jump 'begin
    eshell-review-quick-commands nil
    eshell-smart-space-goes-to-end t
-   eshell-prompt-function
-   (lambda ()
-     (concat (format-time-string " %Y-%m-%d %H:%M" (current-time))
-             (if (= (user-uid) 0) " # " " $ ")))
+   eshell-prompt-function #'eshell/prompt
    eshell-highlight-prompt t)
   (set-face-attribute 'eshell-prompt nil :weight 'ultra-bold :inherit 'minibuffer-prompt)
   (eat-eshell-mode 1)
@@ -3037,7 +3184,7 @@ main window without closing the side window."
                                                             default-directory
                                                           (utils/get-project-root-if-wanted))))
            (eshell-buffer (eshell/get-relevant-buffer default-directory))
-           (use-side-window (and (not frame-centric) (not in-dired)))
+           (use-side-window (and (not frame-centric) (not in-dired) (not (featurep 'ewm))))
            (buf (or eshell-buffer
                     (let ((b (generate-new-buffer eshell-buffer-name)))
                       (with-current-buffer b (eshell-mode)) b))))
@@ -3123,9 +3270,10 @@ main window without closing the side window."
 
   (add-hook 'eat-mode-hook #'shell/hook)
   ;; Auto-scroll eat buffers even when window doesn't have focus
-  (add-hook 'eat-mode-hook
-            (lambda ()
-              (setq-local eat--synchronize-scroll-function #'eat--synchronize-scroll)))
+  (defun eat/enable-auto-scroll ()
+    "Enable auto-scroll for eat terminal buffers."
+    (setq-local eat--synchronize-scroll-function #'eat--synchronize-scroll))
+  (add-hook 'eat-mode-hook #'eat/enable-auto-scroll)
   (with-eval-after-load 'eat
     ;; Couleurs standard (0-7)
     (set-face-foreground 'eat-term-color-0 "#282a36")  ; black
@@ -3263,9 +3411,10 @@ Video files are played with EMMS, other files are visited normally."
   (setq ls-lisp-dirs-first t
         wdired-allow-to-change-permissions t
         dired-auto-revert-buffer t)
-  (add-hook 'wdired-mode-hook
-            (lambda ()
-              (define-key wdired-mode-map (kbd "s-<escape>") 'wdired-abort-changes))))
+  (defun wdired/bind-escape-abort ()
+    "Bind Super+Escape to abort wdired changes."
+    (define-key wdired-mode-map (kbd "s-<escape>") 'wdired-abort-changes))
+  (add-hook 'wdired-mode-hook #'wdired/bind-escape-abort))
 
 (use-package dired-hide-dotfiles
   :hook
@@ -3339,7 +3488,12 @@ Video files are played with EMMS, other files are visited normally."
             (rename-buffer "Eww" t)))))
 
     (add-hook 'eww-after-render-hook 'eww/rename-buffer)
-    (add-hook 'eww-after-render-hook (lambda () (visual-line-mode 1)))))
+    (defun eww/enable-visual-line ()
+      "Enable visual-line-mode in EWW buffers."
+      (visual-line-mode 1))
+    (add-hook 'eww-after-render-hook #'eww/enable-visual-line)))
+
+(setq plstore-cache-passphrase-for-symmetric-encryption t)
 
 (use-package auth-source-xoauth2-plugin
   :ensure t
@@ -3353,22 +3507,25 @@ Video files are played with EMMS, other files are visited normally."
 (setq gnus-select-method '(nnnil ""))
 (setq gnus-use-full-window nil)
 (defun gnus/display-article ()
-  "Display article: split if single window, reuse other window otherwise."
-  (let ((article-buf (gnus-get-buffer-create gnus-article-buffer)))
+  "Display article in window below if one exists, otherwise split."
+  (let ((article-buf (gnus-get-buffer-create gnus-article-buffer))
+        (below (window-in-direction 'below)))
     (when article-buf
-      (display-buffer article-buf
-                      '((display-buffer-use-some-window
-                         display-buffer-pop-up-window)
-                        (inhibit-same-window . t))))))
-(advice-add 'gnus-configure-windows :override
-            (lambda (setting &optional _force)
-              (cond
-               ((eq setting 'summary)
-                (let ((sum-buf (gnus-get-buffer-create gnus-summary-buffer)))
-                  (when sum-buf
-                    (switch-to-buffer sum-buf))))
-               ((eq setting 'article)
-                (gnus/display-article)))))
+      (if below
+          (window--display-buffer article-buf below 'reuse)
+        (display-buffer article-buf
+                        '((display-buffer-below-selected)
+                          (window-height . 0.6)))))))
+(defun gnus/configure-windows (setting &optional _force)
+  "Override for gnus-configure-windows with custom layout."
+  (cond
+   ((eq setting 'summary)
+    (let ((sum-buf (gnus-get-buffer-create gnus-summary-buffer)))
+      (when sum-buf
+        (switch-to-buffer sum-buf))))
+   ((eq setting 'article)
+    (gnus/display-article))))
+(advice-add 'gnus-configure-windows :override #'gnus/configure-windows)
 (keymap-global-set "C-c g" #'gnus)
 
 (setq gnus-message-archive-group nil
@@ -3385,12 +3542,13 @@ Video files are played with EMMS, other files are visited normally."
                                       ((* 7 86400) . "%a %H:%M")
                                       (t . "%d/%m/%Y")))
 
-  (defun gnus/kill-article-buffer ()
-    "Kill the article buffer."
+  (defun gnus/summary-quit ()
+    "Kill the article buffer if visible, otherwise exit summary and sync marks."
     (interactive)
     (let ((buf (get-buffer gnus-article-buffer)))
-      (when buf
-        (kill-buffer buf))))
+      (if (and buf (get-buffer-window buf))
+          (kill-buffer buf)
+        (gnus-summary-exit))))
 
   (defun gnus/summary-next ()
     "Go to next article in summary.
@@ -3454,7 +3612,8 @@ If at the last article, fetch 200 more and then move to the next one."
       message-directory   "~/gnus/mail/"
       nndraft-directory   "~/gnus/drafts/"
       gnus-use-cache nil
-      gnus-agent nil)
+      gnus-agent t
+      gnus-agent-synchronize-flags t)
 
 (setq gnus-demon-timestep 60)
 (require 'gnus)
@@ -3462,15 +3621,17 @@ If at the last article, fetch 200 more and then move to the next one."
 (gnus-demon-add-handler 'gnus-demon-scan-news 5 t)
 (gnus-demon-init)
 
-(setq doom-modeline-gnus t
+(setq doom-modeline-gnus nil
       doom-modeline-gnus-timer 5)
-(add-hook 'gnus-started-hook (lambda ()
-                               (setq doom-modeline--gnus-started t
-                                     shr-width nil)
-                               (keymap-set gnus-summary-mode-map "n" #'gnus/summary-next)
-                               (keymap-set gnus-summary-mode-map "p" #'gnus/summary-prev)
-                               (keymap-set gnus-summary-mode-map "q" #'gnus/kill-article-buffer)
-                               (keymap-set message-mode-map "C-c C-s" nil)))
+(defun gnus/setup-on-start ()
+  "Initialize Gnus modeline and custom keybindings on start."
+  (setq doom-modeline--gnus-started t
+        shr-width nil)
+  (keymap-set gnus-summary-mode-map "n" #'gnus/summary-next)
+  (keymap-set gnus-summary-mode-map "p" #'gnus/summary-prev)
+  (keymap-set gnus-summary-mode-map "q" #'gnus/summary-quit)
+  (keymap-set message-mode-map "C-c C-s" nil))
+(add-hook 'gnus-started-hook #'gnus/setup-on-start)
 
 (use-package bbdb
   :config
@@ -3486,10 +3647,11 @@ If at the last article, fetch 200 more and then move to the next one."
           ("From" . "noreply@.*\\.github\\.com")
           ("From" . ".*noreply.*@.*")
           ("From" . "info@e\\.atlassian\\.com")))
-  (add-hook 'message-mode-hook
-            (lambda ()
-              (setq-local company-backends
-                          (cons 'company-bbdb company-backends)))))
+  (defun message/add-bbdb-backend ()
+    "Add BBDB company backend for email composition."
+    (setq-local company-backends
+                (cons 'company-bbdb company-backends)))
+  (add-hook 'message-mode-hook #'message/add-bbdb-backend))
 
 (defvar gcal/ics-url nil
     "Secret ICS URL for Google Calendar.")
@@ -3744,10 +3906,11 @@ DURATION-SECS is the event duration in seconds."
                             entries)))))))))
       (mapconcat #'cdr (sort entries (lambda (a b) (string< (car a) (car b)))) "\n")))
 
-  (defun gcal/fetch ()
-    "Fetch Google Calendar ICS and convert to org."
+  (defun gcal/fetch (&optional callback)
+    "Fetch Google Calendar ICS and convert to org. Call CALLBACK when done."
     (interactive)
     (when gcal/ics-url
+      (message "Fetching calendar...")
       (url-retrieve gcal/ics-url
         (lambda (_status)
           (goto-char (point-min))
@@ -3767,10 +3930,11 @@ DURATION-SECS is the event duration in seconds."
                 (when (fboundp 'org-element-cache-reset)
                   (org-element-cache-reset))))
             (kill-buffer ical-buf)
-            ;; Reset org-timeblock cache to avoid duplicates
             (when (boundp 'org-timeblock-cache)
               (setq org-timeblock-cache nil
-                    org-timeblock-buffers nil))))
+                    org-timeblock-buffers nil)))
+          (message "Calendar updated.")
+          (when callback (funcall callback)))
         nil t)))
 
   (with-eval-after-load 'org
@@ -3778,10 +3942,17 @@ DURATION-SECS is the event duration in seconds."
 
 (use-package org-timeblock
   :ensure t
-  :bind ("C-c c" . org-timeblock)
+  :bind ("C-c c" . gcal/fetch-and-timeblock)
   :custom
   (org-timeblock-span 1)
   :config
+  (defun gcal/fetch-and-timeblock ()
+    "Fetch Google Calendar then open org-timeblock."
+    (interactive)
+    (if (not gcal/ics-url)
+        (org-timeblock)
+      (gcal/fetch #'org-timeblock)))
+
   (defun gcal/timeblock-show-entry ()
     "Display the selected timeblock event in a dedicated read-only org buffer."
     (interactive)
@@ -3843,11 +4014,12 @@ DURATION-SECS is the event duration in seconds."
   (define-key org-timeblock-mode-map (kbd "M-o") #'gcal/open-google-calendar)
   (define-key org-timeblock-list-mode-map (kbd "M-o") #'gcal/open-google-calendar))
 
-(add-hook 'after-init-hook
-    #'(lambda ()
-	(let ((local-settings "~/.emacs.d/local.el"))
-	  (when (file-exists-p local-settings)
-	    (load-file local-settings)))
-    (lsp)
-    (when (display-graphic-p)
-      (fix-char-width-for-spinners))))
+(defun init/load-local-settings ()
+  "Load machine-specific local settings after initialization."
+  (let ((local-settings "~/.emacs.d/local.el"))
+    (when (file-exists-p local-settings)
+      (load-file local-settings)))
+  (lsp)
+  (when (display-graphic-p)
+    (fix-char-width-for-spinners)))
+(add-hook 'after-init-hook #'init/load-local-settings)

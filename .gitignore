@@ -127,3 +127,6 @@ emacs/.emacs.d/etc/transient/values.el
 /emacs/.emacs.d/.agent-shell/
 /emacs/.emacs.d/.claude/
 /emacs/.emacs.d/etc/gnus/
+/emacs/.claude/
+/emacs/.emacs.d/agent/
+/emacs/.emacs.d/ewm/

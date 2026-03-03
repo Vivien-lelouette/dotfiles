@@ -80,9 +80,9 @@ read it before opening a new issue about your will.")
 
 ;; Assigment form: VARIABLE COLOR [256-COLOR [TTY-COLOR]]
 (let ((colors '(;; Upstream theme color
-                (dracula-bg           "#232530" "unspecified-bg" "unspecified-bg") ; official background
-                (dracula-bg-alternate "#282a36" "unspecified-bg" "unspecified-bg") ; alternate background
-                (dracula-disabled-bg  "#1f212c" "unspecified-bg" "unspecified-bg") ; official background
+                (dracula-bg           "#232530" "color-234" "black") ; official background
+                (dracula-bg-alternate "#282a36" "color-235" "black") ; alternate background
+                (dracula-disabled-bg  "#1f212c" "color-233" "black") ; official background
                 (dracula-fg           "#f8f8f2" "#ffffff" "brightwhite") ; official foreground
                 (dracula-current      "#282a36" "#282a36" "brightblack") ; official current-line/selection
                 (dracula-comment      "#6272a4" "#5f5faf" "blue")        ; official comment
@@ -112,10 +112,12 @@ read it before opening a new issue about your will.")
                (error :foreground ,dracula-red)
                (ffap :foreground ,fg4)
                (fringe :background ,dracula-bg :foreground ,fg4)
+               (internal-border :background ,dracula-bg-alternate)
+               (border :background ,dracula-bg-alternate)
                (header-line :inherit 'mode-line :background ,dracula-bg :box ,dracula-bg)
-               (window-divider :foreground ,dracula-bg-alternate :background ,dracula-bg-alternate)
-               (window-divider-first-pixel :foreground ,dracula-bg-alternate :background ,dracula-bg-alternate)
-               (window-divider-last-pixel :foreground ,dracula-bg-alternate :background ,dracula-bg-alternate)
+               (window-divider :foreground ,bg2 :background ,bg2)
+               (window-divider-first-pixel :foreground ,bg2 :background ,bg2)
+               (window-divider-last-pixel :foreground ,bg2 :background ,bg2)
                (highlight :foreground ,fg3 :background ,dracula-current)
                (hl-line :background ,dracula-current :extend t)
                (info-quoted-name :foreground ,dracula-orange)
@@ -140,8 +142,9 @@ read it before opening a new issue about your will.")
                           ,@(if dracula-alternate-mode-line-and-minibuffer
                                 (list :foreground fg3)
                               (list :foreground dracula-fg)))
+               (mode-line-active :inherit mode-line)
                (mode-line-inactive
-                :background ,dracula-bg :inverse-video nil
+                :background ,dracula-bg :inverse-video nil :weight normal
                 ,@(if dracula-alternate-mode-line-and-minibuffer
                       (list :foreground dracula-comment :box dracula-bg)
                     (list :foreground fg4 :box dracula-bg)))
@@ -856,16 +859,18 @@ read it before opening a new issue about your will.")
                                         :foreground ,dracula-fg
                                         :weight bold)
                ;; tab-bar & tab-line (since Emacs 27.1)
-               (tab-bar :background ,dracula-bg-alternate :foreground ,fg4 :underline nil :box (:line-width (1 . 2) :color ,dracula-bg-alternate) :height 120 :weight bold :inherit variable-pitch)
-               (tab-bar-tab :inherit hl-line :foreground ,dracula-fg :box nil :height 120 :weight normal :style nil)
-               (tab-bar-tab-inactive :box nil :height 120 :weight normal)
+               (tab-bar :background ,dracula-bg-alternate :foreground ,fg4 :underline nil :overline nil :box (:line-width (-1 . 8) :color ,dracula-bg-alternate) :weight bold :inherit variable-pitch)
+               (tab-bar-tab :background ,dracula-bg-alternate :foreground ,dracula-fg :box (:line-width (-1 . 8) :color ,dracula-bg-alternate) :weight bold)
+               (tab-bar-tab-inactive :background ,dracula-bg-alternate :box (:line-width (-1 . 8) :color ,dracula-bg-alternate) :weight normal)
 
-               (tab-line :inherit 'mode-line :background ,dracula-bg-alternate :box ,dracula-bg-alternate)
+               (tab-line :background ,dracula-bg-alternate :foreground ,fg4 :underline nil :overline nil :box (:line-width (1 . 2) :color ,dracula-bg-alternate))
                (tab-line-tab :foreground ,dracula-pink :background ,dracula-bg-alternate
-                             :box (:line-width 2 :color ,dracula-bg-alternate :style nil))
-               (tab-line-tab-inactive :foreground ,dracula-purple :background ,bg2
-                                      :box (:line-width 2 :color ,bg2 :style nil))
-               (tab-line-tab-current :inherit tab-line-tab)
+                             :box (:line-width (1 . 2) :color ,dracula-bg-alternate :style nil) :underline nil :overline nil)
+               (tab-line-tab-inactive :foreground ,dracula-purple :background ,dracula-bg-alternate
+                                      :box (:line-width (1 . 2) :color ,dracula-bg-alternate :style nil) :underline nil :overline nil)
+               (tab-line-tab-current :foreground ,dracula-pink :background ,dracula-bg
+                                     :box (:line-width (1 . 2) :color ,dracula-bg :style nil) :underline nil :overline nil)
+               (tab-line-highlight :background ,dracula-bg-alternate :underline nil :overline nil)
                (tab-line-close-highlight :foreground ,dracula-red)
                ;; telephone-line
                (telephone-line-accent-active :background ,dracula-bg :foreground ,dracula-pink)
