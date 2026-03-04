@@ -22,11 +22,11 @@
 (defvar system-bar-menu (make-sparse-keymap "System"))
 (define-key global-map [menu-bar system-menu] (cons "System" system-bar-menu))
 (define-key system-bar-menu [shutdown]
-            '(menu-item "Shutdown" cosmic/shutdown :help "Shutdown the computer"))
+            '(menu-item "Shutdown" system/shutdown :help "Shutdown the computer"))
 (define-key system-bar-menu [reboot]
-            '(menu-item "Reboot" cosmic/reboot :help "Reboot the computer"))
+            '(menu-item "Reboot" system/reboot :help "Reboot the computer"))
 (define-key system-bar-menu [logout]
-            '(menu-item "Logout" cosmic/logout :help "Logout user"))
+            '(menu-item "Logout" system/logout :help "Logout user"))
 
 (defvar application-bar-menu (make-sparse-keymap "Applications"))
 (define-key global-map [menu-bar application-menu] (cons "Applications" application-bar-menu))
@@ -220,17 +220,13 @@
         (propertize (format " %s " num)
                     'face (doom-modeline-face 'doom-modeline-buffer-major-mode))))))
 
-(defun helm-ag/noop-status ()
-  "No-op status function for helm-ag.")
-(setq helm-ag-show-status-function #'helm-ag/noop-status)
-
 (defun system/lock-screen ()
   (interactive)
   (shell/async-command-no-output "hyprlock"))
 
 (defun system/logout ()
   (interactive)
-  (shell/run-in-background "cosmic-session exit"))
+  (kill-emacs))
 
 (defun system/shutdown ()
   (interactive)
@@ -272,6 +268,15 @@
   :ensure nil
   :config
   (winner-mode 1)
+
+  ;; Hide scroll bars on EWM surface windows
+  (defun ewm/hide-surface-scroll-bars (_frame)
+    (walk-windows
+     (lambda (win)
+       (when (with-current-buffer (window-buffer win)
+               (derived-mode-p 'ewm-surface-mode))
+         (set-window-scroll-bars win 0 nil)))))
+  (add-hook 'window-buffer-change-functions #'ewm/hide-surface-scroll-bars)
 
   ;; Compose key (Caps Lock) for accented characters
   (setq ewm-input-config '((keyboard :xkb-options "compose:caps")))
@@ -380,7 +385,7 @@
                 (create-image file nil nil
                               :height (frame-char-height)
                               :ascent 'center)
-                'face '(:inherit default :family "" :height 1.0)))
+                'face '(:family "" :height 1.0)))
 
   (defun ewm-surface--lookup-icon (app-id)
     "Look up icon for APP-ID via .desktop files, with caching."
@@ -513,6 +518,7 @@
     (setq tab-bar-tab-name-format-function #'tab-bar/format-tab-name)
     (tab-bar-mode -1)
     (tab-bar-mode 1)
+    (scroll-bar-mode 1)
     ;; Re-sync intercepted keys with compositor (useful for manual s-R refresh)
     (when ewm--module-mode
       (ewm--send-intercept-keys)))
@@ -671,7 +677,7 @@ If already recording, stop and save to ~/Videos/recordings/."
               ("s-d" . ewm/focus-ednc)
               ("s-t" . nil)
               ("s-l" . system/lock-screen)
-              ("s-x" . helm-M-x)
+              ("s-x" . execute-extended-command)
 
               ;; Screenshot / recording
               ("s-c" . ewm/screenshot-region)

@@ -212,156 +212,6 @@
 
 (setq hl-line-overlay-priority -50)
 
-(use-package window-dim
-  :vc
-  (:url "https://github.com/alvgaona/window-dim.el")
-  :config
-  ;; Dimming intensity (0.0 to 1.0, default 0.3)
-  (setq window-dim-fraction 0.4)
-
-  ;; Keep last window highlighted when Emacs loses focus
-  (setq window-dim-dim-on-focus-out nil)
-
-  (setq window-dim-exclude-buffer-regexp
-        "\\`\\( \\|\\*Minibuf\\|\\*which-key\\|\\*transient\\|\\*helm\\)")
-
-  (setq window-dim-exclude-modes nil)
-
-  ;; Add magit faces so window-dim can dim them in inactive windows
-  (with-eval-after-load 'magit
-    (dolist (face '(magit-section-heading
-                    magit-section-highlight
-                    magit-branch-local
-                    magit-branch-remote
-                    magit-tag
-                    magit-hash
-                    magit-dimmed
-                    magit-refname
-                    magit-diff-context
-                    magit-diff-context-highlight
-                    magit-diff-added
-                    magit-diff-added-highlight
-                    magit-diff-removed
-                    magit-diff-removed-highlight
-                    magit-diff-file-heading
-                    magit-diff-file-heading-highlight
-                    magit-diff-hunk-heading
-                    magit-diff-hunk-heading-highlight
-                    magit-diff-revision-summary
-                    magit-diff-revision-summary-highlight))
-      (cl-pushnew face window-dim--faces))
-    (window-dim--refresh-all-remaps))
-
-  ;; Add org-mode faces so window-dim can dim them in inactive windows
-  (with-eval-after-load 'org
-    (dolist (face '(org-level-1
-                    org-level-2
-                    org-level-3
-                    org-level-4
-                    org-level-5
-                    org-level-6
-                    org-level-7
-                    org-level-8
-                    org-document-title
-                    org-document-info
-                    org-code
-                    org-verbatim
-                    org-block
-                    org-block-begin-line
-                    org-block-end-line
-                    org-meta-line
-                    org-link
-                    org-tag
-                    org-todo
-                    org-done
-                    org-date
-                    org-table
-                    org-formula
-                    org-special-keyword
-                    org-property-value
-                    org-drawer))
-      (cl-pushnew face window-dim--faces))
-    (window-dim--refresh-all-remaps))
-
-  ;; Add agent-shell faces so window-dim can dim them in inactive windows
-  (with-eval-after-load 'agent-shell
-    (dolist (face '(success
-                    warning
-                    error
-                    bold
-                    font-lock-doc-markup-face
-                    diff-added
-                    diff-removed
-                    diff-hunk-header
-                    mode-line-emphasis))
-      (cl-pushnew face window-dim--faces))
-    (window-dim--refresh-all-remaps))
-
-  ;; Add comint faces so window-dim can dim them in inactive windows
-  (with-eval-after-load 'comint
-    (dolist (face '(comint-highlight-prompt
-                    comint-highlight-input))
-      (cl-pushnew face window-dim--faces))
-    (window-dim--refresh-all-remaps))
-
-  ;; Add dired faces so window-dim can dim them in inactive windows
-  (with-eval-after-load 'dired
-    (dolist (face '(dired-directory
-                    dired-symlink
-                    dired-mark
-                    dired-marked
-                    dired-flagged
-                    dired-header
-                    dired-ignored
-                    dired-perm-write
-                    dired-warning))
-      (cl-pushnew face window-dim--faces))
-    (window-dim--refresh-all-remaps))
-
-  ;; Add eat faces so window-dim can dim them in inactive windows
-  (with-eval-after-load 'eat
-    (dolist (face '(eat-term-color-0
-                    eat-term-color-1
-                    eat-term-color-2
-                    eat-term-color-3
-                    eat-term-color-4
-                    eat-term-color-5
-                    eat-term-color-6
-                    eat-term-color-7
-                    eat-term-color-8
-                    eat-term-color-9
-                    eat-term-color-10
-                    eat-term-color-11
-                    eat-term-color-12
-                    eat-term-color-13
-                    eat-term-color-14
-                    eat-term-color-15))
-      (cl-pushnew face window-dim--faces))
-    (window-dim--refresh-all-remaps))
-
-  ;; Add eshell faces so window-dim can dim them in inactive windows
-  (with-eval-after-load 'eshell
-    (dolist (face '(eshell-prompt
-                    eshell-ls-directory
-                    eshell-ls-executable
-                    eshell-ls-symlink
-                    eshell-ls-archive
-                    eshell-ls-backup
-                    eshell-ls-clutter
-                    eshell-ls-missing
-                    eshell-ls-product
-                    eshell-ls-readonly
-                    eshell-ls-special
-                    eshell-ls-unreadable))
-      (cl-pushnew face window-dim--faces))
-    (window-dim--refresh-all-remaps))
-
-  (window-dim-mode 1)
-  (defun window-dim/on-config-change ()
-    "Refresh window-dim remaps on window configuration change."
-    (window-dim--on-window-change (selected-frame)))
-  (add-hook 'window-configuration-change-hook #'window-dim/on-config-change))
-
 (defvar frame-centric nil
   "When non-nil, window rules prefer opening buffers in new frames.
 Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'")
@@ -589,7 +439,7 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
   (load-theme 'dracula t)
 
   (modify-all-frames-parameters '((internal-border-width . 0)))
-  (fringe-mode '(24 . 12))
+  (fringe-mode '(12 . 12))
   (theme/hide-minibuffer-scrollbar))
 
 (add-hook 'after-make-frame-functions #'theme/hide-minibuffer-scrollbar)
@@ -607,55 +457,10 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
    doom-modeline-total-line-number nil
    doom-modeline-total-line-number nil
    doom-modeline-workspace-name nil
-   doom-modeline-height 30
-   doom-modeline-bar-width 1)
+   doom-modeline-height 18
+   doom-modeline-bar-width 4)
   (line-number-mode 0)
-  (column-number-mode 0)
-
-  ;; Move bar to right side on all modelines to prevent layout shift on focus
-  (with-eval-after-load 'doom-modeline
-    (doom-modeline-def-modeline 'main
-      '(eldoc window-state workspace-name window-number modals matches follow buffer-info remote-host buffer-position word-count parrot selection-info)
-      '(compilation objed-state misc-info project-name persp-name battery grip irc mu4e gnus github debug repl lsp minor-modes input-method indent-info buffer-encoding major-mode process vcs check time bar))
-    (doom-modeline-def-modeline 'minimal
-      '(window-number modals matches buffer-info-simple)
-      '(media-info major-mode time bar))
-    (doom-modeline-def-modeline 'special
-      '(eldoc window-state window-number modals matches buffer-info remote-host buffer-position word-count parrot selection-info)
-      '(compilation objed-state misc-info battery irc-buffers debug minor-modes input-method indent-info buffer-encoding major-mode process time bar))
-    (doom-modeline-def-modeline 'project
-      '(window-number modals buffer-default-directory remote-host buffer-position)
-      '(compilation misc-info battery irc mu4e gnus github debug minor-modes input-method major-mode process time bar))
-    (doom-modeline-def-modeline 'dashboard
-      '(window-number modals buffer-default-directory-simple remote-host)
-      '(compilation misc-info battery irc mu4e gnus github debug minor-modes input-method major-mode process time bar))
-    (doom-modeline-def-modeline 'vcs
-      '(window-state window-number modals matches buffer-info remote-host buffer-position parrot selection-info)
-      '(compilation misc-info battery irc mu4e gnus github debug minor-modes buffer-encoding major-mode process time bar))
-    (doom-modeline-def-modeline 'package
-      '(window-number modals matches package buffer-position parrot)
-      '(compilation misc-info major-mode process time bar))
-    (doom-modeline-def-modeline 'info
-      '(window-number modals matches buffer-info info-nodes buffer-position parrot selection-info)
-      '(compilation misc-info buffer-encoding major-mode time bar))
-    (doom-modeline-def-modeline 'media
-      '(window-number modals buffer-size buffer-info)
-      '(compilation misc-info media-info major-mode process vcs time bar))
-    (doom-modeline-def-modeline 'message
-      '(eldoc window-state window-number modals matches buffer-info-simple buffer-position word-count parrot selection-info)
-      '(compilation objed-state misc-info battery debug minor-modes input-method indent-info buffer-encoding major-mode time bar))
-    (doom-modeline-def-modeline 'pdf
-      '(window-number modals matches buffer-info pdf-pages reader-pages)
-      '(compilation misc-info major-mode process vcs time bar))
-    (doom-modeline-def-modeline 'org-src
-      '(eldoc window-state window-number modals matches buffer-info buffer-position word-count parrot selection-info)
-      '(compilation objed-state misc-info debug lsp minor-modes input-method indent-info buffer-encoding major-mode process check time bar))
-    (doom-modeline-def-modeline 'git-timemachine
-      '(eldoc window-number modals matches git-timemachine buffer-position word-count parrot selection-info)
-      '(misc-info minor-modes indent-info buffer-encoding major-mode time bar))
-    (doom-modeline-def-modeline 'speedbar
-      '(" " major-mode)
-      '(speedbar-info bar))))
+  (column-number-mode 0))
 
 (use-package hide-mode-line
   :config
@@ -679,151 +484,13 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
     (let ((completion-use-base-affixes nil))
       (choose-completion nil no-exit no-quit))))
 
-(use-package helm
-    :config
-    (setq helm-input-idle-delay                     0.1
-          helm-reuse-last-window-split-state        nil
-          helm-always-two-windows                   nil
-          helm-split-window-default-side            'below
-          helm-commands-using-frame                 '()
-          helm-actions-inherit-frame-settings       t
-          helm-use-frame-when-more-than-two-windows nil
-          helm-use-frame-when-no-suitable-window    nil
-          helm-persistent-action-display-window     t
-          helm-show-action-window-other-window      'right
-          helm-allow-mouse                          t
-          helm-move-to-line-cycle-in-source         nil
-          helm-echo-input-in-header-line            t
-          helm-autoresize-max-height                5
-          helm-autoresize-min-height                5
-          helm-follow-mode-persistent               t
-          helm-candidate-number-limit               300
-          helm-visible-mark-prefix                  "✓"
-          helm-kill-real-or-display-selection       'real
-          helm-truncate-lines                       t
-          helm-net-prefer-curl                      t
-          helm-split-window-inside-p                t
-          helm-display-buffer-default-height        10
-          helm-grep-git-grep-command "git --no-pager grep -n%cH --color=always --full-name -e \"%p\" -- %f"
-          helm-buffers-show-icons nil
-          helm-buffer-max-length 20)
-
-    (defun helm--show-action-window-other-window-p ()
-      helm-show-action-window-other-window)
-
-    (defun helm/display-buffer (buffer &optional resume)
-      "Display helm BUFFER, allowing split inside side windows.
-When the selected window is a side window, temporarily remove its
-side parameter so that `helm-default-display-buffer' can split it."
-      (let* ((win (selected-window))
-             (side (window-parameter win 'window-side)))
-        (when side
-          (set-window-parameter win 'window-side nil))
-        (unwind-protect
-            (helm-default-display-buffer buffer resume)
-          (when side
-            (set-window-parameter win 'window-side side)))))
-    (setq helm-display-function #'helm/display-buffer)
-
-    (defun helm/hook ()
-      (display-line-numbers-mode 0))
-    (add-hook 'helm-major-mode-hook 'helm/hook)
-
-    (defun helm/grep-do-git-grep ()
-      (interactive)
-      (let* ((helm-candidate-number-limit nil))
-        (helm-grep-do-git-grep '(4))))
-
-    (defun helm/grep-do-git-grep-literal ()
-      "Git grep with literal string matching (handles spaces and parentheses)."
-      (interactive)
-      (let* ((helm-candidate-number-limit nil)
-             (pattern (read-string "Git grep literal: " (thing-at-point 'symbol)))
-             (default-directory (or (helm-browse-project-get--root-dir (helm-current-directory))
-                                    default-directory)))
-        (helm-grep-git-1 default-directory nil nil (list "-F" "-e" pattern))))
-
-    (defun helm/do-grep-ag ()
-      (interactive)
-      (let* ((helm-candidate-number-limit nil))
-        (call-interactively 'helm-do-grep-ag)
-        ))
-
-    (defun helm/do-grep-ag-project ()
-      (interactive)
-      (let* ((helm-candidate-number-limit nil))
-        (call-interactively 'helm-do-grep-ag-project)
-        ))
-
-    (defun helm/prompt-display-with-region (pos)
-      "Like `helm-set-default-prompt-display' but also shows the region."
-      (helm-set-default-prompt-display pos)
-      (with-selected-window (minibuffer-window)
-        (when (and mark-active (region-active-p))
-          (let* ((beg (save-excursion (vertical-motion 0 (helm-window)) (point)))
-                 (rbeg (- (region-beginning) beg))
-                 (rend (- (region-end) beg)))
-            ;; Offset by 1 for the pref space
-            (with-helm-buffer
-              (put-text-property (+ 1 rbeg) (+ 1 rend)
-                                 'face 'region
-                                 header-line-format))))))
-    (setq helm-default-prompt-display-function #'helm/prompt-display-with-region)
-
-    (global-set-key (kbd "C-h r")                        'helm-info-emacs)
-    (global-set-key (kbd "M-x")                          'undefined)
-    (global-set-key (kbd "M-x")                          'helm-M-x)
-    (global-set-key (kbd "M-y")                          'helm-show-kill-ring)
-    (global-set-key (kbd "C-x C-f")                      'helm-find-files)
-    (global-set-key (kbd "C-x b")                        'helm-buffers-list)
-    (global-set-key (kbd "C-c <SPC>")                    'helm-mark-ring)
-    (global-set-key [remap bookmark-jump]                'helm-filtered-bookmarks)
-    (global-set-key (kbd "C-c i")                        'helm-imenu)
-    (global-set-key (kbd "C-c I")                        'helm-imenu-in-all-buffers)
-    (global-set-key (kbd "C-:")                          'helm-eval-expression-with-eldoc)
-    (global-set-key (kbd "C-,")                          'helm-calcul-expression)
-    (global-set-key (kbd "C-h d")                        'helm-info-at-point)
-    (global-set-key (kbd "C-h i")                        'helm-info)
-    (global-set-key (kbd "C-x C-d")                      'helm-browse-project)
-    (global-set-key (kbd "<f1>")                         'helm-resume)
-    (global-set-key (kbd "C-h C-f")                      'helm-apropos)
-    (global-set-key (kbd "C-h a")                        'helm-apropos)
-    (global-set-key (kbd "C-h C-d")                      'helm-debug-open-last-log)
-    (global-set-key (kbd "S-<f4>")                       'helm-execute-kmacro)
-    (global-set-key (kbd "M-s")                          nil)
-    (global-set-key (kbd "M-s M-s")                      'helm-occur-visible-buffers)
-    (global-set-key (kbd "M-s M-d")                      'helm-find)
-    (global-set-key (kbd "M-s M-o")                      'helm-org-agenda-files-headings)
-    (global-set-key (kbd "M-s M-i")                      'helm-google-suggest)
-    (global-set-key (kbd "C-x C-b")                      'helm-semantic-or-imenu)
-
-    (define-key global-map (kbd "M-s M-g")               'helm/grep-do-git-grep)
-    (define-key global-map (kbd "M-s M-G")               'helm/grep-do-git-grep-literal)
-    (define-key global-map [remap bookmark-bmenu-list]   'helm-register)
-    (define-key global-map [remap list-buffers]          'helm-buffers-list)
-    (define-key global-map [remap dabbrev-expand]        'helm-dabbrev)
-    (define-key global-map (kbd "M-g a")                 'helm/do-grep-ag)
-    (define-key global-map (kbd "M-s M-p")               'helm/do-grep-ag-project)
-    (define-key global-map (kbd "M-g l")                 'goto-line)
-    (define-key global-map (kbd "M-g M-g")               'helm-revert-next-error-last-buffer)
-    (define-key global-map (kbd "M-g i")                 'helm-gid)
-    (define-key global-map (kbd "C-x r p")               'helm-projects-history)
-    (define-key global-map (kbd "C-x r c")               'helm-addressbook-bookmarks)
-    (define-key global-map (kbd "C-c t r")               'helm-dictionary)
-
-    ;; Fixed 5-candidate height (7 lines = header + 5 body + modeline)
-    (defun helm/fixed-resize-handler ()
-      "Override helm-autoresize to a fixed 5-candidate height."
-      (unless (helm-action-window)
-        (fit-window-to-buffer (helm-window) 7 7)))
-    (advice-add 'helm-autoresize-handler :override #'helm/fixed-resize-handler)
-
-    (helm-mode 1)
-    (helm-autoresize-mode 0))
-
-  (use-package helm-xref)
-
-  (use-package helm-tramp)
+(use-package consult
+  :bind
+  (("C-c i"   . consult-imenu)
+   ("M-s M-s" . consult-line)
+   ("M-s M-g" . consult-git-grep)
+   ("M-s M-p" . consult-ripgrep)
+   ("M-g l"   . consult-goto-line)))
 
 (use-package company
   :defer 1  ; Delay loading by 1 second
@@ -844,6 +511,28 @@ side parameter so that `helm-default-display-buffer' can split it."
   (setq completion-styles '(orderless)
   completion-category-defaults nil
   completion-category-overrides '((file (styles partial-completion)))))
+
+(use-package vertico
+  :init
+  (vertico-mode 1)
+  (vertico-buffer-mode 1)
+  :config
+  (setq vertico-buffer-display-action
+        '(display-buffer-in-direction
+          (direction . below)
+          (window-height . 0.2)))
+
+  (defun vertico/buffer-mirror-prompt (&rest _)
+    "Mirror minibuffer prompt+input into vertico buffer header-line."
+    (when (and (bound-and-true-p vertico-buffer-mode)
+               (minibufferp)
+               (boundp 'vertico-buffer--buffer)
+               (buffer-live-p vertico-buffer--buffer))
+      (let ((content (buffer-string)))
+        (with-current-buffer vertico-buffer--buffer
+          (setq-local header-line-format content)))))
+
+  (add-hook 'post-command-hook #'vertico/buffer-mirror-prompt))
 
 (use-package org
   :config
@@ -1224,13 +913,7 @@ side parameter so that `helm-default-display-buffer' can split it."
   (setq wgrep-auto-save-buffer t)
 
   (defun wgrep/hook ()
-    (wgrep-change-to-wgrep-mode))
-
- (add-hook 'helm-occur-mode-hook 'wgrep/hook)
- (add-hook 'helm-grep-mode-hook 'wgrep/hook))
-
-(use-package wgrep-helm
- :after (wgrep helm))
+    (wgrep-change-to-wgrep-mode)))
 
 (use-package savehist
   :ensure nil
@@ -1414,7 +1097,7 @@ when reading files and the other way around when writing contents."
   :config
   (setq agent-shell-show-welcome-message nil
         agent-shell-show-busy-indicator nil
-        agent-shell-header-style 'text
+        agent-shell-header-style 'none
         agent-shell-prefer-viewport-interaction nil
         agent-shell-preferred-agent-config 'claude-code)
 
@@ -1486,6 +1169,9 @@ Preserves context (region, files, etc.) like the default behavior."
   (add-to-list 'display-buffer-alist
                '("\\*agent-shell-diff\\*"
                  (agent/display-below)))
+
+  (advice-add 'agent-shell-diff-accept-all :after #'kill-current-buffer)
+  (advice-add 'agent-shell-diff-reject-all :after #'kill-current-buffer)
 
   (global-set-key (kbd "C-c a") #'agent/shell))
 
@@ -1631,7 +1317,7 @@ Preserves context (region, files, etc.) like the default behavior."
             (joplin--folder-notes folder-id)))
 
   (defun joplin--read-path (prompt)
-    "Read a Joplin path with iterative Helm folder navigation.
+    "Read a Joplin path with iterative folder navigation.
   Each step shows subfolders (suffixed with /) and notes of the
   current folder.  Selecting a subfolder navigates into it;
   selecting a note or typing a new name returns the full path."
@@ -1649,8 +1335,7 @@ Preserves context (region, files, etc.) like the default behavior."
       (catch 'done
         (while t
           (let* ((candidates (joplin--folder-contents folder-id))
-                 (sel (helm-comp-read (concat prompt path) candidates
-                                      :must-match nil)))
+                 (sel (completing-read (concat prompt path) candidates)))
             (cond
              ((and (> (length sel) 0) (string-suffix-p "/" sel))
               (let ((name (substring sel 0 -1)))
@@ -1733,7 +1418,7 @@ Preserves context (region, files, etc.) like the default behavior."
 
   (defun joplin-delete-note-dwim ()
     "Delete a Joplin note.  Uses note at point, current note buffer,
-  or prompts for a path via Helm navigation."
+  or prompts for a path via completion."
     (interactive)
     (joplin--init)
     (let (title id)
@@ -1770,7 +1455,7 @@ Preserves context (region, files, etc.) like the default behavior."
 
   (defun joplin-delete-notebook-dwim ()
     "Delete a Joplin notebook.  Uses notebook at point in the folder
-  browser, or prompts for a path via Helm navigation."
+  browser, or prompts for a path via completion."
     (interactive)
     (joplin--init)
     (let (name id)
@@ -2165,58 +1850,50 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
           (browse-url url))
       (user-error "No link at point")))
 
-  (defun joplin--search-notes-candidates ()
-    "Fetch Joplin notes matching current `helm-pattern'."
-    (when (>= (length helm-pattern) 2)
-      (let* ((resp (joplin--http-get "/search"
-                                     `((query . ,(url-hexify-string helm-pattern))
-                                       (type . note)
-                                       (fields . "id,title")
-                                       (limit . "30"))))
-             (items (alist-get 'items resp)))
-        (cl-loop for item across items
-                 collect (cons (alist-get 'title item)
-                               (alist-get 'id item))))))
+  (defun joplin--all-notes ()
+    "Fetch all Joplin notes as an alist of (title . id)."
+    (let ((page 0)
+          (has-more t)
+          all-notes)
+      (while has-more
+        (cl-incf page)
+        (let* ((resp (joplin--http-get "/notes"
+                                       `((page . ,page)
+                                         (limit . 100)
+                                         (fields . "id,title")
+                                         (order_by . "user_updated_time")
+                                         (order_dir . "desc"))))
+               (items (alist-get 'items resp)))
+          (cl-loop for item across items
+                   do (push (cons (alist-get 'title item)
+                                  (alist-get 'id item))
+                            all-notes))
+          (setq has-more (not (eq (alist-get 'has_more resp) :json-false)))))
+      (nreverse all-notes)))
 
-  (defvar joplin--insert-link-candidates nil
-    "Last candidates from `joplin--search-notes-candidates'.")
-
-  (defun joplin/search-note-candidates ()
-    "Generate live search candidates for Joplin notes."
-    (setq joplin--insert-link-candidates
-          (joplin--search-notes-candidates))
-    joplin--insert-link-candidates)
+  (defun joplin--read-note (prompt)
+    "Select a Joplin note with PROMPT via completing-read, return its id."
+    (let* ((candidates (joplin--all-notes))
+           (sel (completing-read prompt candidates nil t)))
+      (cdr (assoc sel candidates))))
 
   (defun joplin-insert-link ()
-    "Search for a Joplin note with live Helm and insert a link at point."
+    "Search for a Joplin note and insert a link at point."
     (interactive)
     (unless (bound-and-true-p joplin-note-mode)
       (user-error "Not in a Joplin note buffer"))
     (joplin--init)
-    (let ((id (helm :sources
-                    (helm-build-sync-source "Joplin notes"
-                      :candidates #'joplin/search-note-candidates
-                      :volatile t
-                      :match #'identity
-                      :requires-pattern 2)
-                    :buffer "*helm joplin link*"
-                    :prompt "Note: ")))
+    (let ((id (joplin--read-note "Search notes: ")))
       (when id
-        (let ((title (car (rassoc id joplin--insert-link-candidates))))
+        (let* ((candidates (joplin--search-notes ""))
+               (title (car (rassoc id candidates))))
           (insert (format "[%s](:/%s)" (or title "Untitled") id))))))
 
   (defun joplin-find-note ()
-    "Search for a Joplin note with live Helm and open it."
+    "Search for a Joplin note and open it."
     (interactive)
     (joplin--init)
-    (let ((id (helm :sources
-                    (helm-build-sync-source "Joplin notes"
-                      :candidates #'joplin--search-notes-candidates
-                      :volatile t
-                      :match #'identity
-                      :requires-pattern 2)
-                    :buffer "*helm joplin find*"
-                    :prompt "Note: ")))
+    (let ((id (joplin--read-note "Search notes: ")))
       (when id
         (switch-to-buffer (joplin--note-buffer id)))))
 
@@ -2749,180 +2426,181 @@ filename, COUNTER a cons cell (done . total) for tracking progress."
   (setq-local electric-indent-inhibit t))
 
 (use-package ilist
-    :vc (:url "https://github.com/emacs-straight/ilist" :rev :newest)
-    :defer t)
+  :vc (:url "https://github.com/emacs-straight/ilist" :rev :newest)
+  :defer t)
 
-  (use-package transient
-    :ensure t
-    :defer t
-    :config
-    (defun transient/display-buffer (buffer alist)
-      "Display transient BUFFER below the selected window.
+(use-package transient
+  :ensure t
+  :defer t
+  :config
+  (defun transient/display-buffer (buffer alist)
+    "Display transient BUFFER below the selected window.
 Falls back to a bottom side-window when splitting is not possible."
-      (or (display-buffer-below-selected buffer alist)
-          (display-buffer-in-side-window buffer
-                                         (append alist '((side . bottom))))))
-    (setq transient-display-buffer-action
-          '(transient/display-buffer
-            (dedicated . t)
-            (inhibit-same-window . t)
-            (window-height . fit-window-to-buffer)
-            (preserve-size . (nil . t))
-            (window-parameters (no-other-window . t)))))
+    (or (display-buffer-below-selected buffer alist)
+        (display-buffer-in-side-window buffer
+                                       (append alist '((side . bottom))))))
+  (setq transient-display-buffer-action
+        '(transient/display-buffer
+          (dedicated . t)
+          (inhibit-same-window . t)
+          (window-height . fit-window-to-buffer)
+          (preserve-size . (nil . t))
+          (window-parameters (no-other-window . t)))))
 
-  (use-package magit
-    :defer t
-    :commands (magit-status magit-clone magit-blame)
-    :bind (("C-x g g" . magit-status)
-           ("C-x g c" . magit-clone))
-    :config
-    (require 'ilist)
+(use-package magit
+  :defer t
+  :commands (magit-status magit-clone magit-blame)
+  :bind (("C-x g g" . magit-status)
+         ("C-x g c" . magit-clone))
+  :config
+  (require 'ilist)
 
-    (defun magit/display-buffer (buffer)
-      "Display magit BUFFER: status in same window, others below."
-      (if (with-current-buffer buffer
-            (derived-mode-p 'magit-status-mode))
-          (display-buffer buffer '(display-buffer-same-window))
-        (let ((below (window-in-direction 'below)))
-          (if below
-              (window--display-buffer buffer below 'reuse)
-            (display-buffer buffer
-                            '(display-buffer-in-direction
-                              (direction . below)
-                              (window-height . 0.6)))))))
-    (setq magit-display-buffer-function #'magit/display-buffer)
+  (defun magit/display-buffer (buffer)
+    "Display magit BUFFER: status in same window, others below."
+    (if (with-current-buffer buffer
+          (derived-mode-p 'magit-status-mode))
+        (display-buffer buffer '(display-buffer-same-window))
+      (let ((below (window-in-direction 'below)))
+        (if below
+            (window--display-buffer buffer below 'reuse)
+          (display-buffer buffer
+                          '(display-buffer-in-direction
+                            (direction . below)
+                            (window-height . 0.6)))))))
+  (setq magit-display-buffer-function #'magit/display-buffer)
 
-    (defun magit/jira-key-from-branch ()
-      "Extract a Jira issue key (e.g. PROJ-123) from the current branch name."
-      (when-let* ((branch (magit-get-current-branch)))
-        (when (string-match "\\b\\([A-Z][A-Z0-9]+-[0-9]+\\)" branch)
-          (match-string 1 branch))))
+  (defun magit/jira-key-from-branch ()
+    "Extract a Jira issue key (e.g. PROJ-123) from the current branch name."
+    (when-let* ((branch (magit-get-current-branch)))
+      (when (string-match "\\b\\([A-Z][A-Z0-9]+-[0-9]+\\)" branch)
+        (match-string 1 branch))))
 
-    (defvar-local magit/jira-issue-cache nil
-      "Cached Jira issue data for the current magit-status buffer.")
+  (defvar-local magit/jira-issue-cache nil
+    "Cached Jira issue data for the current magit-status buffer.")
 
-    (defvar-local magit/jira-issue-cache-branch nil
-      "Branch name associated with `magit/jira-issue-cache'.")
+  (defvar-local magit/jira-issue-cache-branch nil
+    "Branch name associated with `magit/jira-issue-cache'.")
 
-    (defun magit/jira-fetch-issue-callback (buf branch data _response)
-      "Handle async Jira fetch result.
+  (defun magit/jira-fetch-issue-callback (buf branch data _response)
+    "Handle async Jira fetch result.
 Store DATA in cache for BRANCH in BUF, then refresh magit."
-      (when (buffer-live-p buf)
-        (with-current-buffer buf
-          (setq magit/jira-issue-cache data)
-          (setq magit/jira-issue-cache-branch branch)
-          (magit-refresh))))
+    (when (buffer-live-p buf)
+      (with-current-buffer buf
+        (setq magit/jira-issue-cache data)
+        (setq magit/jira-issue-cache-branch branch)
+        (magit-refresh))))
 
-    (defun magit/jira-fetch-issue-async (key buf branch)
-      "Fetch Jira issue KEY asynchronously.
+  (defun magit/jira-fetch-issue-async (key buf branch)
+    "Fetch Jira issue KEY asynchronously.
 When done, store result in BUF's cache and refresh magit."
-      (jira-api-call
-       "GET" (concat "issue/" key)
-       :callback (apply-partially #'magit/jira-fetch-issue-callback buf branch)))
+    (jira-api-call
+     "GET" (concat "issue/" key)
+     :callback (apply-partially #'magit/jira-fetch-issue-callback buf branch)))
 
-    (defun magit/jira--insert-issue-section (key issue)
-      "Insert the magit section content for Jira ISSUE with KEY."
-      (let* ((fields (alist-get 'fields issue))
-             (summary (alist-get 'summary fields))
-             (status (alist-get 'name (alist-get 'status fields)))
-             (type (alist-get 'name (alist-get 'issuetype fields)))
-             (assignee (or (alist-get 'displayName (alist-get 'assignee fields)) "Unassigned"))
-             (priority (alist-get 'name (alist-get 'priority fields)))
-             (components (mapcar (lambda (c) (alist-get 'name c))
-                                 (append (alist-get 'components fields) nil)))
-             (description (alist-get 'description fields)))
-        (when (and issue summary)
-          (magit-insert-section (jira-issue key)
-            (magit-insert-heading
-              (format "Jira: %s [%s] %s" key status summary))
-            (insert (format "  Type:     %s\n" type))
-            (insert (format "  Priority: %s\n" (or priority "None")))
-            (insert (format "  Assignee: %s\n" assignee))
-            (insert (format "  Status:   %s\n" status))
-            (when components
-              (insert (format "  Components: %s\n" (string-join components ", "))))
-            (when description
-              (insert "\n")
-              (insert (propertize "  Description\n" 'font-lock-face 'magit-section-heading))
-              (insert (replace-regexp-in-string
-                       "^" "    "
-                       (jira-doc-format description))
-                      "\n"))
-            (insert "\n")))))
+  (defun magit/jira--insert-issue-section (key issue)
+    "Insert the magit section content for Jira ISSUE with KEY."
+    (let* ((fields (alist-get 'fields issue))
+           (summary (alist-get 'summary fields))
+           (status (alist-get 'name (alist-get 'status fields)))
+           (type (alist-get 'name (alist-get 'issuetype fields)))
+           (assignee (or (alist-get 'displayName (alist-get 'assignee fields)) "Unassigned"))
+           (priority (alist-get 'name (alist-get 'priority fields)))
+           (components (mapcar (lambda (c) (alist-get 'name c))
+                               (append (alist-get 'components fields) nil)))
+           (description (alist-get 'description fields)))
+      (when (and issue summary)
+        (magit-insert-section (jira-issue key)
+          (magit-insert-heading
+            (format "Jira: %s [%s] %s" key status summary))
+          (insert (format "  Type:     %s\n" type))
+          (insert (format "  Priority: %s\n" (or priority "None")))
+          (insert (format "  Assignee: %s\n" assignee))
+          (insert (format "  Status:   %s\n" status))
+          (when components
+            (insert (format "  Components: %s\n" (string-join components ", "))))
+          (when description
+            (insert "\n")
+            (insert (propertize "  Description\n" 'font-lock-face 'magit-section-heading))
+            (insert (replace-regexp-in-string
+                     "^" "    "
+                     (jira-doc-format description))
+                    "\n"))
+          (insert "\n")))))
 
-    (defun magit/insert-jira-issue ()
-      "Insert a Magit section showing the Jira issue associated with the branch."
-      (when-let* ((key (magit/jira-key-from-branch)))
-        (require 'jira-api nil t)
-        (require 'jira-doc nil t)
-        (when (fboundp 'jira-api-call)
-          (condition-case nil
-              (let* ((current-branch (magit-get-current-branch))
-                     (_cache-check (unless (equal current-branch magit/jira-issue-cache-branch)
-                                     (setq magit/jira-issue-cache nil
-                                           magit/jira-issue-cache-branch current-branch)))
-                     (issue magit/jira-issue-cache))
-                (if issue
-                    ;; Cache hit: insert section normally
-                    (magit/jira--insert-issue-section key issue)
-                  ;; Cache miss: show placeholder and fetch async
-                  (magit-insert-section (jira-issue key)
-                    (magit-insert-heading
-                      (format "Jira: %s [Chargement...]" key))
-                    (insert "\n"))
-                  (magit/jira-fetch-issue-async key (current-buffer) current-branch)))
-            (error nil)))))
+  (defun magit/insert-jira-issue ()
+    "Insert a Magit section showing the Jira issue associated with the branch."
+    (when-let* ((key (magit/jira-key-from-branch)))
+      (require 'jira-api nil t)
+      (require 'jira-doc nil t)
+      (when (fboundp 'jira-api-call)
+        (condition-case nil
+            (let* ((current-branch (magit-get-current-branch))
+                   (_cache-check (unless (equal current-branch magit/jira-issue-cache-branch)
+                                   (setq magit/jira-issue-cache nil
+                                         magit/jira-issue-cache-branch current-branch)))
+                   (issue magit/jira-issue-cache))
+              (if issue
+                  ;; Cache hit: insert section normally
+                  (magit/jira--insert-issue-section key issue)
+                ;; Cache miss: show placeholder and fetch async
+                (magit-insert-section (jira-issue key)
+                  (magit-insert-heading
+                    (format "Jira: %s [Chargement...]" key))
+                  (insert "\n"))
+                (magit/jira-fetch-issue-async key (current-buffer) current-branch)))
+          (error nil)))))
 
-    (defun jira/open-issue-at-section ()
-      "Open Jira issue at point in magit-status."
-      (interactive)
-      (when-let* ((key (magit-section-value-if 'jira-issue)))
-        (jira-detail-show-issue key)))
-    (defvar-keymap jira-issue-section-map
-      :doc "Keymap for the Jira issue section in magit-status."
-      "RET" #'jira/open-issue-at-section)
+  (defun jira/open-issue-at-section ()
+    "Open Jira issue at point in magit-status."
+    (interactive)
+    (when-let* ((key (magit-section-value-if 'jira-issue)))
+      (jira-detail-show-issue key)))
+  (defvar-keymap jira-issue-section-map
+    :doc "Keymap for the Jira issue section in magit-status."
+    "RET" #'jira/open-issue-at-section)
 
-    (defclass jira-issue (magit-section)
-      ((keymap :initform 'jira-issue-section-map)))
+  (defclass jira-issue (magit-section)
+    ((keymap :initform 'jira-issue-section-map)))
 
-    (magit-add-section-hook 'magit-status-sections-hook
-                            #'magit/insert-jira-issue
-                            #'magit-insert-status-headers
-                            'append))
+  (magit-add-section-hook 'magit-status-sections-hook
+                          #'magit/insert-jira-issue
+                          nil 'append))
 
-  (use-package magit-todos
-    :after magit
-    :config (magit-todos-mode 1))
+(use-package magit-todos
+  :after magit
+  :config
+  (setq magit-todos-insert-after '(jira-issue))
+  (magit-todos-mode 1))
 
-  (use-package forge
-    :after magit
-    :config
-    (global-set-key (kbd "M-o") #'forge-browse)
-    (defun forge--format-topic-title (topic)
-      (with-temp-buffer
-        (save-excursion
-          (with-slots (title status state) topic
-            (insert
-             (magit--propertize-face
-              title
-              `(,@(and (forge-pullreq-p topic)
-                       (oref topic draft-p)
-                       '(forge-pullreq-draft))
-                ,(pcase status
-                   ('unread  'forge-topic-unread)
-                   ('pending 'forge-topic-pending)
-                   ('done    'forge-topic-done))
-                ,(pcase (list (eieio-object-class topic) state)
-                   (`(forge-issue   open)      'forge-issue-open)
-                   (`(forge-issue   completed) 'forge-issue-completed)
-                   (`(forge-issue   unplanned) 'forge-issue-unplanned)
-                   (`(forge-pullreq open)      'forge-pullreq-open)
-                   (`(forge-pullreq merged)    'forge-pullreq-merged)
-                   (`(forge-pullreq rejected)  'forge-pullreq-rejected)))))))
-        (run-hook-wrapped 'forge-topic-wash-title-hook
-                          (lambda (fn) (prog1 nil (save-excursion (funcall fn)))))
-        (buffer-string)))
-    )
+(use-package forge
+  :after magit
+  :config
+  (global-set-key (kbd "M-o") #'forge-browse)
+  (defun forge--format-topic-title (topic)
+    (with-temp-buffer
+      (save-excursion
+        (with-slots (title status state) topic
+          (insert
+           (magit--propertize-face
+            title
+            `(,@(and (forge-pullreq-p topic)
+                     (oref topic draft-p)
+                     '(forge-pullreq-draft))
+              ,(pcase status
+                 ('unread  'forge-topic-unread)
+                 ('pending 'forge-topic-pending)
+                 ('done    'forge-topic-done))
+              ,(pcase (list (eieio-object-class topic) state)
+                 (`(forge-issue   open)      'forge-issue-open)
+                 (`(forge-issue   completed) 'forge-issue-completed)
+                 (`(forge-issue   unplanned) 'forge-issue-unplanned)
+                 (`(forge-pullreq open)      'forge-pullreq-open)
+                 (`(forge-pullreq merged)    'forge-pullreq-merged)
+                 (`(forge-pullreq rejected)  'forge-pullreq-rejected)))))))
+      (run-hook-wrapped 'forge-topic-wash-title-hook
+                        (lambda (fn) (prog1 nil (save-excursion (funcall fn)))))
+      (buffer-string)))
+  )
 
 (use-package yasnippet
   :defer 2
@@ -3111,10 +2789,7 @@ When done, store result in BUF's cache and refresh magit."
         lsp-ui-sideline-enable nil
         lsp-ui-sideline-show-hover nil)
   (define-key lsp-ui-mode-map (kbd "C-h h") #'lsp-ui-doc-glance)
-  (define-key lsp-ui-mode-map (kbd "C-h C-h") #'lsp-ui-doc-glance)
-  (add-hook 'helm-minibuffer-set-up-hook #'lsp-ui-doc-hide))
-
-(use-package helm-lsp :commands helm-lsp-workspace-symbol)
+  (define-key lsp-ui-mode-map (kbd "C-h C-h") #'lsp-ui-doc-glance))
 
 (use-package dap-mode
   :defer t
@@ -3170,7 +2845,7 @@ When done, store result in BUF's cache and refresh magit."
   (require 'em-smart)
   (define-key eshell-mode-map (kbd "M-m") #'eshell-bol)
   (define-key eshell-hist-mode-map (kbd "M-s") nil)
-  (define-key eshell-hist-mode-map (kbd "M-r") #'helm-eshell-history)
+
   (setq
    eshell-where-to-jump 'begin
    eshell-review-quick-commands nil
@@ -3647,6 +3322,7 @@ If at the last article, fetch 200 more and then move to the next one."
       gnus-agent-synchronize-flags t)
 
 (require 'gnus)
+(require 'gnus-demon)
 
 (defvar gnus/auto-scan-idle-timer nil
   "Idle timer for auto-scanning Gnus news.")

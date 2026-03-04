@@ -119,7 +119,7 @@ read it before opening a new issue about your will.")
                (window-divider-first-pixel :foreground ,bg2 :background ,bg2)
                (window-divider-last-pixel :foreground ,bg2 :background ,bg2)
                (highlight :foreground ,fg3 :background ,dracula-current)
-               (hl-line :background ,dracula-current :extend t)
+               (hl-line :background "#302b45" :extend t)
                (info-quoted-name :foreground ,dracula-orange)
                (info-string :foreground ,dracula-selection)
                (lazy-highlight :foreground ,fg2 :background ,bg2)
@@ -142,7 +142,7 @@ read it before opening a new issue about your will.")
                           ,@(if dracula-alternate-mode-line-and-minibuffer
                                 (list :foreground fg3)
                               (list :foreground dracula-fg)))
-               (mode-line-active :inherit mode-line)
+               (mode-line-active :inherit mode-line :background "#302b45" :box "#302b45")
                (mode-line-inactive
                 :background ,dracula-bg :inverse-video nil :weight normal
                 ,@(if dracula-alternate-mode-line-and-minibuffer
@@ -150,7 +150,7 @@ read it before opening a new issue about your will.")
                     (list :foreground fg4 :box dracula-bg)))
 
                ;; Doom-modeline
-               (doom-modeline-bar :foreground ,dracula-bg :background ,dracula-bg)
+               (doom-modeline-bar :foreground "#302b45" :background "#302b45")
                (doom-modeline-bar-inactive :foreground ,dracula-bg :background ,dracula-bg)
                (doom-modeline-emphasis :foreground ,dracula-purple :weight bold)
                (read-multiple-choice-face :inherit completions-first-difference)
@@ -183,7 +183,7 @@ read it before opening a new issue about your will.")
                (font-lock-warning-face :inherit warning :background ,bg2)
 
                ;; vertico
-               (vertico-current :inherit 'match)
+               (vertico-current :inherit 'hl-line)
                (vertico-posframe :inherit tooltip)
                (vertico-posframe-border :background nil)
                (mini-popup-default :inherit default)
@@ -191,7 +191,7 @@ read it before opening a new issue about your will.")
 
                ;; corfu
                (corfu-bar :foreground ,dracula-fg)
-               (corfu-current :inherit 'match)
+               (corfu-current :inherit 'hl-line)
                (corfu-default :inherit 'default :background ,dracula-current)
 
                ;;
@@ -219,12 +219,12 @@ read it before opening a new issue about your will.")
                                        :foreground ,dracula-green)
                (company-tooltip-scrollbar-track :inherit tooltip)
                (company-tooltip-scrollbar-thumb :foreground ,dracula-gtk-scrollbar :background ,dracula-gtk-scrollbar)
-               (company-tooltip :inherit tooltip)
+               (company-tooltip :background ,dracula-current :foreground ,dracula-fg)
                (company-tooltip-search :foreground ,dracula-green
                                        :underline t)
                (company-tooltip-search-selection :background ,dracula-green
                                                  :foreground ,dracula-bg)
-               (company-tooltip-selection :inherit match)
+               (company-tooltip-selection :inherit hl-line)
                (company-tooltip-mouse :background ,dracula-bg)
                (company-tooltip-common :foreground ,dracula-pink :weight bold)
                ;;(company-tooltip-common-selection :inherit company-tooltip-common)
