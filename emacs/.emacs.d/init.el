@@ -70,8 +70,7 @@
 
 (setq large-file-warning-threshold 100000000)
 
-(setq read-process-output-max (* 5 1024 1024)
-    process-adaptive-read-buffering nil)
+(setq read-process-output-max (* 5 1024 1024))
 
 (set-language-environment "UTF-8")
 (prefer-coding-system 'utf-8)
@@ -1417,6 +1416,8 @@ when reading files and the other way around when writing contents."
   :ensure t
   :config
   (setq agent-shell-show-welcome-message nil
+        agent-shell-show-busy-indicator nil
+        agent-shell-header-style 'text
         agent-shell-prefer-viewport-interaction nil
         agent-shell-preferred-agent-config 'claude-code)
 
@@ -1466,49 +1467,6 @@ Preserves context (region, files, etc.) like the default behavior."
               (insert "\n\n" context)
               (comint-previous-prompt 1))))))))
 
-  (defun agent-shell-reply (text)
-    "Send TEXT as a quick reply to the agent from any buffer."
-    (let ((shell-buffer (agent-shell--shell-buffer :no-error t :no-create t)))
-      (if shell-buffer
-          (with-current-buffer shell-buffer
-            (agent-shell-insert :text text :submit t))
-        (user-error "No agent-shell buffer found"))))
-
-  (defun agent-shell-reply-yes ()
-    "Reply 'yes' to the agent."
-    (interactive)
-    (agent-shell-reply "yes"))
-
-  (defun agent-shell-reply-no ()
-    "Reply 'no' to the agent."
-    (interactive)
-    (agent-shell-reply "no"))
-
-  (defun agent-shell-reply-yes-all ()
-    "Reply 'yes for the rest of the session' to the agent."
-    (interactive)
-    (agent-shell-reply "yes, for the rest of the session"))
-
-  (defun agent-shell-reply-stop ()
-    "Reply 'stop' to the agent."
-    (interactive)
-    (agent-shell-reply "stop"))
-
-  (defun agent-shell-reply-continue ()
-    "Reply 'continue' to the agent."
-    (interactive)
-    (agent-shell-reply "continue"))
-
-  (transient-append-suffix 'agent-shell-help-menu '(-1)
-    ["Quick"
-     ("a" "Agent shell" agent/shell)]
-    ["Reply"
-     ("y" "Yes" agent-shell-reply-yes)
-     ("n" "No" agent-shell-reply-no)
-     ("Y" "Yes (session)" agent-shell-reply-yes-all)
-     ("s" "Stop" agent-shell-reply-stop)
-     ("c" "Continue" agent-shell-reply-continue)])
-
   ;; Navigation avec M-n / M-p pour les pages du viewport
   (with-eval-after-load 'agent-shell-viewport
     (define-key agent-shell-viewport-view-mode-map (kbd "M-n") #'agent-shell-viewport-next-page)
@@ -1520,7 +1478,9 @@ Preserves context (region, files, etc.) like the default behavior."
     "Display BUFFER below, reusing existing window if present."
     (let ((below (window-in-direction 'below)))
       (if below
-          (window--display-buffer buffer below 'reuse alist)
+          (progn
+            (set-window-dedicated-p below nil)
+            (window--display-buffer buffer below 'reuse alist))
         (display-buffer-in-direction buffer
                                      (append '((direction . below)
                                                (window-height . 0.6))
@@ -2285,405 +2245,450 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
   (stripspace-restore-column t))
 
 (use-package jira
-  :vc (:url "https://github.com/unmonoqueteclea/jira.el" :rev :newest)
-  :config
-  (defun jira/detail-find-issue-by-key ()
-    (interactive)
-    (jira-detail-find-issue-by-key))
+    :vc (:url "https://github.com/unmonoqueteclea/jira.el" :rev :newest)
+    :config
+    (defun jira/detail-find-issue-by-key ()
+      (interactive)
+      (jira-detail-find-issue-by-key))
 
-  (global-set-key (kbd "M-s J") #'jira/detail-find-issue-by-key)
-  (global-set-key (kbd "M-s M-J") #'jira/detail-find-issue-by-key)
+    (global-set-key (kbd "M-s J") #'jira/detail-find-issue-by-key)
+    (global-set-key (kbd "M-s M-J") #'jira/detail-find-issue-by-key)
 
-  (setq jira-detail-show-announcements nil
-        jira-token-is-personal-access-token nil
-        jira-api-version 3
-        jira-issues-max-results 200
-        jira-issues-sort-key (cons "Status" t)
-        jira-issues-table-fields '(:key :issue-type-name :status-name :assignee-name :summary)
-        jira-issues-fields '((:key (:path key) (:columns . 12) (:name . "Key") (:formatter . jira-fmt-issue-key))
-                             (:priority-name (:path fields priority name) (:columns . 10) (:name . "Priority"))
-                             (:priority-icon. ((:path fields priority iconUrl) (:columns . 10) (:name . "Priority")))
-                             (:labels (:path fields labels) (:columns . 10) (:name . "Labels"))
-                             (:original-estimate (:path fields aggregatetimeoriginalestimate) (:columns . 10) (:name . "Estimate") (:formatter . jira-fmt-time-from-secs))
-                             (:work-ratio (:path fields workratio) (:columns . 6) (:name . "WR") (:formatter . jira-fmt-issue-progress))
-                             (:remaining-time (:path fields timeestimate) (:columns . 10) (:name . "Remaining") (:formatter . jira-fmt-time-from-secs))
-                             (:assignee-name (:path fields assignee displayName) (:columns . 18) (:name . "Assignee"))
-                             (:reporter-name (:path fields reporter displayName) (:columns . 14) (:name . "Reporter"))
-                             (:components (:path fields components) (:columns . 10) (:name . "Components") (:formatter . jira-fmt-issue-components))
-                             (:fix-versions (:path fields fixVersions) (:columns . 10) (:name . "Fix Versions") (:formatter . jira-fmt-issue-fix-versions))
-                             (:status-name (:path fields status) (:columns . 22) (:name . "Status") (:formatter . jira-fmt-issue-status))
-                             (:status-category-name (:path fields status statusCategory name) (:columns . 10) (:name . "Status Category"))
-                             (:creator-name (:path (fields creator displayName)) (:columns . 10) (:name . "Creator"))
-                             (:progress-percent (:path fields progress percent) (:columns . 10) (:name . "Progress") (:formatter . jira-fmt-issue-progress))
-                             (:issue-type-name (:path fields issuetype name) (:columns . 5) (:name . "Type") (:formatter . jira-fmt-issue-type-name))
-                             (:issue-type-id (:path fields issuetype id) (:columns . 15) (:name . "Type"))
-                             (:issue-type-icon (:path fields issuetype iconUrl) (:columns . 10) (:name . "Type"))
-                             (:project-key (:path fields project key) (:columns . 10) (:name . "Project"))
-                             (:project-name (:path fields project name) (:columns . 10) (:name . "Project"))
-                             (:parent-type-name (:path fields parent fields issuetype name) (:columns . 10) (:name . "Parent Type") (:formatter . jira-fmt-issue-type-name))
-                             (:parent-status (:path fields parent fields status) (:columns . 10) (:name . "Parent Status") (:formatter . jira-fmt-issue-status))
-                             (:parent-key (:path fields parent key) (:columns . 10) (:name . "Parent Key") (:formatter . jira-fmt-issue-key))
-                             (:parent-summary (:path fields parent fields summary) (:columns . 40) (:name . "Parent Summary"))
-                             (:created (:path fields created) (:columns . 10) (:name . "Created") (:formatter . jira-fmt-datetime))
-                             (:updated (:path fields updated) (:columns . 10) (:name . "Updated") (:formatter . jira-fmt-datetime))
-                             (:description (:path fields description) (:columns . 10) (:name . "Description"))
-                             (:summary (:path fields summary) (:columns . 10) (:name . "Summary"))
-                             (:due-date (:path fields duedate) (:columns . 10) (:name . "Due Date") (:formatter . jira-fmt-date))
-                             (:sprints (:path fields (custom "Sprint")) (:columns . 10) (:name . "Sprints") (:formatter . jira-fmt-issue-sprints))
-                             (:line (:path fields (custom "Business line")) (:columns . 10) (:name . "Business Line") (:formatter . jira-fmt-business-line))
-                             (:cost-center (:path fields (custom "Cost center")) (:columns . 10) (:name . "Const Center") (:formatter . jira-fmt-cost-center))
-                             (:resolution (:path fields resolution name) (:columns . 10) (:name . "Resolution"))
-                             (:issuelinks (:path fields issuelinks) (:columns . 15) (:name . "Linked Issues") (:formatter . jira-fmt-issuelinks))))
+    (setq jira-detail-show-announcements nil
+          jira-token-is-personal-access-token nil
+          jira-api-version 3
+          jira-issues-max-results 200
+          jira-issues-sort-key (cons "Status" t)
+          jira-issues-table-fields '(:key :issue-type-name :status-name :assignee-name :summary)
+          jira-issues-fields '((:key (:path key) (:columns . 12) (:name . "Key") (:formatter . jira-fmt-issue-key))
+                               (:priority-name (:path fields priority name) (:columns . 10) (:name . "Priority"))
+                               (:priority-icon. ((:path fields priority iconUrl) (:columns . 10) (:name . "Priority")))
+                               (:labels (:path fields labels) (:columns . 10) (:name . "Labels"))
+                               (:original-estimate (:path fields aggregatetimeoriginalestimate) (:columns . 10) (:name . "Estimate") (:formatter . jira-fmt-time-from-secs))
+                               (:work-ratio (:path fields workratio) (:columns . 6) (:name . "WR") (:formatter . jira-fmt-issue-progress))
+                               (:remaining-time (:path fields timeestimate) (:columns . 10) (:name . "Remaining") (:formatter . jira-fmt-time-from-secs))
+                               (:assignee-name (:path fields assignee displayName) (:columns . 18) (:name . "Assignee"))
+                               (:reporter-name (:path fields reporter displayName) (:columns . 14) (:name . "Reporter"))
+                               (:components (:path fields components) (:columns . 10) (:name . "Components") (:formatter . jira-fmt-issue-components))
+                               (:fix-versions (:path fields fixVersions) (:columns . 10) (:name . "Fix Versions") (:formatter . jira-fmt-issue-fix-versions))
+                               (:status-name (:path fields status) (:columns . 22) (:name . "Status") (:formatter . jira-fmt-issue-status))
+                               (:status-category-name (:path fields status statusCategory name) (:columns . 10) (:name . "Status Category"))
+                               (:creator-name (:path (fields creator displayName)) (:columns . 10) (:name . "Creator"))
+                               (:progress-percent (:path fields progress percent) (:columns . 10) (:name . "Progress") (:formatter . jira-fmt-issue-progress))
+                               (:issue-type-name (:path fields issuetype name) (:columns . 5) (:name . "Type") (:formatter . jira-fmt-issue-type-name))
+                               (:issue-type-id (:path fields issuetype id) (:columns . 15) (:name . "Type"))
+                               (:issue-type-icon (:path fields issuetype iconUrl) (:columns . 10) (:name . "Type"))
+                               (:project-key (:path fields project key) (:columns . 10) (:name . "Project"))
+                               (:project-name (:path fields project name) (:columns . 10) (:name . "Project"))
+                               (:parent-type-name (:path fields parent fields issuetype name) (:columns . 10) (:name . "Parent Type") (:formatter . jira-fmt-issue-type-name))
+                               (:parent-status (:path fields parent fields status) (:columns . 10) (:name . "Parent Status") (:formatter . jira-fmt-issue-status))
+                               (:parent-key (:path fields parent key) (:columns . 10) (:name . "Parent Key") (:formatter . jira-fmt-issue-key))
+                               (:parent-summary (:path fields parent fields summary) (:columns . 40) (:name . "Parent Summary"))
+                               (:created (:path fields created) (:columns . 10) (:name . "Created") (:formatter . jira-fmt-datetime))
+                               (:updated (:path fields updated) (:columns . 10) (:name . "Updated") (:formatter . jira-fmt-datetime))
+                               (:description (:path fields description) (:columns . 10) (:name . "Description"))
+                               (:summary (:path fields summary) (:columns . 10) (:name . "Summary"))
+                               (:due-date (:path fields duedate) (:columns . 10) (:name . "Due Date") (:formatter . jira-fmt-date))
+                               (:sprints (:path fields (custom "Sprint")) (:columns . 10) (:name . "Sprints") (:formatter . jira-fmt-issue-sprints))
+                               (:line (:path fields (custom "Business line")) (:columns . 10) (:name . "Business Line") (:formatter . jira-fmt-business-line))
+                               (:cost-center (:path fields (custom "Cost center")) (:columns . 10) (:name . "Const Center") (:formatter . jira-fmt-cost-center))
+                               (:resolution (:path fields resolution name) (:columns . 10) (:name . "Resolution"))
+                               (:issuelinks (:path fields issuelinks) (:columns . 15) (:name . "Linked Issues") (:formatter . jira-fmt-issuelinks))))
 
-  (defun jira/attachment-id-by-name (issue filename)
-    "Find the attachment content ID for FILENAME in ISSUE data."
-    (let ((attachments (append (alist-get 'attachment (alist-get 'fields issue)) nil)))
-      (cl-loop for att in attachments
-               when (string= (alist-get 'filename att) filename)
-               return (file-name-nondirectory
-                       (url-filename
-                        (url-generic-parse-url (alist-get 'content att)))))))
+    (defun jira/attachment-id-by-name (issue filename)
+      "Find the attachment content ID for FILENAME in ISSUE data."
+      (let ((attachments (append (alist-get 'attachment (alist-get 'fields issue)) nil)))
+        (cl-loop for att in attachments
+                 when (string= (alist-get 'filename att) filename)
+                 return (file-name-nondirectory
+                         (url-filename
+                          (url-generic-parse-url (alist-get 'content att)))))))
 
-  (defvar jira/auto-inline-images t
-    "When non-nil, automatically fetch and inline images when opening a Jira issue.")
+    (defvar jira/auto-inline-images t
+      "When non-nil, automatically fetch and inline images when opening a Jira issue.")
 
-  (defun jira/inline-images ()
-    "Replace <file:...> image placeholders with inline images in jira-detail buffer."
-    (interactive)
-    (unless jira-detail--current
-      (user-error "Not in a jira-detail buffer"))
-    (let ((issue jira-detail--current)
-          (count 0)
-          (done 0))
-      (save-excursion
-        (goto-char (point-min))
-        (while (re-search-forward
-                "<file:\\(?:[^:>]+:\\)?\\([^>]+\\.\\(?:png\\|jpe?g\\|gif\\|webp\\)\\)>"
-                nil t)
-          (let* ((filename (match-string-no-properties 1))
-                 (placeholder (match-string-no-properties 0))
-                 (id (jira/attachment-id-by-name issue filename)))
-            (when id
-              (cl-incf count)
-              ;; capture loop variables for the async callback
-              ;; key must be a lexical binding (not defvar-local) so the
-              ;; closure sees the value captured here, not a dynamic lookup
-              ;; in whatever buffer request.el uses for the callback.
-              (let ((ph placeholder)
-                    (fname filename)
-                    (key jira-detail--current-key))
+    (defun jira/inline-image-parser ()
+      "Parser for binary image data from Jira API."
+      (set-buffer-multibyte nil)
+      (buffer-string))
+
+    (defun jira/inline-image-callback (key placeholder fname counter data _response)
+      "Handle async image fetch result.
+KEY is the issue key, PLACEHOLDER the text to replace, FNAME the
+filename, COUNTER a cons cell (done . total) for tracking progress."
+      (when-let* ((buf (jira-detail--get-issue-buffer key)))
+        (with-current-buffer buf
+          (let ((inhibit-read-only t))
+            (save-excursion
+              (goto-char (point-min))
+              (when (search-forward placeholder nil t)
+                (replace-match "")
+                (insert-image
+                 (create-image data nil t
+                               :max-width (min 1000 (- (window-pixel-width) 50)))
+                 (format "[%s]" fname))
+                (insert "\n"))))
+          (cl-incf (car counter))
+          (when (= (car counter) (cdr counter))
+            (goto-char (point-min))))))
+
+    (defun jira/inline-images ()
+      "Replace <file:...> image placeholders with inline images in jira-detail buffer."
+      (interactive)
+      (unless jira-detail--current
+        (user-error "Not in a jira-detail buffer"))
+      (let ((issue jira-detail--current)
+            (key jira-detail--current-key)
+            (total 0)
+            (counter (cons 0 0)))
+        (save-excursion
+          (goto-char (point-min))
+          (while (re-search-forward
+                  "<file:\\(?:[^:>]+:\\)?\\([^>]+\\.\\(?:png\\|jpe?g\\|gif\\|webp\\)\\)>"
+                  nil t)
+            (let* ((filename (match-string-no-properties 1))
+                   (placeholder (match-string-no-properties 0))
+                   (id (jira/attachment-id-by-name issue filename)))
+              (when id
+                (cl-incf total)
                 (jira-api-call
                  "GET" (format "attachment/content/%s" id)
-                 :parser (lambda ()
-                           (set-buffer-multibyte nil)
-                           (buffer-string))
-                 :callback
-                 (lambda (data _response)
-                   (when-let* ((buf (jira-detail--get-issue-buffer key)))
-                     (with-current-buffer buf
-                       (let ((inhibit-read-only t))
-                         (save-excursion
-                           (goto-char (point-min))
-                           (when (search-forward ph nil t)
-                             (replace-match "")
-                             (insert-image
-                              (create-image data nil t
-                                            :max-width (min 1000 (- (window-pixel-width) 50)))
-                              (format "[%s]" fname))
-                             (insert "\n"))))
-                       (cl-incf done)
-                       (when (= done count)
-                         (goto-char (point-min)))))))))))))
-    (if (> count 0)
-        (message "Fetching %d image(s)..." count)
-      (message "No image placeholders found")))
+                 :parser #'jira/inline-image-parser
+                 :callback (apply-partially #'jira/inline-image-callback
+                                            key placeholder filename counter))))))
+        (setcdr counter total)
+        (if (> total 0)
+            (message "Fetching %d image(s)..." total)
+          (message "No image placeholders found"))))
 
-  (defun jira/toggle-auto-inline-images ()
-    "Toggle automatic image inlining for Jira issues."
-    (interactive)
-    (setq jira/auto-inline-images (not jira/auto-inline-images))
-    (message "Jira auto inline images: %s" (if jira/auto-inline-images "ON" "OFF")))
+    (defun jira/toggle-auto-inline-images ()
+      "Toggle automatic image inlining for Jira issues."
+      (interactive)
+      (setq jira/auto-inline-images (not jira/auto-inline-images))
+      (message "Jira auto inline images: %s" (if jira/auto-inline-images "ON" "OFF")))
 
-  (defun jira/copy-issue-link ()
-    "Copy the Jira URL of the issue at point to the kill ring."
-    (interactive)
-    (if-let* ((key (jira-utils-marked-item))
-              (url (format "%s/browse/%s" (jira-api--get-current-url) key)))
-        (progn (kill-new url)
-               (message "Copied: %s" url))
-      (user-error "No issue at point")))
+    (defun jira/copy-issue-link ()
+      "Copy the Jira URL of the issue at point to the kill ring."
+      (interactive)
+      (if-let* ((key (jira-utils-marked-item))
+                (url (format "%s/browse/%s" (jira-api--get-current-url) key)))
+          (progn (kill-new url)
+                 (message "Copied: %s" url))
+        (user-error "No issue at point")))
 
-  (defun jira/browse-url-at-point-or-issue (issue-key)
-    "Open the link at point in a browser, or fall back to opening ISSUE-KEY."
-    (if-let* ((btn (button-at (point)))
-              (url (or (button-get btn 'href)
-                       (let ((data (button-get btn 'button-data)))
-                         (and (stringp data) (string-match-p "\\`https?://" data) data)))))
-        (browse-url url)
-      (jira-actions-open-issue issue-key)))
+    (defun jira/browse-url-at-point-or-issue (issue-key)
+      "Open the link at point in a browser, or fall back to opening ISSUE-KEY."
+      (if-let* ((btn (button-at (point)))
+                (url (or (button-get btn 'href)
+                         (let ((data (button-get btn 'button-data)))
+                           (and (stringp data) (string-match-p "\\`https?://" data) data)))))
+          (browse-url url)
+        (jira-actions-open-issue issue-key)))
 
-  (defun jira/inhibit-ret-on-buttons (orig-fun &rest args)
-    "In jira modes, make RET run the mode binding instead of following buttons."
-    (if (and (memq last-command-event '(13 return))
-             (derived-mode-p 'jira-issues-mode 'jira-detail-mode))
-        (when-let* ((cmd (lookup-key (current-local-map) (kbd "RET"))))
-          (call-interactively cmd))
-      (apply orig-fun args)))
-  (advice-add 'push-button :around #'jira/inhibit-ret-on-buttons)
+    (defun jira/inhibit-ret-on-buttons (orig-fun &rest args)
+      "In jira modes, make RET run the mode binding instead of following buttons."
+      (if (and (memq last-command-event '(13 return))
+               (derived-mode-p 'jira-issues-mode 'jira-detail-mode))
+          (when-let* ((cmd (lookup-key (current-local-map) (kbd "RET"))))
+            (call-interactively cmd))
+        (apply orig-fun args)))
+    (advice-add 'push-button :around #'jira/inhibit-ret-on-buttons)
 
-  (defun jira/list-jql (jql)
-    "Ouvre la vue jira-issues avec le filtre JQL donné."
-    (interactive "sJQL: ")
-    (oset (get 'jira-issues-menu 'transient--prefix)
-          value (list (concat "--jql=" jql)))
-    (jira-issues))
+    (defun jira/list-jql (jql)
+      "Ouvre la vue jira-issues avec le filtre JQL donné."
+      (interactive "sJQL: ")
+      (oset (get 'jira-issues-menu 'transient--prefix)
+            value (list (concat "--jql=" jql)))
+      (jira-issues))
 
-  (defun jira/org--fetch-issues (jql &optional max-results)
-    "Récupère les issues Jira correspondant à JQL."
-    (require 'jira-api)
-    (let* ((max-results (or max-results 50))
-           (params `(("jql" . ,jql)
-                     ("maxResults" . ,max-results)
-                     ("fields" . "key,status,summary,issuetype,assignee")))
-           (response nil))
-      (jira-api-search
-       :params params
-       :sync t
-       :callback (lambda (data _response) (setq response data)))
-      (when response
-        (append (alist-get 'issues response) nil))))
+    (defun jira/org--fetch-issues-handler (cb data _response)
+      "Handler pour le retour API. Appelle CB avec les issues extraites de DATA."
+      (funcall cb (append (alist-get 'issues data) nil)))
 
-  (defun jira/org--insert-issues (issues)
-    "Insère les ISSUES formatées avec faces au point actuel."
-    (require 'jira-fmt)
-    ;; Header
-    (insert (propertize (format "%-12s" "Id") 'face 'bold))
-    (insert "  ")
-    (insert (propertize (format "%-22s" "Status") 'face 'bold))
-    (insert "  ")
-    (insert (propertize "Titre" 'face 'bold))
-    (insert "\n")
-    ;; Séparateur
-    (insert (make-string 80 ?─))
-    (insert "\n")
-    ;; Issues groupées par status
-    (let ((last-status nil))
-      (dolist (issue issues)
-        (let* ((key (alist-get 'key issue))
-               (fields (alist-get 'fields issue))
-               (status (alist-get 'status fields))
-               (status-name (alist-get 'name status))
-               (status-fmt (jira-fmt-issue-status status))
-               (summary (or (alist-get 'summary fields) "")))
-          ;; Ligne vide entre groupes de status différents
-          (when (and last-status (not (equal last-status status-name)))
-            (insert "\n"))
-          (setq last-status status-name)
-          (insert (jira-fmt-set-face key 'jira-face-link))
-          (insert (make-string (max 0 (- 12 (length key))) ? ))
-          (insert "  ")
-          (insert status-fmt)
-          (insert (make-string (max 0 (- 22 (length status-fmt))) ? ))
-          (insert "  ")
-          (insert summary)
-          (insert "\n"))))
-    (when issues (delete-char -1)))
+    (defun jira/org--fetch-issues (jql cb &optional max-results)
+      "Récupère les issues Jira correspondant à JQL de manière asynchrone.
+    Appelle CB avec la liste des issues une fois reçues."
+      (require 'jira-api)
+      (let* ((max-results (or max-results 50))
+             (params `(("jql" . ,jql)
+                       ("maxResults" . ,max-results)
+                       ("fields" . "key,status,summary,issuetype,assignee"))))
+        (jira-api-search
+         :params params
+         :callback (apply-partially #'jira/org--fetch-issues-handler cb))))
 
-  (defun jira/org-refresh-block ()
-    "Rafraîchit le bloc Jira sous le curseur ou dans la section courante."
-    (interactive)
-    (save-excursion
-      (let ((case-fold-search t))
-        ;; Chercher le marqueur BEGIN dans la section courante
-        (unless (looking-at "^#\\+JIRA_BEGIN:")
-          (if (re-search-backward "^#\\+JIRA_BEGIN:" nil t)
-              (goto-char (match-beginning 0))
-            (user-error "Aucun bloc Jira trouvé")))
-        (let* ((begin-line (line-beginning-position))
-               (jql (progn
-                      (looking-at "^#\\+JIRA_BEGIN: \\(.*\\)$")
-                      (match-string 1)))
-               (content-start (progn (forward-line 1) (point)))
-               (content-end (progn
-                              (if (re-search-forward "^#\\+JIRA_END" nil t)
-                                  (line-beginning-position)
-                                (user-error "Marqueur JIRA_END manquant")))))
-          ;; Supprimer l'ancien contenu
-          (delete-region content-start content-end)
-          (goto-char content-start)
-          ;; Insérer les nouvelles données
-          (let ((issues (jira/org--fetch-issues jql)))
+    (defun jira/org--insert-issues (issues)
+      "Insère les ISSUES formatées avec faces au point actuel."
+      (require 'jira-fmt)
+      ;; Header
+      (insert (propertize (format "%-12s" "Id") 'face 'bold))
+      (insert "  ")
+      (insert (propertize (format "%-22s" "Status") 'face 'bold))
+      (insert "  ")
+      (insert (propertize "Titre" 'face 'bold))
+      (insert "\n")
+      ;; Séparateur
+      (insert (make-string 80 ?─))
+      (insert "\n")
+      ;; Issues groupées par status
+      (let ((last-status nil))
+        (dolist (issue issues)
+          (let* ((key (alist-get 'key issue))
+                 (fields (alist-get 'fields issue))
+                 (status (alist-get 'status fields))
+                 (status-name (alist-get 'name status))
+                 (status-fmt (jira-fmt-issue-status status))
+                 (summary (or (alist-get 'summary fields) "")))
+            ;; Ligne vide entre groupes de status différents
+            (when (and last-status (not (equal last-status status-name)))
+              (insert "\n"))
+            (setq last-status status-name)
+            (insert key)
+            (insert (make-string (max 0 (- 12 (length key))) ? ))
+            (insert "  ")
+            (insert (substring-no-properties (or status-fmt "")))
+            (insert (make-string (max 0 (- 22 (length (substring-no-properties (or status-fmt ""))))) ? ))
+            (insert "  ")
+            (insert summary)
+            (insert "\n"))))
+      (when issues (delete-char -1)))
+
+    (defun jira/org--refresh-block-callback (buf content-start content-end issues)
+      "Callback pour jira/org-refresh-block.
+    Insère ISSUES entre CONTENT-START et CONTENT-END dans BUF."
+      (when (buffer-live-p buf)
+        (with-current-buffer buf
+          (save-excursion
+            (delete-region content-start content-end)
+            (goto-char content-start)
             (if issues
                 (progn
                   (jira/org--insert-issues issues)
                   (insert "\n"))
-              (insert "(Aucune issue)\n")))
-          (message "Bloc Jira rafraîchi: %d issues" (length (jira/org--fetch-issues jql)))))))
+              (insert "(Aucune issue)\n"))
+            (jira/org-fontify-buffer)
+            (message "Bloc Jira rafraîchi")))))
 
-  (defun jira/org-refresh-buffer ()
-    "Rafraîchit tous les blocs Jira du buffer."
-    (interactive)
-    (save-excursion
-      (goto-char (point-min))
-      (let ((count 0))
+    (defun jira/org-refresh-block ()
+      "Rafraîchit le bloc Jira sous le curseur ou dans la section courante."
+      (interactive)
+      (save-excursion
+        (let ((case-fold-search t))
+          ;; Chercher le marqueur BEGIN dans la section courante
+          (unless (looking-at "^#\\+JIRA_BEGIN:")
+            (if (re-search-backward "^#\\+JIRA_BEGIN:" nil t)
+                (goto-char (match-beginning 0))
+              (user-error "Aucun bloc Jira trouvé")))
+          (let* ((jql (progn
+                        (looking-at "^#\\+JIRA_BEGIN: \\(.*\\)$")
+                        (match-string 1)))
+                 (content-start (progn (forward-line 1) (point)))
+                 (content-end (progn
+                                (if (re-search-forward "^#\\+JIRA_END" nil t)
+                                    (line-beginning-position)
+                                  (user-error "Marqueur JIRA_END manquant")))))
+            (message "Chargement Jira...")
+            (jira/org--fetch-issues
+             jql
+             (apply-partially #'jira/org--refresh-block-callback
+                              (current-buffer) content-start content-end))))))
+
+    (defun jira/org-refresh-buffer ()
+      "Rafraîchit tous les blocs Jira du buffer."
+      (interactive)
+      (save-excursion
+        (goto-char (point-min))
         (while (re-search-forward "^#\\+JIRA_BEGIN:" nil t)
           (goto-char (match-beginning 0))
           (jira/org-refresh-block)
-          (cl-incf count)
-          (forward-line 1))
-        (message "Rafraîchi %d bloc(s) Jira" count))))
+          (forward-line 1))))
 
-  (defun jira/org-insert-block (jql)
-    "Insère un nouveau bloc Jira avec JQL."
-    (interactive "sJQL: ")
-    (insert (format "#+JIRA_BEGIN: %s\n" jql))
-    (let ((issues (jira/org--fetch-issues jql)))
-      (if issues
-          (jira/org--insert-issues issues)
-        (insert "(Aucune issue)"))
-      (insert "\n#+JIRA_END\n")))
-
-  ;; Liste des statuts connus avec leur catégorie pour la fontification
-  (defvar jira/org-status-faces
-    '(;; To Do
-      ("À analyser" . jira-face-status-todo)
-      ("To Do" . jira-face-status-todo)
-      ("Backlog" . jira-face-status-todo)
-      ("Open" . jira-face-status-todo)
-      ("Reopened" . jira-face-status-todo)
-      ("READY TO DO" . jira-face-status-todo)
-      ;; In Progress
-      ("In Progress" . jira-face-status-inprogress)
-      ("En cours" . jira-face-status-inprogress)
-      ("In Review" . jira-face-status-inprogress)
-      ("MERGE REQUEST REVIEW" . jira-face-status-inprogress)
-      ("En revue" . jira-face-status-inprogress)
-      ("À valider" . jira-face-status-inprogress)
-      ("En attente" . jira-face-status-inprogress)
-      ;; Done
-      ("Done" . jira-face-status-done)
-      ("Terminé" . jira-face-status-done)
-      ("Closed" . jira-face-status-done)
-      ("Resolved" . jira-face-status-done)
-      ("DEPLOYED" . jira-face-status-done)
-      ("Validé" . jira-face-status-done))
-    "Alist mapping status names to their faces.")
-
-  (defun jira/org-clear-overlays ()
-    "Supprime tous les overlays Jira du buffer."
-    (remove-overlays (point-min) (point-max) 'jira-overlay t))
-
-  (defun jira/org-fontify-block (start end)
-    "Fontifie un bloc Jira entre START et END avec des overlays."
-    (save-excursion
-      (goto-char start)
-      ;; Fontifier les IDs Jira (pattern: PROJET-1234)
-      (while (re-search-forward "^\\([A-Z][A-Z0-9]+-[0-9]+\\)" end t)
-        (let ((ov (make-overlay (match-beginning 1) (match-end 1))))
-          (overlay-put ov 'jira-overlay t)
-          (overlay-put ov 'face 'jira-face-link)))
-      ;; Fontifier les statuts
-      (goto-char start)
-      (dolist (status-face jira/org-status-faces)
-        (let ((status (car status-face))
-              (face (cdr status-face)))
-          (goto-char start)
-          (while (re-search-forward (concat "  \\(" (regexp-quote status) "\\)  ") end t)
-            (let ((ov (make-overlay (match-beginning 1) (match-end 1))))
-              (overlay-put ov 'jira-overlay t)
-              (overlay-put ov 'face face)))))))
-
-  (defun jira/org-fontify-buffer ()
-    "Fontifie tous les blocs Jira du buffer."
-    (interactive)
-    (require 'jira-fmt)
-    (jira/org-clear-overlays)
-    (save-excursion
-      (goto-char (point-min))
-      (while (re-search-forward "^#\\+JIRA_BEGIN:" nil t)
-        (let ((block-start (line-beginning-position 2)))
-          (when (re-search-forward "^#\\+JIRA_END" nil t)
-            (let ((block-end (line-beginning-position)))
-              (jira/org-fontify-block block-start block-end)))))))
-
-  (defun jira/org-maybe-fontify ()
-    "Fontifie les blocs Jira si jira-fmt est chargé."
-    (when (featurep 'jira-fmt)
-      (jira/org-fontify-buffer)))
-
-  (defun jira/init-org-buffer ()
-    (jira/org-setup-keys)
-    (add-hook 'after-save-hook #'jira/org-maybe-fontify nil t)
-    ;; Fontifier après un court délai pour laisser le buffer se charger
-    (let ((buf (current-buffer)))
-      (run-with-idle-timer 0.5 nil
-                           (lambda ()
-                             (when (buffer-live-p buf)
-                               (with-current-buffer buf
-                                 (jira/org-maybe-fontify)))))))
-
-  (defun jira/org-issue-at-point ()
-    "Retourne l'ID Jira sous le curseur, ou nil."
-    (save-excursion
-      (let ((line-start (line-beginning-position))
-            (line-end (line-end-position)))
-        ;; Chercher un ID Jira sur la ligne courante
-        (goto-char line-start)
-        (when (re-search-forward "\\([A-Z][A-Z0-9]+-[0-9]+\\)" line-end t)
-          (let ((match-start (match-beginning 1))
-                (match-end (match-end 1)))
-            ;; Vérifier si le curseur est sur ou avant l'ID
-            (when (<= (point) match-end)
-              (match-string 1)))))))
-
-  (defun jira/org-open-issue-at-point ()
-    "Ouvre l'issue Jira sous le curseur dans jira.el."
-    (interactive)
-    (if-let ((key (jira/org-issue-at-point)))
-        (jira-detail-show-issue key)
-      (user-error "Aucun ID Jira trouvé sur cette ligne")))
-
-  (defun jira/org-RET-dwim ()
-    "Ouvre l'issue Jira si sur un ID, sinon exécute l'action org par défaut."
-    (interactive)
-    (if (jira/org-issue-at-point)
-        (jira/org-open-issue-at-point)
-      (org-return)))
-
-  (defun jira/org-setup-keys ()
-    "Configure les raccourcis clavier pour les blocs Jira dans org-mode."
-    (local-set-key (kbd "<return>") #'jira/org-RET-dwim))
-
-  ;; Hook pour fontifier à l'ouverture des fichiers Org
-  (add-hook 'org-mode-hook 'jira/init-org-buffer)
-
-  (with-eval-after-load 'jira-detail
-    (defun jira/remove-section-highlight-bg ()
-      "Remove background from magit-section-highlight in Jira detail buffers."
-      (face-remap-add-relative 'magit-section-highlight :background nil))
-    (add-hook 'jira-detail-mode-hook #'jira/remove-section-highlight-bg)
-    (define-key jira-detail-mode-map (kbd "I") #'jira/toggle-auto-inline-images)
-    (define-key jira-detail-mode-map (kbd "c") #'jira/copy-issue-link)
-    (defun jira/browse-issue-at-point ()
-      "Open link at point or issue in browser."
-      (interactive)
-      (jira/browse-url-at-point-or-issue jira-detail--current-key))
-    (define-key jira-detail-mode-map (kbd "M-o") #'jira/browse-issue-at-point)
-    (defun jira/auto-inline-images-after (key &rest _)
-      "After-advice to auto-inline images in Jira issue buffers."
-      (when-let* ((buf (jira-detail--get-issue-buffer key)))
+    (defun jira/org--insert-block-callback (buf content-start issues)
+      "Callback pour jira/org-insert-block.
+    Remplace le placeholder dans BUF à CONTENT-START avec ISSUES."
+      (when (buffer-live-p buf)
         (with-current-buffer buf
-          (when jira/auto-inline-images
-            (jira/inline-images)))))
-    (advice-add 'jira-detail--issue :after #'jira/auto-inline-images-after)))
+          (save-excursion
+            (goto-char content-start)
+            (delete-region content-start
+                          (progn (re-search-forward "^#\\+JIRA_END")
+                                 (line-beginning-position)))
+            (if issues
+                (progn
+                  (jira/org--insert-issues issues)
+                  (insert "\n"))
+              (insert "(Aucune issue)\n"))
+            (jira/org-fontify-buffer)))))
 
-  (with-eval-after-load 'jira-issues
-    (define-key jira-issues-mode-map (kbd "c") #'jira/copy-issue-link)
-    (defun jira/browse-marked-issue ()
-      "Open link at point or marked issue in browser."
+    (defun jira/org-insert-block (jql)
+      "Insère un nouveau bloc Jira avec JQL."
+      (interactive "sJQL: ")
+      (insert (format "#+JIRA_BEGIN: %s\n" jql))
+      (let ((content-start (point)))
+        (insert "(Chargement...)\n#+JIRA_END\n")
+        (jira/org--fetch-issues
+         jql
+         (apply-partially #'jira/org--insert-block-callback
+                          (current-buffer) content-start))))
+
+    ;; Liste des statuts connus avec leur catégorie pour la fontification
+    (defvar jira/org-status-faces
+      '(;; To Do
+        ("À analyser" . jira-face-status-todo)
+        ("To Do" . jira-face-status-todo)
+        ("Backlog" . jira-face-status-todo)
+        ("Open" . jira-face-status-todo)
+        ("Reopened" . jira-face-status-todo)
+        ("READY TO DO" . jira-face-status-todo)
+        ;; In Progress
+        ("In Progress" . jira-face-status-inprogress)
+        ("En cours" . jira-face-status-inprogress)
+        ("In Review" . jira-face-status-inprogress)
+        ("MERGE REQUEST REVIEW" . jira-face-status-inprogress)
+        ("En revue" . jira-face-status-inprogress)
+        ("À valider" . jira-face-status-inprogress)
+        ("En attente" . jira-face-status-inprogress)
+        ;; Done
+        ("Done" . jira-face-status-done)
+        ("Terminé" . jira-face-status-done)
+        ("Closed" . jira-face-status-done)
+        ("Resolved" . jira-face-status-done)
+        ("DEPLOYED" . jira-face-status-done)
+        ("Validé" . jira-face-status-done))
+      "Alist mapping status names to their faces.")
+
+    (defun jira/org-clear-overlays ()
+      "Supprime tous les overlays Jira du buffer."
+      (remove-overlays (point-min) (point-max) 'jira-overlay t))
+
+    (defvar jira/org--status-regex nil
+      "Cached regex matching all known Jira statuses.")
+
+    (defun jira/org--status-regex ()
+      "Return a regex matching all known statuses, built once and cached."
+      (or jira/org--status-regex
+          (setq jira/org--status-regex
+                (concat "  \\("
+                        (mapconcat (lambda (sf) (regexp-quote (car sf)))
+                                   jira/org-status-faces "\\|")
+                        "\\)  "))))
+
+    (defun jira/org-fontify-block (start end)
+      "Fontifie un bloc Jira entre START et END avec des overlays."
+      (save-excursion
+        ;; Overlay de base : neutralise l'emphasis org dans tout le bloc
+        (let ((base-ov (make-overlay start end)))
+          (overlay-put base-ov 'jira-overlay t)
+          (overlay-put base-ov 'face 'default)
+          (overlay-put base-ov 'priority -10))
+        (goto-char start)
+        ;; Fontifier les IDs Jira (pattern: PROJET-1234)
+        (while (re-search-forward "^\\([A-Z][A-Z0-9]+-[0-9]+\\)" end t)
+          (let ((ov (make-overlay (match-beginning 1) (match-end 1))))
+            (overlay-put ov 'jira-overlay t)
+            (overlay-put ov 'face 'jira-face-link)))
+        ;; Fontifier les statuts — une seule passe avec une regex combinée
+        ;; case-insensitive car jira-fmt-issue-status fait (upcase status-name)
+        (goto-char start)
+        (let ((case-fold-search t))
+          (while (re-search-forward (jira/org--status-regex) end t)
+            (let* ((status (match-string 1))
+                   (face (cdr (assoc-string status jira/org-status-faces t)))
+                   (ov (make-overlay (match-beginning 1) (match-end 1))))
+              (overlay-put ov 'jira-overlay t)
+              (overlay-put ov 'face face))))))
+
+    (defun jira/org-fontify-buffer ()
+      "Fontifie tous les blocs Jira du buffer."
       (interactive)
-      (jira/browse-url-at-point-or-issue (jira-utils-marked-item)))
-    (define-key jira-issues-mode-map (kbd "M-o") #'jira/browse-marked-issue))
+      (require 'jira-fmt)
+      (jira/org-clear-overlays)
+      (save-excursion
+        (goto-char (point-min))
+        (while (re-search-forward "^#\\+JIRA_BEGIN:" nil t)
+          (let ((block-start (line-beginning-position 2)))
+            (when (re-search-forward "^#\\+JIRA_END" nil t)
+              (let ((block-end (line-beginning-position)))
+                (jira/org-fontify-block block-start block-end)))))))
+
+    (defun jira/org-maybe-fontify ()
+      "Fontifie les blocs Jira si jira-fmt est chargé."
+      (when (featurep 'jira-fmt)
+        (jira/org-fontify-buffer)))
+
+    (defun jira/init-org-buffer ()
+      (jira/org-setup-keys)
+      (add-hook 'after-save-hook #'jira/org-maybe-fontify nil t)
+      ;; Fontifier après un court délai pour laisser le buffer se charger
+      (let ((buf (current-buffer)))
+        (run-with-idle-timer 0.5 nil
+                             (lambda ()
+                               (when (buffer-live-p buf)
+                                 (with-current-buffer buf
+                                   (jira/org-maybe-fontify)))))))
+
+    (defun jira/org-issue-at-point ()
+      "Retourne l'ID Jira sous le curseur, ou nil."
+      (save-excursion
+        (let ((line-start (line-beginning-position))
+              (line-end (line-end-position)))
+          ;; Chercher un ID Jira sur la ligne courante
+          (goto-char line-start)
+          (when (re-search-forward "\\([A-Z][A-Z0-9]+-[0-9]+\\)" line-end t)
+            (let ((match-start (match-beginning 1))
+                  (match-end (match-end 1)))
+              ;; Vérifier si le curseur est sur ou avant l'ID
+              (when (<= (point) match-end)
+                (match-string 1)))))))
+
+    (defun jira/org-open-issue-at-point ()
+      "Ouvre l'issue Jira sous le curseur dans jira.el."
+      (interactive)
+      (if-let ((key (jira/org-issue-at-point)))
+          (jira-detail-show-issue key)
+        (user-error "Aucun ID Jira trouvé sur cette ligne")))
+
+    (defun jira/org-RET-dwim ()
+      "Ouvre l'issue Jira si sur un ID, sinon exécute l'action org par défaut."
+      (interactive)
+      (if (jira/org-issue-at-point)
+          (jira/org-open-issue-at-point)
+        (org-return)))
+
+    (defun jira/org-setup-keys ()
+      "Configure les raccourcis clavier pour les blocs Jira dans org-mode."
+      (local-set-key (kbd "<return>") #'jira/org-RET-dwim))
+
+    ;; Hook pour fontifier à l'ouverture des fichiers Org
+    (add-hook 'org-mode-hook 'jira/init-org-buffer)
+
+    (with-eval-after-load 'jira-detail
+      (defun jira/remove-section-highlight-bg ()
+        "Remove background from magit-section-highlight in Jira detail buffers."
+        (face-remap-add-relative 'magit-section-highlight :background (face-background 'default)))
+      (add-hook 'jira-detail-mode-hook #'jira/remove-section-highlight-bg)
+      (define-key jira-detail-mode-map (kbd "I") #'jira/toggle-auto-inline-images)
+      (define-key jira-detail-mode-map (kbd "c") #'jira/copy-issue-link)
+      (defun jira/browse-issue-at-point ()
+        "Open link at point or issue in browser."
+        (interactive)
+        (jira/browse-url-at-point-or-issue jira-detail--current-key))
+      (define-key jira-detail-mode-map (kbd "M-o") #'jira/browse-issue-at-point)
+      (defun jira/auto-inline-images-after (key &rest _)
+        "After-advice to auto-inline images in Jira issue buffers."
+        (when-let* ((buf (jira-detail--get-issue-buffer key)))
+          (with-current-buffer buf
+            (when jira/auto-inline-images
+              (jira/inline-images)))))
+      (advice-add 'jira-detail--issue :after #'jira/auto-inline-images-after)))
+
+    (with-eval-after-load 'jira-issues
+      (define-key jira-issues-mode-map (kbd "c") #'jira/copy-issue-link)
+      (defun jira/browse-marked-issue ()
+        "Open link at point or marked issue in browser."
+        (interactive)
+        (jira/browse-url-at-point-or-issue (jira-utils-marked-item)))
+      (define-key jira-issues-mode-map (kbd "M-o") #'jira/browse-marked-issue))
 
 (use-package nix-mode
   :mode "\\.nix\\'")
@@ -2767,14 +2772,51 @@ Falls back to a bottom side-window when splitting is not possible."
     (defvar-local magit/jira-issue-cache-branch nil
       "Branch name associated with `magit/jira-issue-cache'.")
 
-    (defun magit/jira-fetch-issue (key)
-      "Fetch Jira issue KEY synchronously and return the response data."
-      (let ((result nil))
-        (jira-api-call
-         "GET" (concat "issue/" key)
-         :sync t
-         :callback (lambda (data _response) (setq result data)))
-        result))
+    (defun magit/jira-fetch-issue-callback (buf branch data _response)
+      "Handle async Jira fetch result.
+Store DATA in cache for BRANCH in BUF, then refresh magit."
+      (when (buffer-live-p buf)
+        (with-current-buffer buf
+          (setq magit/jira-issue-cache data)
+          (setq magit/jira-issue-cache-branch branch)
+          (magit-refresh))))
+
+    (defun magit/jira-fetch-issue-async (key buf branch)
+      "Fetch Jira issue KEY asynchronously.
+When done, store result in BUF's cache and refresh magit."
+      (jira-api-call
+       "GET" (concat "issue/" key)
+       :callback (apply-partially #'magit/jira-fetch-issue-callback buf branch)))
+
+    (defun magit/jira--insert-issue-section (key issue)
+      "Insert the magit section content for Jira ISSUE with KEY."
+      (let* ((fields (alist-get 'fields issue))
+             (summary (alist-get 'summary fields))
+             (status (alist-get 'name (alist-get 'status fields)))
+             (type (alist-get 'name (alist-get 'issuetype fields)))
+             (assignee (or (alist-get 'displayName (alist-get 'assignee fields)) "Unassigned"))
+             (priority (alist-get 'name (alist-get 'priority fields)))
+             (components (mapcar (lambda (c) (alist-get 'name c))
+                                 (append (alist-get 'components fields) nil)))
+             (description (alist-get 'description fields)))
+        (when (and issue summary)
+          (magit-insert-section (jira-issue key)
+            (magit-insert-heading
+              (format "Jira: %s [%s] %s" key status summary))
+            (insert (format "  Type:     %s\n" type))
+            (insert (format "  Priority: %s\n" (or priority "None")))
+            (insert (format "  Assignee: %s\n" assignee))
+            (insert (format "  Status:   %s\n" status))
+            (when components
+              (insert (format "  Components: %s\n" (string-join components ", "))))
+            (when description
+              (insert "\n")
+              (insert (propertize "  Description\n" 'font-lock-face 'magit-section-heading))
+              (insert (replace-regexp-in-string
+                       "^" "    "
+                       (jira-doc-format description))
+                      "\n"))
+            (insert "\n")))))
 
     (defun magit/insert-jira-issue ()
       "Insert a Magit section showing the Jira issue associated with the branch."
@@ -2787,37 +2829,16 @@ Falls back to a bottom side-window when splitting is not possible."
                      (_cache-check (unless (equal current-branch magit/jira-issue-cache-branch)
                                      (setq magit/jira-issue-cache nil
                                            magit/jira-issue-cache-branch current-branch)))
-                     (issue (or magit/jira-issue-cache
-                               (setq magit/jira-issue-cache
-                                     (magit/jira-fetch-issue key))))
-                     (fields (alist-get 'fields issue))
-                     (summary (alist-get 'summary fields))
-                     (status (alist-get 'name (alist-get 'status fields)))
-                     (type (alist-get 'name (alist-get 'issuetype fields)))
-                     (assignee (or (alist-get 'displayName (alist-get 'assignee fields)) "Unassigned"))
-                     (priority (alist-get 'name (alist-get 'priority fields)))
-                     (labels (alist-get 'labels fields))
-                     (components (mapcar (lambda (c) (alist-get 'name c))
-                                         (append (alist-get 'components fields) nil)))
-                     (description (alist-get 'description fields)))
-                (when (and issue summary)
+                     (issue magit/jira-issue-cache))
+                (if issue
+                    ;; Cache hit: insert section normally
+                    (magit/jira--insert-issue-section key issue)
+                  ;; Cache miss: show placeholder and fetch async
                   (magit-insert-section (jira-issue key)
                     (magit-insert-heading
-                      (format "Jira: %s [%s] %s" key status summary))
-                    (insert (format "  Type:     %s\n" type))
-                    (insert (format "  Priority: %s\n" (or priority "None")))
-                    (insert (format "  Assignee: %s\n" assignee))
-                    (insert (format "  Status:   %s\n" status))
-                    (when components
-                      (insert (format "  Components: %s\n" (string-join components ", "))))
-                    (when description
-                      (insert "\n")
-                      (insert (propertize "  Description\n" 'font-lock-face 'magit-section-heading))
-                      (insert (replace-regexp-in-string
-                               "^" "    "
-                               (jira-doc-format description))
-                              "\n"))
-                    (insert "\n"))))
+                      (format "Jira: %s [Chargement...]" key))
+                    (insert "\n"))
+                  (magit/jira-fetch-issue-async key (current-buffer) current-branch)))
             (error nil)))))
 
     (defun jira/open-issue-at-section ()
@@ -2979,6 +3000,9 @@ Falls back to a bottom side-window when splitting is not possible."
   :config
   (setq flycheck-idle-change-delay 1.0  ; Wait before checking
         flycheck-display-errors-delay 0.5)
+  ;; org-lint renvoie des strings propertized au lieu de numéros de ligne,
+  ;; ce qui casse flycheck (bug de compatibilité org 9.8 / flycheck)
+  (setq-default flycheck-disabled-checkers '(org-lint))
   (global-flycheck-mode 1))
 
 (use-package flycheck-title
@@ -3466,7 +3490,9 @@ Video files are played with EMMS, other files are visited normally."
       (visual-line-mode 1))
     (add-hook 'eww-after-render-hook #'eww/enable-visual-line)))
 
-(setq plstore-cache-passphrase-for-symmetric-encryption t)
+(setq plstore-cache-passphrase-for-symmetric-encryption t
+      auth-source-cache t
+      epa-file-cache-passphrase-for-symmetric-encryption t)
 
 (use-package auth-source-xoauth2-plugin
   :ensure t
@@ -3588,16 +3614,48 @@ If at the last article, fetch 200 more and then move to the next one."
       gnus-agent t
       gnus-agent-synchronize-flags t)
 
-(setq gnus-demon-timestep 60)
 (require 'gnus)
 
-(gnus-demon-add-handler 'gnus-demon-scan-news 5 t)
-(gnus-demon-init)
+(defvar gnus/auto-scan-idle-timer nil
+  "Idle timer for auto-scanning Gnus news.")
+
+(defvar gnus/auto-scan-interval-timer nil
+  "Repeating timer that resets the idle timer for Gnus scan.")
+
+(defun gnus/auto-scan ()
+  "Scan for new news if Gnus is running and alive."
+  (when (and (fboundp 'gnus-alive-p) (gnus-alive-p))
+    (gnus-demon-scan-news)))
+
+(defun gnus/auto-scan-schedule ()
+  "Schedule a scan on next idle moment."
+  (when gnus/auto-scan-idle-timer
+    (cancel-timer gnus/auto-scan-idle-timer))
+  (setq gnus/auto-scan-idle-timer
+        (run-with-idle-timer 10 nil #'gnus/auto-scan)))
+
+(defun gnus/auto-scan-start ()
+  "Start periodic idle-based mail scanning (every 5 min, runs when idle 10s)."
+  (interactive)
+  (gnus/auto-scan-stop)
+  (setq gnus/auto-scan-interval-timer
+        (run-with-timer 300 300 #'gnus/auto-scan-schedule)))
+
+(defun gnus/auto-scan-stop ()
+  "Stop periodic mail scanning."
+  (interactive)
+  (when gnus/auto-scan-idle-timer
+    (cancel-timer gnus/auto-scan-idle-timer)
+    (setq gnus/auto-scan-idle-timer nil))
+  (when gnus/auto-scan-interval-timer
+    (cancel-timer gnus/auto-scan-interval-timer)
+    (setq gnus/auto-scan-interval-timer nil)))
 
 (setq doom-modeline-gnus nil
       doom-modeline-gnus-timer 5)
 (defun gnus/setup-on-start ()
   "Initialize Gnus modeline and custom keybindings on start."
+  (gnus/auto-scan-start)
   (setq doom-modeline--gnus-started t
         shr-width nil)
   (keymap-set gnus-summary-mode-map "n" #'gnus/summary-next)
@@ -3978,10 +4036,48 @@ DURATION-SECS is the event duration in seconds."
             (setq buffer-read-only t)
             (local-set-key (kbd "q") #'kill-buffer-and-window))
           (pop-to-buffer (current-buffer))))))
+
   (defun gcal/open-google-calendar ()
     "Open Google Calendar day view in the default browser."
     (interactive)
     (browse-url "https://calendar.google.com/calendar/u/0/r/day"))
+
+  (defvar gcal/timeblock-idle-timer nil)
+  (defvar gcal/timeblock-interval-timer nil)
+
+  (defun gcal/timeblock-redraw-if-visible ()
+    "Redraw org-timeblock buffers if any are visible."
+    (when (seq-some (lambda (w)
+                      (string-match-p "\\*Org Timeblock" (buffer-name (window-buffer w))))
+                    (window-list))
+      (org-timeblock-redraw-buffers)))
+
+  (defun gcal/timeblock-schedule-redraw ()
+    "Schedule a redraw on next idle moment."
+    (when gcal/timeblock-idle-timer
+      (cancel-timer gcal/timeblock-idle-timer))
+    (setq gcal/timeblock-idle-timer
+          (run-with-idle-timer 5 nil #'gcal/timeblock-redraw-if-visible)))
+
+  (defun gcal/timeblock-auto-refresh-start ()
+    "Start auto-refreshing org-timeblock every 10 min when idle."
+    (interactive)
+    (gcal/timeblock-auto-refresh-stop)
+    (setq gcal/timeblock-interval-timer
+          (run-with-timer 600 600 #'gcal/timeblock-schedule-redraw)))
+
+  (defun gcal/timeblock-auto-refresh-stop ()
+    "Stop auto-refreshing org-timeblock."
+    (interactive)
+    (when gcal/timeblock-idle-timer
+      (cancel-timer gcal/timeblock-idle-timer)
+      (setq gcal/timeblock-idle-timer nil))
+    (when gcal/timeblock-interval-timer
+      (cancel-timer gcal/timeblock-interval-timer)
+      (setq gcal/timeblock-interval-timer nil)))
+
+  (add-hook 'org-timeblock-mode-hook #'gcal/timeblock-auto-refresh-start)
+
   (define-key org-timeblock-mode-map (kbd "RET") #'gcal/timeblock-show-entry)
   (define-key org-timeblock-mode-map (kbd "<double-mouse-1>") #'gcal/timeblock-show-entry)
   (define-key org-timeblock-mode-map (kbd "M-o") #'gcal/open-google-calendar)

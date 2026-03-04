@@ -81,12 +81,17 @@
   (propertize icon 'display '(raise 0.1)))
 
 (defun tab-bar-format-system-menu ()
-  `((system-menu menu-item ,(concat " " (tab-bar--raise-icon (char-to-string #x23FB)) " ") tab-bar-system-menu)))
+  (or tab-bar--system-menu-cache
+      (setq tab-bar--system-menu-cache
+            `((system-menu menu-item ,(concat " " (tab-bar--raise-icon (char-to-string #x23FB)) " ") tab-bar-system-menu)))))
 
 (require 'battery)
 (defvar tab-bar--datetime-cache nil "Cached datetime tab-bar item.")
 (defvar tab-bar--battery-cache nil "Cached battery tab-bar item.")
 (defvar tab-bar--mail-count 0 "Cached unread mail count.")
+(defvar tab-bar--mail-cache nil "Cached mail tab-bar item.")
+(defvar tab-bar--system-menu-cache nil "Cached system menu tab-bar item.")
+(defvar tab-bar--recording-icon nil "Cached recording icon string.")
 
 (defun tab-bar--update-status ()
   "Update cached datetime, battery and mail tab-bar items."
@@ -111,11 +116,19 @@
   (when (bound-and-true-p gnus-newsrc-alist)
     (let ((total 0))
       (mapc (lambda (g)
-              (let ((unread (eval `(gnus-group-unread ,(car g)))))
+              (let ((unread (gnus-group-unread (car g))))
                 (when (and (numberp unread) (> unread 0))
                   (setq total (+ total unread)))))
             gnus-newsrc-alist)
       (setq tab-bar--mail-count total)))
+  (setq tab-bar--mail-cache
+        (when (> tab-bar--mail-count 0)
+          (let* ((color `(:foreground ,(face-background 'cursor)))
+                 (icon (tab-bar--raise-icon (nerd-icons-mdicon "nf-md-email")))
+                 (count (number-to-string tab-bar--mail-count))
+                 (text (format " %s %s " icon count)))
+            (add-face-text-property 0 (length text) color nil text)
+            `((mail menu-item ,text gnus)))))
   (force-mode-line-update t))
 
 (run-with-timer (- 60 (decoded-time-second (decode-time))) 60 #'tab-bar--update-status)
@@ -126,14 +139,21 @@
 (defun tab-bar-format-battery ()
   tab-bar--battery-cache)
 
+(defun tab-bar-format-recording ()
+  (when (and (bound-and-true-p ewm--recording-start-time)
+             (bound-and-true-p ewm--recording-process)
+             (process-live-p ewm--recording-process))
+    (let* ((elapsed (time-subtract (current-time) ewm--recording-start-time))
+           (secs (floor (float-time elapsed)))
+           (icon (or tab-bar--recording-icon
+                     (setq tab-bar--recording-icon
+                           (tab-bar--raise-icon (nerd-icons-mdicon "nf-md-record_circle")))))
+           (text (format " %s %d:%02d " icon (/ secs 60) (% secs 60))))
+      (add-face-text-property 0 (length text) '(:foreground "#ff5555") nil text)
+      `((recording menu-item ,text ewm/record-region)))))
+
 (defun tab-bar-format-mail ()
-  (when (> tab-bar--mail-count 0)
-    (let* ((color `(:foreground ,(face-background 'cursor)))
-           (icon (tab-bar--raise-icon (nerd-icons-mdicon "nf-md-email")))
-           (count (number-to-string tab-bar--mail-count))
-           (text (format " %s %s " icon count)))
-      (add-face-text-property 0 (length text) color nil text)
-      `((mail menu-item ,text gnus)))))
+  tab-bar--mail-cache)
 
 (defvar tab-bar--notification-cache nil "Cached notification tab-bar item.")
 
@@ -156,7 +176,7 @@
                  (text (format " %s %s%s " icon badge
                                (propertize
                                 (truncate-string-to-width
-                                 (format "%s: %s" app summary) 120 nil nil "...")
+                                 (format "%s: %s" app summary) 80 nil nil "...")
                                 'face color))))
             `((notification menu-item ,text ednc-pop-to-notification-in-log-buffer)))))
   (force-mode-line-update t))
@@ -188,6 +208,17 @@
         (window-state-put state (frame-root-window) t)
         (message "Layout loaded from slot %d" n))
     (message "No layout in slot %d" n)))
+
+(use-package winum
+  :ensure t
+  :config
+  (setq winum-auto-setup-mode-line nil)
+  (winum-mode 1)
+  (with-eval-after-load 'doom-modeline
+    (doom-modeline-def-segment window-number
+      (let ((num (winum-get-number-string)))
+        (propertize (format " %s " num)
+                    'face (doom-modeline-face 'doom-modeline-buffer-major-mode))))))
 
 (defun helm-ag/noop-status ()
   "No-op status function for helm-ag.")
@@ -269,6 +300,13 @@
   ;; Intercept C-c from surfaces (like C-x) — must be set before ewm-mode enables
   (add-to-list 'ewm-intercept-prefixes ?\C-c)
 
+  ;; Intercept s-Shift-N from surfaces for tab switching (s-! s-@ etc.)
+  ;; ewm--event-to-intercept-spec doesn't emit :shift for s-! (Emacs folds
+  ;; Shift+1 → !, losing the shift modifier), so we register the physical
+  ;; Super+Shift+<digit> combos explicitly.
+  (dolist (key '("s-S-1" "s-S-2" "s-S-3" "s-S-4" "s-S-5" "s-S-6" "s-S-7" "s-S-8" "s-S-9"))
+    (add-to-list 'ewm-intercept-prefixes key))
+
   ;; Passthrough bindings: C-x C-x / C-c C-c send next keypress to the surface
   (defun ewm/passthrough-x ()
     "Passthrough C-x to surface app."
@@ -336,8 +374,8 @@
 
   (defun ewm-surface--make-icon-string (file)
     "Create propertized string displaying icon image from FILE.
-  Includes a face plist so doom-modeline-propertize-icon processes it correctly;
-  the display property with the image takes precedence for rendering."
+    Includes a face plist so doom-modeline-propertize-icon processes it correctly;
+    the display property with the image takes precedence for rendering."
     (propertize " " 'display
                 (create-image file nil nil
                               :height (frame-char-height)
@@ -398,19 +436,23 @@
     (or tab-bar--right-reserved-px
         (setq tab-bar--right-reserved-px
               (let ((sep-w (string-pixel-width " ")))
-                (+ (string-pixel-width
-                    (concat " " (nerd-icons-mdicon "nf-md-bell") " (99) "
-                            (make-string 120 ?m) " "))
-                   sep-w
-                   (string-pixel-width
-                    (concat " " (nerd-icons-mdicon "nf-md-email") " 9999 "))
-                   sep-w
-                   (string-pixel-width
-                    (concat " " (format-time-string "%a %d %b  %H:%M") " "))
-                   sep-w
-                   (string-pixel-width
-                    (concat " " (nerd-icons-mdicon "nf-md-battery") " 100% "))
-                   sep-w))))) ; trailing separator
+                (+ ;; recording indicator (worst case: visible)
+                 (string-pixel-width
+                  (concat " " (nerd-icons-mdicon "nf-md-record_circle") " 99:59 "))
+                 sep-w
+                 (string-pixel-width
+                  (concat " " (nerd-icons-mdicon "nf-md-bell") " (99) "
+                          (make-string 80 ?m) " "))
+                 sep-w
+                 (string-pixel-width
+                  (concat " " (nerd-icons-mdicon "nf-md-email") " 9999 "))
+                 sep-w
+                 (string-pixel-width
+                  (concat " " (format-time-string "%a %d %b  %H:%M") " "))
+                 sep-w
+                 (string-pixel-width
+                  (concat " " (nerd-icons-mdicon "nf-md-battery") " 100% "))
+                 sep-w))))) ; trailing separator
 
   (defun tab-bar/format-tab-name (tab i)
     "Format TAB name with index I, fixed pixel-width using align-to."
@@ -435,13 +477,13 @@
     (interactive)
     (setopt epg-pinentry-mode 'loopback)
     (setq agent-shell-display-action
-        (if (featurep 'ewm)
-            '((display-buffer-same-window))
-          '((vv/display-buffer-pop-up-frame-maybe display-buffer-in-side-window)
-            (side . left)
-            (slot . 1)
-            (window-width . 100)
-            (preserve-size . (t . nil)))))
+          (if (featurep 'ewm)
+              '((display-buffer-same-window))
+            '((vv/display-buffer-pop-up-frame-maybe display-buffer-in-side-window)
+              (side . left)
+              (slot . 1)
+              (window-width . 100)
+              (preserve-size . (t . nil)))))
 
     (theme/apply)
     (set-face-attribute 'window-divider nil :foreground "#282a36")
@@ -458,6 +500,8 @@
                            tab-bar-separator
                            tab-bar-format-tabs
                            tab-bar-format-align-right
+                           tab-bar-format-recording
+                           tab-bar-separator
                            tab-bar-format-notification
                            tab-bar-separator
                            tab-bar-format-mail
@@ -487,7 +531,8 @@
   (define-key ewm/window-map (kbd "n")   #'tab-bar-duplicate-tab)
   (define-key ewm/window-map (kbd "s-k") #'tab-bar-close-tab)
   (define-key ewm/window-map (kbd "k")   #'tab-bar-close-tab)
-
+  (define-key ewm/window-map (kbd "s-o") #'other-frame)
+  (define-key ewm/window-map (kbd "o")   #'other-frame)
   ;; s-w (s-)w: layout sub-prefix
   (define-key ewm/window-map (kbd "s-w") 'ewm/layout-map)
   (define-key ewm/window-map (kbd "w")   'ewm/layout-map)
@@ -500,11 +545,11 @@
   (dotimes (i 9)
     (let ((n (1+ i)))
       (define-key ewm/layout-save-map (kbd (number-to-string n))
-        `(lambda () (interactive) (ewm/save-layout ,n)))
+                  `(lambda () (interactive) (ewm/save-layout ,n)))
       (define-key ewm/layout-map (kbd (format "s-%d" n))
-        `(lambda () (interactive) (ewm/load-layout ,n)))
+                  `(lambda () (interactive) (ewm/load-layout ,n)))
       (define-key ewm/layout-map (kbd (number-to-string n))
-        `(lambda () (interactive) (ewm/load-layout ,n)))))
+                  `(lambda () (interactive) (ewm/load-layout ,n)))))
   (defun ewm/save-layout-0 ()
     "Save window layout to quick-access slot 0."
     (interactive)
@@ -516,6 +561,96 @@
   (define-key ewm/layout-save-map (kbd "w") #'ewm/save-layout-0)
   (define-key ewm/layout-map (kbd "s-w") #'ewm/load-layout-0)
   (define-key ewm/layout-map (kbd "w") #'ewm/load-layout-0)
+
+  ;; Make repeat-mode (and other transient maps) work on surface buffers.
+  ;; Non-prefix intercepted keys (e.g. s-<left>) don't redirect compositor
+  ;; focus to Emacs — the key is injected but focus stays on the surface.
+  ;; So when repeat-mode sets overriding-terminal-local-map, the repeat
+  ;; keys go to the surface instead of Emacs.
+  ;; Fix: actively redirect focus to Emacs while a transient map is active,
+  ;; and restore surface focus when it deactivates.
+  (defvar ewm--transient-map-active nil)
+
+  (defun ewm/sync-transient-map-focus ()
+    "Keep compositor focus on Emacs while a transient map is active."
+    (when (and ewm--module-mode
+               (derived-mode-p 'ewm-surface-mode))
+      (let ((active (and overriding-terminal-local-map
+                         (keymapp overriding-terminal-local-map))))
+        (unless (eq (not (not active)) ewm--transient-map-active)
+          (setq ewm--transient-map-active (not (not active)))
+          (if active
+              (when-let ((frame-id (frame-parameter (selected-frame)
+                                                    'ewm-surface-id)))
+                (ewm-focus frame-id))
+            (ewm--sync-focus))))))
+
+  (add-hook 'post-command-hook #'ewm/sync-transient-map-focus 90)
+
+  (defun ewm/screenshot-region ()
+    "Take a screenshot of a selected region using grim+slurp+swappy."
+    (interactive)
+    (start-process-shell-command "screenshot" nil
+                                 "grim -g \"$(slurp)\" - | swappy -f -"))
+
+  (defvar ewm--recording-process nil "Active wf-recorder process.")
+  (defvar ewm--recording-start-time nil "Start time of current recording.")
+  (defvar ewm--recording-timer nil "Timer updating the recording indicator.")
+
+  (defun ewm/record-region ()
+    "Toggle screen recording of a selected region using wf-recorder.
+If already recording, stop and save to ~/Videos/recordings/."
+    (interactive)
+    (if (and ewm--recording-process (process-live-p ewm--recording-process))
+        ;; Stop recording
+        (progn
+          (signal-process ewm--recording-process 'SIGINT)
+          (when ewm--recording-timer (cancel-timer ewm--recording-timer))
+          (setq ewm--recording-process nil
+                ewm--recording-start-time nil
+                ewm--recording-timer nil)
+          (force-mode-line-update t)
+          (message "Recording stopped"))
+      ;; Start recording
+      (let* ((geom (string-trim (shell-command-to-string "slurp")))
+             (ts (format-time-string "%Y_%m_%d-%H_%M_%S"))
+             (dir "~/Videos/recordings/")
+             (file (expand-file-name (concat ts ".mkv") dir)))
+        (unless (string-empty-p geom)
+          (make-directory dir t)
+          (setq ewm--recording-start-time (current-time)
+                ewm--recording-process
+                (start-process "wf-recorder" nil
+                               "wf-recorder" "-g" geom "-f" file))
+          (set-process-sentinel
+           ewm--recording-process
+           (lambda (_proc _event)
+             (setq ewm--recording-process nil
+                   ewm--recording-start-time nil)
+             (force-mode-line-update t)))
+          (setq ewm--recording-timer
+                (run-with-timer 1 1 #'force-mode-line-update))
+          (force-mode-line-update t)
+          (message "Recording started")))))
+
+  ;; Rebind tabs to s-S-<n> (s-<n> is now used by winum for window selection)
+  ;; s-S-1 is seen as s-!, etc. Map shifted symbols back to tab numbers.
+  (defvar ewm--shift-digit-alist
+    '((?! . 1) (?@ . 2) (?# . 3) (?$ . 4) (?% . 5)
+      (?^ . 6) (?& . 7) (?* . 8) (?\( . 9)))
+
+  (defun ewm/tab-select-shifted ()
+    "Select tab by number from a shifted key (s-! → tab 1, etc.)."
+    (interactive)
+    (let* ((key (event-basic-type last-command-event))
+           (tab (alist-get key ewm--shift-digit-alist 0))
+           (current (1+ (tab-bar--current-tab-index))))
+      (if (eq tab current)
+          (tab-recent)
+        (tab-bar-select-tab tab))))
+
+  (dolist (key '("s-!" "s-@" "s-#" "s-$" "s-%" "s-^" "s-&" "s-*" "s-("))
+    (define-key ewm-mode-map (kbd key) #'ewm/tab-select-shifted))
 
   ;; Keybindings in ewm-mode-map (always active, intercepted from surfaces)
   :bind (:map ewm-mode-map
@@ -530,6 +665,22 @@
               ("s-t" . nil)
               ("s-l" . system/lock-screen)
               ("s-x" . helm-M-x)
+
+              ;; Screenshot / recording
+              ("s-c" . ewm/screenshot-region)
+              ("s-C" . ewm/record-region)
+
+              ;; Window selection (winum) — override default s-N tab bindings
+              ("s-0" . winum-select-window-0-or-10)
+              ("s-1" . winum-select-window-1)
+              ("s-2" . winum-select-window-2)
+              ("s-3" . winum-select-window-3)
+              ("s-4" . winum-select-window-4)
+              ("s-5" . winum-select-window-5)
+              ("s-6" . winum-select-window-6)
+              ("s-7" . winum-select-window-7)
+              ("s-8" . winum-select-window-8)
+              ("s-9" . winum-select-window-9)
 
               ;; Applications
               ("s-i" . apps/vivaldi-browser)

@@ -121,7 +121,7 @@ range."
          ;; Treesit parser is quick and lazy, don't bother to get the accurate
          ;; range, just set it to 256KB from the window start.
          (range-end (min (+ (window-start) (* 1024 256)) (point-max)))
-         )
+         (win-end (structlog--window-end)))
 
     (structlog--update-parser-range (list (cons range-begin range-end)))
 
@@ -129,30 +129,20 @@ range."
     (let* ((start (window-start))
            (node (treesit-node-first-child-for-pos (treesit-buffer-root-node)
                                                    start))
-           )
-      (while (and node (<= (treesit-node-end node)
-                           (min structlog--prev-start
-                                (structlog--window-end))))
-        ;; must re-calculate the end in each loop as it changes after hiding
-        ;; some lines
+           (top-limit (min structlog--prev-start win-end)))
+      (while (and node (<= (treesit-node-end node) top-limit))
         (treesit-induce-sparse-tree node pred process-fn)
         (setq node (treesit-node-next-sibling node)))
-      (setq structlog--prev-start start)
-      )
+      (setq structlog--prev-start start))
 
     ;; process the delta at the bottom of the window
     (let* ((start (max structlog--prev-end (window-start)))
-           (new-end (structlog--window-end))
            (node (treesit-node-first-child-for-pos (treesit-buffer-root-node)
                                                    start)))
-      (while (and node
-                  (< (treesit-node-end node) (setq new-end
-                                                   (structlog--window-end)))
-                  )
+      (while (and node (< (treesit-node-end node) win-end))
         (treesit-induce-sparse-tree node pred process-fn)
         (setq node (treesit-node-next-sibling node)))
-      (setq structlog--prev-end new-end)
-      )))
+      (setq structlog--prev-end win-end))))
 
 (defvar structlog--currently-hidding nil)
 (make-variable-buffer-local 'structlog--currently-hidding)
@@ -174,9 +164,20 @@ range."
   (interactive)
   (structlog--hide-show nil))
 
+(defvar structlog--scroll-timer nil "Idle timer for debounced scroll updates.")
+(make-variable-buffer-local 'structlog--scroll-timer)
+
 (defun structlog--after-scroll (window start)
-  "Adapter of `structlog-hide-nodes-in-window', WINDOW & START are not used."
-  (structlog--hide-nodes-in-window structlog--currently-hidding))
+  "Debounced adapter of `structlog--hide-nodes-in-window'.
+WINDOW & START are not used directly."
+  (when structlog--scroll-timer
+    (cancel-timer structlog--scroll-timer))
+  (setq structlog--scroll-timer
+        (run-with-idle-timer 0.05 nil
+                             (lambda ()
+                               (setq structlog--scroll-timer nil)
+                               (structlog--hide-nodes-in-window
+                                structlog--currently-hidding)))))
 
 (defvar structured-log-mode-map
   (let ((map (make-sparse-keymap)))
