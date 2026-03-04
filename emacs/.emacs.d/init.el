@@ -63,10 +63,10 @@
 
 ;; redisplay-dont-pause is obsolete since Emacs 24.5 - removed
 ;; Optimize jit-lock for better fontification performance
-(setq jit-lock-stealth-time 1.25
+(setq jit-lock-stealth-time 1.5
       jit-lock-stealth-nice 0.5
-      jit-lock-defer-time 0.05  ; Lower defer for snappier highlighting
-      jit-lock-chunk-size 1000) ; Smaller chunks = more responsive
+      jit-lock-defer-time 0.25
+      jit-lock-chunk-size 1500)
 
 (setq large-file-warning-threshold 100000000)
 
@@ -92,9 +92,12 @@
       (process-send-string wl-copy-process text)
       (process-send-eof wl-copy-process))
     (defun wl-paste ()
-      (if (and wl-copy-process (process-live-p wl-copy-process))
-          nil
-        (shell-command-to-string "wl-paste -n | tr -d \r")))
+      (unless (and wl-copy-process (process-live-p wl-copy-process))
+        (with-temp-buffer
+          (call-process "wl-paste" nil t nil "-n")
+          (goto-char (point-min))
+          (while (search-forward "\r" nil t) (replace-match "" nil t))
+          (buffer-string))))
     (setq interprogram-cut-function #'wl-copy
           interprogram-paste-function #'wl-paste))
   (remove-hook 'server-after-make-frame-hook #'wl/setup-clipboard))
@@ -205,14 +208,9 @@
   (interactive)
   (other-window -1))
 
-(global-hl-line-mode 1)
-(setq hl-line-overlay-priority -50)
+;; (global-hl-line-mode 1)
 
-(use-package winpulse
-  :vc (:url "https://github.com/xenodium/winpulse"
-            :rev :newest)
-  :config
-  (winpulse-mode 0))
+(setq hl-line-overlay-priority -50)
 
 (use-package window-dim
   :vc
@@ -606,13 +604,12 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
    doom-modeline-percent-position nil
    doom-modeline-enable-word-count t
    doom-modeline-continuous-word-count-modes nil
-   doom-modeline-total-line-number t
-   doom-modeline-position-line-format '("" " " "%l")
-   doom-modeline-position-column-line-format '("" " " "%cC %lL")
+   doom-modeline-total-line-number nil
+   doom-modeline-total-line-number nil
    doom-modeline-workspace-name nil
    doom-modeline-height 30
    doom-modeline-bar-width 1)
-  (line-number-mode 1)
+  (line-number-mode 0)
   (column-number-mode 0)
 
   ;; Move bar to right side on all modelines to prevent layout shift on focus
@@ -1502,6 +1499,24 @@ Preserves context (region, files, etc.) like the default behavior."
   :config
   (setq joplin-token (auth-source-pick-first-password :host "joplin"))
 
+  ;; --- Async HTTP helper for Joplin local API ---
+  (defun joplin--http-get-async-handler (cb _status)
+    "Parse JSON response from url-retrieve and call CB with result."
+    (goto-char (point-min))
+    (when (re-search-forward "\n\n" nil t)
+      (condition-case nil
+          (let ((data (json-read)))
+            (funcall cb data))
+        (error nil)))
+    (kill-buffer (current-buffer)))
+
+  (defun joplin--http-get-async (url cb &optional context)
+    "Async version of joplin--http-get. Calls CB with parsed JSON."
+    (let ((url-proxy-services joplin-url-proxy))
+      (url-retrieve
+       (joplin--build-url url (append context joplin-context))
+       (apply-partially #'joplin--http-get-async-handler cb))))
+
   (defun joplin--find-folder (name &optional parent-id)
     "Find a folder with NAME under PARENT-ID.
   When multiple folders match, return the most recently modified one.
@@ -1514,12 +1529,16 @@ Preserves context (region, files, etc.) like the default behavior."
                do (push (JFOLDER-id folder) candidates))
       (if (<= (length candidates) 1)
           (car candidates)
-        (car (sort candidates
-                   (lambda (a b)
-                     (> (or (alist-get 'updated_time
-                                       (joplin--http-get (format "/folders/%s" a))) 0)
-                        (or (alist-get 'updated_time
-                                       (joplin--http-get (format "/folders/%s" b))) 0))))))))
+        ;; Pre-fetch update times O(N) instead of O(N*logN) in sort comparator
+        (let ((times (make-hash-table :test 'equal)))
+          (dolist (id candidates)
+            (puthash id
+                     (or (alist-get 'updated_time
+                                    (joplin--http-get (format "/folders/%s" id))) 0)
+                     times))
+          (car (sort candidates
+                     (lambda (a b)
+                       (> (gethash a times) (gethash b times)))))))))
 
   (defun joplin--find-or-create-folder (name &optional parent-id)
     "Find or create a folder with NAME under PARENT-ID. Returns folder ID."
@@ -1971,33 +1990,32 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
 
   (advice-add 'joplin-save-note :after #'joplin--after-save-note)
 
+  (defun joplin--revert-body-callback (buf pos id data)
+    "Handle async note body fetch for revert in BUF."
+    (when (buffer-live-p buf)
+      (with-current-buffer buf
+        (let ((inhibit-read-only t))
+          (erase-buffer)
+          (insert (or (alist-get 'body data) "")))
+        (goto-char (min pos (point-max)))
+        (setq-local joplin-note (joplin-get-note id))
+        (joplin--rename-buffer-from-note)
+        (set-buffer-modified-p nil)
+        (setq buffer-read-only nil)
+        (when view-mode (view-mode -1))
+        (joplin--insert-metadata-section)
+        (message "Reverted note from Joplin"))))
+
   (defun joplin--revert-note-buffer (_ignore-auto _noconfirm)
-    "Revert the current buffer from the Joplin API."
+    "Revert the current buffer from the Joplin API asynchronously."
     (let ((id (JNOTE-id joplin-note))
           (pos (point))
           (buf (current-buffer)))
-      (let ((inhibit-read-only t))
-        (erase-buffer)
-        (insert (alist-get 'body
-                           (joplin--http-get
-                            (concat "/notes/" id)
-                            '((fields . "body")))))
-        (goto-char (min pos (point-max))))
-      (setq-local joplin-note (joplin-get-note id))
-      (joplin--rename-buffer-from-note)
-      (set-buffer-modified-p nil)
-      (setq buffer-read-only nil)
-      (when view-mode (view-mode -1))
-      ;; Ensure edit mode after all revert hooks complete
-      (run-with-timer 0 nil
-                      (lambda (b)
-                        (when (buffer-live-p b)
-                          (with-current-buffer b
-                            (setq buffer-read-only nil)
-                            (when view-mode (view-mode -1)))))
-                      buf)
-      (joplin--insert-metadata-section)
-      (message "Reverted note from Joplin")))
+      (message "Reverting note from Joplin...")
+      (joplin--http-get-async
+       (concat "/notes/" id)
+       (apply-partially #'joplin--revert-body-callback buf pos id)
+       '((fields . "body")))))
 
   (advice-remove 'joplin--note-fill-buffer #'joplin--after-note-fill-buffer)
 
@@ -2016,23 +2034,41 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
   advice on `joplin-save-note' from re-inserting read-only backlinks
   during `write-file-functions'.")
 
-  (defun joplin--fetch-backlinks-for-note ()
-    "Return a list of (TITLE . ID) for notes that link to the current note."
-    (condition-case err
-        (when (bound-and-true-p joplin-note)
-          (let* ((id (JNOTE-id joplin-note))
-                 (resp (joplin--http-get "/search"
-                                         `((query . ,id)
-                                           (type . note)
-                                           (fields . "id,title")
-                                           (limit . "50"))))
-                 (items (alist-get 'items resp)))
-            (cl-loop for item across items
-                     unless (string= (alist-get 'id item) id)
-                     collect (cons (alist-get 'title item)
-                                   (alist-get 'id item)))))
-      (error (message "Joplin backlinks: %s" (error-message-string err))
-             nil)))
+  (defun joplin--backlinks-async-callback (buf note-id data)
+    "Handle async backlinks response. Append backlinks to metadata in BUF."
+    (when (buffer-live-p buf)
+      (with-current-buffer buf
+        (let* ((items (alist-get 'items data))
+               (backlinks (cl-loop for item across items
+                                   unless (string= (alist-get 'id item) note-id)
+                                   collect (cons (alist-get 'title item)
+                                                 (alist-get 'id item)))))
+          (when backlinks
+            (save-excursion
+              (let ((inhibit-read-only t)
+                    (buffer-undo-list t))
+                (goto-char (point-max))
+                (let ((start (point)))
+                  (insert "\n## Backlinks\n")
+                  (dolist (bl backlinks)
+                    (insert (format "[%s](:/%s)\n" (car bl) (cdr bl))))
+                  (add-text-properties start (point-max)
+                                       '(read-only t front-sticky (read-only)
+                                         joplin-metadata t face shadow))))))
+        (set-buffer-modified-p nil)))))
+
+  (defun joplin--fetch-backlinks-async ()
+    "Fetch backlinks for the current note asynchronously."
+    (when (bound-and-true-p joplin-note)
+      (let ((id (JNOTE-id joplin-note))
+            (buf (current-buffer)))
+        (joplin--http-get-async
+         "/search"
+         (apply-partially #'joplin--backlinks-async-callback buf id)
+         `((query . ,id)
+           (type . note)
+           (fields . "id,title")
+           (limit . "50"))))))
 
   (defun joplin--remove-metadata-section ()
     "Remove the metadata section from the current buffer."
@@ -2050,7 +2086,7 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
 
   (defun joplin--insert-metadata-section ()
     "Insert a read-only metadata section at the end of the current buffer.
-  Includes note path, author, dates, and backlinks."
+  Includes note path, author, dates. Backlinks are fetched asynchronously."
     (joplin--remove-metadata-section)
     (when (bound-and-true-p joplin-note)
       (let* ((note joplin-note)
@@ -2059,8 +2095,7 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
              (author (JNOTE-author note))
              (created (joplin--format-joplin-time (JNOTE-user_created_time note)))
              (updated (joplin--format-joplin-time (JNOTE-user_updated_time note)))
-             (tags (JNOTE-_tags note))
-             (backlinks (joplin--fetch-backlinks-for-note)))
+             (tags (JNOTE-_tags note)))
         (save-excursion
           (let ((inhibit-read-only t)
                 (buffer-undo-list t))
@@ -2081,17 +2116,14 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
                 (insert (format "- Updated: %s\n" updated)))
               (when tags
                 (insert "\n## Tags\n")
-
                 (insert (format "Tags: %s\n"
                                 (mapconcat #'JTAG-title tags ", "))))
-              (when backlinks
-                (insert "\n## Backlinks\n")
-                (dolist (bl backlinks)
-                  (insert (format "[%s](:/%s)\n" (car bl) (cdr bl)))))
               (add-text-properties start (point-max)
                                    '(read-only t front-sticky (read-only)
                                      joplin-metadata t face shadow)))))))
-    (set-buffer-modified-p nil))
+    (set-buffer-modified-p nil)
+    ;; Fetch backlinks asynchronously — they'll be appended when ready
+    (joplin--fetch-backlinks-async))
 
   (defun joplin--clamp-to-before-metadata (&rest _)
     "If point is inside the metadata section, move it just before it."
@@ -3097,7 +3129,7 @@ When done, store result in BUF's cache and refresh magit."
 (use-package exec-path-from-shell
   :config
   (when (memq window-system '(mac ns x))
-    (exec-path-from-shell-initialize)))
+    (run-with-idle-timer 1 nil #'exec-path-from-shell-initialize)))
 
 (defun shell/hook ()
   (display-line-numbers-mode 0)
@@ -3937,36 +3969,42 @@ DURATION-SECS is the event duration in seconds."
                             entries)))))))))
       (mapconcat #'cdr (sort entries (lambda (a b) (string< (car a) (car b)))) "\n")))
 
+  (defun gcal/fetch-handler (cb _status)
+    "Handle async calendar fetch response. Call CB when done."
+    (goto-char (point-min))
+    (re-search-forward "\n\n" nil t)
+    (delete-region (point-min) (point))
+    (set-buffer-multibyte t)
+    (decode-coding-region (point-min) (point-max) 'utf-8)
+    (let* ((ical-buf (current-buffer))
+           (ics-content (buffer-string))
+           (content (concat "#+TITLE: Google Calendar\n\n"
+                            (gcal/ics-to-org ics-content))))
+      (write-region content nil gcal/org-file nil 'silent)
+      ;; Update buffer if already visiting the file
+      (when-let ((org-buf (find-buffer-visiting gcal/org-file)))
+        (with-current-buffer org-buf
+          (let ((inhibit-read-only t))
+            (erase-buffer)
+            (insert content)
+            (set-buffer-modified-p nil)
+            (when (fboundp 'org-element-cache-reset)
+              (org-element-cache-reset)))))
+      (kill-buffer ical-buf)
+      (when (boundp 'org-timeblock-cache)
+        (setq org-timeblock-cache nil
+              org-timeblock-buffers nil)))
+    (message "Calendar updated.")
+    (when cb (funcall cb)))
+
   (defun gcal/fetch (&optional callback)
     "Fetch Google Calendar ICS and convert to org. Call CALLBACK when done."
     (interactive)
     (when gcal/ics-url
       (message "Fetching calendar...")
       (url-retrieve gcal/ics-url
-        (lambda (_status)
-          (goto-char (point-min))
-          (re-search-forward "\n\n" nil t)
-          (delete-region (point-min) (point))
-          (set-buffer-multibyte t)
-          (decode-coding-region (point-min) (point-max) 'utf-8)
-          (let* ((ical-buf (current-buffer))
-                 (ics-content (buffer-string))
-                 (org-buf (find-file-noselect gcal/org-file)))
-            (with-current-buffer org-buf
-              (let ((inhibit-read-only t))
-                (erase-buffer)
-                (insert "#+TITLE: Google Calendar\n\n")
-                (insert (gcal/ics-to-org ics-content))
-                (save-buffer)
-                (when (fboundp 'org-element-cache-reset)
-                  (org-element-cache-reset))))
-            (kill-buffer ical-buf)
-            (when (boundp 'org-timeblock-cache)
-              (setq org-timeblock-cache nil
-                    org-timeblock-buffers nil)))
-          (message "Calendar updated.")
-          (when callback (funcall callback)))
-        nil t)))
+                    (apply-partially #'gcal/fetch-handler callback)
+                    nil t)))
 
   (with-eval-after-load 'org
     (add-to-list 'org-agenda-files gcal/org-file))

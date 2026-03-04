@@ -519,6 +519,10 @@
 
   (add-hook 'emacs-startup-hook #'ewm/refresh-setup)
 
+  (defun ewm/focus-ednc ()
+    (interactive)
+    (switch-to-buffer "*ednc-log*"))
+
   ;; s-w prefix key: window & tab management
   (define-prefix-command 'ewm/window-map)
   (define-prefix-command 'ewm/layout-map)
@@ -536,6 +540,9 @@
   ;; s-w (s-)w: layout sub-prefix
   (define-key ewm/window-map (kbd "s-w") 'ewm/layout-map)
   (define-key ewm/window-map (kbd "w")   'ewm/layout-map)
+
+  (define-key ewm/window-map (kbd "s-c") 'ewm/layout-map)
+  (define-key ewm/window-map (kbd "c")   'ewm/layout-map)
 
   ;; s-w s-w (s-)s <n>: save layout to slot n
   (define-key ewm/layout-map (kbd "s-s") 'ewm/layout-save-map)
@@ -661,7 +668,7 @@ If already recording, stop and save to ~/Videos/recordings/."
               ("s-?" . winner-redo)
 
               ("s-a" . ewm-launch-app)
-              ("s-d" . nil)
+              ("s-d" . ewm/focus-ednc)
               ("s-t" . nil)
               ("s-l" . system/lock-screen)
               ("s-x" . helm-M-x)
