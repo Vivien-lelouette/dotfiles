@@ -77,16 +77,6 @@
 (set-selection-coding-system 'utf-8)
 (set-clipboard-coding-system 'utf-8)
 
-(defun xselect/encode-text-plain-as-utf8 (orig type str &rest args)
-  "Encode text/plain as UTF-8 for Wayland compatibility.
-Emacs pgtk defaults to ASCII for text/plain, but Wayland apps expect UTF-8."
-  (if (eq type 'text/plain)
-      (let ((result (apply orig 'text/plain\;charset=utf-8 str args)))
-        (when result
-          (cons 'text/plain (cdr result))))
-    (apply orig type str args)))
-(advice-add 'xselect--encode-string :around #'xselect/encode-text-plain-as-utf8)
-
 (use-package ultra-scroll
   :init
   (setq scroll-conservatively 3 ; or whatever value you prefer, since v0.4
@@ -528,19 +518,7 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
   (setq vertico-buffer-display-action
         '(display-buffer-in-direction
           (direction . below)
-          (window-height . 0.2)))
-
-  (defun vertico/buffer-mirror-prompt (&rest _)
-    "Mirror minibuffer prompt+input into vertico buffer header-line."
-    (when (and (bound-and-true-p vertico-buffer-mode)
-               (minibufferp)
-               (boundp 'vertico-buffer--buffer)
-               (buffer-live-p vertico-buffer--buffer))
-      (let ((content (buffer-string)))
-        (with-current-buffer vertico-buffer--buffer
-          (setq-local header-line-format content)))))
-
-  (add-hook 'post-command-hook #'vertico/buffer-mirror-prompt))
+          (window-height . 0.2))))
 
 (use-package marginalia
   :init
@@ -613,7 +591,7 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
         (org-babel-tangle))))
   (defun org/enable-auto-tangle ()
     "Enable auto-tangle on save in org-mode buffers."
-    (add-hook 'after-save-hook #'org/org-babel-tangle-config))
+    (add-hook 'after-save-hook #'org/org-babel-tangle-config nil t))
   (add-hook 'org-mode-hook #'org/enable-auto-tangle))
 ;; (custom-set-faces
 ;;  '(org-level-1 ((t (:inherit outline-1 :height 2.5))))
@@ -1046,7 +1024,7 @@ when reading files and the other way around when writing contents."
 (use-package jinx
   :ensure nil
   :if (or *is-linux* (executable-find "enchant-2"))
-  :hook (emacs-startup . global-jinx-mode)
+  :hook ((text-mode org-mode markdown-mode) . jinx-mode)
   :bind (("M-$" . jinx-correct)
          ("C-M-$" . jinx-languages)))
 
@@ -2711,7 +2689,8 @@ Uses `magit/jira-image-cache' for already-fetched images."
               ("<tab>" . nil)
               ("TAB" . nil))
   :config
-  (yas-global-mode 1))
+  (add-hook 'prog-mode-hook #'yas-minor-mode)
+  (add-hook 'text-mode-hook #'yas-minor-mode))
 
 (with-eval-after-load 'company
   (with-eval-after-load 'yasnippet
@@ -2797,7 +2776,7 @@ Uses `magit/jira-image-cache' for already-fetched images."
   (add-to-list 'apheleia-mode-alist '(js-ts-mode . eslint))
   (add-to-list 'apheleia-mode-alist '(typescript-mode . eslint))
   (add-to-list 'apheleia-mode-alist '(typescript-ts-mode . eslint))
-  (apheleia-global-mode t))
+  (add-hook 'prog-mode-hook #'apheleia-mode))
 
 (use-package treesit-auto
   :custom
@@ -2814,7 +2793,7 @@ Uses `magit/jira-image-cache' for already-fetched images."
   ;; org-lint renvoie des strings propertized au lieu de numéros de ligne,
   ;; ce qui casse flycheck (bug de compatibilité org 9.8 / flycheck)
   (setq-default flycheck-disabled-checkers '(org-lint))
-  (global-flycheck-mode 1))
+  (add-hook 'prog-mode-hook #'flycheck-mode))
 
 (use-package flycheck-title
   :after flycheck
