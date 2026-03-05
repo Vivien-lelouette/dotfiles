@@ -652,19 +652,6 @@ If already recording, stop and save to ~/Videos/recordings/."
     '((?! . 1) (?@ . 2) (?# . 3) (?$ . 4) (?% . 5)
       (?^ . 6) (?& . 7) (?* . 8) (?\( . 9)))
 
-  (defun ewm/tab-select-shifted ()
-    "Select tab by number from a shifted key (s-! → tab 1, etc.)."
-    (interactive)
-    (let* ((key (event-basic-type last-command-event))
-           (tab (alist-get key ewm--shift-digit-alist 0))
-           (current (1+ (tab-bar--current-tab-index))))
-      (if (eq tab current)
-          (tab-recent)
-        (tab-bar-select-tab tab))))
-
-  (dolist (key '("s-!" "s-@" "s-#" "s-$" "s-%" "s-^" "s-&" "s-*" "s-("))
-    (define-key ewm-mode-map (kbd key) #'ewm/tab-select-shifted))
-
   ;; Keybindings in ewm-mode-map (always active, intercepted from surfaces)
   :bind (:map ewm-mode-map
               ;; refresh setup
@@ -694,6 +681,10 @@ If already recording, stop and save to ~/Videos/recordings/."
               ("s-7" . winum-select-window-7)
               ("s-8" . winum-select-window-8)
               ("s-9" . winum-select-window-9)
+
+              ;; Tab switching
+              ("s-<tab>" . tab-next)
+              ("s-<iso-lefttab>" . tab-next)
 
               ;; Applications
               ("s-i" . apps/vivaldi-browser)

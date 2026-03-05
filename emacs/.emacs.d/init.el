@@ -49,7 +49,7 @@
 ;; After init, lower to a reasonable value for interactive use
 (defun gc/set-runtime-threshold ()
   "Set GC threshold to a reasonable value after startup."
-  (setq gc-cons-threshold (* 16 1024 1024)  ; 16MB
+  (setq gc-cons-threshold (* 64 1024 1024)  ; 64MB
         gc-cons-percentage 0.1))
 (add-hook 'emacs-startup-hook #'gc/set-runtime-threshold)
 
@@ -77,34 +77,15 @@
 (set-selection-coding-system 'utf-8)
 (set-clipboard-coding-system 'utf-8)
 
-(defun wl/setup-clipboard ()
-  "Set up Wayland clipboard integration on first graphical frame."
-  (when (and (display-graphic-p)
-             (getenv "WAYLAND_DISPLAY"))
-    (defvar wl-copy-process nil)
-    (defun wl-copy (text)
-      (setq wl-copy-process
-            (make-process :name "wl-copy"
-                          :buffer nil
-                          :command '("wl-copy" "-f" "-n")
-                          :connection-type 'pipe
-                          :noquery t))
-      (process-send-string wl-copy-process text)
-      (process-send-eof wl-copy-process))
-    (defun wl-paste ()
-      (unless (and wl-copy-process (process-live-p wl-copy-process))
-        (with-temp-buffer
-          (call-process "wl-paste" nil t nil "-n")
-          (goto-char (point-min))
-          (while (search-forward "\r" nil t) (replace-match "" nil t))
-          (buffer-string))))
-    (setq interprogram-cut-function #'wl-copy
-          interprogram-paste-function #'wl-paste))
-  (remove-hook 'server-after-make-frame-hook #'wl/setup-clipboard))
-
-(if (daemonp)
-    (add-hook 'server-after-make-frame-hook #'wl/setup-clipboard)
-  (wl/setup-clipboard))
+(defun xselect/encode-text-plain-as-utf8 (orig type str &rest args)
+  "Encode text/plain as UTF-8 for Wayland compatibility.
+Emacs pgtk defaults to ASCII for text/plain, but Wayland apps expect UTF-8."
+  (if (eq type 'text/plain)
+      (let ((result (apply orig 'text/plain\;charset=utf-8 str args)))
+        (when result
+          (cons 'text/plain (cdr result))))
+    (apply orig type str args)))
+(advice-add 'xselect--encode-string :around #'xselect/encode-text-plain-as-utf8)
 
 (use-package ultra-scroll
   :init
@@ -362,7 +343,7 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
 (tab/default-width 4)
 
 (setq
- display-line-numbers-type 'relative
+ display-line-numbers-type 'absolute
  mode-line-percent-position nil)
 (global-display-line-numbers-mode 1)
 (defun completion/disable-line-numbers ()
@@ -486,11 +467,38 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
 
 (use-package consult
   :bind
-  (("C-c i"   . consult-imenu)
-   ("M-s M-s" . consult-line)
-   ("M-s M-g" . consult-git-grep)
-   ("M-s M-p" . consult-ripgrep)
-   ("M-g l"   . consult-goto-line)))
+  (;; C-x bindings (buffer)
+   ("C-x b"   . consult-buffer)
+   ("C-x 4 b" . consult-buffer-other-window)
+   ("C-x 5 b" . consult-buffer-other-frame)
+   ("C-x r b" . consult-bookmark)
+   ("C-x p b" . consult-project-buffer)
+   ;; M-g bindings (goto)
+   ("M-g g"   . consult-goto-line)
+   ("M-g M-g" . consult-goto-line)
+   ("M-g o"   . consult-outline)
+   ("M-g m"   . consult-mark)
+   ("M-g k"   . consult-global-mark)
+   ("M-g i"   . consult-imenu)
+   ("M-g I"   . consult-imenu-multi)
+   ("M-g f"   . consult-flymake)
+   ;; M-s bindings (search)
+   ("M-s d"   . consult-find)
+   ("M-s g"   . consult-grep)
+   ("M-s G"   . consult-git-grep)
+   ("M-s r"   . consult-ripgrep)
+   ("M-s l"   . consult-line)
+   ("M-s L"   . consult-line-multi)
+   ("M-s k"   . consult-keep-lines)
+   ("M-s u"   . consult-focus-lines)
+   ;; Other
+   ("M-y"     . consult-yank-pop)
+   ("C-x M-:" . consult-complex-command)
+   ("M-#"     . consult-register-load)
+   ("M-'"     . consult-register-store)
+   ("C-M-#"   . consult-register))
+  :config
+  (setq consult-narrow-key "<"))
 
 (use-package company
   :defer 1  ; Delay loading by 1 second
@@ -533,6 +541,37 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
           (setq-local header-line-format content)))))
 
   (add-hook 'post-command-hook #'vertico/buffer-mirror-prompt))
+
+(use-package marginalia
+  :init
+  (marginalia-mode 1))
+
+(use-package embark
+  :bind
+  (("C-." . embark-act)
+   ("C-;" . embark-dwim))
+  :config
+  (setq prefix-help-command #'embark-prefix-help-command)
+
+  (defun embark/add-ctrl-bindings (keymap)
+    "Duplicate uppercase letter bindings in KEYMAP as C-<letter>."
+    (map-keymap
+     (lambda (key cmd)
+       (when (and (integerp key) (>= key ?A) (<= key ?Z))
+         (define-key keymap (vector (- key 64)) cmd)))
+     keymap))
+
+  (embark/add-ctrl-bindings embark-general-map)
+  (dolist (entry embark-keymap-alist)
+    (dolist (map-sym (ensure-list (cdr entry)))
+      (when (and (symbolp map-sym) (boundp map-sym)
+                 (keymapp (symbol-value map-sym)))
+        (embark/add-ctrl-bindings (symbol-value map-sym))))))
+
+(use-package embark-consult
+  :after (embark consult)
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
 
 (use-package org
   :config
@@ -1099,7 +1138,11 @@ when reading files and the other way around when writing contents."
         agent-shell-show-busy-indicator nil
         agent-shell-header-style 'none
         agent-shell-prefer-viewport-interaction nil
-        agent-shell-preferred-agent-config 'claude-code)
+        agent-shell-preferred-agent-config 'claude-code
+        agent-shell-highlight-blocks nil
+        agent-shell-embed-file-size-limit 51200
+        markdown-overlays-highlight-blocks nil
+        markdown-overlays-render-latex nil)
 
   (add-to-list 'exec-path "~/.npm-packages/bin")
   (add-hook 'agent-shell-mode-hook (lambda () (display-line-numbers-mode -1)))
@@ -1170,8 +1213,18 @@ Preserves context (region, files, etc.) like the default behavior."
                '("\\*agent-shell-diff\\*"
                  (agent/display-below)))
 
-  (advice-add 'agent-shell-diff-accept-all :after #'kill-current-buffer)
-  (advice-add 'agent-shell-diff-reject-all :after #'kill-current-buffer)
+  (defun agent/diff-then-close (orig-fn &rest args)
+    "Call ORIG-FN, then kill the diff buffer and its window."
+    (let ((diff-buf (current-buffer))
+          (diff-win (selected-window)))
+      (apply orig-fn args)
+      (when (buffer-live-p diff-buf)
+        (kill-buffer diff-buf))
+      (when (window-live-p diff-win)
+        (delete-window diff-win))))
+
+  (advice-add 'agent-shell-diff-accept-all :around #'agent/diff-then-close)
+  (advice-add 'agent-shell-diff-reject-all :around #'agent/diff-then-close)
 
   (global-set-key (kbd "C-c a") #'agent/shell))
 
@@ -2036,10 +2089,7 @@ filename, COUNTER a cons cell (done . total) for tracking progress."
                  (create-image data nil t
                                :max-width (min 1000 (- (window-pixel-width) 50)))
                  (format "[%s]" fname))
-                (insert "\n"))))
-          (cl-incf (car counter))
-          (when (= (car counter) (cdr counter))
-            (goto-char (point-min))))))
+                (insert "\n")))))))
 
     (defun jira/inline-images ()
       "Replace <file:...> image placeholders with inline images in jira-detail buffer."
@@ -2456,13 +2506,17 @@ Falls back to a bottom side-window when splitting is not possible."
   (require 'ilist)
 
   (defun magit/display-buffer (buffer)
-    "Display magit BUFFER: status in same window, others below."
+    "Display magit BUFFER: status in same window, others in a magit window below."
     (if (with-current-buffer buffer
           (derived-mode-p 'magit-status-mode))
         (display-buffer buffer '(display-buffer-same-window))
-      (let ((below (window-in-direction 'below)))
-        (if below
-            (window--display-buffer buffer below 'reuse)
+      (let ((magit-win (cl-find-if
+                        (lambda (w)
+                          (with-current-buffer (window-buffer w)
+                            (derived-mode-p 'magit-mode)))
+                        (cdr (window-list)))))
+        (if magit-win
+            (window--display-buffer buffer magit-win 'reuse)
           (display-buffer buffer
                           '(display-buffer-in-direction
                             (direction . below)
@@ -2481,6 +2535,9 @@ Falls back to a bottom side-window when splitting is not possible."
   (defvar-local magit/jira-issue-cache-branch nil
     "Branch name associated with `magit/jira-issue-cache'.")
 
+  (defvar-local magit/jira-image-cache nil
+    "Hash table mapping filenames to binary image data for the Jira section.")
+
   (defun magit/jira-fetch-issue-callback (buf branch data _response)
     "Handle async Jira fetch result.
 Store DATA in cache for BRANCH in BUF, then refresh magit."
@@ -2496,6 +2553,54 @@ When done, store result in BUF's cache and refresh magit."
     (jira-api-call
      "GET" (concat "issue/" key)
      :callback (apply-partially #'magit/jira-fetch-issue-callback buf branch)))
+
+  (defun magit/jira-inline-image-callback (buf placeholder fname data _response)
+    "Handle async image fetch for magit jira section.
+Store DATA in `magit/jira-image-cache' and replace PLACEHOLDER in BUF."
+    (when (buffer-live-p buf)
+      (with-current-buffer buf
+        (when magit/jira-image-cache
+          (puthash fname data magit/jira-image-cache))
+        (let ((inhibit-read-only t))
+          (save-excursion
+            (goto-char (point-min))
+            (when (search-forward placeholder nil t)
+              (replace-match "")
+              (insert-image
+               (create-image data nil t
+                             :max-width (min 600 (- (window-pixel-width) 50)))
+               (format "[%s]" fname))
+              (insert "\n")))))))
+
+  (defun magit/jira-inline-images (issue buf)
+    "Inline image placeholders in magit buffer BUF for ISSUE.
+Uses `magit/jira-image-cache' for already-fetched images."
+    (with-current-buffer buf
+      (unless magit/jira-image-cache
+        (setq magit/jira-image-cache (make-hash-table :test 'equal)))
+      (let ((inhibit-read-only t))
+        (save-excursion
+          (goto-char (point-min))
+          (while (re-search-forward
+                  "<file:\\(?:[^:>]+:\\)?\\([^>]+\\.\\(?:png\\|jpe?g\\|gif\\|webp\\)\\)>"
+                  nil t)
+            (let* ((filename (match-string-no-properties 1))
+                   (placeholder (match-string-no-properties 0))
+                   (cached (gethash filename magit/jira-image-cache)))
+              (if cached
+                  (progn
+                    (replace-match "")
+                    (insert-image
+                     (create-image cached nil t
+                                   :max-width (min 600 (- (window-pixel-width) 50)))
+                     (format "[%s]" filename))
+                    (insert "\n"))
+                (when-let* ((id (jira/attachment-id-by-name issue filename)))
+                  (jira-api-call
+                   "GET" (format "attachment/content/%s" id)
+                   :parser #'jira/inline-image-parser
+                   :callback (apply-partially #'magit/jira-inline-image-callback
+                                              buf placeholder filename))))))))))
 
   (defun magit/jira--insert-issue-section (key issue)
     "Insert the magit section content for Jira ISSUE with KEY."
@@ -2525,7 +2630,9 @@ When done, store result in BUF's cache and refresh magit."
                      "^" "    "
                      (jira-doc-format description))
                     "\n"))
-          (insert "\n")))))
+          (insert "\n"))))
+    (when jira/auto-inline-images
+      (magit/jira-inline-images issue (current-buffer))))
 
   (defun magit/insert-jira-issue ()
     "Insert a Magit section showing the Jira issue associated with the branch."
@@ -2537,7 +2644,8 @@ When done, store result in BUF's cache and refresh magit."
             (let* ((current-branch (magit-get-current-branch))
                    (_cache-check (unless (equal current-branch magit/jira-issue-cache-branch)
                                    (setq magit/jira-issue-cache nil
-                                         magit/jira-issue-cache-branch current-branch)))
+                                         magit/jira-issue-cache-branch current-branch
+                                         magit/jira-image-cache nil)))
                    (issue magit/jira-issue-cache))
               (if issue
                   ;; Cache hit: insert section normally
@@ -2545,7 +2653,7 @@ When done, store result in BUF's cache and refresh magit."
                 ;; Cache miss: show placeholder and fetch async
                 (magit-insert-section (jira-issue key)
                   (magit-insert-heading
-                    (format "Jira: %s [Chargement...]" key))
+                    (format "Jira: %s [Loading...]" key))
                   (insert "\n"))
                 (magit/jira-fetch-issue-async key (current-buffer) current-branch)))
           (error nil)))))
@@ -2564,13 +2672,7 @@ When done, store result in BUF's cache and refresh magit."
 
   (magit-add-section-hook 'magit-status-sections-hook
                           #'magit/insert-jira-issue
-                          nil 'append))
-
-(use-package magit-todos
-  :after magit
-  :config
-  (setq magit-todos-insert-after '(jira-issue))
-  (magit-todos-mode 1))
+                          'forge-insert-issues 'append))
 
 (use-package forge
   :after magit
@@ -2599,8 +2701,7 @@ When done, store result in BUF's cache and refresh magit."
                  (`(forge-pullreq rejected)  'forge-pullreq-rejected)))))))
       (run-hook-wrapped 'forge-topic-wash-title-hook
                         (lambda (fn) (prog1 nil (save-excursion (funcall fn)))))
-      (buffer-string)))
-  )
+      (buffer-string))))
 
 (use-package yasnippet
   :defer 2
@@ -2737,7 +2838,7 @@ When done, store result in BUF's cache and refresh magit."
         lsp-idle-delay 0.5
         lsp-enable-file-watchers t
         lsp-enable-folding nil
-        lsp-enable-symbol-highlighting t
+        lsp-enable-symbol-highlighting nil
         lsp-enable-on-type-formatting nil
         lsp-signature-auto-activate nil
         lsp-eldoc-enable-hover nil)
@@ -3307,7 +3408,7 @@ If at the last article, fetch 200 more and then move to the next one."
 
 (setq gnus-gcc-mark-as-read t
       message-confirm-send t
-      message-fill-column 80
+      message-fill-column 120
       message-forward-as-mime t
       message-send-mail-function #'smtpmail-send-it)
 
@@ -3324,46 +3425,13 @@ If at the last article, fetch 200 more and then move to the next one."
 (require 'gnus)
 (require 'gnus-demon)
 
-(defvar gnus/auto-scan-idle-timer nil
-  "Idle timer for auto-scanning Gnus news.")
-
-(defvar gnus/auto-scan-interval-timer nil
-  "Repeating timer that resets the idle timer for Gnus scan.")
-
-(defun gnus/auto-scan ()
-  "Scan for new news if Gnus is running and alive."
-  (when (and (fboundp 'gnus-alive-p) (gnus-alive-p))
-    (gnus-demon-scan-news)))
-
-(defun gnus/auto-scan-schedule ()
-  "Schedule a scan on next idle moment."
-  (when gnus/auto-scan-idle-timer
-    (cancel-timer gnus/auto-scan-idle-timer))
-  (setq gnus/auto-scan-idle-timer
-        (run-with-idle-timer 10 nil #'gnus/auto-scan)))
-
-(defun gnus/auto-scan-start ()
-  "Start periodic idle-based mail scanning (every 5 min, runs when idle 10s)."
-  (interactive)
-  (gnus/auto-scan-stop)
-  (setq gnus/auto-scan-interval-timer
-        (run-with-timer 300 300 #'gnus/auto-scan-schedule)))
-
-(defun gnus/auto-scan-stop ()
-  "Stop periodic mail scanning."
-  (interactive)
-  (when gnus/auto-scan-idle-timer
-    (cancel-timer gnus/auto-scan-idle-timer)
-    (setq gnus/auto-scan-idle-timer nil))
-  (when gnus/auto-scan-interval-timer
-    (cancel-timer gnus/auto-scan-interval-timer)
-    (setq gnus/auto-scan-interval-timer nil)))
+(gnus-demon-add-handler 'gnus-demon-scan-news 5 10)
 
 (setq doom-modeline-gnus nil
-      doom-modeline-gnus-timer 5)
+      doom-modeline-gnus-timer 0)
 (defun gnus/setup-on-start ()
   "Initialize Gnus modeline and custom keybindings on start."
-  (gnus/auto-scan-start)
+  (gnus-demon-init)
   (setq doom-modeline--gnus-started t
         shr-width nil)
   (keymap-set gnus-summary-mode-map "n" #'gnus/summary-next)
@@ -3755,42 +3823,6 @@ DURATION-SECS is the event duration in seconds."
     "Open Google Calendar day view in the default browser."
     (interactive)
     (browse-url "https://calendar.google.com/calendar/u/0/r/day"))
-
-  (defvar gcal/timeblock-idle-timer nil)
-  (defvar gcal/timeblock-interval-timer nil)
-
-  (defun gcal/timeblock-redraw-if-visible ()
-    "Redraw org-timeblock buffers if any are visible."
-    (when (seq-some (lambda (w)
-                      (string-match-p "\\*Org Timeblock" (buffer-name (window-buffer w))))
-                    (window-list))
-      (org-timeblock-redraw-buffers)))
-
-  (defun gcal/timeblock-schedule-redraw ()
-    "Schedule a redraw on next idle moment."
-    (when gcal/timeblock-idle-timer
-      (cancel-timer gcal/timeblock-idle-timer))
-    (setq gcal/timeblock-idle-timer
-          (run-with-idle-timer 5 nil #'gcal/timeblock-redraw-if-visible)))
-
-  (defun gcal/timeblock-auto-refresh-start ()
-    "Start auto-refreshing org-timeblock every 10 min when idle."
-    (interactive)
-    (gcal/timeblock-auto-refresh-stop)
-    (setq gcal/timeblock-interval-timer
-          (run-with-timer 600 600 #'gcal/timeblock-schedule-redraw)))
-
-  (defun gcal/timeblock-auto-refresh-stop ()
-    "Stop auto-refreshing org-timeblock."
-    (interactive)
-    (when gcal/timeblock-idle-timer
-      (cancel-timer gcal/timeblock-idle-timer)
-      (setq gcal/timeblock-idle-timer nil))
-    (when gcal/timeblock-interval-timer
-      (cancel-timer gcal/timeblock-interval-timer)
-      (setq gcal/timeblock-interval-timer nil)))
-
-  (add-hook 'org-timeblock-mode-hook #'gcal/timeblock-auto-refresh-start)
 
   (define-key org-timeblock-mode-map (kbd "RET") #'gcal/timeblock-show-entry)
   (define-key org-timeblock-mode-map (kbd "<double-mouse-1>") #'gcal/timeblock-show-entry)

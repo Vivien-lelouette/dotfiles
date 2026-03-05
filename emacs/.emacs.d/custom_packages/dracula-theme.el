@@ -102,8 +102,8 @@ read it before opening a new issue about your will.")
                 (fg2                  "#e2e2dc" "#e4e4e4" "brightwhite")
                 (fg3                  "#ccccc7" "#c6c6c6" "white")
                 (fg4                  "#b6b6b2" "#b2b2b2" "white")
-                (dark-red             "#880000" "#870000" "red") ; 40% darker
-                (dark-green           "#037a22" "#00af00" "green") ; 40% darker
+                (dark-red             "#3a1520" "#870000" "red") ; subtle dark red
+                (dark-green           "#1a3524" "#00af00" "green") ; subtle dark green
                 (dark-blue            "#0189cc" "#0087ff" "brightblue")))
       (faces '(;; default / basic faces
                (cursor :background ,dracula-purple)
