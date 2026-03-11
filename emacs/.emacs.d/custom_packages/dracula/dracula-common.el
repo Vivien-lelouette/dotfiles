@@ -1,4 +1,4 @@
-;;; dracula-theme.el --- Dracula Theme  -*- lexical-binding: t; -*-
+;;; dracula-common.el --- Shared foundation for Dracula themes  -*- lexical-binding: t; -*-
 
 ;; Copyright 2015-present, All rights reserved
 ;;
@@ -6,20 +6,16 @@
 
 ;; Maintainer: Étienne Deparis <etienne@depar.is>
 ;; Author: film42
-;; Version: 1.7.0
-;; Package-Requires: ((emacs "24.3"))
 ;; URL: https://github.com/dracula/emacs
 
 ;;; Commentary:
 
-;; A dark color theme available for a number of editors.
-;; This theme tries as much as possible to follow the consensual
-;; specification (see URL `https://spec.draculatheme.com/').
+;; Shared face definitions and configuration for Dracula theme variants.
+;; This file is not a theme itself -- it provides the infrastructure
+;; that dracula-theme.el and dracula-light-theme.el both use.
 
 ;;; Code:
-(deftheme dracula)
 
-
 ;;;; Configuration options:
 
 (defgroup dracula nil
@@ -75,38 +71,15 @@ There is a lot of discussion behind the 256 colors theme (see URL
 `https://github.com/dracula/emacs/pull/57').  Please take time to
 read it before opening a new issue about your will.")
 
-
-;;;; Theme definition:
 
-;; Assigment form: VARIABLE COLOR [256-COLOR [TTY-COLOR]]
-(let ((colors '(;; Upstream theme color
-                (dracula-bg           "#232530" "color-234" "black") ; official background
-                (dracula-bg-alternate "#282a36" "color-235" "black") ; alternate background
-                (dracula-disabled-bg  "#1f212c" "color-233" "black") ; official background
-                (dracula-fg           "#f8f8f2" "#ffffff" "brightwhite") ; official foreground
-                (dracula-current      "#282a36" "#282a36" "brightblack") ; official current-line/selection
-                (dracula-comment      "#6272a4" "#5f5faf" "blue")        ; official comment
-                (dracula-cyan         "#8be9fd" "#87d7ff" "brightcyan")  ; official cyan
-                (dracula-green        "#50fa7b" "#5fff87" "green")       ; official green
-                (dracula-orange       "#ffb86c" "#ffaf5f" "brightred")   ; official orange
-                (dracula-pink         "#ff79c6" "#ff87d7" "magenta")     ; official pink
-                (dracula-purple       "#bd93f9" "#af87ff" "brightmagenta") ; official purple
-                (dracula-red          "#ff5555" "#ff8787" "red")         ; official red
-                (dracula-yellow       "#f1fa8c" "#ffff87" "yellow")      ; official yellow
-                (dracula-selection    "#44475a" "#303030" "selection")
-                (dracula-selection-alternate    "#BD93F9" "#BD93F9" "selection")
-                (dracula-gtk-scrollbar "#a1a1a2" "unspecified" "unspecified")
-                ;; Other colors
-                (bg2                  "#373844" "#121212" "brightblack")
-                (bg3                  "#565761" "#444444" "brightblack")
-                (fg2                  "#e2e2dc" "#e4e4e4" "brightwhite")
-                (fg3                  "#ccccc7" "#c6c6c6" "white")
-                (fg4                  "#b6b6b2" "#b2b2b2" "white")
-                (dark-red             "#3a1520" "#870000" "red") ; subtle dark red
-                (dark-green           "#1a3524" "#00af00" "green") ; subtle dark green
-                (dark-blue            "#0189cc" "#0087ff" "brightblue")))
-      (faces '(;; default / basic faces
+;;;; Face specifications:
+
+(defun dracula-common--faces ()
+  "Return the alist of face specifications for Dracula themes.
+The returned alist uses backquote-comma syntax for color references."
+  '(;; default / basic faces
                (cursor :background ,dracula-purple)
+               (mc/cursor-face :box nil :background ,dracula-pink)
                (default :background ,dracula-bg :foreground ,dracula-fg)
                (default-italic :slant italic)
                (error :foreground ,dracula-red)
@@ -119,14 +92,14 @@ read it before opening a new issue about your will.")
                (window-divider-first-pixel :foreground ,bg2 :background ,bg2)
                (window-divider-last-pixel :foreground ,bg2 :background ,bg2)
                (highlight :foreground ,fg3 :background ,dracula-current)
-               (hl-line :background "#302b45" :extend t)
+               (hl-line :background ,hl-accent :extend t)
                (info-quoted-name :foreground ,dracula-orange)
                (info-string :foreground ,dracula-selection)
                (lazy-highlight :foreground ,fg2 :background ,bg2)
                (link :foreground ,dracula-cyan :underline t)
                (linum :slant italic :foreground ,bg3 :background ,dracula-bg)
                (line-number :slant italic :foreground ,bg3 :background ,dracula-bg)
-               (line-number-current-line :foreground ,dracula-fg :background ,dracula-bg)
+               (line-number-current-line :inherit line-number :foreground ,dracula-fg :background ,dracula-bg)
                ;; (match :background ,dracula-selection :foreground ,dracula-bg)
                (match :background ,dracula-selection)
                (menu :background ,dracula-current :inverse-video nil
@@ -142,15 +115,15 @@ read it before opening a new issue about your will.")
                           ,@(if dracula-alternate-mode-line-and-minibuffer
                                 (list :foreground fg3)
                               (list :foreground dracula-fg)))
-               (mode-line-active :inherit mode-line :background "#302b45" :box "#302b45")
+               (mode-line-active :inherit mode-line :background ,hl-accent :box ,hl-accent)
                (mode-line-inactive
-                :background ,dracula-bg :inverse-video nil :weight normal
+                :inherit mode-line :background ,dracula-bg :inverse-video nil :weight normal
                 ,@(if dracula-alternate-mode-line-and-minibuffer
                       (list :foreground dracula-comment :box dracula-bg)
                     (list :foreground fg4 :box dracula-bg)))
 
                ;; Doom-modeline
-               (doom-modeline-bar :foreground "#302b45" :background "#302b45")
+               (doom-modeline-bar :foreground ,hl-accent :background ,hl-accent)
                (doom-modeline-bar-inactive :foreground ,dracula-bg :background ,dracula-bg)
                (doom-modeline-emphasis :foreground ,dracula-purple :weight bold)
                (read-multiple-choice-face :inherit completions-first-difference)
@@ -955,59 +928,80 @@ read it before opening a new issue about your will.")
                (whitespace-trailing :inherit trailing-whitespace)
                ;; yard-mode
                (yard-tag-face :inherit font-lock-builtin-face)
-               (yard-directive-face :inherit font-lock-builtin-face))))
+               (yard-directive-face :inherit font-lock-builtin-face)))
 
-  (apply #'custom-theme-set-faces
-         'dracula
-         (let ((expand-with-func
-                (lambda (func spec)
-                  (let (reduced-color-list)
-                    (dolist (col colors reduced-color-list)
-                      (push (list (car col) (funcall func col))
-                            reduced-color-list))
-                    (eval `(let ,reduced-color-list
-                             (backquote ,spec))))))
-               whole-theme)
-           (pcase-dolist (`(,face . ,spec) faces)
-             (push `(,face
-                     ((((min-colors 16777216)) ; fully graphical envs
-                       ,(funcall expand-with-func 'cadr spec))
-                      (((min-colors 256))      ; terminal withs 256 colors
-                       ,(if dracula-use-24-bit-colors-on-256-colors-terms
-                            (funcall expand-with-func 'cadr spec)
-                          (funcall expand-with-func 'caddr spec)))
-                      (t                       ; should be only tty-like envs
-                       ,(funcall expand-with-func 'cadddr spec))))
-                   whole-theme))
-           whole-theme))
 
-  (apply #'custom-theme-set-variables
-         'dracula
-         (let ((get-func
-                (pcase (display-color-cells)
-                  ((pred (<= 16777216)) 'car) ; fully graphical envs
-                  ((pred (<= 256)) 'cadr)     ; terminal withs 256 colors
-                  (_ 'caddr))))               ; should be only tty-like envs
-           `((ansi-color-names-vector
-              [,(funcall get-func (alist-get 'dracula-bg colors))
-               ,(funcall get-func (alist-get 'dracula-red colors))
-               ,(funcall get-func (alist-get 'dracula-green colors))
-               ,(funcall get-func (alist-get 'dracula-selection colors))
-               ,(funcall get-func (alist-get 'dracula-comment colors))
-               ,(funcall get-func (alist-get 'dracula-purple colors))
-               ,(funcall get-func (alist-get 'dracula-cyan colors))
-               ,(funcall get-func (alist-get 'dracula-fg colors))])))))
+;;;; Color accessor:
 
-
+(defvar dracula-current-colors nil
+  "Alist of the currently active Dracula palette.
+Set automatically by `dracula-common--apply-theme'.")
+
+(defun dracula-color (name)
+  "Return the 24-bit hex color for NAME from the active Dracula palette.
+NAME is a symbol like \\='dracula-bg, \\='dracula-pink, etc."
+  (cadr (assq name dracula-current-colors)))
+
+
+;;;; Theme application:
+
+(defun dracula-common--apply-theme (theme-name colors)
+  "Apply face and variable settings for THEME-NAME using COLORS palette.
+COLORS is an alist where each entry is (NAME 24BIT-HEX 256-COLOR TTY-COLOR).
+THEME-NAME is a symbol like \\='dracula or \\='dracula-light."
+  (setq dracula-current-colors colors)
+  (let ((faces (dracula-common--faces)))
+    (apply #'custom-theme-set-faces
+           theme-name
+           (let ((expand-with-func
+                  (lambda (func spec)
+                    (let (reduced-color-list)
+                      (dolist (col colors reduced-color-list)
+                        (push (list (car col) (funcall func col))
+                              reduced-color-list))
+                      (eval `(let ,reduced-color-list
+                               (backquote ,spec))))))
+                 whole-theme)
+             (pcase-dolist (`(,face . ,spec) faces)
+               (push `(,face
+                       ((((min-colors 16777216)) ; fully graphical envs
+                         ,(funcall expand-with-func 'cadr spec))
+                        (((min-colors 256))      ; terminal with 256 colors
+                         ,(if dracula-use-24-bit-colors-on-256-colors-terms
+                              (funcall expand-with-func 'cadr spec)
+                            (funcall expand-with-func 'caddr spec)))
+                        (t                       ; should be only tty-like envs
+                         ,(funcall expand-with-func 'cadddr spec))))
+                     whole-theme))
+             whole-theme))
+
+    (apply #'custom-theme-set-variables
+           theme-name
+           (let ((get-func
+                  (pcase (display-color-cells)
+                    ((pred (<= 16777216)) 'car) ; fully graphical envs
+                    ((pred (<= 256)) 'cadr)     ; terminal with 256 colors
+                    (_ 'caddr))))               ; should be only tty-like envs
+             `((ansi-color-names-vector
+                [,(funcall get-func (alist-get 'dracula-bg colors))
+                 ,(funcall get-func (alist-get 'dracula-red colors))
+                 ,(funcall get-func (alist-get 'dracula-green colors))
+                 ,(funcall get-func (alist-get 'dracula-selection colors))
+                 ,(funcall get-func (alist-get 'dracula-comment colors))
+                 ,(funcall get-func (alist-get 'dracula-purple colors))
+                 ,(funcall get-func (alist-get 'dracula-cyan colors))
+                 ,(funcall get-func (alist-get 'dracula-fg colors))]))))))
+
+
 ;;;###autoload
 (when load-file-name
   (add-to-list 'custom-theme-load-path
                (file-name-as-directory (file-name-directory load-file-name))))
 
-(provide-theme 'dracula)
+(provide 'dracula-common)
 
 ;; Local Variables:
 ;; indent-tabs-mode: nil
 ;; End:
 
-;;; dracula-theme.el ends here
+;;; dracula-common.el ends here

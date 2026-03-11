@@ -4,6 +4,8 @@
 * Desktop Environment
 ** Shell command runner
 #+begin_src emacs-lisp
+  (require 'dracula-common)
+
   (defun shell/run-in-background (command)
     (let ((command-parts (split-string command "[ ]+")))
       (apply #'call-process `(,(car command-parts) nil 0 nil ,@(cdr command-parts)))))
@@ -16,7 +18,7 @@
 #+begin_src emacs-lisp
   (defun apps/vivaldi-browser (&optional url)
     (interactive)
-    (shell/async-command-no-output (concat "vivaldi --new-window " url)))
+    (shell/async-command-no-output (concat "vivaldi --remote-debugging-port=9222 --new-window " url)))
 
   (defun apps/cosmic-term ()
     (interactive)
@@ -103,9 +105,63 @@
 
 *** Tab-bar menu buttons
 #+BEGIN_SRC emacs-lisp
+(defvar tab-bar--popup-menu-buf " *tab-bar-popup*")
+
+(defun tab-bar--popup-menu-close ()
+  "Close the popup menu posframe."
+  (posframe-hide tab-bar--popup-menu-buf)
+  (remove-hook 'pre-command-hook #'tab-bar--popup-menu-dismiss))
+
+(defun tab-bar--popup-menu-dismiss ()
+  "Close popup menu when clicking outside it."
+  (unless (eq (window-buffer (selected-window))
+              (get-buffer tab-bar--popup-menu-buf))
+    (tab-bar--popup-menu-close)))
+
+(defun tab-bar--popup-menu-show (keymap)
+  "Show KEYMAP as a popup menu posframe near the tab-bar."
+  (if (and (get-buffer tab-bar--popup-menu-buf)
+           (frame-visible-p (buffer-local-value
+                             'posframe--frame
+                             (get-buffer tab-bar--popup-menu-buf))))
+      (tab-bar--popup-menu-close)
+    (let ((items '()))
+      (map-keymap
+       (lambda (_key binding)
+         (when (and (consp binding) (eq (car binding) 'menu-item))
+           (push (cons (nth 1 binding) (nth 2 binding)) items)))
+       keymap)
+      (setq items (nreverse items))
+      (when items
+        (with-current-buffer (get-buffer-create tab-bar--popup-menu-buf)
+          (let ((inhibit-read-only t))
+            (erase-buffer)
+            (dolist (item items)
+              (let ((cmd (cdr item)))
+                (insert-text-button
+                 (concat "  " (car item) "  ")
+                 'action (lambda (_btn)
+                           (let ((fn cmd))
+                             (tab-bar--popup-menu-close)
+                             (call-interactively fn)))
+                 'follow-link t
+                 'face '(:inherit default :height 1.0))
+                (insert "\n")))
+            (goto-char (point-min))
+            (setq-local cursor-type nil)
+            (read-only-mode 1)))
+        (posframe-show tab-bar--popup-menu-buf
+                       :position (cons 0 0)
+                       :poshandler #'posframe-poshandler-frame-top-left-corner
+                       :border-width 1
+                       :border-color (face-foreground 'shadow)
+                       :min-width 20
+                       :y-pixel-offset (tab-bar-height nil t))
+        (add-hook 'pre-command-hook #'tab-bar--popup-menu-dismiss)))))
+
 (defun tab-bar-system-menu ()
   (interactive)
-  (menu/show-dropdown system-bar-menu))
+  (tab-bar--popup-menu-show system-bar-menu))
 
 (defun tab-bar--raise-icon (icon)
   "Vertically center ICON in the tab-bar."
@@ -180,7 +236,7 @@
                      (setq tab-bar--recording-icon
                            (tab-bar--raise-icon (nerd-icons-mdicon "nf-md-record_circle")))))
            (text (format " %s %d:%02d " icon (/ secs 60) (% secs 60))))
-      (add-face-text-property 0 (length text) '(:foreground "#ff5555") nil text)
+      (add-face-text-property 0 (length text) `(:foreground ,(dracula-color 'dracula-red)) nil text)
       `((recording menu-item ,text ewm/record-region)))))
 
 (defun tab-bar-format-mail ()
@@ -270,7 +326,7 @@ We use [[https://codeberg.org/ezemtsov/ewm][EWM]] (Emacs Wayland Manager) as the
 #+begin_src emacs-lisp
   (defun system/lock-screen ()
     (interactive)
-    (shell/async-command-no-output "hyprlock"))
+    (shell/async-command-no-output "grim /tmp/lockscreen.png && hyprlock"))
 
   (defun system/logout ()
     (interactive)
@@ -335,6 +391,13 @@ We use [[https://codeberg.org/ezemtsov/ewm][EWM]] (Emacs Wayland Manager) as the
     ;; C-x C-x / C-c C-c: passthrough next keypress to surface
     (defvar ewm--passthrough-timer nil)
 
+    (defun ewm--passthrough-restore (prefix)
+      "Restore interception of PREFIX after passthrough timeout."
+      (add-to-list 'ewm-intercept-prefixes prefix)
+      (ewm--send-intercept-keys)
+      (setq ewm--passthrough-timer nil)
+      (message nil))
+
     (defun ewm/passthrough-prefix (key)
       "Temporarily stop intercepting C-KEY so the next press goes to the surface."
       (let ((prefix (aref (kbd (concat "C-" key)) 0)))
@@ -343,12 +406,7 @@ We use [[https://codeberg.org/ezemtsov/ewm][EWM]] (Emacs Wayland Manager) as the
         (ewm--send-intercept-keys)
         (message "C-%s passthrough — press it now" key)
         (setq ewm--passthrough-timer
-              (run-at-time 1 nil
-                           (lambda (p)
-                             (add-to-list 'ewm-intercept-prefixes p)
-                             (ewm--send-intercept-keys)
-                             (setq ewm--passthrough-timer nil))
-                           prefix))))
+              (run-at-time 1 nil #'ewm--passthrough-restore prefix))))
 
     ;; Intercept C-c from surfaces (like C-x) — must be set before ewm-mode enables
     (add-to-list 'ewm-intercept-prefixes ?\C-c)
@@ -375,7 +433,7 @@ We use [[https://codeberg.org/ezemtsov/ewm][EWM]] (Emacs Wayland Manager) as the
     ;; Dynamic application icons for EWM surfaces in doom-modeline
     ;; Looks up real app icons via .desktop files and the hicolor icon theme
     (defvar ewm-surface-icon-cache (make-hash-table :test 'equal)
-      "Cache mapping app-id to propertized icon string or `none'.")
+      "Cache mapping app-id to (COLOR-ICON . GRAYSCALE-ICON) or `none'.")
 
     (defun ewm-surface--xdg-data-dirs ()
       "Return list of XDG data directories."
@@ -425,34 +483,74 @@ We use [[https://codeberg.org/ezemtsov/ewm][EWM]] (Emacs Wayland Manager) as the
                        for path = (expand-file-name (concat "pixmaps/" icon-name ".png") dir)
                        when (file-exists-p path) return path)))))
 
-    (defun ewm-surface--make-icon-string (file)
+    (defun ewm-surface--make-icon-string (file &optional grayscale)
       "Create propertized string displaying icon image from FILE.
+      When GRAYSCALE is non-nil, wrap in an SVG with desaturation and darkening.
       Includes a face plist so doom-modeline-propertize-icon processes it correctly;
       the display property with the image takes precedence for rendering."
-      (propertize " " 'display
-                  (create-image file nil nil
-                                :height (frame-char-height)
-                                :ascent 'center)
-                  'face '(:family "" :height 1.0)))
+      (let* ((h (frame-char-height))
+             (img (if (not grayscale)
+                      (create-image file nil nil :height h :ascent 'center)
+                    (let* ((data (with-temp-buffer
+                                   (set-buffer-multibyte nil)
+                                   (insert-file-contents-literally file)
+                                   (base64-encode-region (point-min) (point-max))
+                                   (buffer-string)))
+                           (svg-p (string-suffix-p ".svg" file))
+                           (mime (if svg-p "image/svg+xml"
+                                   (format "image/%s" (file-name-extension file))))
+                           (fg (and svg-p
+                                    (let ((rgb (color-values
+                                                (face-foreground 'mode-line-inactive nil t))))
+                                      (format "#%02x%02x%02x"
+                                              (/ (nth 0 rgb) 256)
+                                              (/ (nth 1 rgb) 256)
+                                              (/ (nth 2 rgb) 256)))))
+                           (filter (if fg
+                                       (format "<filter id='g'>
+        <feFlood flood-color='%s' result='c'/>
+        <feComposite in='c' in2='SourceAlpha' operator='in'/>
+      </filter>" fg)
+                                     "<filter id='g'>
+        <feColorMatrix type='saturate' values='0'/>
+        <feComponentTransfer>
+          <feFuncR type='linear' slope='0.6'/>
+          <feFuncG type='linear' slope='0.6'/>
+          <feFuncB type='linear' slope='0.6'/>
+        </feComponentTransfer>
+      </filter>"))
+                           (svg (format
+                                 "<svg xmlns='http://www.w3.org/2000/svg' width='%d' height='%d'>
+      <defs>%s</defs>
+      <image href='data:%s;base64,%s' width='%d' height='%d' filter='url(#g)'/>
+    </svg>" h h filter mime data h h)))
+                      (create-image svg 'svg t :height h :ascent 'center)))))
+        (propertize " " 'display img 'face '(:family "" :height 1.0))))
 
-    (defun ewm-surface--lookup-icon (app-id)
-      "Look up icon for APP-ID via .desktop files, with caching."
+    (defun ewm-surface--lookup-icon (app-id &optional grayscale)
+      "Look up icon for APP-ID via .desktop files, with caching.
+      When GRAYSCALE is non-nil, return the desaturated variant."
       (let ((cached (gethash app-id ewm-surface-icon-cache)))
         (if cached
-            (unless (eq cached 'none) cached)
+            (unless (eq cached 'none)
+              (if grayscale (cdr cached) (car cached)))
           (let* ((desktop   (ewm-surface--find-desktop-file app-id))
                  (icon-name (and desktop (ewm-surface--desktop-icon-name desktop)))
                  (icon-file (and icon-name (ewm-surface--find-icon-file icon-name)))
-                 (result    (and icon-file (ewm-surface--make-icon-string icon-file))))
-            (puthash app-id (or result 'none) ewm-surface-icon-cache)
-            result))))
+                 (color     (and icon-file (ewm-surface--make-icon-string icon-file)))
+                 (gray      (and icon-file (ewm-surface--make-icon-string icon-file t))))
+            (puthash app-id (if color (cons color gray) 'none) ewm-surface-icon-cache)
+            (if grayscale gray color)))))
 
     (defun ewm-surface-icon-for-buffer (orig-fn &rest args)
-      "Return app icon for EWM surface buffers, fall back to ORIG-FN."
+      "Return app icon for EWM surface buffers, fall back to ORIG-FN.
+      Unfocused surfaces get a grayscale icon."
       (if (and (bound-and-true-p ewm-surface-app)
                (not (string-empty-p ewm-surface-app)))
-          (or (ewm-surface--lookup-icon ewm-surface-app)
-              (nerd-icons-mdicon "nf-md-application"))
+          (let ((grayscale (not (eq (current-buffer)
+                                    (window-buffer (selected-window))))))
+            (or (ewm-surface--lookup-icon ewm-surface-app grayscale)
+                (nerd-icons-mdicon "nf-md-application")))
         (apply orig-fn args)))
 
     (with-eval-after-load 'doom-modeline-core
@@ -472,7 +570,17 @@ We use [[https://codeberg.org/ezemtsov/ewm][EWM]] (Emacs Wayland Manager) as the
           (with-current-buffer where
             (doom-modeline-update-buffer-file-icon)
             (doom-modeline-set-modeline 'ewm-surface))))
-      (add-variable-watcher 'ewm-surface-app #'ewm-surface--on-app-set))
+      (add-variable-watcher 'ewm-surface-app #'ewm-surface--on-app-set)
+
+      (defun ewm-surface--update-icons-on-focus (&rest _)
+        "Refresh doom-modeline icons for visible EWM surfaces on focus change."
+        (dolist (frame (frame-list))
+          (dolist (win (window-list frame 'no-minibuf))
+            (with-current-buffer (window-buffer win)
+              (when (bound-and-true-p ewm-surface-app)
+                (doom-modeline-update-buffer-file-icon))))))
+      (add-hook 'window-selection-change-functions
+                #'ewm-surface--update-icons-on-focus))
 
     (defvar tab-bar--tabs-start-px nil "Cached pixel position where tabs area starts.")
     (defvar tab-bar--right-reserved-px nil "Cached max pixel width of right-side elements.")
@@ -538,10 +646,53 @@ We use [[https://codeberg.org/ezemtsov/ewm][EWM]] (Emacs Wayland Manager) as the
                 (window-width . 100)
                 (preserve-size . (t . nil)))))
 
+      (defun theme/apply-window-divider ()
+        "Set window-divider faces from the current Dracula palette."
+        (set-face-attribute 'window-divider nil :foreground (dracula-color 'dracula-bg-alternate))
+        (set-face-attribute 'window-divider-first-pixel nil :foreground (dracula-color 'dracula-bg-alternate))
+        (set-face-attribute 'window-divider-last-pixel nil :foreground (dracula-color 'dracula-bg-alternate)))
+      (add-hook 'theme/after-apply-hook #'theme/apply-window-divider)
+
+      (defun theme/apply-desktop ()
+        "Switch Cosmic, GTK and Qt themes to match the current Emacs theme."
+        (let ((light (memq 'dracula-light custom-enabled-themes)))
+          ;; Cosmic
+          (with-temp-file "~/.config/cosmic/com.system76.CosmicTheme.Mode/v1/is_dark"
+            (insert (if light "false" "true")))
+          ;; GTK color-scheme
+          (start-process "gsettings" nil "gsettings" "set"
+                         "org.gnome.desktop.interface" "color-scheme"
+                         (if light "prefer-light" "prefer-dark"))
+          ;; Qt
+          (let ((scheme (if light "CosmicLight" "CosmicDark")))
+            (dolist (conf '("~/.config/qt5ct/qt5ct.conf"
+                            "~/.config/qt6ct/qt6ct.conf"))
+              (let ((path (expand-file-name conf)))
+                (when (file-exists-p path)
+                  (with-temp-buffer
+                    (insert-file-contents path)
+                    (when (re-search-forward "^color_scheme_path=.*$" nil t)
+                      (replace-match (format "color_scheme_path=%s/.local/share/color-schemes/%s.colors"
+                                             (getenv "HOME") scheme)))
+                    (write-region (point-min) (point-max) path))))))
+          ;; Vivaldi theme + Dark Reader via Chrome DevTools Protocol
+          (theme/vivaldi-set light)))
+      (add-hook 'theme/after-apply-hook #'theme/apply-desktop)
+
+      (defun theme/vivaldi-daemon-ensure ()
+        "Start the vivaldi-ctl daemon if not already running."
+        (let ((script (expand-file-name "~/.emacs.d/scripts/vivaldi-ctl.py")))
+          (unless (file-exists-p (expand-file-name "~/.cache/vivaldi-theme.sock"))
+            (start-process "vivaldi-ctl-daemon" nil "python3" script "daemon"))))
+
+      (defun theme/vivaldi-set (light)
+        "Switch Vivaldi theme and Dark Reader to match LIGHT mode."
+        (let ((script (expand-file-name "~/.emacs.d/scripts/vivaldi-ctl.py")))
+          (theme/vivaldi-daemon-ensure)
+          (start-process "vivaldi-ctl" nil "python3" script
+                         (if light "light" "dark"))))
+
       (theme/apply)
-      (set-face-attribute 'window-divider nil :foreground "#282a36")
-      (set-face-attribute 'window-divider-first-pixel nil :foreground "#282a36")
-      (set-face-attribute 'window-divider-last-pixel nil :foreground "#282a36")
       (modify-all-frames-parameters '((right-divider-width . 8)
                                       (bottom-divider-width . 8)))
 
@@ -700,6 +851,41 @@ We use [[https://codeberg.org/ezemtsov/ewm][EWM]] (Emacs Wayland Manager) as the
       '((?! . 1) (?@ . 2) (?# . 3) (?$ . 4) (?% . 5)
         (?^ . 6) (?& . 7) (?* . 8) (?\( . 9)))
 
+    ;; Multi-source M-x: Emacs commands + XDG apps in a single Vertico interface
+    (defvar consult--source-emacs-command
+      `(:name "Emacs command"
+        :narrow ?x
+        :category command
+        :items ,(lambda ()
+                  (let (cmds)
+                    (mapatoms (lambda (sym)
+                                (when (commandp sym)
+                                  (push (symbol-name sym) cmds))))
+                    (sort cmds #'string<))))
+      "Consult multi source for Emacs interactive commands.")
+
+    (defvar consult--source-xdg-app
+      `(:name "Application"
+        :narrow ?a
+        :category app
+        :face font-lock-builtin-face
+        :items ,(lambda () (mapcar #'car (ewm-list-xdg-apps)))
+        :action ,(lambda (name) (ewm-launch-xdg-command name)))
+      "Consult multi source for XDG desktop applications.")
+
+    (defun ewm/execute-extended-command ()
+      "Multi-source M-x: Emacs commands + XDG apps."
+      (interactive)
+      (let ((selected (consult--multi
+                       (list consult--source-emacs-command
+                             consult--source-xdg-app)
+                       :prompt "M-x: "
+                       :sort nil)))
+        (when selected
+          (pcase-let ((`(,cand . ,src) selected))
+            (unless (plist-get src :action)
+              (command-execute (intern cand)))))))
+
     ;; Keybindings in ewm-mode-map (always active, intercepted from surfaces)
     :bind (:map ewm-mode-map
                 ;; refresh setup
@@ -711,8 +897,9 @@ We use [[https://codeberg.org/ezemtsov/ewm][EWM]] (Emacs Wayland Manager) as the
                 ("s-a" . ewm-launch-app)
                 ("s-d" . ewm/focus-ednc)
                 ("s-t" . nil)
-                ("s-l" . system/lock-screen)
-                ("s-x" . execute-extended-command)
+                ;; ("s-l" . system/lock-screen)
+                ("s-x" . ewm/execute-extended-command)
+                ("M-x" . ewm/execute-extended-command)
 
                 ;; Screenshot / recording
                 ("s-c" . ewm/screenshot-region)
@@ -732,7 +919,7 @@ We use [[https://codeberg.org/ezemtsov/ewm][EWM]] (Emacs Wayland Manager) as the
 
                 ;; Tab switching
                 ("s-<tab>" . tab-next)
-                ("s-<iso-lefttab>" . tab-next)
+                ("s-<iso-lefttab>" . tab-previous)
 
                 ;; Applications
                 ("s-i" . apps/vivaldi-browser)

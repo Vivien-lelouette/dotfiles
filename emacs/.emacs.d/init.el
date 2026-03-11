@@ -363,27 +363,57 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
 
 (setq-default fill-column 148)
 
-(defun fonts/set-fonts ()
-  (interactive)
-  (set-face-attribute 'default nil :family "JetBrains Mono")
-
-  ;; Set the fixed pitch face
-  (set-face-attribute 'fixed-pitch nil :family "JetBrains Mono" :height 1.0)
-
-  ;; Set the variable pitch face
-  (set-face-attribute 'variable-pitch nil :family "Cantarell" :weight 'regular :height 1.0)
-  (fix-char-width-for-spinners))
-(if (daemonp)
-    (add-hook 'server-after-make-frame-hook #'fonts/set-fonts)
-  (add-hook 'window-setup-hook #'fonts/set-fonts))
-
-(use-package textsize
-  :vc (:url "https://github.com/WJCFerguson/textsize" :rev :newest)
+(use-package fontaine
   :custom
-  (textsize-default-points 10)
-  (textsize-monitor-size-thresholds '((0 . -3) (280 . 0) (500 . 3) (1000 . 6) (1500 . 9)))
-  (textsize-pixel-pitch-thresholds '((0 . 3) (0.12 . 0) (0.18 . -3) (0.22 . -6) (0.40 . 12)))
-  :init (textsize-mode))
+  (fontaine-latest-state-file
+   (locate-user-emacs-file "var/fontaine-latest-state.eld"))
+  (fontaine-presets
+   '((regular
+      :default-height 110)
+     (presentation
+      :default-height 160)
+     (huge
+      :default-height 200)
+     (t
+      :default-family "JetBrainsMono Nerd Font"
+      :default-weight regular
+      :fixed-pitch-family "JetBrainsMono Nerd Font"
+      :fixed-pitch-height 1.0
+      :variable-pitch-family "Cantarell"
+      :variable-pitch-weight regular
+      :variable-pitch-height 1.0
+      :mode-line-active-height 1.0
+      :mode-line-inactive-height 1.0
+      :line-number-height 1.0
+      :bold-weight bold
+      :italic-slant italic)))
+  :config
+  (fontaine-set-preset (or (fontaine-restore-latest-preset) 'regular))
+  (fontaine-mode 1))
+
+(setq use-default-font-for-symbols nil)
+
+;; JetBrains Mono for standard symbol ranges
+(set-fontset-font t 'symbol "JetBrainsMono Nerd Font" nil 'prepend)
+
+;; JetBrainsMono Nerd Font for extended symbols (✓ ✗ and Nerd icons)
+(set-fontset-font t '(#x2700 . #x27BF) "JetBrainsMono Nerd Font")  ;; Dingbats (✓ ✗)
+(set-fontset-font t '(#xE000 . #xF8FF) "JetBrainsMono Nerd Font")  ;; Nerd Font PUA icons
+(set-fontset-font t '(#xF0000 . #xFFFFF) "JetBrainsMono Nerd Font") ;; Nerd Font Supplementary PUA
+
+;; Fallback for emoji that no monospace font covers (✅ ❌)
+(set-fontset-font t 'emoji "Noto Sans Symbols" nil 'append)
+
+;; Character widths — monospace ranges to 1 cell
+(dolist (range '((#x2500 . #x257F)    ;; Box drawing
+                 (#x2580 . #x259F)    ;; Block elements
+                 (#x25A0 . #x25FF)    ;; Geometric shapes
+                 (#x2190 . #x21FF)    ;; Arrows
+                 (#x2700 . #x27BF)    ;; Dingbats
+                 (#x2800 . #x28FF)    ;; Braille
+                 (#xE000 . #xF8FF)))  ;; Nerd Font PUA
+  (set-char-table-range char-width-table range 1))
+(set-char-table-range char-width-table #x00B7 1)
 
 (setq auth-sources '("~/.authinfo.json.gpg" "~/.authinfo.gpg"))
 
@@ -402,19 +432,56 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
 
 (defun theme/hide-minibuffer-scrollbar (&optional frame)
-  (set-window-scroll-bars (minibuffer-window frame) 0 nil))
+    (set-window-scroll-bars (minibuffer-window frame) 0 nil))
 
-(defun theme/apply ()
-  (interactive)
-  (load-file "~/.emacs.d/custom_packages/dracula-theme.el")
-  (load-theme 'dracula t)
+  (add-to-list 'load-path "~/.emacs.d/custom_packages/dracula/")
+  (add-to-list 'custom-theme-load-path "~/.emacs.d/custom_packages/dracula/")
+  (require 'dracula-common)
 
-  (modify-all-frames-parameters '((internal-border-width . 0)))
-  (fringe-mode '(12 . 12))
-  (theme/hide-minibuffer-scrollbar))
+  (defvar theme/after-apply-hook nil
+    "Hook run after `theme/apply' loads a theme.
+Use this to refresh faces that depend on `dracula-color'.")
 
-(add-hook 'after-make-frame-functions #'theme/hide-minibuffer-scrollbar)
-(add-hook 'after-init-hook #'theme/apply)
+  (defun theme/apply (&optional variant)
+    "Apply Dracula theme.  VARIANT can be \\='light for the light variant."
+    (mapc #'disable-theme '(dracula dracula-light))
+    (let ((theme (if (eq variant 'light) 'dracula-light 'dracula)))
+      (load-theme theme t))
+    (modify-all-frames-parameters '((internal-border-width . 0)))
+    (fringe-mode '(12 . 12))
+    (theme/hide-minibuffer-scrollbar)
+    (run-hooks 'theme/after-apply-hook))
+
+  (defun theme/dark ()
+    "Apply Dracula dark theme."
+    (interactive)
+    (theme/apply))
+
+  (defun theme/light ()
+    "Apply Dracula light theme."
+    (interactive)
+    (theme/apply 'light))
+
+  ;; GTK CSS injection via dynamic module (scrollbar theming)
+  (module-load (expand-file-name "~/.emacs.d/custom_packages/gtk-css.so"))
+
+  (defun theme/apply-gtk-scrollbar ()
+    "Update GTK scrollbar colors from the current Dracula palette."
+    (gtk-css-load
+     (format "scrollbar { background-color: %s; }
+scrollbar trough { background-color: %s; border: none; }
+scrollbar slider { background-color: %s; border-color: transparent; }
+scrollbar slider:hover { background-color: %s; }
+scrollbar slider:active { background-color: %s; }"
+             (dracula-color 'dracula-bg)
+             (dracula-color 'dracula-bg)
+             (dracula-color 'dracula-comment)
+             (dracula-color 'dracula-fg)
+             (dracula-color 'dracula-pink))))
+  (add-hook 'theme/after-apply-hook #'theme/apply-gtk-scrollbar)
+
+  (add-hook 'after-make-frame-functions #'theme/hide-minibuffer-scrollbar)
+  (add-hook 'after-init-hook #'theme/apply)
 
 (use-package doom-modeline
   :hook (after-init . doom-modeline-mode)
@@ -515,7 +582,8 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
   (vertico-mode 1)
   (vertico-buffer-mode 1)
   :config
-  (setq vertico-buffer-display-action
+  (setq vertico-cycle t
+        vertico-buffer-display-action
         '(display-buffer-in-direction
           (direction . below)
           (window-height . 0.2))))
@@ -544,7 +612,78 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
     (dolist (map-sym (ensure-list (cdr entry)))
       (when (and (symbolp map-sym) (boundp map-sym)
                  (keymapp (symbol-value map-sym)))
-        (embark/add-ctrl-bindings (symbol-value map-sym))))))
+        (embark/add-ctrl-bindings (symbol-value map-sym)))))
+
+  (defun embark/kill-ring-delete (text)
+    "Delete TEXT from the kill ring."
+    (setq kill-ring (delete text kill-ring))
+    (when (equal text (car kill-ring-yank-pointer))
+      (setq kill-ring-yank-pointer kill-ring)))
+
+  (defvar-keymap embark-kill-ring-map
+    :doc "Embark actions for kill-ring entries."
+    :parent embark-general-map
+    "d" #'embark/kill-ring-delete)
+
+  (add-to-list 'embark-keymap-alist '(kill-ring . embark-kill-ring-map))
+
+  (defun embark/which-key-indicator ()
+    "Embark indicator that displays keymaps using which-key."
+    (lambda (&optional keymap targets prefix)
+      (if (null keymap)
+          (when-let* ((buf (get-buffer which-key-buffer-name))
+                      (win (get-buffer-window buf)))
+            (quit-window nil win))
+        (condition-case nil
+            (let* ((vertico-win
+                    (when-let* ((mb-win (active-minibuffer-window))
+                                (mb-buf (window-buffer mb-win)))
+                      (with-current-buffer mb-buf
+                        (when (and (bound-and-true-p vertico--candidates-ov)
+                                   (overlayp vertico--candidates-ov))
+                          (let ((w (overlay-get vertico--candidates-ov 'window)))
+                            (when (window-live-p w) w))))))
+                   (which-key-popup-type 'custom)
+                   (which-key-custom-popup-max-dimensions-function
+                    (lambda (_)
+                      (cons (round (* (frame-height) 0.25)) (frame-width))))
+                   (which-key-custom-show-popup-function
+                    (lambda (_dim)
+                      (when-let* ((buf (get-buffer which-key-buffer-name)))
+                        (display-buffer buf
+                          (if vertico-win
+                              `((display-buffer-in-direction)
+                                (direction . below)
+                                (window . ,vertico-win)
+                                (window-height . fit-window-to-buffer))
+                            '((display-buffer-at-bottom)
+                              (window-height . fit-window-to-buffer)))))))
+                   (which-key-custom-hide-popup-function
+                    (lambda ()
+                      (when-let* ((buf (get-buffer which-key-buffer-name))
+                                  (win (get-buffer-window buf)))
+                        (quit-window nil win)))))
+              (cl-letf (((symbol-function 'set-transient-map) #'ignore))
+                (which-key--show-keymap
+                 "Embark"
+                 (if prefix (lookup-key keymap prefix) keymap)
+                 nil nil t)))
+          (error nil)))))
+
+  (defun embark/hide-which-key-indicator (fn &rest args)
+    "Hide which-key indicator when using the completing-read prompter."
+    (which-key--hide-popup-ignore-command)
+    (let ((embark-indicators
+           (remq #'embark/which-key-indicator embark-indicators)))
+      (apply fn args)))
+
+  (advice-add #'embark-completing-read-prompter
+              :around #'embark/hide-which-key-indicator)
+
+  (setq embark-indicators
+        '(embark/which-key-indicator
+          embark-highlight-indicator
+          embark-isearch-highlight-indicator)))
 
 (use-package embark-consult
   :after (embark consult)
@@ -603,7 +742,8 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
 (use-package org-tree-slide
   :config
   (define-key org-tree-slide-mode-map (kbd "M-p") 'org-tree-slide-move-previous-tree)
-  (define-key org-tree-slide-mode-map (kbd "M-n") 'org-tree-slide-move-next-tree))
+  (define-key org-tree-slide-mode-map (kbd "M-n") 'org-tree-slide-move-next-tree)
+  (setq org-tree-slide-slide-in-blank-lines 0))
 
 ;; (make-directory "~/RoamNotes")
 (use-package org-roam
@@ -644,19 +784,29 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
   (require 'bind-key)
   (bind-key "M-j" #'avy-goto-char-timer))
 
-(defun mc/setup-cursor-face ()
-  "Set up cursor face for multiple-cursors mode."
-  (set-face-attribute 'mc/cursor-bar-face nil :height 1 :background nil :inherit 'cursor))
+(defvar mc/--hl-line-was-active nil
+  "Whether global-hl-line-mode was active before entering MC mode.")
+(defun mc/disable-hl-line ()
+  "Disable hl-line when multiple-cursors is active, if it was on."
+  (setq mc/--hl-line-was-active global-hl-line-mode)
+  (when global-hl-line-mode
+    (global-hl-line-mode -1)))
+(defun mc/enable-hl-line ()
+  "Re-enable hl-line when multiple-cursors is deactivated, if it was on."
+  (when mc/--hl-line-was-active
+    (global-hl-line-mode 1)))
 (use-package multiple-cursors
-  :vc (:url "https://github.com/magnars/multiple-cursors.el" :rev :newest)
+  :vc (:url "htts://github.com/magnars/multiple-cursors.el" :rev :newest)
   :hook
-  ((multiple-cursors-mode . mc/setup-cursor-face))
+  ((multiple-cursors-mode-enabled . mc/disable-hl-line)
+   (multiple-cursors-mode-disabled . mc/enable-hl-line))
   :config
   (define-key mc/keymap (kbd "<return>") nil)
-  (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
-  (global-set-key (kbd "C-}") 'mc/mark-next-like-this)
-  (global-set-key (kbd "C-{") 'mc/mark-previous-like-this)
-  (global-set-key (kbd "C-'") 'mc/mark-all-like-this)
+  (global-set-key (kbd "C->") 'mc/mark-next-like-this)
+  (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
+  (global-set-key (kbd "C-M-<") 'mc/mark-all-like-this)
+  (global-set-key (kbd "C-M->") 'mc/mark-all-like-this)
+  (global-set-key (kbd "C-M-?") 'mc/edit-lines)
   (global-set-key (kbd "C-S-<mouse-1>") 'mc/add-cursor-on-click)
   (setq mc/black-list-prefer t))
 
@@ -816,12 +966,6 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
                          host (or port 5432) db user pass)))
       (pgmacs-open-string str))))
 
-(use-package emms
-  :config
-  (emms-all)
-  (setq emms-player-list '(emms-player-vlc)
-        emms-info-functions '(emms-info-native)))
-
 (use-package string-inflection
   :defer t
   :bind (("C-c C-u C-u" . string-inflection-upcase)
@@ -833,6 +977,10 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
 
 (use-package sudo-edit
   :commands (sudo-edit sudo-edit-find-file))
+
+(use-package browse-kill-ring
+  :defer t
+  :bind ("M-Y" . browse-kill-ring))
 
 (use-package which-key
   :defer 2  ; Load after 2 seconds idle
@@ -855,7 +1003,7 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
         which-key-custom-popup-max-dimensions-function #'which-key/popup-dimensions
         which-key-custom-show-popup-function #'which-key/show-popup
         which-key-custom-hide-popup-function #'which-key/hide-popup
-        which-key-idle-delay 0.5)
+        which-key-idle-delay 2)
   (which-key-mode 1))
 
 (use-package whole-line-or-region
@@ -1605,8 +1753,8 @@ Preserves context (region, files, etc.) like the default behavior."
            (interactive "e")
            (switch-to-buffer (joplin--note-buffer ,id))))
       (propertize label
-                  'face '(:foreground "#6272a4")
-                  'mouse-face '(:foreground "#bd93f9" :underline t)
+                  'face `(:foreground ,(dracula-color 'dracula-comment))
+                  'mouse-face `(:foreground ,(dracula-color 'dracula-purple) :underline t)
                   'help-echo date-str
                   'keymap map)))
 
@@ -1617,19 +1765,19 @@ Preserves context (region, files, etc.) like the default behavior."
               (next (joplin--journal-find-adjacent title  1)))
           (list
            "  "
-           (propertize "|" 'face '(:foreground "#44475a"))
+           (propertize "|" 'face `(:foreground ,(dracula-color 'dracula-selection)))
            "  "
            (if prev
                (joplin--journal-nav-link
                 (concat "<< " (car prev))
                 (car prev) (cdr prev))
-             (propertize "<< ···" 'face '(:foreground "#44475a")))
+             (propertize "<< ···" 'face `(:foreground ,(dracula-color 'dracula-selection))))
            "    "
            (if next
                (joplin--journal-nav-link
                 (concat (car next) " >>")
                 (car next) (cdr next))
-             (propertize "··· >>" 'face '(:foreground "#44475a")))))
+             (propertize "··· >>" 'face `(:foreground ,(dracula-color 'dracula-selection))))))
       ""))
 
   (defun joplin--rename-buffer-from-note ()
@@ -2903,15 +3051,19 @@ Uses `magit/jira-image-cache' for already-fetched images."
             (replace-regexp-in-string "^[Directory ]*" "" (pwd)))
           default-directory))))
 
-(custom-set-faces
- `(ansi-color-black ((t (:foreground "#282a36"))))
- `(ansi-color-red ((t (:foreground "#ff5555"))))
- `(ansi-color-green ((t (:foreground "#50fa7b"))))
- `(ansi-color-yellow ((t (:foreground "#f1fa8c"))))
- `(ansi-color-blue ((t (:foreground "#bd93f9"))))
- `(ansi-color-magenta ((t (:foreground "#ff79c6"))))
- `(ansi-color-cyan ((t (:foreground "#8be9fd"))))
- `(ansi-color-gray ((t (:foreground "#f8f8f2")))))
+(defun theme/apply-ansi-colors ()
+  "Set ansi-color faces from the current Dracula palette."
+  (custom-set-faces
+   `(ansi-color-black ((t (:foreground ,(dracula-color 'dracula-bg)))))
+   `(ansi-color-red ((t (:foreground ,(dracula-color 'dracula-red)))))
+   `(ansi-color-green ((t (:foreground ,(dracula-color 'dracula-green)))))
+   `(ansi-color-yellow ((t (:foreground ,(dracula-color 'dracula-yellow)))))
+   `(ansi-color-blue ((t (:foreground ,(dracula-color 'dracula-purple)))))
+   `(ansi-color-magenta ((t (:foreground ,(dracula-color 'dracula-pink)))))
+   `(ansi-color-cyan ((t (:foreground ,(dracula-color 'dracula-cyan)))))
+   `(ansi-color-gray ((t (:foreground ,(dracula-color 'dracula-fg)))))))
+(theme/apply-ansi-colors)
+(add-hook 'theme/after-apply-hook #'theme/apply-ansi-colors)
 
 (setq eshell-banner-message "")
 
@@ -2994,29 +3146,6 @@ main window without closing the side window."
   (setq eshell-visual-commands '()
         eat-enable-blinking-text nil)
 
-  (defun fix-char-width-for-spinners ()
-    "Fix character width for common spinner/animation characters."
-    (setq use-default-font-for-symbols nil)
-
-    (set-fontset-font t 'symbol "JetBrains Mono" nil 'prepend)
-
-    (set-fontset-font t 'emoji "JetBrains Mono" nil 'prepend)
-
-    (set-fontset-font t '(#x2800 . #x28FF) "JetBrains Mono")
-    (set-fontset-font t '(#x2500 . #x257F) "JetBrains Mono")
-    (set-fontset-font t '(#x2580 . #x259F) "JetBrains Mono")
-    (set-fontset-font t '(#x2190 . #x21FF) "JetBrains Mono")
-    (set-fontset-font t '(#x2700 . #x27BF) "JetBrains Mono")
-    (set-fontset-font t #x00B7 "JetBrains Mono")
-
-    (set-char-table-range char-width-table '(#x2800 . #x28FF) 1)  ;; Braille
-    (set-char-table-range char-width-table '(#x2500 . #x257F) 1)  ;; Box drawing
-    (set-char-table-range char-width-table '(#x2580 . #x259F) 1)  ;; Block elements
-    (set-char-table-range char-width-table '(#x25A0 . #x25FF) 1)  ;; Geometric shapes
-    (set-char-table-range char-width-table '(#x2190 . #x21FF) 1)  ;; Arrows
-    (set-char-table-range char-width-table '(#x2700 . #x27BF) 1)  ;; Dingbats (✢ ✶ ✻ ✽)
-    (set-char-table-range char-width-table #x00B7 1))             ;; Middle dot (· ✢ ✶ ✻ ✽)
-
   (defvar vv/eat-shell (or (executable-find "nu") (getenv "SHELL") "bash"))
   (defvar vv/eat-shell-flag (if (string-match-p "nu\\|bash\\|zsh\\|sh" vv/eat-shell) "-c" "-Command"))
 
@@ -3058,29 +3187,32 @@ main window without closing the side window."
     "Enable auto-scroll for eat terminal buffers."
     (setq-local eat--synchronize-scroll-function #'eat--synchronize-scroll))
   (add-hook 'eat-mode-hook #'eat/enable-auto-scroll)
+  (defun theme/apply-eat-colors ()
+    "Set eat terminal color faces from the current Dracula palette."
+    (when (facep 'eat-term-color-0)
+      ;; Couleurs standard (0-7)
+      (set-face-foreground 'eat-term-color-0 (dracula-color 'dracula-bg))        ; black
+      (set-face-foreground 'eat-term-color-1 (dracula-color 'dracula-red))       ; red
+      (set-face-foreground 'eat-term-color-2 (dracula-color 'dracula-green))     ; green
+      (set-face-foreground 'eat-term-color-3 (dracula-color 'dracula-yellow))    ; yellow
+      (set-face-foreground 'eat-term-color-4 (dracula-color 'dracula-purple))    ; blue
+      (set-face-foreground 'eat-term-color-5 (dracula-color 'dracula-pink))      ; magenta
+      (set-face-foreground 'eat-term-color-6 (dracula-color 'dracula-cyan))      ; cyan
+      (set-face-foreground 'eat-term-color-7 (dracula-color 'dracula-fg))        ; white
+      ;; Couleurs bright (8-15)
+      (set-face-foreground 'eat-term-color-8 (dracula-color 'dracula-comment))   ; bright black (gris)
+      (set-face-foreground 'eat-term-color-9 (dracula-color 'dracula-red))       ; bright red
+      (set-face-foreground 'eat-term-color-10 (dracula-color 'dracula-green))    ; bright green
+      (set-face-foreground 'eat-term-color-11 (dracula-color 'dracula-yellow))   ; bright yellow
+      (set-face-foreground 'eat-term-color-12 (dracula-color 'dracula-purple))   ; bright blue
+      (set-face-foreground 'eat-term-color-13 (dracula-color 'dracula-pink))     ; bright magenta
+      (set-face-foreground 'eat-term-color-14 (dracula-color 'dracula-cyan))     ; bright cyan
+      (set-face-foreground 'eat-term-color-15 (dracula-color 'dracula-fg))))     ; bright white
+  (add-hook 'theme/after-apply-hook #'theme/apply-eat-colors)
   (with-eval-after-load 'eat
-    ;; Couleurs standard (0-7)
-    (set-face-foreground 'eat-term-color-0 "#282a36")  ; black
-    (set-face-foreground 'eat-term-color-1 "#ff5555")  ; red
-    (set-face-foreground 'eat-term-color-2 "#50fa7b")  ; green
-    (set-face-foreground 'eat-term-color-3 "#f1fa8c")  ; yellow
-    (set-face-foreground 'eat-term-color-4 "#bd93f9")  ; blue
-    (set-face-foreground 'eat-term-color-5 "#ff79c6")  ; magenta
-    (set-face-foreground 'eat-term-color-6 "#8be9fd")  ; cyan
-    (set-face-foreground 'eat-term-color-7 "#f8f8f2")  ; white
-
-    ;; Couleurs bright (8-15)
-    (set-face-foreground 'eat-term-color-8 "#6272a4")   ; bright black (gris)
-    (set-face-foreground 'eat-term-color-9 "#ff6e6e")   ; bright red
-    (set-face-foreground 'eat-term-color-10 "#69ff94")  ; bright green
-    (set-face-foreground 'eat-term-color-11 "#ffffa5")  ; bright yellow
-    (set-face-foreground 'eat-term-color-12 "#d6acff")  ; bright blue
-    (set-face-foreground 'eat-term-color-13 "#ff92df")  ; bright magenta
-    (set-face-foreground 'eat-term-color-14 "#a4ffff")  ; bright cyan
-    (set-face-foreground 'eat-term-color-15 "#ffffff")
-
+    (theme/apply-eat-colors)
     (setq eat-term-scrollback-size 400000
-          eat--synchronize-scroll-function #'eat--synchronize-scroll)) ; bright white
+          eat--synchronize-scroll-function #'eat--synchronize-scroll))
   )
 
 (defun eshell/emacs (file)
@@ -3130,18 +3262,18 @@ main window without closing the side window."
 
 (defvar dired/video-extensions
     '("mp4" "mkv" "avi" "mov" "webm" "flv" "ogv" "mpg" "mpeg" "wmv" "m4v" "divx" "vob" "rmvb")
-    "Video file extensions to open with EMMS.")
+    "Video file extensions to open with mpv.")
 
   (defun dired/find-file ()
     "In dired, open the file named on this line.
-Video files are played with EMMS, other files are visited normally."
+Video files are played with mpv, other files are visited normally."
     (interactive)
     (let* ((file (dired-get-filename nil t))
            (ext (downcase (or (file-name-extension file) ""))))
       (if (member ext dired/video-extensions)
           (progn
-            (message "Playing %s with EMMS..." file)
-            (emms-play-file file))
+            (message "Playing %s with mpv..." file)
+            (start-process "mpv" nil "mpv" "--keep-open" file))
         (dired-find-file))))
 
   (defun dired/open-file ()
@@ -3404,7 +3536,7 @@ If at the last article, fetch 200 more and then move to the next one."
 (require 'gnus)
 (require 'gnus-demon)
 
-(gnus-demon-add-handler 'gnus-demon-scan-news 5 10)
+(gnus-demon-add-handler 'gnus-demon-scan-news 5 t)
 
 (setq doom-modeline-gnus nil
       doom-modeline-gnus-timer 0)
@@ -3813,7 +3945,5 @@ DURATION-SECS is the event duration in seconds."
   (let ((local-settings "~/.emacs.d/local.el"))
     (when (file-exists-p local-settings)
       (load-file local-settings)))
-  (lsp)
-  (when (display-graphic-p)
-    (fix-char-width-for-spinners)))
+  (lsp))
 (add-hook 'after-init-hook #'init/load-local-settings)

@@ -1,0 +1,70 @@
+#+TITLE: MPV Configuration
+#+PROPERTY: header-args :tangle .config/mpv/mpv.conf :mkdirp yes
+
+* MPV
+
+Configuration for the mpv media player with Dracula theme colors.
+
+#+BEGIN_SRC conf
+  # Keep window open after video ends
+  keep-open=yes
+
+  # Dracula background
+  background=color
+  background-color="#FF232530"
+
+  # OSD Dracula theme
+  osd-color="#bd93f9"
+  osd-border-color="#bd93f9"
+  osd-shadow-color="#bd93f9"
+  osd-back-color="#bd93f9"
+
+  osd-font-size=24
+  osd-border-size=0
+
+  # Disable default OSC (ModernZ replaces it)
+  osc=no
+  osd-bar=no
+#+END_SRC
+
+* Input bindings
+
+Override default bindings to use =no-osd= seek (ModernZ handles the display via =osc_on_seek=).
+
+#+BEGIN_SRC conf :tangle .config/mpv/input.conf
+  RIGHT seek  5
+  LEFT  seek -5
+  UP    seek  60
+  DOWN  seek -60
+  Shift+RIGHT seek  1 exact
+  Shift+LEFT  seek -1 exact
+#+END_SRC
+
+* ModernZ OSC
+
+Modern OSC replacement with Dracula colors. Install =modernz.lua= and its font:
+
+#+BEGIN_SRC shell :tangle no
+  curl -Lo ~/.config/mpv/scripts/modernz.lua https://github.com/Samillion/ModernZ/releases/latest/download/modernz.lua
+  curl -Lo ~/.config/mpv/fonts/Material-Design-Iconic-Round.ttf https://github.com/Samillion/ModernZ/releases/latest/download/Material-Design-Iconic-Round.ttf
+#+END_SRC
+
+#+BEGIN_SRC conf :tangle .config/mpv/script-opts/modernz.conf
+  osc_on_seek=yes
+  persistentprogress=no
+  persistentprogressheight=2
+  osc_color=#232530
+  window_title_color=#f8f8f2
+  window_controls_color=#f8f8f2
+  title_color=#f8f8f2
+  seekbarfg_color=#bd93f9
+  seekbarbg_color=#44475a
+  seekbar_cache_color=#6272a4
+  time_color=#f8f8f2
+  chapter_title_color=#f8f8f2
+  side_buttons_color=#f8f8f2
+  middle_buttons_color=#f8f8f2
+  playpause_color=#f8f8f2
+  hover_effect_color=#ff79c6
+  held_element_color=#6272a4
+#+END_SRC
