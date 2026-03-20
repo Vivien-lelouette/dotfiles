@@ -183,6 +183,31 @@
 
 (setq hl-line-overlay-priority -50)
 
+(use-package windresize
+  :bind
+  (
+   (:map windresize-map
+   ("C-M-<down>" . windresize-down-fixed)
+   ("C-M-<left>" . windresize-left-fixed)
+   ("C-M-<right>" . windresize-right-fixed)
+   ("C-M-<up>" . windresize-up-fixed)
+   ("C-<down>" . windresize-down-minus)
+   ("C-<left>" . windresize-left-minus)
+   ("C-<right>" . windresize-right-minus)
+   ("C-<up>" . windresize-up-minus)
+   ("M-S-<down>" . windresize-select-down)
+   ("M-S-<left>" . windresize-select-left)
+   ("M-S-<right>" . windresize-select-right)
+   ("M-S-<up>" . windresize-select-up)
+   ("M-<down>" . windresize-down-force-up)
+   ("M-<left>" . windresize-left-force-left)
+   ("M-<right>" . windresize-right-force-left)
+   ("M-<up>" . windresize-up-force-up)
+   ("C-n" . windresize-down)
+   ("C-b" . windresize-left)
+   ("C-f" . windresize-right)
+   ("C-p" . windresize-up))))
+
 (defvar frame-centric nil
   "When non-nil, window rules prefer opening buffers in new frames.
 Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'")
@@ -352,7 +377,7 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
 (tool-bar-mode -1)
 (tooltip-mode -1)
 (menu-bar-mode -1)
-(cua-mode 1)
+(cua-mode 0)
 (define-key isearch-mode-map (kbd "C-v") 'isearch-yank-kill)
 (setq window-divider-default-right-width 8
       window-divider-default-bottom-width 8)
@@ -571,6 +596,22 @@ scrollbar slider:active { background-color: %s; }"
   :config
   (global-company-mode 1))
 
+(use-package auto-dictionary
+  :hook ((text-mode org-mode markdown-mode) . auto-dictionary-mode)
+  :config
+  (setq adict-dictionary-list '(("en" . "english")
+                                 ("fr" . "french"))))
+
+(use-package company-wordfreq
+  :defer t
+  :hook ((text-mode org-mode markdown-mode) . company-wordfreq-setup)
+  :config
+  (setq company-wordfreq-path (expand-file-name "wordfreq-dicts" user-emacs-directory))
+  (defun company-wordfreq-setup ()
+    "Set up company-wordfreq as the sole backend for text buffers."
+    (setq-local company-backends '(company-wordfreq))
+    (setq-local company-transformers nil)))
+
 (use-package orderless
   :init
   (setq completion-styles '(orderless)
@@ -586,7 +627,28 @@ scrollbar slider:active { background-color: %s; }"
         vertico-buffer-display-action
         '(display-buffer-in-direction
           (direction . below)
-          (window-height . 0.2))))
+          (window-height . 0.2)))
+
+  (defun vertico/kill-buffer-at-point ()
+    "Kill the buffer candidate currently selected in Vertico."
+    (interactive)
+    (when-let* ((cand (nth vertico--index vertico--candidates))
+                (buf (get-buffer cand)))
+      (kill-buffer buf)
+      (setq vertico--input t)
+      (vertico--exhibit)
+      (message "Killed: %s" cand)))
+
+  (defun vertico/buffer-kill-setup ()
+    "Add C-k binding in buffer-switching minibuffers."
+    (when (eq (completion-metadata-get
+               (completion-metadata "" minibuffer-completion-table
+                                   minibuffer-completion-predicate)
+               'category)
+              'buffer)
+      (local-set-key (kbd "C-k") #'vertico/kill-buffer-at-point)))
+
+  (add-hook 'minibuffer-setup-hook #'vertico/buffer-kill-setup))
 
 (use-package marginalia
   :init
@@ -597,7 +659,8 @@ scrollbar slider:active { background-color: %s; }"
   (("C-." . embark-act)
    ("C-;" . embark-dwim))
   :config
-  (setq prefix-help-command #'embark-prefix-help-command)
+  (setq prefix-help-command #'embark-prefix-help-command
+        embark-quit-after-action nil)
 
   (defun embark/add-ctrl-bindings (keymap)
     "Duplicate uppercase letter bindings in KEYMAP as C-<letter>."
@@ -743,30 +806,8 @@ scrollbar slider:active { background-color: %s; }"
   :config
   (define-key org-tree-slide-mode-map (kbd "M-p") 'org-tree-slide-move-previous-tree)
   (define-key org-tree-slide-mode-map (kbd "M-n") 'org-tree-slide-move-next-tree)
-  (setq org-tree-slide-slide-in-blank-lines 0))
-
-;; (make-directory "~/RoamNotes")
-(use-package org-roam
-  :custom
-  (org-roam-directory "~/RoamNotes")
-  :bind (("C-c n l" . org-roam-buffer-toggle)
-         ("C-c n f" . org-roam-node-find)
-         ("C-c n i" . org-roam-node-insert))
-  :config
-  (org-roam-setup))
-
-(use-package org-roam-ui
-  :vc (:url "https://github.com/org-roam/org-roam-ui" :rev :newest)
-  :after org-roam
-  ;;         normally we'd recommend hooking orui after org-roam, but since org-roam does not have
-  ;;         a hookable mode anymore, you're advised to pick something yourself
-  ;;         if you don't care about startup time, use
-  ;;  :hook (after-init . org-roam-ui-mode)
-  :config
-  (setq org-roam-ui-sync-theme t
-        org-roam-ui-follow t
-        org-roam-ui-update-on-save t
-        org-roam-ui-open-on-start t))
+  (setq org-tree-slide-slide-in-blank-lines 0
+        org-tree-slide-header nil))
 
 (use-package markdown-mode
   :hook (markdown-mode . visual-line-mode))
@@ -849,6 +890,154 @@ scrollbar slider:active { background-color: %s; }"
   (setq vundo-glyph-alist vundo-unicode-symbols)
   (global-unset-key (kbd "C-?"))
   (global-set-key (kbd "C-?") 'vundo))
+
+(use-package meow
+  :config
+  (setq meow--kbd-exchange-point-and-mark 'exchange-point-and-mark)
+  (setq meow-char-thing-table
+        '((?\( . round)
+          (?\) . round)
+          (?\[ . square)
+          (?\] . square)
+          (?\{ . curly)
+          (?\} . curly)
+          (?\" . string)
+          (?\' . string)
+          (?e . symbol)
+          (?w . window)
+          (?b . buffer)
+          (?p . paragraph)
+          (?l . line)
+          (?v . visual-line)
+          (?d . defun)
+          (?. . sentence)))
+  (defun meow/enter-edit ()
+    "Enter editable mode and meow insert in special buffers."
+    (interactive)
+    (cond
+     ((derived-mode-p 'dired-mode)   (wdired-change-to-wdired-mode))
+     ((derived-mode-p 'occur-mode)   (occur-edit-mode))
+     ((derived-mode-p 'grep-mode)    (require 'wgrep)
+                                      (wgrep-change-to-wgrep-mode)))
+    (meow-insert))
+  (defun meow/normal-escape ()
+    "Finish editable mode and return to read-only. Otherwise ignore."
+    (interactive)
+    (cond
+     ((derived-mode-p 'wdired-mode)      (wdired-finish-edit)
+                                          (meow--switch-state 'motion))
+     ((derived-mode-p 'occur-edit-mode)  (occur-cease-edit)
+                                          (meow--switch-state 'motion))
+     ((and (derived-mode-p 'grep-mode)
+           (boundp 'wgrep-mode-map)
+           (eq (current-local-map) wgrep-mode-map))
+                                          (wgrep-finish-edit)
+                                          (meow--switch-state 'motion))))
+  (add-to-list 'meow-mode-state-list '(grep-mode . motion))
+  (with-eval-after-load 'dired
+    (define-key dired-mode-map "i" #'meow/enter-edit))
+  (with-eval-after-load 'replace
+    (define-key occur-mode-map "i" #'meow/enter-edit))
+  (with-eval-after-load 'grep
+    (require 'wgrep)
+    (define-key grep-mode-map "i" #'meow/enter-edit))
+  (defun meow/grab-buffer ()
+    "Grab the entire buffer without moving point."
+    (interactive)
+    (save-excursion
+      (push-mark (point-min) t t)
+      (goto-char (point-max))
+      (meow-grab)))
+  (defun meow-setup ()
+    (setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
+    (meow-motion-define-key
+     '("j" . meow-next)
+     '("k" . meow-prev)
+     '("<escape>" . ignore))
+    (meow-leader-define-key
+     ;; Use SPC (0-9) for digit arguments.
+     '("1" . meow-digit-argument)
+     '("2" . meow-digit-argument)
+     '("3" . meow-digit-argument)
+     '("4" . meow-digit-argument)
+     '("5" . meow-digit-argument)
+     '("6" . meow-digit-argument)
+     '("7" . meow-digit-argument)
+     '("8" . meow-digit-argument)
+     '("9" . meow-digit-argument)
+     '("0" . meow-digit-argument)
+     '("/" . meow-keypad-describe-key)
+     '("?" . meow-cheatsheet))
+    (meow-normal-define-key
+     '("0" . meow-expand-0)
+     '("9" . meow-expand-9)
+     '("8" . meow-expand-8)
+     '("7" . meow-expand-7)
+     '("6" . meow-expand-6)
+     '("5" . meow-expand-5)
+     '("4" . meow-expand-4)
+     '("3" . meow-expand-3)
+     '("2" . meow-expand-2)
+     '("1" . meow-expand-1)
+     '("-" . negative-argument)
+     '(";" . meow-reverse)
+     '("," . meow-inner-of-thing)
+     '("." . meow-bounds-of-thing)
+     '("[" . meow-beginning-of-thing)
+     '("]" . meow-end-of-thing)
+     '("a" . meow-append)
+     '("A" . meow-open-below)
+     '("b" . meow-back-word)
+     '("B" . meow-back-symbol)
+     '("c" . meow-change)
+     '("d" . meow-delete)
+     '("D" . meow-backward-delete)
+     '("e" . meow-next-word)
+     '("E" . meow-next-symbol)
+     '("f" . meow-find)
+     '("g" . meow-cancel-selection)
+     '("G" . meow-grab)
+     '("h" . meow-left)
+     '("H" . meow-left-expand)
+     '("i" . meow-insert)
+     '("I" . meow-open-above)
+     '("j" . meow-next)
+     '("J" . meow-next-expand)
+     '("k" . meow-prev)
+     '("K" . meow-prev-expand)
+     '("l" . meow-right)
+     '("L" . meow-right-expand)
+     '("m" . meow-join)
+     '("n" . meow-search)
+     '("o" . meow-block)
+     '("O" . meow-to-block)
+     '("p" . meow-pop-search)
+     '("q" . meow-quit)
+     '("Q" . meow-goto-line)
+     '("r" . meow-replace)
+     '("R" . meow-swap-grab)
+     '("s" . meow-kill)
+     '("t" . meow-till)
+     '("u" . meow-undo)
+     '("U" . meow-undo-in-selection)
+     '("v" . meow-visit)
+     '("w" . meow-mark-word)
+     '("W" . meow-mark-symbol)
+     '("x" . meow-line)
+     '("X" . meow-goto-line)
+     '("Y" . meow/grab-buffer)
+     '("z" . meow-pop-selection)
+     '("'" . repeat)
+     '("<escape>" . meow/normal-escape)))
+  (setq meow-replace-state-name-list
+        '((normal . "N")
+          (motion . "M")
+          (keypad . "K")
+          (insert . "I")
+          (beacon . "B")))
+  (setq doom-modeline-modal-icon nil)
+  (meow-setup)
+  (meow-global-mode 1))
 
 (use-package hideshow
   :ensure nil
@@ -1250,12 +1439,6 @@ when reading files and the other way around when writing contents."
                                                            )
                                )
   )
-
-(use-package gptel
-  :config
-  (setq
-   gptel-default-mode 'org-mode
-   gptel-prompt-prefix-alist '((markdown-mode . "## ") (org-mode . "** ") (text-mode . "## "))))
 
 (use-package agent-shell
   :ensure t
@@ -2108,6 +2291,9 @@ mouse-1: Previous buffer\nmouse-3: Next buffer"
   )
 
 (load-file "~/.emacs.d/custom_packages/structured-log-mode.el")
+
+(load-file "~/.emacs.d/custom_packages/nix-system.el")
+(global-set-key (kbd "C-c n") #'nix-system)
 
 (use-package stripspace
   :ensure t
@@ -2971,9 +3157,12 @@ Uses `magit/jira-image-cache' for already-fetched images."
         lsp-eldoc-enable-hover nil)
 
   (defun add-yasnippet-enable-company ()
-    (setq-local company-backends '((:separate company-yasnippet company-capf)))
+    (if (bound-and-true-p company-wordfreq-mode)
+        (setq-local company-backends '((:separate company-wordfreq company-yasnippet company-capf)))
+      (setq-local company-backends '((:separate company-yasnippet company-capf))))
     (company-mode 1))
   (add-hook 'lsp-mode-hook #'add-yasnippet-enable-company)
+  (define-key lsp-mode-map (kbd "C-.") #'lsp-execute-code-action)
 
   (defun lsp-booster--advice-json-parse (old-fn &rest args)
     "Try to parse bytecode instead of json."
@@ -3006,6 +3195,48 @@ Uses `magit/jira-image-cache' for already-fetched images."
         orig-result)))
   (advice-add 'lsp-resolve-final-command :around #'lsp-booster--advice-final-command))
 
+;; LTeX — grammar/spell checker via ltex-ls (EN + FR, offline)
+(use-package lsp-ltex
+  :after lsp-mode
+  :init
+  (setq lsp-ltex-language "auto"
+        lsp-ltex-mother-tongue "fr"
+        lsp-ltex-additional-rules-mother-tongue "fr")
+  (defun ltex/use-english ()
+    (interactive)
+    ;; (setq-local lsp-typos-enable t)
+    (setq-local lsp-ltex-language "en-US"))
+  (defun ltex/use-french ()
+    (interactive)
+    ;; (setq-local lsp-typos-enable nil)
+    (setq-local lsp-ltex-language "fr-FR"))
+  (dolist (hook '(python-ts-mode-hook js-ts-mode-hook typescript-ts-mode-hook
+                                      tsx-ts-mode-hook html-ts-mode-hook css-ts-mode-hook
+                                      nix-mode-hook php-mode-hook yaml-ts-mode-hook
+                                      json-ts-mode-hook emacs-lisp-mode-hook))
+    (add-hook hook #'ltex/use-english))
+  :config
+  (setq lsp-ltex-enabled ["bibtex" "context" "latex" "markdown" "org"
+                          "restructuredtext" "rsweave" "typst"
+                          "python" "javascript" "typescript" "html"
+                          "css" "nix" "php" "yaml" "json" "elisp"]
+        lsp-ltex-check-frequency "edit")
+  (let ((client (gethash 'ltex-ls lsp-clients)))
+    (setf (lsp--client-add-on? client) t
+          (lsp--client-major-modes client)
+          (append (lsp--client-major-modes client)
+                  '(python-ts-mode js-ts-mode typescript-ts-mode
+                                   tsx-ts-mode html-ts-mode css-ts-mode nix-mode
+                                   php-mode yaml-ts-mode json-ts-mode
+                                   emacs-lisp-mode)))))
+(dolist (hook '(org-mode-hook markdown-mode-hook text-mode-hook))
+  (add-hook hook #'lsp-deferred))
+
+;; typos-lsp — spell checker for code comments/strings via LSP
+(with-eval-after-load 'lsp-mode
+  (require 'lsp-typos)
+  (setq lsp-typos-enable nil))
+
 (use-package lsp-ui
   :commands lsp-ui-mode
   :hook (lsp-mode . lsp-ui-mode)
@@ -3014,8 +3245,40 @@ Uses `magit/jira-image-cache' for already-fetched images."
         lsp-ui-doc-position 'at-point
         lsp-ui-doc-show-with-cursor nil
         lsp-ui-doc-show-with-mouse nil
-        lsp-ui-sideline-enable nil
-        lsp-ui-sideline-show-hover nil)
+        lsp-ui-sideline-enable t
+        lsp-ui-sideline-show-hover t)
+  ;; Dim sideline hover text by blending each foreground color toward bg.
+  ;; Advices --make-display-string (last step before overlay) so nothing
+  ;; can override the dimmed colors afterward.
+  (defun lsp-ui-sideline--dim-display (orig info symbol current)
+    (let ((result (funcall orig info symbol current)))
+      (when (stringp result)
+        (let ((i 0)
+              (len (length result))
+              (bg (color-name-to-rgb (face-background 'default nil t))))
+          (while (< i len)
+            (let* ((next (next-single-property-change i 'face result len))
+                   (face-spec (get-text-property i 'face result))
+                   (fg (when face-spec
+                         (cond
+                          ((facep face-spec)
+                           (face-foreground face-spec nil t))
+                          ((and (consp face-spec)
+                                (cl-loop for f in (if (facep (car face-spec))
+                                                      face-spec
+                                                    (list face-spec))
+                                         when (and (facep f) (face-foreground f nil t))
+                                         return (face-foreground f nil t)))
+                           )
+                          ((and (consp face-spec) (plist-get face-spec :foreground)))))))
+              (when (and (stringp fg) (color-defined-p fg))
+                (let ((dimmed (apply #'color-rgb-to-hex
+                                     (cl-mapcar (lambda (f b) (+ (* 0.7 f) (* 0.3 b)))
+                                                (color-name-to-rgb fg) bg))))
+                  (add-face-text-property i next `(:foreground ,dimmed) nil result)))
+              (setq i next)))))
+      result))
+  (advice-add 'lsp-ui-sideline--make-display-string :around #'lsp-ui-sideline--dim-display)
   (define-key lsp-ui-mode-map (kbd "C-h h") #'lsp-ui-doc-glance)
   (define-key lsp-ui-mode-map (kbd "C-h C-h") #'lsp-ui-doc-glance))
 
@@ -3944,6 +4207,48 @@ DURATION-SECS is the event duration in seconds."
   "Load machine-specific local settings after initialization."
   (let ((local-settings "~/.emacs.d/local.el"))
     (when (file-exists-p local-settings)
-      (load-file local-settings)))
+      (condition-case err
+          (load-file local-settings)
+        (error (message "Warning: failed to load local.el: %s" err)))))
   (lsp))
 (add-hook 'after-init-hook #'init/load-local-settings)
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(custom-safe-themes
+   '("038423a7ba25aab82489983a52ea890c46e4aedc44e78134841afac09f3fdd7c" default))
+ '(package-selected-packages
+   '(agent-shell all-the-icons-ibuffer apheleia auth-source-xoauth2-plugin auto-dictionary bbdb blist browse-kill-ring combobulate company-spell
+                 company-wordfreq compile-angel coterm csv-mode d2-mode dap-mode detached dired-hide-dotfiles diredfl docker doom-modeline eat
+                 editorconfig ednc eglot ejc-sql embark-consult emms erc exec-path-from-shell explain-pause-mode expreg faceup fancy-compilation
+                 flycheck-title fontaine forge free-keys goto-last-change gptel helpful hide-mode-line ibuffer-vc idlwave jest-test-mode jira
+                 joplin-mode jwt kmacro-x lsp-ltex lsp-ui marginalia meow multi-term multiple-cursors nerd-icons-dired nix-mode no-littering
+                 nodejs-repl ob-d2 orderless org-roam-ui org-timeblock org-tree-slide perfect-margin pgmacs php-mode python shr-tag-pre-highlight
+                 sqlite-mode-extras sqlup-mode string-inflection stripspace sudo-edit textsize track-changes tramp treesit-auto typescript-mode
+                 ultra-scroll verilog-mode vertico vue-mode vundo wgrep which-key whole-line-or-region window-tool-bar windresize winum
+                 yasnippet-snippets)))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(ansi-color-black ((t (:foreground nil))))
+ '(ansi-color-blue ((t (:foreground nil))))
+ '(ansi-color-cyan ((t (:foreground nil))))
+ '(ansi-color-gray ((t (:foreground nil))))
+ '(ansi-color-green ((t (:foreground nil))))
+ '(ansi-color-magenta ((t (:foreground nil))))
+ '(ansi-color-red ((t (:foreground nil))))
+ '(ansi-color-yellow ((t (:foreground nil))))
+ '(doom-modeline-meow-beacon-state ((t (:foreground "#f1fa8c" :weight bold))))
+ '(doom-modeline-meow-insert-state ((t (:foreground "#ff79c6" :weight bold))))
+ '(doom-modeline-meow-keypad-state ((t (:foreground "#ffb86c" :weight bold))))
+ '(doom-modeline-meow-motion-state ((t (:foreground "#8be9fd" :weight bold))))
+ '(doom-modeline-meow-normal-state ((t (:foreground "#50fa7b" :weight bold))))
+ '(meow-beacon-indicator ((t (:foreground "#f1fa8c" :weight bold))))
+ '(meow-insert-indicator ((t (:foreground "#ff79c6" :weight bold))))
+ '(meow-keypad-indicator ((t (:foreground "#ffb86c" :weight bold))))
+ '(meow-motion-indicator ((t (:foreground "#8be9fd" :weight bold))))
+ '(meow-normal-indicator ((t (:foreground "#50fa7b" :weight bold)))))

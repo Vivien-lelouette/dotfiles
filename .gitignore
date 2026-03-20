@@ -130,3 +130,7 @@ emacs/.emacs.d/etc/transient/values.el
 /emacs/.claude/
 /emacs/.emacs.d/agent/
 /emacs/.emacs.d/ewm/
+/.agent-shell/
+/emacs/.emacs.d/dict/
+/emacs/.emacs.d/ewm-key-pressed
+/emacs/.emacs.d/wordfreq-dicts/

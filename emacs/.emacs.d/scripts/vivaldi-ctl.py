@@ -615,6 +615,61 @@ def oneshot_main(mode):
             pass
 
 
+# -- Tab/URL commands --------------------------------------------------------
+
+def get_targets():
+    """Fetch CDP targets, return list of dicts."""
+    conn = http.client.HTTPConnection(CDP_HOST, CDP_PORT, timeout=2)
+    conn.request("GET", "/json")
+    targets = json.loads(conn.getresponse().read())
+    conn.close()
+    return targets
+
+
+def cmd_tabs():
+    """Print JSON array of page tabs: [{id, title, url, wsUrl}]."""
+    try:
+        targets = get_targets()
+    except Exception:
+        print("[]")
+        return
+    pages = [
+        {"id": t["id"], "title": t.get("title", ""),
+         "url": t.get("url", ""), "wsUrl": t.get("webSocketDebuggerUrl", "")}
+        for t in targets
+        if t.get("type") == "page"
+        and VIVALDI_UI_ID not in t.get("url", "")
+    ]
+    print(json.dumps(pages))
+
+
+def cmd_url(title_substr):
+    """Print the URL of the first tab whose title contains title_substr."""
+    try:
+        targets = get_targets()
+    except Exception:
+        return
+    for t in targets:
+        if t.get("type") == "page" and title_substr in t.get("title", ""):
+            print(t.get("url", ""))
+            return
+
+
+def cmd_navigate(target_id, url):
+    """Navigate the tab with target_id to url via CDP."""
+    try:
+        targets = get_targets()
+    except Exception:
+        return
+    target = next((t for t in targets if t.get("id") == target_id), None)
+    if not target or "webSocketDebuggerUrl" not in target:
+        return
+    h, p, path = parse_ws_url(target["webSocketDebuggerUrl"])
+    s = ws_connect(h, p, path)
+    cdp_send(s, "Page.navigate", {"url": url}, 1)
+    s.close()
+
+
 # -- Main --------------------------------------------------------------------
 
 if __name__ == "__main__":
@@ -624,6 +679,12 @@ if __name__ == "__main__":
         daemon_main()
     elif cmd == "stop":
         daemon_send("stop")
+    elif cmd == "tabs":
+        cmd_tabs()
+    elif cmd == "url" and len(sys.argv) > 2:
+        cmd_url(sys.argv[2])
+    elif cmd == "navigate" and len(sys.argv) > 3:
+        cmd_navigate(sys.argv[2], sys.argv[3])
     else:
         # Send mode to daemon for persistent prefers-color-scheme
         daemon_send(cmd)

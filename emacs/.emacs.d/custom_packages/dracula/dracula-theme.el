@@ -49,8 +49,11 @@
    (fg4                  "#b6b6b2" "#b2b2b2" "white")
    (dark-red             "#3a1520" "#870000" "red")
    (dark-green           "#1a3524" "#00af00" "green")
+   (mid-red              "#5a2535" "#af0000" "red")           ; refined diffs
+   (mid-green            "#2a5e3a" "#00af00" "green")         ; refined diffs
    (dark-blue            "#0189cc" "#0087ff" "brightblue")
-   (hl-accent            "#302b45" "#302b45" "brightblack")))
+   (hl-accent            "#302b45" "#302b45" "brightblack")
+   (grab-accent           "#3a3520" "#3a3520" "brightyellow")))
 
 (provide-theme 'dracula)
 

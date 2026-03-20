@@ -53,8 +53,11 @@
    (fg4                  "#5e606c" "#444444" "brightblack")
    (dark-red             "#fce4ec" "#ffd7d7" "brightred")     ; subtle pastel for diffs
    (dark-green           "#e4f5e8" "#d7ffd7" "brightgreen")   ; subtle pastel for diffs
+   (mid-red              "#f0c0c8" "#ffafaf" "brightred")     ; refined diffs
+   (mid-green            "#b8e0c0" "#afffaf" "brightgreen")   ; refined diffs
    (dark-blue            "#0189cc" "#0087ff" "brightblue")
-   (hl-accent            "#e0d8f0" "#d7d7ff" "brightwhite"))) ; subtle violet tint
+   (hl-accent            "#e0d8f0" "#d7d7ff" "brightwhite") ; subtle violet tint
+   (grab-accent           "#f5f0c8" "#ffffd7" "brightyellow")))
 
 (provide-theme 'dracula-light)
 
