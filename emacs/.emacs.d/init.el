@@ -367,11 +367,11 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
 (add-hook 'completion-list-mode-hook #'completion/disable-line-numbers)
 (line-number-mode 0)
 (column-number-mode 0)
-(global-hl-line-mode 1)
 
 (setq warning-minimum-level :error)
 
 (repeat-mode 1)
+(put 'dired-jump 'repeat-map nil)
 
 (scroll-bar-mode 1)
 (tool-bar-mode -1)
@@ -467,11 +467,44 @@ Set via --eval at daemon launch: emacs --daemon --eval '(setq frame-centric t)'"
     "Hook run after `theme/apply' loads a theme.
 Use this to refresh faces that depend on `dracula-color'.")
 
+  (defvar theme/persist-file (expand-file-name "last-theme" user-emacs-directory)
+    "File used to persist the last applied theme name.")
+
   (defun theme/apply (&optional variant)
     "Apply Dracula theme.  VARIANT can be \\='light for the light variant."
-    (mapc #'disable-theme '(dracula dracula-light))
+    (mapc #'disable-theme custom-enabled-themes)
     (let ((theme (if (eq variant 'light) 'dracula-light 'dracula)))
-      (load-theme theme t))
+      (load-theme theme t)
+      (theme/persist theme))
+    (modify-all-frames-parameters '((internal-border-width . 0)))
+    (fringe-mode '(12 . 12))
+    (theme/hide-minibuffer-scrollbar)
+    (run-hooks 'theme/after-apply-hook))
+
+  (defun theme/persist (theme)
+    "Save THEME name to `theme/persist-file'."
+    (with-temp-file theme/persist-file
+      (insert (symbol-name theme))))
+
+  (defun theme/restore ()
+    "Load the last persisted theme, or fall back to Dracula dark."
+    (let ((theme (when (file-exists-p theme/persist-file)
+                   (intern (string-trim
+                            (with-temp-buffer
+                              (insert-file-contents theme/persist-file)
+                              (buffer-string)))))))
+      (if (and theme (memq theme (custom-available-themes)))
+          (theme/load theme)
+        (theme/apply))))
+
+  (defun theme/load (theme)
+    "Cleanly switch to THEME, disabling all active themes first."
+    (interactive
+     (list (intern (completing-read "Theme: "
+                                    (mapcar #'symbol-name (custom-available-themes))))))
+    (mapc #'disable-theme custom-enabled-themes)
+    (load-theme theme t)
+    (theme/persist theme)
     (modify-all-frames-parameters '((internal-border-width . 0)))
     (fringe-mode '(12 . 12))
     (theme/hide-minibuffer-scrollbar)
@@ -490,23 +523,27 @@ Use this to refresh faces that depend on `dracula-color'.")
   ;; GTK CSS injection via dynamic module (scrollbar theming)
   (module-load (expand-file-name "~/.emacs.d/custom_packages/gtk-css.so"))
 
+  (defun theme/face-color (face attr &optional fallback)
+    "Get color ATTR from FACE, falling back to FALLBACK."
+    (or (face-attribute face attr nil t) fallback))
+
   (defun theme/apply-gtk-scrollbar ()
-    "Update GTK scrollbar colors from the current Dracula palette."
-    (gtk-css-load
-     (format "scrollbar { background-color: %s; }
+    "Update GTK scrollbar colors from the current theme."
+    (let ((bg      (theme/face-color 'default :background "#282a36"))
+          (slider  (theme/face-color 'shadow :foreground "#6272a4"))
+          (hover   (theme/face-color 'default :foreground "#f8f8f2"))
+          (active  (theme/face-color 'highlight :background "#ff79c6")))
+      (gtk-css-load
+       (format "scrollbar { background-color: %s; }
 scrollbar trough { background-color: %s; border: none; }
 scrollbar slider { background-color: %s; border-color: transparent; }
 scrollbar slider:hover { background-color: %s; }
 scrollbar slider:active { background-color: %s; }"
-             (dracula-color 'dracula-bg)
-             (dracula-color 'dracula-bg)
-             (dracula-color 'dracula-comment)
-             (dracula-color 'dracula-fg)
-             (dracula-color 'dracula-pink))))
+               bg bg slider hover active))))
   (add-hook 'theme/after-apply-hook #'theme/apply-gtk-scrollbar)
 
   (add-hook 'after-make-frame-functions #'theme/hide-minibuffer-scrollbar)
-  (add-hook 'after-init-hook #'theme/apply)
+  (add-hook 'after-init-hook #'theme/restore)
 
 (use-package doom-modeline
   :hook (after-init . doom-modeline-mode)
@@ -528,6 +565,8 @@ scrollbar slider:active { background-color: %s; }"
 (use-package hide-mode-line
   :config
   (add-hook 'completion-list-mode-hook #'hide-mode-line-mode))
+
+(use-package doom-themes)
 
 (setq tab-always-indent 'complete)
 (setq completions-format 'one-column
@@ -1036,8 +1075,59 @@ scrollbar slider:active { background-color: %s; }"
           (insert . "I")
           (beacon . "B")))
   (setq doom-modeline-modal-icon nil)
+  (custom-set-faces
+   '(doom-modeline-meow-normal-state ((t (:inherit success :weight bold :inverse-video t))))
+   '(doom-modeline-meow-insert-state ((t (:inherit error :weight bold :inverse-video t))))
+   '(doom-modeline-meow-motion-state ((t (:inherit shadow :weight bold :inverse-video t))))
+   '(doom-modeline-meow-keypad-state ((t (:inherit font-lock-type-face :weight bold :inverse-video t))))
+   '(doom-modeline-meow-beacon-state ((t (:inherit warning :weight bold :inverse-video t)))))
+  (defvar-local meow--state-cookies nil
+    "Cookies for the current meow state face remaps.")
+  (defun meow/apply-state-tint ()
+    "Indicate meow state via hl-line and mode-line tint."
+    (dolist (cookie meow--state-cookies)
+      (face-remap-remove-relative cookie))
+    (setq meow--state-cookies nil)
+    (if-let* ((face (pcase meow--current-state
+                      ('insert 'error)
+                      ('motion 'shadow)
+                      ('keypad 'font-lock-type-face)
+                      ('beacon 'warning)))
+              (fg (face-foreground face nil t))
+              (bg (face-background 'default nil t)))
+        (progn
+          (require 'color)
+          (let ((tinted (apply #'color-rgb-to-hex
+                               (cl-mapcar (lambda (a b) (+ (* 0.07 a) (* 0.93 b)))
+                                          (color-name-to-rgb fg)
+                                          (color-name-to-rgb bg)))))
+            (push (face-remap-add-relative 'hl-line :background tinted)
+                  meow--state-cookies)
+            (push (face-remap-add-relative 'mode-line-active :background tinted)
+                  meow--state-cookies))
+          (hl-line-mode 1))
+      (hl-line-mode -1)))
+  (defun meow/apply-state-tint-h (&rest _)
+    "Hook/advice wrapper for `meow/apply-state-tint'."
+    (meow/apply-state-tint))
+  (advice-add 'meow--switch-state :after #'meow/apply-state-tint-h)
+  (add-hook 'window-buffer-change-functions #'meow/apply-state-tint-h)
   (meow-setup)
   (meow-global-mode 1))
+
+(use-package dired
+  :ensure nil
+  :custom
+  (dired-listing-switches "-alh --group-directories-first --time-style=long-iso")
+  (dired-hide-details-hide-symlink-targets nil)
+  :hook
+  (dired-mode . dired-hide-details-mode))
+
+(use-package nerd-icons-dired
+  :hook (dired-mode . nerd-icons-dired-mode))
+
+(use-package diredfl
+  :hook (dired-mode . diredfl-mode))
 
 (use-package hideshow
   :ensure nil
@@ -1936,8 +2026,8 @@ Preserves context (region, files, etc.) like the default behavior."
            (interactive "e")
            (switch-to-buffer (joplin--note-buffer ,id))))
       (propertize label
-                  'face `(:foreground ,(dracula-color 'dracula-comment))
-                  'mouse-face `(:foreground ,(dracula-color 'dracula-purple) :underline t)
+                  'face 'shadow
+                  'mouse-face `(:foreground ,(face-foreground 'link nil t) :underline t)
                   'help-echo date-str
                   'keymap map)))
 
@@ -1948,19 +2038,19 @@ Preserves context (region, files, etc.) like the default behavior."
               (next (joplin--journal-find-adjacent title  1)))
           (list
            "  "
-           (propertize "|" 'face `(:foreground ,(dracula-color 'dracula-selection)))
+           (propertize "|" 'face 'shadow)
            "  "
            (if prev
                (joplin--journal-nav-link
                 (concat "<< " (car prev))
                 (car prev) (cdr prev))
-             (propertize "<< ···" 'face `(:foreground ,(dracula-color 'dracula-selection))))
+             (propertize "<< ···" 'face 'shadow))
            "    "
            (if next
                (joplin--journal-nav-link
                 (concat (car next) " >>")
                 (car next) (cdr next))
-             (propertize "··· >>" 'face `(:foreground ,(dracula-color 'dracula-selection))))))
+             (propertize "··· >>" 'face 'shadow))))
       ""))
 
   (defun joplin--rename-buffer-from-note ()
@@ -3315,16 +3405,16 @@ Uses `magit/jira-image-cache' for already-fetched images."
           default-directory))))
 
 (defun theme/apply-ansi-colors ()
-  "Set ansi-color faces from the current Dracula palette."
+  "Set ansi-color faces from the current theme."
   (custom-set-faces
-   `(ansi-color-black ((t (:foreground ,(dracula-color 'dracula-bg)))))
-   `(ansi-color-red ((t (:foreground ,(dracula-color 'dracula-red)))))
-   `(ansi-color-green ((t (:foreground ,(dracula-color 'dracula-green)))))
-   `(ansi-color-yellow ((t (:foreground ,(dracula-color 'dracula-yellow)))))
-   `(ansi-color-blue ((t (:foreground ,(dracula-color 'dracula-purple)))))
-   `(ansi-color-magenta ((t (:foreground ,(dracula-color 'dracula-pink)))))
-   `(ansi-color-cyan ((t (:foreground ,(dracula-color 'dracula-cyan)))))
-   `(ansi-color-gray ((t (:foreground ,(dracula-color 'dracula-fg)))))))
+   `(ansi-color-black ((t (:foreground ,(theme/face-color 'default :background "#000")))))
+   `(ansi-color-red ((t (:foreground ,(theme/face-color 'error :foreground "#f00")))))
+   `(ansi-color-green ((t (:foreground ,(theme/face-color 'success :foreground "#0f0")))))
+   `(ansi-color-yellow ((t (:foreground ,(theme/face-color 'warning :foreground "#ff0")))))
+   `(ansi-color-blue ((t (:foreground ,(theme/face-color 'link :foreground "#00f")))))
+   `(ansi-color-magenta ((t (:foreground ,(theme/face-color 'font-lock-builtin-face :foreground "#f0f")))))
+   `(ansi-color-cyan ((t (:foreground ,(theme/face-color 'font-lock-constant-face :foreground "#0ff")))))
+   `(ansi-color-gray ((t (:foreground ,(theme/face-color 'default :foreground "#fff")))))))
 (theme/apply-ansi-colors)
 (add-hook 'theme/after-apply-hook #'theme/apply-ansi-colors)
 
@@ -3451,26 +3541,24 @@ main window without closing the side window."
     (setq-local eat--synchronize-scroll-function #'eat--synchronize-scroll))
   (add-hook 'eat-mode-hook #'eat/enable-auto-scroll)
   (defun theme/apply-eat-colors ()
-    "Set eat terminal color faces from the current Dracula palette."
+    "Set eat terminal color faces from the current theme."
     (when (facep 'eat-term-color-0)
-      ;; Couleurs standard (0-7)
-      (set-face-foreground 'eat-term-color-0 (dracula-color 'dracula-bg))        ; black
-      (set-face-foreground 'eat-term-color-1 (dracula-color 'dracula-red))       ; red
-      (set-face-foreground 'eat-term-color-2 (dracula-color 'dracula-green))     ; green
-      (set-face-foreground 'eat-term-color-3 (dracula-color 'dracula-yellow))    ; yellow
-      (set-face-foreground 'eat-term-color-4 (dracula-color 'dracula-purple))    ; blue
-      (set-face-foreground 'eat-term-color-5 (dracula-color 'dracula-pink))      ; magenta
-      (set-face-foreground 'eat-term-color-6 (dracula-color 'dracula-cyan))      ; cyan
-      (set-face-foreground 'eat-term-color-7 (dracula-color 'dracula-fg))        ; white
-      ;; Couleurs bright (8-15)
-      (set-face-foreground 'eat-term-color-8 (dracula-color 'dracula-comment))   ; bright black (gris)
-      (set-face-foreground 'eat-term-color-9 (dracula-color 'dracula-red))       ; bright red
-      (set-face-foreground 'eat-term-color-10 (dracula-color 'dracula-green))    ; bright green
-      (set-face-foreground 'eat-term-color-11 (dracula-color 'dracula-yellow))   ; bright yellow
-      (set-face-foreground 'eat-term-color-12 (dracula-color 'dracula-purple))   ; bright blue
-      (set-face-foreground 'eat-term-color-13 (dracula-color 'dracula-pink))     ; bright magenta
-      (set-face-foreground 'eat-term-color-14 (dracula-color 'dracula-cyan))     ; bright cyan
-      (set-face-foreground 'eat-term-color-15 (dracula-color 'dracula-fg))))     ; bright white
+      (set-face-foreground 'eat-term-color-0  (theme/face-color 'default :background "#000"))
+      (set-face-foreground 'eat-term-color-1  (theme/face-color 'error :foreground "#f00"))
+      (set-face-foreground 'eat-term-color-2  (theme/face-color 'success :foreground "#0f0"))
+      (set-face-foreground 'eat-term-color-3  (theme/face-color 'warning :foreground "#ff0"))
+      (set-face-foreground 'eat-term-color-4  (theme/face-color 'link :foreground "#00f"))
+      (set-face-foreground 'eat-term-color-5  (theme/face-color 'font-lock-builtin-face :foreground "#f0f"))
+      (set-face-foreground 'eat-term-color-6  (theme/face-color 'font-lock-constant-face :foreground "#0ff"))
+      (set-face-foreground 'eat-term-color-7  (theme/face-color 'default :foreground "#fff"))
+      (set-face-foreground 'eat-term-color-8  (theme/face-color 'shadow :foreground "#888"))
+      (set-face-foreground 'eat-term-color-9  (theme/face-color 'error :foreground "#f00"))
+      (set-face-foreground 'eat-term-color-10 (theme/face-color 'success :foreground "#0f0"))
+      (set-face-foreground 'eat-term-color-11 (theme/face-color 'warning :foreground "#ff0"))
+      (set-face-foreground 'eat-term-color-12 (theme/face-color 'link :foreground "#00f"))
+      (set-face-foreground 'eat-term-color-13 (theme/face-color 'font-lock-builtin-face :foreground "#f0f"))
+      (set-face-foreground 'eat-term-color-14 (theme/face-color 'font-lock-constant-face :foreground "#0ff"))
+      (set-face-foreground 'eat-term-color-15 (theme/face-color 'default :foreground "#fff"))))
   (add-hook 'theme/after-apply-hook #'theme/apply-eat-colors)
   (with-eval-after-load 'eat
     (theme/apply-eat-colors)
@@ -4212,43 +4300,3 @@ DURATION-SECS is the event duration in seconds."
         (error (message "Warning: failed to load local.el: %s" err)))))
   (lsp))
 (add-hook 'after-init-hook #'init/load-local-settings)
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(custom-safe-themes
-   '("038423a7ba25aab82489983a52ea890c46e4aedc44e78134841afac09f3fdd7c" default))
- '(package-selected-packages
-   '(agent-shell all-the-icons-ibuffer apheleia auth-source-xoauth2-plugin auto-dictionary bbdb blist browse-kill-ring combobulate company-spell
-                 company-wordfreq compile-angel coterm csv-mode d2-mode dap-mode detached dired-hide-dotfiles diredfl docker doom-modeline eat
-                 editorconfig ednc eglot ejc-sql embark-consult emms erc exec-path-from-shell explain-pause-mode expreg faceup fancy-compilation
-                 flycheck-title fontaine forge free-keys goto-last-change gptel helpful hide-mode-line ibuffer-vc idlwave jest-test-mode jira
-                 joplin-mode jwt kmacro-x lsp-ltex lsp-ui marginalia meow multi-term multiple-cursors nerd-icons-dired nix-mode no-littering
-                 nodejs-repl ob-d2 orderless org-roam-ui org-timeblock org-tree-slide perfect-margin pgmacs php-mode python shr-tag-pre-highlight
-                 sqlite-mode-extras sqlup-mode string-inflection stripspace sudo-edit textsize track-changes tramp treesit-auto typescript-mode
-                 ultra-scroll verilog-mode vertico vue-mode vundo wgrep which-key whole-line-or-region window-tool-bar windresize winum
-                 yasnippet-snippets)))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(ansi-color-black ((t (:foreground nil))))
- '(ansi-color-blue ((t (:foreground nil))))
- '(ansi-color-cyan ((t (:foreground nil))))
- '(ansi-color-gray ((t (:foreground nil))))
- '(ansi-color-green ((t (:foreground nil))))
- '(ansi-color-magenta ((t (:foreground nil))))
- '(ansi-color-red ((t (:foreground nil))))
- '(ansi-color-yellow ((t (:foreground nil))))
- '(doom-modeline-meow-beacon-state ((t (:foreground "#f1fa8c" :weight bold))))
- '(doom-modeline-meow-insert-state ((t (:foreground "#ff79c6" :weight bold))))
- '(doom-modeline-meow-keypad-state ((t (:foreground "#ffb86c" :weight bold))))
- '(doom-modeline-meow-motion-state ((t (:foreground "#8be9fd" :weight bold))))
- '(doom-modeline-meow-normal-state ((t (:foreground "#50fa7b" :weight bold))))
- '(meow-beacon-indicator ((t (:foreground "#f1fa8c" :weight bold))))
- '(meow-insert-indicator ((t (:foreground "#ff79c6" :weight bold))))
- '(meow-keypad-indicator ((t (:foreground "#ffb86c" :weight bold))))
- '(meow-motion-indicator ((t (:foreground "#8be9fd" :weight bold))))
- '(meow-normal-indicator ((t (:foreground "#50fa7b" :weight bold)))))

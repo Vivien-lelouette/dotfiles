@@ -11,7 +11,7 @@
 
 (defun apps/vivaldi-browser (&optional url)
   (interactive)
-  (shell/async-command-no-output (concat "vivaldi --remote-debugging-port=9222 --new-window " url)))
+  (shell/async-command-no-output (concat "vivaldi --new-window " url)))
 
 (defun apps/cosmic-term ()
   (interactive)
@@ -68,7 +68,7 @@
                'action (lambda (_btn)
                          (let ((fn cmd))
                            (menu/close-dropdown)
-                           (funcall fn)))
+                          (funcall fn)))
                'follow-link t)
               (insert "\n")))
           (goto-char (point-min))
@@ -138,10 +138,17 @@
   "Vertically center ICON in the tab-bar."
   (propertize icon 'display '(raise 0.1)))
 
+(defun tab-bar--apply-face (text)
+  "Force TEXT foreground to be visible on tab-bar background."
+  (let ((fg (or (face-foreground 'tab-bar-tab-inactive nil t)
+                (face-foreground 'default))))
+    (add-face-text-property 0 (length text) `(:foreground ,fg) nil text))
+  text)
+
 (defun tab-bar-format-system-menu ()
   (or tab-bar--system-menu-cache
       (setq tab-bar--system-menu-cache
-            `((system-menu menu-item ,(concat " " (tab-bar--raise-icon (char-to-string #x23FB)) " ") tab-bar-system-menu)))))
+            `((system-menu menu-item ,(tab-bar--apply-face (concat " " (tab-bar--raise-icon (char-to-string #x23FB)) " ")) tab-bar-system-menu)))))
 
 (require 'battery)
 (defvar tab-bar--datetime-cache nil "Cached datetime tab-bar item.")
@@ -154,7 +161,7 @@
 (defun tab-bar--update-status ()
   "Update cached datetime, battery and mail tab-bar items."
   (setq tab-bar--datetime-cache
-        `((datetime menu-item ,(concat " " (format-time-string "%a %d %b  %H:%M") " ") ignore)))
+        `((datetime menu-item ,(tab-bar--apply-face (concat " " (format-time-string "%a %d %b  %H:%M") " ")) ignore)))
   (when (bound-and-true-p battery-status-function)
     (let* ((data (funcall battery-status-function))
            (pct-str (cdr (assq ?p data)))
@@ -170,7 +177,7 @@
                    (concat "nf-md-battery" (if (string= level "") "" (concat "_" level)))))
            (icon (tab-bar--raise-icon (nerd-icons-mdicon name))))
       (setq tab-bar--battery-cache
-            `((battery menu-item ,(format " %s %s%% " icon (string-trim (or pct-str ""))) ignore)))))
+            `((battery menu-item ,(tab-bar--apply-face (format " %s %s%% " icon (string-trim (or pct-str "")))) ignore)))))
   (when (bound-and-true-p gnus-newsrc-alist)
     (let ((total 0))
       (mapc (lambda (g)
@@ -181,7 +188,7 @@
       (setq tab-bar--mail-count total)))
   (setq tab-bar--mail-cache
         (when (> tab-bar--mail-count 0)
-          (let* ((color `(:foreground ,(face-background 'cursor)))
+          (let* ((color `(:foreground ,(face-foreground 'error)))
                  (icon (tab-bar--raise-icon (nerd-icons-mdicon "nf-md-email")))
                  (count (number-to-string tab-bar--mail-count))
                  (text (format " %s %s " icon count)))
@@ -207,11 +214,21 @@
                      (setq tab-bar--recording-icon
                            (tab-bar--raise-icon (nerd-icons-mdicon "nf-md-record_circle")))))
            (text (format " %s %d:%02d " icon (/ secs 60) (% secs 60))))
-      (add-face-text-property 0 (length text) `(:foreground ,(dracula-color 'dracula-red)) nil text)
+      (add-face-text-property 0 (length text) `(:foreground ,(face-foreground 'error)) nil text)
       `((recording menu-item ,text ewm/record-region)))))
 
 (defun tab-bar-format-mail ()
   tab-bar--mail-cache)
+
+(defun theme/apply-tab-bar ()
+  "Invalidate tab-bar caches so colors follow the current theme."
+  (setq tab-bar--system-menu-cache nil
+        tab-bar--recording-icon nil
+        tab-bar--notification-cache nil)
+  (tab-bar--update-status)
+  (when (bound-and-true-p ednc-mode)
+    (tab-bar--update-notification nil (car (ednc-notifications)))))
+(add-hook 'theme/after-apply-hook #'theme/apply-tab-bar)
 
 (defvar tab-bar--notification-cache nil "Cached notification tab-bar item.")
 (defvar tab-bar--notification-timer nil "Timer to auto-dismiss notification.")
@@ -230,7 +247,7 @@
           (let* ((summary (ednc-notification-summary n))
                  (app (ednc-notification-app-name n))
                  (app-icon (alist-get 'icon (ednc-notification-amendments n)))
-                 (color `(:foreground ,(face-background 'cursor)))
+                 (color `(:foreground ,(face-foreground 'error)))
                  (icon (or app-icon
                            (let ((bell (tab-bar--raise-icon (nerd-icons-mdicon "nf-md-bell"))))
                              (add-face-text-property 0 (length bell) color nil bell)
@@ -285,7 +302,7 @@
   (with-eval-after-load 'doom-modeline
     (doom-modeline-def-segment window-number
       (let ((num (winum-get-number-string)))
-        (propertize (format " %s " num)
+        (propertize (format " %s" num)
                     'face (doom-modeline-face 'doom-modeline-buffer-major-mode))))))
 
 (defun system/lock-screen ()
@@ -352,7 +369,7 @@
     ;; Disable text-input intercept so compose sequences reach Wayland clients
     (ewm-text-input-auto-mode-disable)
 
-    ;; C-x C-x / C-c C-c: passthrough next keypress to surface
+    ;; Passthrough: temporarily release a prefix so the next press goes to the surface
     (defvar ewm--passthrough-timer nil)
 
     (defun ewm--passthrough-restore (prefix)
@@ -362,18 +379,23 @@
       (setq ewm--passthrough-timer nil)
       (message nil))
 
-    (defun ewm/passthrough-prefix (key)
-      "Temporarily stop intercepting C-KEY so the next press goes to the surface."
-      (let ((prefix (aref (kbd (concat "C-" key)) 0)))
+    (defun ewm/passthrough-key (key-desc)
+      "Temporarily stop intercepting KEY-DESC so the next press goes to the surface."
+      (let ((event (aref (kbd key-desc) 0)))
         (when ewm--passthrough-timer (cancel-timer ewm--passthrough-timer))
-        (setq ewm-intercept-prefixes (delq prefix ewm-intercept-prefixes))
+        (setq ewm-intercept-prefixes (delq event ewm-intercept-prefixes))
         (ewm--send-intercept-keys)
-        (message "C-%s passthrough — press it now" key)
+        (message "%s passthrough — press it now" key-desc)
         (setq ewm--passthrough-timer
-              (run-at-time 1 nil #'ewm--passthrough-restore prefix))))
+              (run-at-time 1 nil #'ewm--passthrough-restore event))))
 
-    ;; Intercept C-c from surfaces (like C-x) — must be set before ewm-mode enables
-    (add-to-list 'ewm-intercept-prefixes ?\C-c)
+    ;; Intercept C-w and M-w (the new prefix keys after CUA swap)
+    ;; C-x and C-c are no longer intercepted — they pass through to surfaces
+    ;; as CUA cut/copy.
+    (setq ewm-intercept-prefixes
+          (delq ?\C-x ewm-intercept-prefixes))
+    (add-to-list 'ewm-intercept-prefixes ?\C-w)
+    (add-to-list 'ewm-intercept-prefixes ?\M-w)
 
     ;; Intercept all Super-key combos from surfaces.
     ;; EWM requires individual key specs, so we generate all s-<letter>,
@@ -405,17 +427,19 @@
       (ewm--send-intercept-keys))
     (add-hook 'ewm-mode-hook #'ewm/sync-intercept-keys)
 
-    ;; Passthrough bindings: C-x C-x / C-c C-c send next keypress to the surface
-    (defun ewm/passthrough-x ()
-      "Passthrough C-x to surface app."
+    ;; Passthrough bindings for the new prefix keys (C-w and M-w after CUA swap).
+    ;; Physical C-w C-w → translated to C-x C-x → passthrough C-w to surface.
+    ;; Physical M-w M-w → translated to C-c C-c → passthrough M-w to surface.
+    (defun ewm/passthrough-w ()
+      "Passthrough C-w to surface app."
       (interactive)
-      (ewm/passthrough-prefix "x"))
-    (defun ewm/passthrough-c ()
-      "Passthrough C-c to surface app."
+      (ewm/passthrough-key "C-w"))
+    (defun ewm/passthrough-mw ()
+      "Passthrough M-w to surface app."
       (interactive)
-      (ewm/passthrough-prefix "c"))
-    (define-key ewm-surface-mode-map (kbd "C-x C-x") #'ewm/passthrough-x)
-    (define-key ewm-surface-mode-map (kbd "C-c C-c") #'ewm/passthrough-c)
+      (ewm/passthrough-key "M-w"))
+    (define-key ewm-surface-mode-map (kbd "C-x C-x") #'ewm/passthrough-w)
+    (define-key ewm-surface-mode-map (kbd "C-c C-c") #'ewm/passthrough-mw)
 
     ;; Dynamic application icons for EWM surfaces in doom-modeline
     ;; Looks up real app icons via .desktop files and the hicolor icon theme
@@ -545,8 +569,8 @@
 
       ;; Minimal modeline for Wayland surface buffers
       (doom-modeline-def-modeline 'ewm-surface
-        '(window-number buffer-info)
-        '(misc-info major-mode bar))
+        '(bar window-number buffer-info)
+        '(misc-info major-mode))
 
       ;; ewm-surface-app is set AFTER ewm-surface-mode activates, so
       ;; doom-modeline's after-change-major-mode-hook fires too early.
@@ -634,15 +658,27 @@
                 (preserve-size . (t . nil)))))
 
       (defun theme/apply-window-divider ()
-        "Set window-divider faces from the current Dracula palette."
-        (set-face-attribute 'window-divider nil :foreground (dracula-color 'dracula-bg-alternate))
-        (set-face-attribute 'window-divider-first-pixel nil :foreground (dracula-color 'dracula-bg-alternate))
-        (set-face-attribute 'window-divider-last-pixel nil :foreground (dracula-color 'dracula-bg-alternate)))
+        "Set window-divider faces from the current theme."
+        (let ((color (if (cl-intersection '(dracula dracula-light) custom-enabled-themes)
+                         (dracula-color 'dracula-bg-alternate)
+                       (face-attribute 'default :background nil t))))
+          (set-face-attribute 'window-divider nil :foreground color)
+          (set-face-attribute 'window-divider-first-pixel nil :foreground color)
+          (set-face-attribute 'window-divider-last-pixel nil :foreground color)))
       (add-hook 'theme/after-apply-hook #'theme/apply-window-divider)
+
+      (defun theme/light-theme-p ()
+        "Return non-nil if the current Emacs theme has a light background."
+        (let* ((rgb (color-values (face-attribute 'default :background nil t)))
+               (lum (/ (+ (* 0.2126 (nth 0 rgb))
+                          (* 0.7152 (nth 1 rgb))
+                          (* 0.0722 (nth 2 rgb)))
+                       65535.0)))
+          (> lum 0.5)))
 
       (defun theme/apply-desktop ()
         "Switch Cosmic, GTK and Qt themes to match the current Emacs theme."
-        (let ((light (memq 'dracula-light custom-enabled-themes)))
+        (let ((light (theme/light-theme-p)))
           ;; Cosmic
           (with-temp-file "~/.config/cosmic/com.system76.CosmicTheme.Mode/v1/is_dark"
             (insert (if light "false" "true")))
@@ -662,24 +698,10 @@
                       (replace-match (format "color_scheme_path=%s/.local/share/color-schemes/%s.colors"
                                              (getenv "HOME") scheme)))
                     (write-region (point-min) (point-max) path))))))
-          ;; Vivaldi theme + Dark Reader via Chrome DevTools Protocol
-          (theme/vivaldi-set light)))
+          ))
       (add-hook 'theme/after-apply-hook #'theme/apply-desktop)
 
-      (defun theme/vivaldi-daemon-ensure ()
-        "Start the vivaldi-ctl daemon if not already running."
-        (let ((script (expand-file-name "~/.emacs.d/scripts/vivaldi-ctl.py")))
-          (unless (file-exists-p (expand-file-name "~/.cache/vivaldi-theme.sock"))
-            (start-process "vivaldi-ctl-daemon" nil "python3" script "daemon"))))
-
-      (defun theme/vivaldi-set (light)
-        "Switch Vivaldi theme and Dark Reader to match LIGHT mode."
-        (let ((script (expand-file-name "~/.emacs.d/scripts/vivaldi-ctl.py")))
-          (theme/vivaldi-daemon-ensure)
-          (start-process "vivaldi-ctl" nil "python3" script
-                         (if light "light" "dark"))))
-
-      (theme/apply)
+      (theme/load (or (car custom-enabled-themes) 'dracula))
       (modify-all-frames-parameters '((right-divider-width . 8)
                                       (bottom-divider-width . 8)))
 
@@ -1077,18 +1099,36 @@ Only grabs once; subsequent repeats just reset the release timer."
            ewm-surface-app
            (string-match-p "\\`[Vv]ivaldi" ewm-surface-app)))
 
-    (defun vivaldi/get-url ()
-      "Extract URL from the Vivaldi window title."
-      (interactive)
+    (defun vivaldi/brotab-active-tab ()
+      "Return (tab-id title url) of the active tab matching this Vivaldi surface.
+  Uses `bt query +active' and matches by page title extracted from the
+  window title.  Falls back to the sole result when only one tab is active."
       (when (vivaldi/surface-p)
-        (when (string-match "\\(https?://\\S-+\\) - Vivaldi\\'" ewm-surface-title)
-          (match-string 1 ewm-surface-title))))
+        (let ((page-title (when (and (boundp 'ewm-surface-title) ewm-surface-title)
+                            (replace-regexp-in-string " - Vivaldi\\'" "" ewm-surface-title))))
+          (with-temp-buffer
+            (when (zerop (call-process "bt" nil t nil "query" "+active"))
+              (goto-char (point-min))
+              (let (result lines)
+                (while (not (eobp))
+                  (when (looking-at "\\(\\S-+\\)\t\\(.*?\\)\t\\(.*\\)$")
+                    (let ((entry (list (match-string 1) (match-string 2)
+                                       (string-trim (match-string 3)))))
+                      (push entry lines)
+                      (when (and page-title (not result)
+                                 (string-prefix-p (nth 1 entry) page-title))
+                        (setq result entry))))
+                  (forward-line 1))
+                (or result (when (= (length lines) 1) (car lines)))))))))
+
+    (defun vivaldi/get-url ()
+      "Return the URL of the active Vivaldi tab via brotab."
+      (interactive)
+      (nth 2 (vivaldi/brotab-active-tab)))
 
     (defun vivaldi/get-page-title ()
-      "Extract page title from the Vivaldi window title."
-      (when (vivaldi/surface-p)
-        (when (string-match "\\`\\(.*\\) - https?://\\S-+ - Vivaldi\\'" ewm-surface-title)
-          (match-string 1 ewm-surface-title))))
+      "Return the page title of the active Vivaldi tab via brotab."
+      (nth 1 (vivaldi/brotab-active-tab)))
 
     (defun vivaldi/copy-url ()
       "Copy the current Vivaldi tab URL to the kill ring."
@@ -1098,21 +1138,8 @@ Only grabs once; subsequent repeats just reset the release timer."
         (message "No Vivaldi URL found")))
 
     (defun vivaldi/brotab-tab-id ()
-      "Find the brotab tab ID matching the current Vivaldi surface.
-  Matches by comparing the URL from the window title against brotab's tab list."
-      (when-let ((url (vivaldi/get-url)))
-        (with-temp-buffer
-          (when (zerop (call-process "bt" nil t nil "list"))
-            (goto-char (point-min))
-            (let ((tab-id nil))
-              (while (and (not tab-id) (not (eobp)))
-                (when (looking-at "\\(\\S-+\\)\t\\(.*?\\)\t\\(.*\\)$")
-                  (let ((id (match-string 1))
-                        (tab-url (match-string 3)))
-                    (when (string= (string-trim tab-url) url)
-                      (setq tab-id id))))
-                (forward-line 1))
-              tab-id)))))
+      "Return the brotab tab ID of the active Vivaldi tab."
+      (nth 0 (vivaldi/brotab-active-tab)))
 
     (defun vivaldi/history-complete (string pred action)
       "Completion table for `vivaldi/input-history' with metadata."
@@ -1183,3 +1210,23 @@ With NEW-WINDOW, always open in a new window."
         (setq-local bookmark-make-record-function #'bookmark/vivaldi-bookmark-make-record)))
 
     (add-hook 'ewm-update-title-hook #'bookmark/vivaldi-set-bookmark-handler)
+
+;; C-x ↔ C-w : keyboard-translate
+(keyboard-translate ?\C-x ?\C-w)
+(keyboard-translate ?\C-w ?\C-x)
+
+;; C-c ↔ M-w : key-translation-map (cross-modifier, pas de boucle)
+(define-key key-translation-map (kbd "C-c") (kbd "M-w"))
+(define-key key-translation-map (kbd "M-w") (kbd "C-c"))
+
+;; C-v ↔ C-y : rebind direct
+(global-set-key (kbd "C-v") #'yank)
+(global-set-key (kbd "C-V") #'yank)
+(global-set-key (kbd "C-y") #'scroll-up-command)
+(global-set-key (kbd "C-Y") #'scroll-up-command)
+
+;; M-v ↔ M-y : rebind direct
+(global-set-key (kbd "M-v") #'yank-pop)
+(global-set-key (kbd "M-V") #'yank-pop)
+(global-set-key (kbd "M-y") #'scroll-down-command)
+(global-set-key (kbd "M-Y") #'scroll-down-command)
