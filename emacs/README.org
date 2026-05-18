@@ -192,6 +192,15 @@
   (global-set-key (kbd (if *is-linux* "C-<iso-lefttab>" "C-S-<tab>")) 'previous-buffer)
 
   (delete-selection-mode 1)
+
+  (defun delete-region-or-backward (orig-fn &rest args)
+    "Delete region if active, otherwise call original function."
+    (if (use-region-p)
+        (delete-region (region-beginning) (region-end))
+      (apply orig-fn args)))
+  (advice-add 'backward-delete-char-untabify :around #'delete-region-or-backward)
+  (advice-add 'delete-backward-char :around #'delete-region-or-backward)
+
   (set-default 'truncate-lines t)
 
   (defun next-code-buffer ()
@@ -249,7 +258,6 @@
      ("C-b" . windresize-left)
      ("C-f" . windresize-right)
      ("C-p" . windresize-up))))
-#+END_SRC
 
     (use-package window-dim
       :vc
@@ -395,11 +403,33 @@
           (cl-pushnew face window-dim--faces))
         (window-dim--refresh-all-remaps))
 
+      ;; Dim org-timeblock SVG when its window is inactive (face remapping
+      ;; cannot reach inside SVG images, so we modify the DOM opacity instead)
+      (with-eval-after-load 'org-timeblock
+        (defun org-timeblock/dim-on-window-change (_frame)
+          "Adjust org-timeblock SVG opacity based on window focus."
+          (when (and (boundp 'org-timeblock-svg) org-timeblock-svg
+                     (boundp 'org-timeblock-buffer))
+            (when-let* ((buf (get-buffer org-timeblock-buffer))
+                        (win (get-buffer-window buf t)))
+              (let ((dimmed (not (eq win (selected-window)))))
+                (dom-set-attribute org-timeblock-svg 'opacity
+                                   (if dimmed
+                                       (number-to-string (- 1.0 window-dim-fraction))
+                                     "1.0"))
+                (with-current-buffer buf
+                  (let ((inhibit-read-only t))
+                    (erase-buffer)
+                    (svg-insert-image org-timeblock-svg)))))))
+        (add-hook 'window-selection-change-functions
+                  #'org-timeblock/dim-on-window-change))
+
       (window-dim-mode 1)
       (defun window-dim/on-config-change ()
         "Refresh window-dim remaps on window configuration change."
         (window-dim--on-window-change (selected-frame)))
       (add-hook 'window-configuration-change-hook #'window-dim/on-config-change))
+#+END_SRC
 
 ** Window rules
 
@@ -1238,6 +1268,7 @@ Run =M-x company-wordfreq-download-list= for =fr= and =en= to fetch dictionaries
 #+begin_src emacs-lisp
   (use-package meow
     :config
+    (setq meow-use-enhanced-selection-effect t)
     (setq meow--kbd-exchange-point-and-mark 'exchange-point-and-mark)
     (setq meow-char-thing-table
           '((?\( . round)
@@ -4768,6 +4799,8 @@ Visual timeblock view of the calendar, similar to Google Calendar.
     :bind ("C-c c" . gcal/fetch-and-timeblock)
     :custom
     (org-timeblock-span 1)
+    :hook
+    ((org-timeblock-mode org-timeblock-list-mode) . (lambda () (display-line-numbers-mode 0)))
     :config
     (defun gcal/fetch-and-timeblock ()
       "Fetch Google Calendar then open org-timeblock."

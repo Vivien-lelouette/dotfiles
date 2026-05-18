@@ -305,224 +305,243 @@
         (propertize (format " %s" num)
                     'face (doom-modeline-face 'doom-modeline-buffer-major-mode))))))
 
+(setopt ewm-unfocused-alpha 0.75)
+(setopt ewm-animations-enabled t)
 (defun system/lock-screen ()
-    (interactive)
-    (shell/async-command-no-output "grim /tmp/lockscreen.png && hyprlock"))
+  (interactive)
+  (shell/async-command-no-output "grim /tmp/lockscreen.png && hyprlock"))
 
-  (defun system/logout ()
-    (interactive)
-    (kill-emacs))
+(defun system/logout ()
+  (interactive)
+  (kill-emacs))
 
-  (defun system/shutdown ()
-    (interactive)
-    (shell/run-in-background "shutdown -h 0"))
+(defun system/shutdown ()
+  (interactive)
+  (shell/run-in-background "shutdown -h 0"))
 
-  (defun system/reboot ()
-    (interactive)
-    (shell/run-in-background "reboot"))
+(defun system/reboot ()
+  (interactive)
+  (shell/run-in-background "reboot"))
 
-  (defun settings/manager ()
-    (interactive)
-    (shell/run-in-background "cosmic-settings"))
+(defun settings/manager ()
+  (interactive)
+  (shell/run-in-background "cosmic-settings"))
 
-  (defun settings/appearance ()
-    (interactive)
-    (shell/run-in-background "cosmic-settings appearance"))
+(defun settings/appearance ()
+  (interactive)
+  (shell/run-in-background "cosmic-settings appearance"))
 
-  (defun settings/display ()
-    (interactive)
-    (shell/run-in-background "cosmic-settings displays"))
+(defun settings/display ()
+  (interactive)
+  (shell/run-in-background "cosmic-settings displays"))
 
-  (defun settings/keyboard ()
-    (interactive)
-    (shell/run-in-background "cosmic-settings keyboard"))
+(defun settings/keyboard ()
+  (interactive)
+  (shell/run-in-background "cosmic-settings keyboard"))
 
-  (defun settings/mouse ()
-    (interactive)
-    (shell/run-in-background "cosmic-settings mouse"))
+(defun settings/mouse ()
+  (interactive)
+  (shell/run-in-background "cosmic-settings mouse"))
 
-  (defun settings/network ()
-    (interactive)
-    (shell/run-in-background "cosmic-settings network"))
+(defun settings/network ()
+  (interactive)
+  (shell/run-in-background "cosmic-settings network"))
 
-  (defun settings/sound ()
-    (interactive)
-    (shell/run-in-background "cosmic-settings sound"))
+(defun settings/sound ()
+  (interactive)
+  (shell/run-in-background "cosmic-settings sound"))
 
-  (use-package ewm
-    :ensure nil
-    :config
-    (winner-mode 1)
+(defun ewm/setup-surface-buffer ()
+  "Configure buffer-local settings for EWM surface buffers."
+  (interactive)
+  (display-line-numbers-mode -1)
+  (setq-local cursor-type nil)
+  (setq-local cursor-in-non-selected-windows nil))
 
-    ;; Hide scroll bars on EWM surface windows
-    (defun ewm/hide-surface-scroll-bars (_frame)
-      (walk-windows
-       (lambda (win)
-         (when (with-current-buffer (window-buffer win)
-                 (derived-mode-p 'ewm-surface-mode))
-           (set-window-scroll-bars win 0 nil)))))
-    (add-hook 'window-buffer-change-functions #'ewm/hide-surface-scroll-bars)
+(use-package ewm
+  :ensure nil
+  :hook (ewm-surface-mode . ewm/setup-surface-buffer)
+  :config
+  (winner-mode 1)
 
-    ;; Compose key (Caps Lock) for accented characters
-    (setq ewm-input-config '((keyboard :xkb-options "compose:caps")))
+  ;; Hide cursor in all windows displaying EWM surface buffers
+  (defun ewm/hide-surface-cursors (_frame)
+    (walk-windows
+     (lambda (win)
+       (let ((is-surface (with-current-buffer (window-buffer win)
+                           (derived-mode-p 'ewm-surface-mode))))
+         (internal-show-cursor win (not is-surface))))))
+  (add-hook 'window-buffer-change-functions #'ewm/hide-surface-cursors)
 
-    ;; Disable text-input intercept so compose sequences reach Wayland clients
-    (ewm-text-input-auto-mode-disable)
+  ;; Hide scroll bars on EWM surface windows
+  (defun ewm/hide-surface-scroll-bars (_frame)
+    (walk-windows
+     (lambda (win)
+       (when (with-current-buffer (window-buffer win)
+               (derived-mode-p 'ewm-surface-mode))
+         (set-window-scroll-bars win 0 nil)))))
+  (add-hook 'window-buffer-change-functions #'ewm/hide-surface-scroll-bars)
 
-    ;; Passthrough: temporarily release a prefix so the next press goes to the surface
-    (defvar ewm--passthrough-timer nil)
+  ;; Compose key (Caps Lock) for accented characters
+  (setq ewm-input-config '((keyboard :xkb-options "compose:caps")))
 
-    (defun ewm--passthrough-restore (prefix)
-      "Restore interception of PREFIX after passthrough timeout."
-      (add-to-list 'ewm-intercept-prefixes prefix)
+  ;; Disable text-input intercept so compose sequences reach Wayland clients
+  (ewm-text-input-auto-mode-disable)
+
+  ;; Passthrough: temporarily release a prefix so the next press goes to the surface
+  (defvar ewm--passthrough-timer nil)
+
+  (defun ewm--passthrough-restore (prefix)
+    "Restore interception of PREFIX after passthrough timeout."
+    (add-to-list 'ewm-intercept-prefixes prefix)
+    (ewm--send-intercept-keys)
+    (setq ewm--passthrough-timer nil)
+    (message nil))
+
+  (defun ewm/passthrough-key (key-desc)
+    "Temporarily stop intercepting KEY-DESC so the next press goes to the surface."
+    (let ((event (aref (kbd key-desc) 0)))
+      (when ewm--passthrough-timer (cancel-timer ewm--passthrough-timer))
+      (setq ewm-intercept-prefixes (delq event ewm-intercept-prefixes))
       (ewm--send-intercept-keys)
-      (setq ewm--passthrough-timer nil)
-      (message nil))
+      (message "%s passthrough — press it now" key-desc)
+      (setq ewm--passthrough-timer
+            (run-at-time 1 nil #'ewm--passthrough-restore event))))
 
-    (defun ewm/passthrough-key (key-desc)
-      "Temporarily stop intercepting KEY-DESC so the next press goes to the surface."
-      (let ((event (aref (kbd key-desc) 0)))
-        (when ewm--passthrough-timer (cancel-timer ewm--passthrough-timer))
-        (setq ewm-intercept-prefixes (delq event ewm-intercept-prefixes))
-        (ewm--send-intercept-keys)
-        (message "%s passthrough — press it now" key-desc)
-        (setq ewm--passthrough-timer
-              (run-at-time 1 nil #'ewm--passthrough-restore event))))
+  ;; Intercept C-w and M-w (the new prefix keys after CUA swap)
+  ;; C-x and C-c are no longer intercepted — they pass through to surfaces
+  ;; as CUA cut/copy.
+  (setq ewm-intercept-prefixes
+        (delq ?\C-x ewm-intercept-prefixes))
+  (add-to-list 'ewm-intercept-prefixes ?\C-w)
+  (add-to-list 'ewm-intercept-prefixes ?\M-w)
 
-    ;; Intercept C-w and M-w (the new prefix keys after CUA swap)
-    ;; C-x and C-c are no longer intercepted — they pass through to surfaces
-    ;; as CUA cut/copy.
-    (setq ewm-intercept-prefixes
-          (delq ?\C-x ewm-intercept-prefixes))
-    (add-to-list 'ewm-intercept-prefixes ?\C-w)
-    (add-to-list 'ewm-intercept-prefixes ?\M-w)
+  ;; Intercept all Super-key combos from surfaces.
+  ;; EWM requires individual key specs, so we generate all s-<letter>,
+  ;; s-S-<letter>, s-<digit>, s-S-<digit>, s-<special>, C-s-<special>.
+  ;; String specs for single-char keys (key-parse friendly)
+  (dolist (key (append
+                (cl-loop for c from ?a to ?z
+                         collect (format "s-%c" c)
+                         collect (format "s-%c" (upcase c)))
+                (cl-loop for c from ?0 to ?9
+                         collect (format "s-%c" c)
+                         collect (format "s-S-%c" c))
+                '("s-=" "s-/" "s-SPC" "C-s-=")))
+    (add-to-list 'ewm-intercept-prefixes key))
+  ;; Event specs for special keys (multi-char names need event-convert-list)
+  (dolist (sym '(left right up down return tab iso-lefttab))
+    (dolist (mods '((super) (super shift) (control super)))
+      (add-to-list 'ewm-intercept-prefixes
+                   (event-convert-list (append mods (list sym))))))
 
-    ;; Intercept all Super-key combos from surfaces.
-    ;; EWM requires individual key specs, so we generate all s-<letter>,
-    ;; s-S-<letter>, s-<digit>, s-S-<digit>, s-<special>, C-s-<special>.
-    ;; String specs for single-char keys (key-parse friendly)
-    (dolist (key (append
-                  (cl-loop for c from ?a to ?z
-                           collect (format "s-%c" c)
-                           collect (format "s-%c" (upcase c)))
-                  (cl-loop for c from ?0 to ?9
-                           collect (format "s-%c" c)
-                           collect (format "s-S-%c" c))
-                  '("s-=" "s-/" "s-SPC" "C-s-=")))
-      (add-to-list 'ewm-intercept-prefixes key))
-    ;; Event specs for special keys (multi-char names need event-convert-list)
-    (dolist (sym '(left right up down return tab iso-lefttab))
-      (dolist (mods '((super) (super shift) (control super)))
-        (add-to-list 'ewm-intercept-prefixes
-                     (event-convert-list (append mods (list sym))))))
+  ;; Auto-intercept all ewm-mode-map bindings from surfaces
+  (defun ewm/sync-intercept-keys ()
+    "Register every `ewm-mode-map' binding in `ewm-intercept-prefixes'."
+    (map-keymap
+     (lambda (event _binding)
+       (add-to-list 'ewm-intercept-prefixes
+                    (key-description (vector event))))
+     ewm-mode-map)
+    (ewm--send-intercept-keys))
+  (add-hook 'ewm-mode-hook #'ewm/sync-intercept-keys)
 
-    ;; Auto-intercept all ewm-mode-map bindings from surfaces
-    (defun ewm/sync-intercept-keys ()
-      "Register every `ewm-mode-map' binding in `ewm-intercept-prefixes'."
-      (map-keymap
-       (lambda (event _binding)
-         (add-to-list 'ewm-intercept-prefixes
-                      (key-description (vector event))))
-       ewm-mode-map)
-      (ewm--send-intercept-keys))
-    (add-hook 'ewm-mode-hook #'ewm/sync-intercept-keys)
+  ;; Passthrough bindings for the new prefix keys (C-w and M-w after CUA swap).
+  ;; Physical C-w C-w → translated to C-x C-x → passthrough C-w to surface.
+  ;; Physical M-w M-w → translated to C-c C-c → passthrough M-w to surface.
+  (defun ewm/passthrough-w ()
+    "Passthrough C-w to surface app."
+    (interactive)
+    (ewm/passthrough-key "C-w"))
+  (defun ewm/passthrough-mw ()
+    "Passthrough M-w to surface app."
+    (interactive)
+    (ewm/passthrough-key "M-w"))
+  (define-key ewm-surface-mode-map (kbd "C-x C-x") #'ewm/passthrough-w)
+  (define-key ewm-surface-mode-map (kbd "C-c C-c") #'ewm/passthrough-mw)
 
-    ;; Passthrough bindings for the new prefix keys (C-w and M-w after CUA swap).
-    ;; Physical C-w C-w → translated to C-x C-x → passthrough C-w to surface.
-    ;; Physical M-w M-w → translated to C-c C-c → passthrough M-w to surface.
-    (defun ewm/passthrough-w ()
-      "Passthrough C-w to surface app."
-      (interactive)
-      (ewm/passthrough-key "C-w"))
-    (defun ewm/passthrough-mw ()
-      "Passthrough M-w to surface app."
-      (interactive)
-      (ewm/passthrough-key "M-w"))
-    (define-key ewm-surface-mode-map (kbd "C-x C-x") #'ewm/passthrough-w)
-    (define-key ewm-surface-mode-map (kbd "C-c C-c") #'ewm/passthrough-mw)
+  ;; Dynamic application icons for EWM surfaces in doom-modeline
+  ;; Looks up real app icons via .desktop files and the hicolor icon theme
+  (defvar ewm-surface-icon-cache (make-hash-table :test 'equal)
+    "Cache mapping app-id to (COLOR-ICON . GRAYSCALE-ICON) or `none'.")
 
-    ;; Dynamic application icons for EWM surfaces in doom-modeline
-    ;; Looks up real app icons via .desktop files and the hicolor icon theme
-    (defvar ewm-surface-icon-cache (make-hash-table :test 'equal)
-      "Cache mapping app-id to (COLOR-ICON . GRAYSCALE-ICON) or `none'.")
+  (defun ewm-surface--xdg-data-dirs ()
+    "Return list of XDG data directories."
+    (let ((dirs (getenv "XDG_DATA_DIRS")))
+      (if dirs (split-string dirs ":" t)
+        '("/usr/share" "/usr/local/share"))))
 
-    (defun ewm-surface--xdg-data-dirs ()
-      "Return list of XDG data directories."
-      (let ((dirs (getenv "XDG_DATA_DIRS")))
-        (if dirs (split-string dirs ":" t)
-          '("/usr/share" "/usr/local/share"))))
+  (defun ewm-surface--find-desktop-file (app-id)
+    "Find .desktop file for APP-ID in XDG data dirs."
+    (let ((lowered (downcase app-id)))
+      (cl-loop for dir in (ewm-surface--xdg-data-dirs)
+               for apps-dir = (expand-file-name "applications" dir)
+               when (file-directory-p apps-dir)
+               thereis
+               (cl-loop for f in (directory-files apps-dir t "\\.desktop\\'")
+                        for base = (downcase (file-name-sans-extension
+                                              (file-name-nondirectory f)))
+                        when (or (string= base lowered)
+                                 (string-match-p (regexp-quote lowered) base))
+                        return f))))
 
-    (defun ewm-surface--find-desktop-file (app-id)
-      "Find .desktop file for APP-ID in XDG data dirs."
-      (let ((lowered (downcase app-id)))
-        (cl-loop for dir in (ewm-surface--xdg-data-dirs)
-                 for apps-dir = (expand-file-name "applications" dir)
-                 when (file-directory-p apps-dir)
-                 thereis
-                 (cl-loop for f in (directory-files apps-dir t "\\.desktop\\'")
-                          for base = (downcase (file-name-sans-extension
-                                                (file-name-nondirectory f)))
-                          when (or (string= base lowered)
-                                   (string-match-p (regexp-quote lowered) base))
-                          return f))))
+  (defun ewm-surface--desktop-icon-name (desktop-file)
+    "Extract Icon= value from DESKTOP-FILE."
+    (with-temp-buffer
+      (insert-file-contents desktop-file)
+      (when (re-search-forward "^Icon=\\(.+\\)$" nil t)
+        (match-string 1))))
 
-    (defun ewm-surface--desktop-icon-name (desktop-file)
-      "Extract Icon= value from DESKTOP-FILE."
-      (with-temp-buffer
-        (insert-file-contents desktop-file)
-        (when (re-search-forward "^Icon=\\(.+\\)$" nil t)
-          (match-string 1))))
+  (defun ewm-surface--find-icon-file (icon-name)
+    "Find icon file for ICON-NAME in hicolor icon theme or pixmaps."
+    (if (and (file-name-absolute-p icon-name) (file-exists-p icon-name))
+        icon-name
+      (let ((sizes '("scalable" "48x48" "32x32" "24x24" "64x64" "16x16" "22x22"))
+            (exts  '("svg" "png")))
+        (or (cl-loop for dir in (ewm-surface--xdg-data-dirs)
+                     for icons-dir = (expand-file-name "icons/hicolor" dir)
+                     when (file-directory-p icons-dir)
+                     thereis
+                     (cl-loop for size in sizes thereis
+                              (cl-loop for ext in exts
+                                       for path = (expand-file-name
+                                                   (format "%s/apps/%s.%s" size icon-name ext)
+                                                   icons-dir)
+                                       when (file-exists-p path) return path)))
+            ;; Fallback: pixmaps directory
+            (cl-loop for dir in (ewm-surface--xdg-data-dirs)
+                     for path = (expand-file-name (concat "pixmaps/" icon-name ".png") dir)
+                     when (file-exists-p path) return path)))))
 
-    (defun ewm-surface--find-icon-file (icon-name)
-      "Find icon file for ICON-NAME in hicolor icon theme or pixmaps."
-      (if (and (file-name-absolute-p icon-name) (file-exists-p icon-name))
-          icon-name
-        (let ((sizes '("scalable" "48x48" "32x32" "24x24" "64x64" "16x16" "22x22"))
-              (exts  '("svg" "png")))
-          (or (cl-loop for dir in (ewm-surface--xdg-data-dirs)
-                       for icons-dir = (expand-file-name "icons/hicolor" dir)
-                       when (file-directory-p icons-dir)
-                       thereis
-                       (cl-loop for size in sizes thereis
-                                (cl-loop for ext in exts
-                                         for path = (expand-file-name
-                                                     (format "%s/apps/%s.%s" size icon-name ext)
-                                                     icons-dir)
-                                         when (file-exists-p path) return path)))
-              ;; Fallback: pixmaps directory
-              (cl-loop for dir in (ewm-surface--xdg-data-dirs)
-                       for path = (expand-file-name (concat "pixmaps/" icon-name ".png") dir)
-                       when (file-exists-p path) return path)))))
-
-    (defun ewm-surface--make-icon-string (file &optional grayscale)
-      "Create propertized string displaying icon image from FILE.
+  (defun ewm-surface--make-icon-string (file &optional grayscale)
+    "Create propertized string displaying icon image from FILE.
       When GRAYSCALE is non-nil, wrap in an SVG with desaturation and darkening.
       Includes a face plist so doom-modeline-propertize-icon processes it correctly;
       the display property with the image takes precedence for rendering."
-      (let* ((h (frame-char-height))
-             (img (if (not grayscale)
-                      (create-image file nil nil :height h :ascent 'center)
-                    (let* ((data (with-temp-buffer
-                                   (set-buffer-multibyte nil)
-                                   (insert-file-contents-literally file)
-                                   (base64-encode-region (point-min) (point-max))
-                                   (buffer-string)))
-                           (svg-p (string-suffix-p ".svg" file))
-                           (mime (if svg-p "image/svg+xml"
-                                   (format "image/%s" (file-name-extension file))))
-                           (fg (and svg-p
-                                    (let ((rgb (color-values
-                                                (face-foreground 'mode-line-inactive nil t))))
-                                      (format "#%02x%02x%02x"
-                                              (/ (nth 0 rgb) 256)
-                                              (/ (nth 1 rgb) 256)
-                                              (/ (nth 2 rgb) 256)))))
-                           (filter (if fg
-                                       (format "<filter id='g'>
+    (let* ((h (frame-char-height))
+           (img (if (not grayscale)
+                    (create-image file nil nil :height h :ascent 'center)
+                  (let* ((data (with-temp-buffer
+                                 (set-buffer-multibyte nil)
+                                 (insert-file-contents-literally file)
+                                 (base64-encode-region (point-min) (point-max))
+                                 (buffer-string)))
+                         (svg-p (string-suffix-p ".svg" file))
+                         (mime (if svg-p "image/svg+xml"
+                                 (format "image/%s" (file-name-extension file))))
+                         (fg (and svg-p
+                                  (let ((rgb (color-values
+                                              (face-foreground 'mode-line-inactive nil t))))
+                                    (format "#%02x%02x%02x"
+                                            (/ (nth 0 rgb) 256)
+                                            (/ (nth 1 rgb) 256)
+                                            (/ (nth 2 rgb) 256)))))
+                         (filter (if fg
+                                     (format "<filter id='g'>
         <feFlood flood-color='%s' result='c'/>
         <feComposite in='c' in2='SourceAlpha' operator='in'/>
       </filter>" fg)
-                                     "<filter id='g'>
+                                   "<filter id='g'>
         <feColorMatrix type='saturate' values='0'/>
         <feComponentTransfer>
           <feFuncR type='linear' slope='0.6'/>
@@ -530,564 +549,567 @@
           <feFuncB type='linear' slope='0.6'/>
         </feComponentTransfer>
       </filter>"))
-                           (svg (format
-                                 "<svg xmlns='http://www.w3.org/2000/svg' width='%d' height='%d'>
+                         (svg (format
+                               "<svg xmlns='http://www.w3.org/2000/svg' width='%d' height='%d'>
       <defs>%s</defs>
       <image href='data:%s;base64,%s' width='%d' height='%d' filter='url(#g)'/>
     </svg>" h h filter mime data h h)))
-                      (create-image svg 'svg t :height h :ascent 'center)))))
-        (propertize " " 'display img 'face '(:family "" :height 1.0))))
+                    (create-image svg 'svg t :height h :ascent 'center)))))
+      (propertize " " 'display img 'face '(:family "" :height 1.0))))
 
-    (defun ewm-surface--lookup-icon (app-id &optional grayscale)
-      "Look up icon for APP-ID via .desktop files, with caching.
+  (defun ewm-surface--lookup-icon (app-id &optional grayscale)
+    "Look up icon for APP-ID via .desktop files, with caching.
       When GRAYSCALE is non-nil, return the desaturated variant."
-      (let ((cached (gethash app-id ewm-surface-icon-cache)))
-        (if cached
-            (unless (eq cached 'none)
-              (if grayscale (cdr cached) (car cached)))
-          (let* ((desktop   (ewm-surface--find-desktop-file app-id))
-                 (icon-name (and desktop (ewm-surface--desktop-icon-name desktop)))
-                 (icon-file (and icon-name (ewm-surface--find-icon-file icon-name)))
-                 (color     (and icon-file (ewm-surface--make-icon-string icon-file)))
-                 (gray      (and icon-file (ewm-surface--make-icon-string icon-file t))))
-            (puthash app-id (if color (cons color gray) 'none) ewm-surface-icon-cache)
-            (if grayscale gray color)))))
+    (let ((cached (gethash app-id ewm-surface-icon-cache)))
+      (if cached
+          (unless (eq cached 'none)
+            (if grayscale (cdr cached) (car cached)))
+        (let* ((desktop   (ewm-surface--find-desktop-file app-id))
+               (icon-name (and desktop (ewm-surface--desktop-icon-name desktop)))
+               (icon-file (and icon-name (ewm-surface--find-icon-file icon-name)))
+               (color     (and icon-file (ewm-surface--make-icon-string icon-file)))
+               (gray      (and icon-file (ewm-surface--make-icon-string icon-file t))))
+          (puthash app-id (if color (cons color gray) 'none) ewm-surface-icon-cache)
+          (if grayscale gray color)))))
 
-    (defun ewm-surface-icon-for-buffer (orig-fn &rest args)
-      "Return app icon for EWM surface buffers, fall back to ORIG-FN.
+  (defun ewm-surface-icon-for-buffer (orig-fn &rest args)
+    "Return app icon for EWM surface buffers, fall back to ORIG-FN.
       Unfocused surfaces get a grayscale icon."
-      (if (and (bound-and-true-p ewm-surface-app)
-               (not (string-empty-p ewm-surface-app)))
-          (let ((grayscale (not (eq (current-buffer)
-                                    (window-buffer (selected-window))))))
-            (or (ewm-surface--lookup-icon ewm-surface-app grayscale)
-                (nerd-icons-mdicon "nf-md-application")))
-        (apply orig-fn args)))
+    (if (and (bound-and-true-p ewm-surface-app)
+             (not (string-empty-p ewm-surface-app)))
+        (let ((grayscale (not (eq (current-buffer)
+                                  (window-buffer (selected-window))))))
+          (or (ewm-surface--lookup-icon ewm-surface-app grayscale)
+              (nerd-icons-mdicon "nf-md-application")))
+      (apply orig-fn args)))
 
-    (with-eval-after-load 'doom-modeline-core
-      (advice-add 'doom-modeline-icon-for-buffer :around #'ewm-surface-icon-for-buffer)
+  (with-eval-after-load 'doom-modeline-core
+    (advice-add 'doom-modeline-icon-for-buffer :around #'ewm-surface-icon-for-buffer)
 
-      ;; Minimal modeline for Wayland surface buffers
-      (doom-modeline-def-modeline 'ewm-surface
-        '(bar window-number buffer-info)
-        '(misc-info major-mode))
+    ;; Minimal modeline for Wayland surface buffers
+    (doom-modeline-def-modeline 'ewm-surface
+      '(bar window-number buffer-info)
+      '(misc-info major-mode))
 
-      ;; ewm-surface-app is set AFTER ewm-surface-mode activates, so
-      ;; doom-modeline's after-change-major-mode-hook fires too early.
-      ;; Re-trigger the icon update and set the minimal modeline.
-      (defun ewm-surface--on-app-set (_sym _val op where)
-        "Update doom-modeline icon and layout when ewm-surface-app is set."
-        (when (and (eq op 'set) (bufferp where))
-          (with-current-buffer where
-            (doom-modeline-update-buffer-file-icon)
-            (doom-modeline-set-modeline 'ewm-surface))))
-      (add-variable-watcher 'ewm-surface-app #'ewm-surface--on-app-set)
+    ;; ewm-surface-app is set AFTER ewm-surface-mode activates, so
+    ;; doom-modeline's after-change-major-mode-hook fires too early.
+    ;; Re-trigger the icon update and set the minimal modeline.
+    (defun ewm-surface--on-app-set (_sym _val op where)
+      "Update doom-modeline icon and layout when ewm-surface-app is set."
+      (when (and (eq op 'set) (bufferp where))
+        (with-current-buffer where
+          (doom-modeline-update-buffer-file-icon)
+          (doom-modeline-set-modeline 'ewm-surface))))
+    (add-variable-watcher 'ewm-surface-app #'ewm-surface--on-app-set)
 
-      (defun ewm-surface--update-icons-on-focus (&rest _)
-        "Refresh doom-modeline icons for visible EWM surfaces on focus change."
-        (dolist (frame (frame-list))
-          (dolist (win (window-list frame 'no-minibuf))
-            (with-current-buffer (window-buffer win)
-              (when (bound-and-true-p ewm-surface-app)
-                (doom-modeline-update-buffer-file-icon))))))
-      (add-hook 'window-selection-change-functions
-                #'ewm-surface--update-icons-on-focus))
+    (defun ewm-surface--update-icons-on-focus (&rest _)
+      "Refresh doom-modeline icons for visible EWM surfaces on focus change."
+      (dolist (frame (frame-list))
+        (dolist (win (window-list frame 'no-minibuf))
+          (with-current-buffer (window-buffer win)
+            (when (bound-and-true-p ewm-surface-app)
+              (doom-modeline-update-buffer-file-icon))))))
+    (add-hook 'window-selection-change-functions
+              #'ewm-surface--update-icons-on-focus))
 
-    (defvar tab-bar--tabs-start-px nil "Cached pixel position where tabs area starts.")
-    (defvar tab-bar--right-reserved-px nil "Cached max pixel width of right-side elements.")
+  (defvar tab-bar--tabs-start-px nil "Cached pixel position where tabs area starts.")
+  (defvar tab-bar--right-reserved-px nil "Cached max pixel width of right-side elements.")
 
-    (defun tab-bar--tabs-start-px ()
-      (or tab-bar--tabs-start-px
-          (setq tab-bar--tabs-start-px
-                (let ((sep-w (string-pixel-width " ")))
-                  (+ sep-w ; left separator
-                     (string-pixel-width (concat " " (char-to-string #x23FB) " "))
-                     sep-w))))) ; separator after menu
+  (defun tab-bar--tabs-start-px ()
+    (or tab-bar--tabs-start-px
+        (setq tab-bar--tabs-start-px
+              (let ((sep-w (string-pixel-width " ")))
+                (+ sep-w ; left separator
+                   (string-pixel-width (concat " " (char-to-string #x23FB) " "))
+                   sep-w))))) ; separator after menu
 
-    (defun tab-bar--right-reserved-px ()
-      (or tab-bar--right-reserved-px
-          (setq tab-bar--right-reserved-px
-                (let ((sep-w (string-pixel-width " ")))
-                  (+ ;; recording indicator (worst case: visible)
-                   (string-pixel-width
-                    (concat " " (nerd-icons-mdicon "nf-md-record_circle") " 99:59 "))
-                   sep-w
-                   (string-pixel-width
-                    (concat " " (nerd-icons-mdicon "nf-md-bell") " (99) "
-                            (make-string 80 ?m) " "))
-                   sep-w
-                   (string-pixel-width
-                    (concat " " (nerd-icons-mdicon "nf-md-email") " 9999 "))
-                   sep-w
-                   (string-pixel-width
-                    (concat " " (format-time-string "%a %d %b  %H:%M") " "))
-                   sep-w
-                   (string-pixel-width
-                    (concat " " (nerd-icons-mdicon "nf-md-battery") " 100% "))
-                   sep-w))))) ; trailing separator
+  (defun tab-bar--right-reserved-px ()
+    (or tab-bar--right-reserved-px
+        (setq tab-bar--right-reserved-px
+              (let ((sep-w (string-pixel-width " ")))
+                (+ ;; recording indicator (worst case: visible)
+                 (string-pixel-width
+                  (concat " " (nerd-icons-mdicon "nf-md-record_circle") " 99:59 "))
+                 sep-w
+                 (string-pixel-width
+                  (concat " " (nerd-icons-mdicon "nf-md-bell") " (99) "
+                          (make-string 80 ?m) " "))
+                 sep-w
+                 (string-pixel-width
+                  (concat " " (nerd-icons-mdicon "nf-md-email") " 9999 "))
+                 sep-w
+                 (string-pixel-width
+                  (concat " " (format-time-string "%a %d %b  %H:%M") " "))
+                 sep-w
+                 (string-pixel-width
+                  (concat " " (nerd-icons-mdicon "nf-md-battery") " 100% "))
+                 sep-w))))) ; trailing separator
 
-    (defun tab-bar/format-tab-name (tab i)
-      "Format TAB name with index I, fixed pixel-width using align-to."
-      (let* ((current-p (eq (car tab) 'current-tab))
-             (tabs (frame-parameter nil 'tabs))
-             (tab-count (max 1 (length tabs)))
-             (name (alist-get 'name tab))
-             (prefix (if (> tab-count 1) (format "%d: " i) ""))
-             (face (if current-p 'tab-bar-tab 'tab-bar-tab-inactive))
-             (start (tab-bar--tabs-start-px))
-             (per-tab (max (* 10 (frame-char-width))
-                           (/ (- (frame-inner-width) start (tab-bar--right-reserved-px))
-                              tab-count)))
-             (tab-end (+ start (* i per-tab)))
-             (max-chars (max 5 (- (/ per-tab (frame-char-width)) 1)))
-             (content (concat " " prefix name " "))
-             (truncated (truncate-string-to-width content max-chars nil nil "..."))
-             (pad (propertize " " 'display `(space :align-to (,tab-end)) 'face face)))
-        (concat (propertize truncated 'face face) pad)))
+  (defun tab-bar/format-tab-name (tab i)
+    "Format TAB name with index I, fixed pixel-width using align-to."
+    (let* ((current-p (eq (car tab) 'current-tab))
+           (tabs (frame-parameter nil 'tabs))
+           (tab-count (max 1 (length tabs)))
+           (name (alist-get 'name tab))
+           (prefix (if (> tab-count 1) (format "%d: " i) ""))
+           (face (if current-p 'tab-bar-tab 'tab-bar-tab-inactive))
+           (start (tab-bar--tabs-start-px))
+           (per-tab (max (* 10 (frame-char-width))
+                         (/ (- (frame-inner-width) start (tab-bar--right-reserved-px))
+                            tab-count)))
+           (tab-end (+ start (* i per-tab)))
+           (max-chars (max 5 (- (/ per-tab (frame-char-width)) 1)))
+           (content (concat " " prefix name " "))
+           (truncated (truncate-string-to-width content max-chars nil nil "..."))
+           (pad (propertize " " 'display `(space :align-to (,tab-end)) 'face face)))
+      (concat (propertize truncated 'face face) pad)))
 
-    (defun ewm/refresh-setup ()
-      (interactive)
-      (setopt epg-pinentry-mode 'loopback)
-      (setq agent-shell-display-action
-            (if (featurep 'ewm)
-                '((display-buffer-same-window))
-              '((vv/display-buffer-pop-up-frame-maybe display-buffer-in-side-window)
-                (side . left)
-                (slot . 1)
-                (window-width . 100)
-                (preserve-size . (t . nil)))))
+  (defun ewm/refresh-setup ()
+    (interactive)
+    (setopt epg-pinentry-mode 'loopback)
+    (setq agent-shell-display-action
+          (if (featurep 'ewm)
+              '((display-buffer-same-window))
+            '((vv/display-buffer-pop-up-frame-maybe display-buffer-in-side-window)
+              (side . left)
+              (slot . 1)
+              (window-width . 100)
+              (preserve-size . (t . nil)))))
 
-      (defun theme/apply-window-divider ()
-        "Set window-divider faces from the current theme."
-        (let ((color (if (cl-intersection '(dracula dracula-light) custom-enabled-themes)
-                         (dracula-color 'dracula-bg-alternate)
-                       (face-attribute 'default :background nil t))))
-          (set-face-attribute 'window-divider nil :foreground color)
-          (set-face-attribute 'window-divider-first-pixel nil :foreground color)
-          (set-face-attribute 'window-divider-last-pixel nil :foreground color)))
-      (add-hook 'theme/after-apply-hook #'theme/apply-window-divider)
+    (defun theme/apply-window-divider ()
+      "Set window-divider faces from the current theme."
+      (let ((color (if (cl-intersection '(dracula dracula-light) custom-enabled-themes)
+                       (dracula-color 'dracula-bg-alternate)
+                     (face-attribute 'tab-bar :background nil t))))
+        (set-face-attribute 'tab-bar-tab nil :background color :weight 'bold)
+        (set-face-attribute 'window-divider nil :foreground color)
+        (set-face-attribute 'window-divider-first-pixel nil :foreground color)
+        (set-face-attribute 'window-divider-last-pixel nil :foreground color)))
+    (add-hook 'theme/after-apply-hook #'theme/apply-window-divider)
 
-      (defun theme/light-theme-p ()
-        "Return non-nil if the current Emacs theme has a light background."
-        (let* ((rgb (color-values (face-attribute 'default :background nil t)))
-               (lum (/ (+ (* 0.2126 (nth 0 rgb))
-                          (* 0.7152 (nth 1 rgb))
-                          (* 0.0722 (nth 2 rgb)))
-                       65535.0)))
-          (> lum 0.5)))
+    (defun theme/light-theme-p ()
+      "Return non-nil if the current Emacs theme has a light background."
+      (let* ((rgb (color-values (face-attribute 'default :background nil t)))
+             (lum (/ (+ (* 0.2126 (nth 0 rgb))
+                        (* 0.7152 (nth 1 rgb))
+                        (* 0.0722 (nth 2 rgb)))
+                     65535.0)))
+        (> lum 0.5)))
 
-      (defun theme/apply-desktop ()
-        "Switch Cosmic, GTK and Qt themes to match the current Emacs theme."
-        (let ((light (theme/light-theme-p)))
-          ;; Cosmic
-          (with-temp-file "~/.config/cosmic/com.system76.CosmicTheme.Mode/v1/is_dark"
-            (insert (if light "false" "true")))
-          ;; GTK color-scheme
-          (start-process "gsettings" nil "gsettings" "set"
-                         "org.gnome.desktop.interface" "color-scheme"
-                         (if light "prefer-light" "prefer-dark"))
-          ;; Qt
-          (let ((scheme (if light "CosmicLight" "CosmicDark")))
-            (dolist (conf '("~/.config/qt5ct/qt5ct.conf"
-                            "~/.config/qt6ct/qt6ct.conf"))
-              (let ((path (expand-file-name conf)))
-                (when (file-exists-p path)
-                  (with-temp-buffer
-                    (insert-file-contents path)
-                    (when (re-search-forward "^color_scheme_path=.*$" nil t)
-                      (replace-match (format "color_scheme_path=%s/.local/share/color-schemes/%s.colors"
-                                             (getenv "HOME") scheme)))
-                    (write-region (point-min) (point-max) path))))))
-          ))
-      (add-hook 'theme/after-apply-hook #'theme/apply-desktop)
+    (defun theme/apply-desktop ()
+      "Switch Cosmic, GTK and Qt themes to match the current Emacs theme."
+      (let ((light (theme/light-theme-p)))
+        ;; Cosmic
+        (with-temp-file "~/.config/cosmic/com.system76.CosmicTheme.Mode/v1/is_dark"
+          (insert (if light "false" "true")))
+        ;; GTK color-scheme
+        (start-process "gsettings" nil "gsettings" "set"
+                       "org.gnome.desktop.interface" "color-scheme"
+                       (if light "prefer-light" "prefer-dark"))
+        ;; Qt
+        (let ((scheme (if light "CosmicLight" "CosmicDark")))
+          (dolist (conf '("~/.config/qt5ct/qt5ct.conf"
+                          "~/.config/qt6ct/qt6ct.conf"))
+            (let ((path (expand-file-name conf)))
+              (when (file-exists-p path)
+                (with-temp-buffer
+                  (insert-file-contents path)
+                  (when (re-search-forward "^color_scheme_path=.*$" nil t)
+                    (replace-match (format "color_scheme_path=%s/.local/share/color-schemes/%s.colors"
+                                           (getenv "HOME") scheme)))
+                  (write-region (point-min) (point-max) path))))))
+        ))
+    (add-hook 'theme/after-apply-hook #'theme/apply-desktop)
 
-      (theme/load (or (car custom-enabled-themes) 'dracula))
-      (modify-all-frames-parameters '((right-divider-width . 8)
-                                      (bottom-divider-width . 8)))
+    (theme/load (or (car custom-enabled-themes) 'dracula))
+    (modify-all-frames-parameters '((right-divider-width . 8)
+                                    (bottom-divider-width . 8)))
 
-      (menu/custom-menu)
-      (setq tab-bar-auto-width nil
-            tab-bar-close-button-show nil
-            tab-bar-format '(tab-bar-separator
-                             tab-bar-format-system-menu
-                             tab-bar-separator
-                             tab-bar-format-tabs
-                             tab-bar-format-align-right
-                             tab-bar-format-recording
-                             tab-bar-separator
-                             tab-bar-format-notification
-                             tab-bar-separator
-                             tab-bar-format-mail
-                             tab-bar-separator
-                             tab-bar-format-datetime
-                             tab-bar-separator
-                             tab-bar-format-battery
-                             tab-bar-separator))
-      (setq tab-bar-tab-name-format-function #'tab-bar/format-tab-name)
-      (tab-bar-mode -1)
-      (tab-bar-mode 1)
-      (scroll-bar-mode 1)
-      ;; Re-sync intercepted keys with compositor (useful for manual s-R refresh)
-      (when ewm--module-mode
-        (ewm/sync-intercept-keys)))
+    (menu/custom-menu)
+    (setq tab-bar-auto-width nil
+          tab-bar-close-button-show nil
+          tab-bar-format '(tab-bar-separator
+                           tab-bar-format-system-menu
+                           tab-bar-separator
+                           tab-bar-format-tabs
+                           tab-bar-format-align-right
+                           tab-bar-format-recording
+                           tab-bar-separator
+                           tab-bar-format-notification
+                           tab-bar-separator
+                           tab-bar-format-mail
+                           tab-bar-separator
+                           tab-bar-format-datetime
+                           tab-bar-separator
+                           tab-bar-format-battery
+                           tab-bar-separator))
+    (setq tab-bar-tab-name-format-function #'tab-bar/format-tab-name)
+    (tab-bar-mode -1)
+    (tab-bar-mode 1)
+    (scroll-bar-mode 1)
+    ;; Re-sync intercepted keys with compositor (useful for manual s-R refresh)
+    (when ewm--module-mode
+      (ewm/sync-intercept-keys)))
 
-    (add-hook 'emacs-startup-hook #'ewm/refresh-setup)
+  (if after-init-time
+      (ewm/refresh-setup)
+    (add-hook 'emacs-startup-hook #'ewm/refresh-setup))
 
-    (defun ewm/focus-ednc ()
-      (interactive)
-      (switch-to-buffer "*ednc-log*"))
+  (defun ewm/focus-ednc ()
+    (interactive)
+    (switch-to-buffer "*ednc-log*"))
 
-    ;; s-w prefix key: window & tab management
-    (define-prefix-command 'ewm/window-map)
-    (define-prefix-command 'ewm/layout-map)
-    (define-prefix-command 'ewm/layout-save-map)
+  ;; s-w prefix key: window & tab management
+  (define-prefix-command 'ewm/window-map)
+  (define-prefix-command 'ewm/layout-map)
+  (define-prefix-command 'ewm/layout-save-map)
 
-    (define-key ewm-mode-map (kbd "s-w") 'ewm/window-map)
+  (define-key ewm-mode-map (kbd "s-w") 'ewm/window-map)
 
-    ;; s-w (s-)n / s-w (s-)k: tab management
-    (define-key ewm/window-map (kbd "s-n") #'tab-bar-duplicate-tab)
-    (define-key ewm/window-map (kbd "n")   #'tab-bar-duplicate-tab)
-    (define-key ewm/window-map (kbd "s-k") #'tab-bar-close-tab)
-    (define-key ewm/window-map (kbd "k")   #'tab-bar-close-tab)
-    (define-key ewm/window-map (kbd "s-o") #'other-frame)
-    (define-key ewm/window-map (kbd "o")   #'other-frame)
-    ;; s-w (s-)w: layout sub-prefix
-    (define-key ewm/window-map (kbd "s-w") 'ewm/layout-map)
-    (define-key ewm/window-map (kbd "w")   'ewm/layout-map)
+  ;; s-w (s-)n / s-w (s-)k: tab management
+  (define-key ewm/window-map (kbd "s-n") #'tab-bar-duplicate-tab)
+  (define-key ewm/window-map (kbd "n")   #'tab-bar-duplicate-tab)
+  (define-key ewm/window-map (kbd "s-k") #'tab-bar-close-tab)
+  (define-key ewm/window-map (kbd "k")   #'tab-bar-close-tab)
+  (define-key ewm/window-map (kbd "s-o") #'other-frame)
+  (define-key ewm/window-map (kbd "o")   #'other-frame)
+  ;; s-w (s-)w: layout sub-prefix
+  (define-key ewm/window-map (kbd "s-w") 'ewm/layout-map)
+  (define-key ewm/window-map (kbd "w")   'ewm/layout-map)
 
-    (define-key ewm/window-map (kbd "s-c") 'ewm/layout-map)
-    (define-key ewm/window-map (kbd "c")   'ewm/layout-map)
+  (define-key ewm/window-map (kbd "s-c") 'ewm/layout-map)
+  (define-key ewm/window-map (kbd "c")   'ewm/layout-map)
 
-    ;; s-w s-w (s-)s <n>: save layout to slot n
-    (define-key ewm/layout-map (kbd "s-s") 'ewm/layout-save-map)
-    (define-key ewm/layout-map (kbd "s")   'ewm/layout-save-map)
-    ;; s-w s-w (s-)<n>: load layout from slot n
-    ;; s-w s-w (s-)w: load layout from slot 0 (quick access)
-    (dotimes (i 9)
-      (let ((n (1+ i)))
-        (define-key ewm/layout-save-map (kbd (number-to-string n))
-                    `(lambda () (interactive) (ewm/save-layout ,n)))
-        (define-key ewm/layout-map (kbd (format "s-%d" n))
-                    `(lambda () (interactive) (ewm/load-layout ,n)))
-        (define-key ewm/layout-map (kbd (number-to-string n))
-                    `(lambda () (interactive) (ewm/load-layout ,n)))))
-    (defun ewm/save-layout-0 ()
-      "Save window layout to quick-access slot 0."
-      (interactive)
-      (ewm/save-layout 0))
-    (defun ewm/load-layout-0 ()
-      "Load window layout from quick-access slot 0."
-      (interactive)
-      (ewm/load-layout 0))
-    (define-key ewm/layout-save-map (kbd "w") #'ewm/save-layout-0)
-    (define-key ewm/layout-map (kbd "s-w") #'ewm/load-layout-0)
-    (define-key ewm/layout-map (kbd "w") #'ewm/load-layout-0)
+  ;; s-w s-w (s-)s <n>: save layout to slot n
+  (define-key ewm/layout-map (kbd "s-s") 'ewm/layout-save-map)
+  (define-key ewm/layout-map (kbd "s")   'ewm/layout-save-map)
+  ;; s-w s-w (s-)<n>: load layout from slot n
+  ;; s-w s-w (s-)w: load layout from slot 0 (quick access)
+  (dotimes (i 9)
+    (let ((n (1+ i)))
+      (define-key ewm/layout-save-map (kbd (number-to-string n))
+                  `(lambda () (interactive) (ewm/save-layout ,n)))
+      (define-key ewm/layout-map (kbd (format "s-%d" n))
+                  `(lambda () (interactive) (ewm/load-layout ,n)))
+      (define-key ewm/layout-map (kbd (number-to-string n))
+                  `(lambda () (interactive) (ewm/load-layout ,n)))))
+  (defun ewm/save-layout-0 ()
+    "Save window layout to quick-access slot 0."
+    (interactive)
+    (ewm/save-layout 0))
+  (defun ewm/load-layout-0 ()
+    "Load window layout from quick-access slot 0."
+    (interactive)
+    (ewm/load-layout 0))
+  (define-key ewm/layout-save-map (kbd "w") #'ewm/save-layout-0)
+  (define-key ewm/layout-map (kbd "s-w") #'ewm/load-layout-0)
+  (define-key ewm/layout-map (kbd "w") #'ewm/load-layout-0)
 
-    ;; Keep compositor focus on Emacs while ewm-mode-map keys are held
-    ;; or a transient map (repeat-mode) is active on a surface buffer.
-    ;; Without this, non-prefix intercepted keys are injected once but
-    ;; key-repeat events go to the focused surface instead of Emacs.
-    (defvar ewm--transient-map-active nil)
-    (defvar ewm--surface-focus-timer nil)
+  ;; Keep compositor focus on Emacs while ewm-mode-map keys are held
+  ;; or a transient map (repeat-mode) is active on a surface buffer.
+  ;; Without this, non-prefix intercepted keys are injected once but
+  ;; key-repeat events go to the focused surface instead of Emacs.
+  (defvar ewm--transient-map-active nil)
+  (defvar ewm--surface-focus-timer nil)
 
-    (defun ewm/grab-surface-focus ()
-      "Grab compositor focus BEFORE command runs so key-repeat goes to Emacs.
+  (defun ewm/grab-surface-focus ()
+    "Grab compositor focus BEFORE command runs so key-repeat goes to Emacs.
 Uses `pre-command-hook' to beat the ~300ms repeat delay.
 Only grabs once; subsequent repeats just reset the release timer."
-      (when (and ewm--module-mode
-                 (derived-mode-p 'ewm-surface-mode)
-                 this-command
-                 (let ((keys (this-command-keys-vector)))
-                   (and (> (length keys) 0)
-                        (lookup-key ewm-mode-map keys))))
-        ;; Only grab focus on the first press (timer nil = not yet grabbed)
-        (unless ewm--surface-focus-timer
-          (when-let ((frame-id (frame-parameter (selected-frame)
-                                                'ewm-surface-id)))
-            (ewm-focus frame-id)))
-        ;; Reset the release timer on every repeat
-        (when ewm--surface-focus-timer
-          (cancel-timer ewm--surface-focus-timer))
-        (setq ewm--surface-focus-timer
-              (run-with-idle-timer 0.3 nil
-                                   (lambda ()
-                                     (setq ewm--surface-focus-timer nil)
-                                     (when (and ewm--module-mode
-                                                (not ewm--transient-map-active))
-                                       (ewm--sync-focus)))))))
+    (when (and ewm--module-mode
+               (derived-mode-p 'ewm-surface-mode)
+               this-command
+               (let ((keys (this-command-keys-vector)))
+                 (and (> (length keys) 0)
+                      (lookup-key ewm-mode-map keys))))
+      ;; Only grab focus on the first press (timer nil = not yet grabbed)
+      (unless ewm--surface-focus-timer
+        (when-let ((frame-id (frame-parameter (selected-frame)
+                                              'ewm-surface-id)))
+          (ewm-focus frame-id)))
+      ;; Reset the release timer on every repeat
+      (when ewm--surface-focus-timer
+        (cancel-timer ewm--surface-focus-timer))
+      (setq ewm--surface-focus-timer
+            (run-with-idle-timer 0.3 nil
+                                 (lambda ()
+                                   (setq ewm--surface-focus-timer nil)
+                                   (when (and ewm--module-mode
+                                              (not ewm--transient-map-active))
+                                     (ewm--sync-focus)))))))
 
-    (defun ewm/sync-transient-map-focus ()
-      "Keep compositor focus on Emacs while a transient map is active."
-      (when (and ewm--module-mode
-                 (derived-mode-p 'ewm-surface-mode))
-        (let ((transient (and overriding-terminal-local-map
-                              (keymapp overriding-terminal-local-map))))
-          (unless (eq (not (not transient)) ewm--transient-map-active)
-            (setq ewm--transient-map-active (not (not transient)))
-            (if transient
-                (when-let ((frame-id (frame-parameter (selected-frame)
-                                                      'ewm-surface-id)))
-                  (ewm-focus frame-id))
-              (ewm--sync-focus))))))
+  (defun ewm/sync-transient-map-focus ()
+    "Keep compositor focus on Emacs while a transient map is active."
+    (when (and ewm--module-mode
+               (derived-mode-p 'ewm-surface-mode))
+      (let ((transient (and overriding-terminal-local-map
+                            (keymapp overriding-terminal-local-map))))
+        (unless (eq (not (not transient)) ewm--transient-map-active)
+          (setq ewm--transient-map-active (not (not transient)))
+          (if transient
+              (when-let ((frame-id (frame-parameter (selected-frame)
+                                                    'ewm-surface-id)))
+                (ewm-focus frame-id))
+            (ewm--sync-focus))))))
 
-    (add-hook 'pre-command-hook #'ewm/grab-surface-focus 90)
-    (add-hook 'post-command-hook #'ewm/sync-transient-map-focus 90)
+  (add-hook 'pre-command-hook #'ewm/grab-surface-focus 90)
+  (add-hook 'post-command-hook #'ewm/sync-transient-map-focus 90)
 
-    (defun ewm/screenshot-region ()
-      "Take a screenshot of a selected region using grim+slurp+swappy."
-      (interactive)
-      (start-process-shell-command "screenshot" nil
-                                   "grim -g \"$(slurp)\" - | swappy -f -"))
+  (defun ewm/screenshot-region ()
+    "Take a screenshot of a selected region using grim+slurp+swappy."
+    (interactive)
+    (start-process-shell-command "screenshot" nil
+                                 "grim -g \"$(slurp)\" - | swappy -f -"))
 
-    (defvar ewm--recording-process nil "Active wf-recorder process.")
-    (defvar ewm--recording-start-time nil "Start time of current recording.")
-    (defvar ewm--recording-timer nil "Timer updating the recording indicator.")
+  (defvar ewm--recording-process nil "Active wf-recorder process.")
+  (defvar ewm--recording-start-time nil "Start time of current recording.")
+  (defvar ewm--recording-timer nil "Timer updating the recording indicator.")
 
-    (defun ewm/record-region ()
-      "Toggle screen recording of a selected region using wf-recorder.
+  (defun ewm/record-region ()
+    "Toggle screen recording of a selected region using wf-recorder.
   If already recording, stop and save to ~/Videos/recordings/."
-      (interactive)
-      (if (and ewm--recording-process (process-live-p ewm--recording-process))
-          ;; Stop recording
-          (progn
-            (signal-process ewm--recording-process 'SIGINT)
-            (when ewm--recording-timer (cancel-timer ewm--recording-timer))
-            (setq ewm--recording-process nil
-                  ewm--recording-start-time nil
-                  ewm--recording-timer nil)
-            (force-mode-line-update t)
-            (message "Recording stopped"))
-        ;; Start recording
-        (let* ((geom (string-trim (shell-command-to-string "slurp")))
-               (ts (format-time-string "%Y_%m_%d-%H_%M_%S"))
-               (dir "~/Videos/recordings/")
-               (file (expand-file-name (concat ts ".mkv") dir)))
-          (unless (string-empty-p geom)
-            (make-directory dir t)
-            (setq ewm--recording-start-time (current-time)
-                  ewm--recording-process
-                  (start-process "wf-recorder" nil
-                                 "wf-recorder" "-g" geom "-f" file))
-            (set-process-sentinel
-             ewm--recording-process
-             (lambda (_proc _event)
-               (setq ewm--recording-process nil
-                     ewm--recording-start-time nil)
-               (force-mode-line-update t)))
-            (setq ewm--recording-timer
-                  (run-with-timer 1 1 #'force-mode-line-update))
-            (force-mode-line-update t)
-            (message "Recording started")))))
+    (interactive)
+    (if (and ewm--recording-process (process-live-p ewm--recording-process))
+        ;; Stop recording
+        (progn
+          (signal-process ewm--recording-process 'SIGINT)
+          (when ewm--recording-timer (cancel-timer ewm--recording-timer))
+          (setq ewm--recording-process nil
+                ewm--recording-start-time nil
+                ewm--recording-timer nil)
+          (force-mode-line-update t)
+          (message "Recording stopped"))
+      ;; Start recording
+      (let* ((geom (string-trim (shell-command-to-string "slurp")))
+             (ts (format-time-string "%Y_%m_%d-%H_%M_%S"))
+             (dir "~/Videos/recordings/")
+             (file (expand-file-name (concat ts ".mkv") dir)))
+        (unless (string-empty-p geom)
+          (make-directory dir t)
+          (setq ewm--recording-start-time (current-time)
+                ewm--recording-process
+                (start-process "wf-recorder" nil
+                               "wf-recorder" "-g" geom "-f" file))
+          (set-process-sentinel
+           ewm--recording-process
+           (lambda (_proc _event)
+             (setq ewm--recording-process nil
+                   ewm--recording-start-time nil)
+             (force-mode-line-update t)))
+          (setq ewm--recording-timer
+                (run-with-timer 1 1 #'force-mode-line-update))
+          (force-mode-line-update t)
+          (message "Recording started")))))
 
-    ;; s-S-N: swap buffer of current window with winum window N
-    ;; s-S-1 is seen as s-!, etc. Map shifted symbols back to window numbers.
-    (defvar ewm--shift-digit-alist
-      '((?! . 1) (?@ . 2) (?# . 3) (?$ . 4) (?% . 5)
-        (?^ . 6) (?& . 7) (?* . 8) (?\( . 9)))
+  ;; s-S-N: swap buffer of current window with winum window N
+  ;; s-S-1 is seen as s-!, etc. Map shifted symbols back to window numbers.
+  (defvar ewm--shift-digit-alist
+    '((?! . 1) (?@ . 2) (?# . 3) (?$ . 4) (?% . 5)
+      (?^ . 6) (?& . 7) (?* . 8) (?\( . 9)))
 
-    (defun ewm/swap-buffer-with-window (n)
-      "Swap the buffer in the current window with the buffer in winum window N."
-      (interactive)
-      (let ((target (winum-get-window-by-number n))
-            (this-win (selected-window)))
-        (if (or (null target) (eq target this-win))
-            (message "No window %d to swap with" n)
-          (let ((this-buf (window-buffer this-win))
-                (target-buf (window-buffer target)))
-            (set-window-buffer this-win target-buf)
-            (set-window-buffer target this-buf)
-            (select-window target)))))
+  (defun ewm/swap-buffer-with-window (n)
+    "Swap the buffer in the current window with the buffer in winum window N."
+    (interactive)
+    (let ((target (winum-get-window-by-number n))
+          (this-win (selected-window)))
+      (if (or (null target) (eq target this-win))
+          (message "No window %d to swap with" n)
+        (let ((this-buf (window-buffer this-win))
+              (target-buf (window-buffer target)))
+          (set-window-buffer this-win target-buf)
+          (set-window-buffer target this-buf)
+          (select-window target)))))
 
-    (defun ewm/swap-buffer-with-window-dispatch ()
-      "Dispatch buffer swap based on the shifted digit key pressed."
-      (interactive)
-      (let* ((key (event-basic-type last-command-event))
-             (n (cdr (assq key ewm--shift-digit-alist))))
-        (when n (ewm/swap-buffer-with-window n))))
+  (defun ewm/swap-buffer-with-window-dispatch ()
+    "Dispatch buffer swap based on the shifted digit key pressed."
+    (interactive)
+    (let* ((key (event-basic-type last-command-event))
+           (n (cdr (assq key ewm--shift-digit-alist))))
+      (when n (ewm/swap-buffer-with-window n))))
 
-    (defun ewm/swap-buffer-in-direction (dir)
-      "Swap buffer with the window in direction DIR and follow."
-      (let ((target (windmove-find-other-window dir))
-            (this-win (selected-window)))
-        (if (or (null target) (eq target this-win) (minibufferp (window-buffer target)))
-            (message "No window %s" dir)
-          (let ((this-buf (window-buffer this-win))
-                (target-buf (window-buffer target)))
-            (set-window-buffer this-win target-buf)
-            (set-window-buffer target this-buf)
-            (select-window target)))))
+  (defun ewm/swap-buffer-in-direction (dir)
+    "Swap buffer with the window in direction DIR and follow."
+    (let ((target (windmove-find-other-window dir))
+          (this-win (selected-window)))
+      (if (or (null target) (eq target this-win) (minibufferp (window-buffer target)))
+          (message "No window %s" dir)
+        (let ((this-buf (window-buffer this-win))
+              (target-buf (window-buffer target)))
+          (set-window-buffer this-win target-buf)
+          (set-window-buffer target this-buf)
+          (select-window target)))))
 
-    (defun ewm/swap-buffer-left () (interactive) (ewm/swap-buffer-in-direction 'left))
-    (defun ewm/swap-buffer-right () (interactive) (ewm/swap-buffer-in-direction 'right))
-    (defun ewm/swap-buffer-up () (interactive) (ewm/swap-buffer-in-direction 'up))
-    (defun ewm/swap-buffer-down () (interactive) (ewm/swap-buffer-in-direction 'down))
+  (defun ewm/swap-buffer-left () (interactive) (ewm/swap-buffer-in-direction 'left))
+  (defun ewm/swap-buffer-right () (interactive) (ewm/swap-buffer-in-direction 'right))
+  (defun ewm/swap-buffer-up () (interactive) (ewm/swap-buffer-in-direction 'up))
+  (defun ewm/swap-buffer-down () (interactive) (ewm/swap-buffer-in-direction 'down))
 
-    ;; Multi-source M-x: Emacs commands + XDG apps in a single Vertico interface
-    (defvar ewm/execute-extended-command-history nil
-      "History for `ewm/execute-extended-command'.")
-    (with-eval-after-load 'savehist
-      (add-to-list 'savehist-additional-variables
-                   'ewm/execute-extended-command-history)
-      (add-hook 'savehist-save-hook
-                (lambda ()
-                  (setq ewm/execute-extended-command-history
-                        (cl-remove-duplicates
-                         (mapcar #'consult--tofu-strip
-                                 ewm/execute-extended-command-history)
-                         :test #'equal)))))
+  ;; Multi-source M-x: Emacs commands + XDG apps in a single Vertico interface
+  (defvar ewm/execute-extended-command-history nil
+    "History for `ewm/execute-extended-command'.")
+  (with-eval-after-load 'savehist
+    (add-to-list 'savehist-additional-variables
+                 'ewm/execute-extended-command-history)
+    (add-hook 'savehist-save-hook
+              (lambda ()
+                (setq ewm/execute-extended-command-history
+                      (cl-remove-duplicates
+                       (mapcar #'consult--tofu-strip
+                               ewm/execute-extended-command-history)
+                       :test #'equal)))))
 
-    (defun ewm/history-sort (items)
-      "Sort ITEMS placing history matches first (by recency), rest alphabetical."
-      (let ((pos (make-hash-table :test #'equal)))
-        (cl-loop for h in ewm/execute-extended-command-history
-                 for i from 0
-                 do (let ((clean (consult--tofu-strip h)))
-                      (unless (gethash clean pos)
-                        (puthash clean i pos))))
-        (sort items
-              (lambda (a b)
-                (let ((pa (gethash a pos))
-                      (pb (gethash b pos)))
-                  (cond
-                   ((and pa pb) (< pa pb))
-                   (pa t)
-                   (pb nil)
-                   (t (string< a b))))))))
+  (defun ewm/history-sort (items)
+    "Sort ITEMS placing history matches first (by recency), rest alphabetical."
+    (let ((pos (make-hash-table :test #'equal)))
+      (cl-loop for h in ewm/execute-extended-command-history
+               for i from 0
+               do (let ((clean (consult--tofu-strip h)))
+                    (unless (gethash clean pos)
+                      (puthash clean i pos))))
+      (sort items
+            (lambda (a b)
+              (let ((pa (gethash a pos))
+                    (pb (gethash b pos)))
+                (cond
+                 ((and pa pb) (< pa pb))
+                 (pa t)
+                 (pb nil)
+                 (t (string< a b))))))))
 
-    (defvar consult--source-emacs-command
-      `(:name "Emacs command"
-        :narrow ?x
-        :category command
-        :items ,(lambda ()
-                  (ewm/history-sort
-                   (let (cmds)
-                     (mapatoms (lambda (sym)
-                                 (when (commandp sym)
-                                   (push (symbol-name sym) cmds))))
-                     cmds))))
-      "Consult multi source for Emacs interactive commands.")
+  (defvar consult--source-emacs-command
+    `(:name "Emacs command"
+            :narrow ?x
+            :category command
+            :items ,(lambda ()
+                      (ewm/history-sort
+                       (let (cmds)
+                         (mapatoms (lambda (sym)
+                                     (when (commandp sym)
+                                       (push (symbol-name sym) cmds))))
+                         cmds))))
+    "Consult multi source for Emacs interactive commands.")
 
-    (defvar consult--source-xdg-app
-      `(:name "Application"
-        :narrow ?a
-        :category app
-        :face font-lock-builtin-face
-        :items ,(lambda ()
-                  (ewm/history-sort
-                   (mapcar #'car (ewm-list-xdg-apps))))
-        :action ,(lambda (name) (ewm-launch-xdg-command name)))
-      "Consult multi source for XDG desktop applications.")
+  (defvar consult--source-xdg-app
+    `(:name "Application"
+            :narrow ?a
+            :category app
+            :face font-lock-builtin-face
+            :items ,(lambda ()
+                      (ewm/history-sort
+                       (mapcar #'car (ewm-list-xdg-apps))))
+            :action ,(lambda (name) (ewm-launch-xdg-command name)))
+    "Consult multi source for XDG desktop applications.")
 
-    (defun ewm/execute-extended-command ()
-      "Multi-source M-x: Emacs commands + XDG apps."
-      (interactive)
-      (let ((selected (consult--multi
-                       (list consult--source-emacs-command
-                             consult--source-xdg-app)
-                       :prompt "M-x: "
-                       :sort nil
-                       :history 'ewm/execute-extended-command-history)))
-        (when selected
-          (pcase-let ((`(,cand . ,src) selected))
-            (unless (plist-get src :action)
-              (command-execute (intern cand)))))))
+  (defun ewm/execute-extended-command ()
+    "Multi-source M-x: Emacs commands + XDG apps."
+    (interactive)
+    (let ((selected (consult--multi
+                     (list consult--source-emacs-command
+                           consult--source-xdg-app)
+                     :prompt "M-x: "
+                     :sort nil
+                     :history 'ewm/execute-extended-command-history)))
+      (when selected
+        (pcase-let ((`(,cand . ,src) selected))
+          (unless (plist-get src :action)
+            (command-execute (intern cand)))))))
 
-    (defun next-buffer-same-mode ()
-      "Switch to the next buffer with the same major mode."
-      (interactive)
-      (let ((mode major-mode)
-            (start (current-buffer)))
-        (next-buffer)
-        (while (and (not (eq major-mode mode))
-                    (not (eq (current-buffer) start)))
-          (next-buffer))))
+  (defun next-buffer-same-mode ()
+    "Switch to the next buffer with the same major mode."
+    (interactive)
+    (let ((mode major-mode)
+          (start (current-buffer)))
+      (next-buffer)
+      (while (and (not (eq major-mode mode))
+                  (not (eq (current-buffer) start)))
+        (next-buffer))))
 
-    (defun previous-buffer-same-mode ()
-      "Switch to the previous buffer with the same major mode."
-      (interactive)
-      (let ((mode major-mode)
-            (start (current-buffer)))
-        (previous-buffer)
-        (while (and (not (eq major-mode mode))
-                    (not (eq (current-buffer) start)))
-          (previous-buffer))))
+  (defun previous-buffer-same-mode ()
+    "Switch to the previous buffer with the same major mode."
+    (interactive)
+    (let ((mode major-mode)
+          (start (current-buffer)))
+      (previous-buffer)
+      (while (and (not (eq major-mode mode))
+                  (not (eq (current-buffer) start)))
+        (previous-buffer))))
 
-    ;; Keybindings in ewm-mode-map (always active, intercepted from surfaces)
-    :bind (:map ewm-mode-map
-                ;; refresh setup
-                ("s-R" . ewm/refresh-setup)
+  ;; Keybindings in ewm-mode-map (always active, intercepted from surfaces)
+  :bind (:map ewm-mode-map
+              ;; refresh setup
+              ("s-R" . ewm/refresh-setup)
 
-                ("s-/" . winner-undo)
-                ("s-?" . winner-redo)
+              ("s-/" . winner-undo)
+              ("s-?" . winner-redo)
 
-                ("s-d" . ewm/focus-ednc)
-                ("s-t" . nil)
-                ;; ("s-l" . system/lock-screen)
-                ("s-x" . ewm/execute-extended-command)
-                ("M-x" . ewm/execute-extended-command)
+              ("s-d" . ewm/focus-ednc)
+              ("s-t" . nil)
+              ("s-l" . system/lock-screen)
+              ("s-x" . ewm/execute-extended-command)
+              ("M-x" . ewm/execute-extended-command)
 
-                ;; Screenshot / recording
-                ("s-c" . ewm/screenshot-region)
-                ("s-C" . ewm/record-region)
+              ;; Screenshot / recording
+              ("s-c" . ewm/screenshot-region)
+              ("s-C" . ewm/record-region)
 
-                ;; Window selection (winum) — override default s-N tab bindings
-                ("s-0" . winum-select-window-0-or-10)
-                ("s-1" . winum-select-window-1)
-                ("s-2" . winum-select-window-2)
-                ("s-3" . winum-select-window-3)
-                ("s-4" . winum-select-window-4)
-                ("s-5" . winum-select-window-5)
-                ("s-6" . winum-select-window-6)
-                ("s-7" . winum-select-window-7)
-                ("s-8" . winum-select-window-8)
-                ("s-9" . winum-select-window-9)
+              ;; Window selection (winum) — override default s-N tab bindings
+              ("s-0" . winum-select-window-0-or-10)
+              ("s-1" . winum-select-window-1)
+              ("s-2" . winum-select-window-2)
+              ("s-3" . winum-select-window-3)
+              ("s-4" . winum-select-window-4)
+              ("s-5" . winum-select-window-5)
+              ("s-6" . winum-select-window-6)
+              ("s-7" . winum-select-window-7)
+              ("s-8" . winum-select-window-8)
+              ("s-9" . winum-select-window-9)
 
-                ;; Buffer swap with target window (s-S-N)
-                ("s-!" . ewm/swap-buffer-with-window-dispatch)
-                ("s-@" . ewm/swap-buffer-with-window-dispatch)
-                ("s-#" . ewm/swap-buffer-with-window-dispatch)
-                ("s-$" . ewm/swap-buffer-with-window-dispatch)
-                ("s-%" . ewm/swap-buffer-with-window-dispatch)
-                ("s-^" . ewm/swap-buffer-with-window-dispatch)
-                ("s-&" . ewm/swap-buffer-with-window-dispatch)
-                ("s-*" . ewm/swap-buffer-with-window-dispatch)
-                ("s-(" . ewm/swap-buffer-with-window-dispatch)
+              ;; Buffer swap with target window (s-S-N)
+              ("s-!" . ewm/swap-buffer-with-window-dispatch)
+              ("s-@" . ewm/swap-buffer-with-window-dispatch)
+              ("s-#" . ewm/swap-buffer-with-window-dispatch)
+              ("s-$" . ewm/swap-buffer-with-window-dispatch)
+              ("s-%" . ewm/swap-buffer-with-window-dispatch)
+              ("s-^" . ewm/swap-buffer-with-window-dispatch)
+              ("s-&" . ewm/swap-buffer-with-window-dispatch)
+              ("s-*" . ewm/swap-buffer-with-window-dispatch)
+              ("s-(" . ewm/swap-buffer-with-window-dispatch)
 
-                ;; Buffer swap with adjacent window (s-S-<arrow>)
-                ("S-s-<left>" . ewm/swap-buffer-left)
-                ("S-s-<right>" . ewm/swap-buffer-right)
-                ("S-s-<up>" . ewm/swap-buffer-up)
-                ("S-s-<down>" . ewm/swap-buffer-down)
+              ;; Buffer swap with adjacent window (s-S-<arrow>)
+              ("S-s-<left>" . ewm/swap-buffer-left)
+              ("S-s-<right>" . ewm/swap-buffer-right)
+              ("S-s-<up>" . ewm/swap-buffer-up)
+              ("S-s-<down>" . ewm/swap-buffer-down)
 
-                ;; Window resize mode
-                ("s-r" . windresize)
+              ;; Window resize mode
+              ("s-r" . windresize)
 
-                ;; Killing Buffers & Windows
-                ("s-k" . kill-current-buffer)
-                ("s-K" . kill-buffer-and-window)
-                ("C-s-k" . delete-window)
+              ;; Killing Buffers & Windows
+              ("s-k" . kill-current-buffer)
+              ("s-K" . kill-buffer-and-window)
+              ("C-s-k" . delete-window)
 
-                ;; Splitting Windows
-                ("s-s" . split-window-right)
-                ("s-S" . split-window-below)
+              ;; Splitting Windows
+              ("s-s" . split-window-right)
+              ("s-S" . split-window-below)
 
-                ;; Switching buffers
-                ("s-b" . consult-buffer)
-                ("s-n" . next-buffer-same-mode)
-                ("s-p" . previous-buffer-same-mode)
+              ;; Switching buffers
+              ("s-b" . consult-buffer)
+              ("s-n" . next-buffer-same-mode)
+              ("s-p" . previous-buffer-same-mode)
 
 
-                ;; Tab switching
-                ("s-<tab>" . tab-next)
-                ("s-<iso-lefttab>" . tab-previous)
+              ;; Tab switching
+              ("s-<tab>" . tab-next)
+              ("s-<iso-lefttab>" . tab-previous)
 
-                ;; Applications
-                ("s-i" . vivaldi/goto-url)
-                ("s-I" . vivaldi/goto-url-new-window)
+              ;; Applications
+              ("s-i" . vivaldi/goto-url)
+              ("s-I" . vivaldi/goto-url-new-window)
 
-                ("s-<return>" . eshell/new-or-current)
-                ("S-s-<return>" . eat)
-                ("C-s-<return>" . apps/cosmic-term)))
+              ("s-<return>" . eshell/new-or-current)
+              ("S-s-<return>" . eat)
+              ("C-s-<return>" . apps/cosmic-term)))
 
 (defvar vivaldi/input-history nil)
     (eval-after-load "savehist"

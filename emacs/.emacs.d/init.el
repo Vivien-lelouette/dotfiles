@@ -150,6 +150,15 @@
 (global-set-key (kbd (if *is-linux* "C-<iso-lefttab>" "C-S-<tab>")) 'previous-buffer)
 
 (delete-selection-mode 1)
+
+(defun delete-region-or-backward (orig-fn &rest args)
+  "Delete region if active, otherwise call original function."
+  (if (use-region-p)
+      (delete-region (region-beginning) (region-end))
+    (apply orig-fn args)))
+(advice-add 'backward-delete-char-untabify :around #'delete-region-or-backward)
+(advice-add 'delete-backward-char :around #'delete-region-or-backward)
+
 (set-default 'truncate-lines t)
 
 (defun next-code-buffer ()
@@ -207,6 +216,177 @@
    ("C-b" . windresize-left)
    ("C-f" . windresize-right)
    ("C-p" . windresize-up))))
+
+  (use-package window-dim
+    :vc
+    (:url "https://github.com/alvgaona/window-dim.el")
+    :config
+    ;; Dimming intensity (0.0 to 1.0, default 0.3)
+    (setq window-dim-fraction 0.4)
+
+    ;; Keep last window highlighted when Emacs loses focus
+    (setq window-dim-dim-on-focus-out nil)
+
+    (setq window-dim-exclude-buffer-regexp
+          "\\`\\( \\|\\*Minibuf\\|\\*which-key\\|\\*transient\\)")
+
+    (setq window-dim-exclude-modes nil)
+
+    ;; Add magit faces so window-dim can dim them in inactive windows
+    (with-eval-after-load 'magit
+      (dolist (face '(magit-section-heading
+                      magit-section-highlight
+                      magit-branch-local
+                      magit-branch-remote
+                      magit-tag
+                      magit-hash
+                      magit-dimmed
+                      magit-refname
+                      magit-diff-context
+                      magit-diff-context-highlight
+                      magit-diff-added
+                      magit-diff-added-highlight
+                      magit-diff-removed
+                      magit-diff-removed-highlight
+                      magit-diff-file-heading
+                      magit-diff-file-heading-highlight
+                      magit-diff-hunk-heading
+                      magit-diff-hunk-heading-highlight
+                      magit-diff-revision-summary
+                      magit-diff-revision-summary-highlight))
+        (cl-pushnew face window-dim--faces))
+      (window-dim--refresh-all-remaps))
+
+    ;; Add org-mode faces so window-dim can dim them in inactive windows
+    (with-eval-after-load 'org
+      (dolist (face '(org-level-1
+                      org-level-2
+                      org-level-3
+                      org-level-4
+                      org-level-5
+                      org-level-6
+                      org-level-7
+                      org-level-8
+                      org-document-title
+                      org-document-info
+                      org-code
+                      org-verbatim
+                      org-block
+                      org-block-begin-line
+                      org-block-end-line
+                      org-meta-line
+                      org-link
+                      org-tag
+                      org-todo
+                      org-done
+                      org-date
+                      org-table
+                      org-formula
+                      org-special-keyword
+                      org-property-value
+                      org-drawer))
+        (cl-pushnew face window-dim--faces))
+      (window-dim--refresh-all-remaps))
+
+    ;; Add agent-shell faces so window-dim can dim them in inactive windows
+    (with-eval-after-load 'agent-shell
+      (dolist (face '(success
+                      warning
+                      error
+                      bold
+                      font-lock-doc-markup-face
+                      diff-added
+                      diff-removed
+                      diff-hunk-header
+                      mode-line-emphasis))
+        (cl-pushnew face window-dim--faces))
+      (window-dim--refresh-all-remaps))
+
+    ;; Add comint faces so window-dim can dim them in inactive windows
+    (with-eval-after-load 'comint
+      (dolist (face '(comint-highlight-prompt
+                      comint-highlight-input))
+        (cl-pushnew face window-dim--faces))
+      (window-dim--refresh-all-remaps))
+
+    ;; Add dired faces so window-dim can dim them in inactive windows
+    (with-eval-after-load 'dired
+      (dolist (face '(dired-directory
+                      dired-symlink
+                      dired-mark
+                      dired-marked
+                      dired-flagged
+                      dired-header
+                      dired-ignored
+                      dired-perm-write
+                      dired-warning))
+        (cl-pushnew face window-dim--faces))
+      (window-dim--refresh-all-remaps))
+
+    ;; Add eat faces so window-dim can dim them in inactive windows
+    (with-eval-after-load 'eat
+      (dolist (face '(eat-term-color-0
+                      eat-term-color-1
+                      eat-term-color-2
+                      eat-term-color-3
+                      eat-term-color-4
+                      eat-term-color-5
+                      eat-term-color-6
+                      eat-term-color-7
+                      eat-term-color-8
+                      eat-term-color-9
+                      eat-term-color-10
+                      eat-term-color-11
+                      eat-term-color-12
+                      eat-term-color-13
+                      eat-term-color-14
+                      eat-term-color-15))
+        (cl-pushnew face window-dim--faces))
+      (window-dim--refresh-all-remaps))
+
+    ;; Add eshell faces so window-dim can dim them in inactive windows
+    (with-eval-after-load 'eshell
+      (dolist (face '(eshell-prompt
+                      eshell-ls-directory
+                      eshell-ls-executable
+                      eshell-ls-symlink
+                      eshell-ls-archive
+                      eshell-ls-backup
+                      eshell-ls-clutter
+                      eshell-ls-missing
+                      eshell-ls-product
+                      eshell-ls-readonly
+                      eshell-ls-special
+                      eshell-ls-unreadable))
+        (cl-pushnew face window-dim--faces))
+      (window-dim--refresh-all-remaps))
+
+    ;; Dim org-timeblock SVG when its window is inactive (face remapping
+    ;; cannot reach inside SVG images, so we modify the DOM opacity instead)
+    (with-eval-after-load 'org-timeblock
+      (defun org-timeblock/dim-on-window-change (_frame)
+        "Adjust org-timeblock SVG opacity based on window focus."
+        (when (and (boundp 'org-timeblock-svg) org-timeblock-svg
+                   (boundp 'org-timeblock-buffer))
+          (when-let* ((buf (get-buffer org-timeblock-buffer))
+                      (win (get-buffer-window buf t)))
+            (let ((dimmed (not (eq win (selected-window)))))
+              (dom-set-attribute org-timeblock-svg 'opacity
+                                 (if dimmed
+                                     (number-to-string (- 1.0 window-dim-fraction))
+                                   "1.0"))
+              (with-current-buffer buf
+                (let ((inhibit-read-only t))
+                  (erase-buffer)
+                  (svg-insert-image org-timeblock-svg)))))))
+      (add-hook 'window-selection-change-functions
+                #'org-timeblock/dim-on-window-change))
+
+    (window-dim-mode 1)
+    (defun window-dim/on-config-change ()
+      "Refresh window-dim remaps on window configuration change."
+      (window-dim--on-window-change (selected-frame)))
+    (add-hook 'window-configuration-change-hook #'window-dim/on-config-change))
 
 (defvar frame-centric nil
   "When non-nil, window rules prefer opening buffers in new frames.
@@ -932,6 +1112,7 @@ scrollbar slider:active { background-color: %s; }"
 
 (use-package meow
   :config
+  (setq meow-use-enhanced-selection-effect t)
   (setq meow--kbd-exchange-point-and-mark 'exchange-point-and-mark)
   (setq meow-char-thing-table
         '((?\( . round)
@@ -4220,6 +4401,8 @@ DURATION-SECS is the event duration in seconds."
   :bind ("C-c c" . gcal/fetch-and-timeblock)
   :custom
   (org-timeblock-span 1)
+  :hook
+  ((org-timeblock-mode org-timeblock-list-mode) . (lambda () (display-line-numbers-mode 0)))
   :config
   (defun gcal/fetch-and-timeblock ()
     "Fetch Google Calendar then open org-timeblock."
